@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+<appender name="consoleOutAppender" class="ch.qos.logback.core.ConsoleAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+		<encoder>
+			<pattern>[%p][%d][%X{first} %X{last} -|%t|] - %m%n</pattern>
+		</encoder>
+	</appender>
+	<appender name="deviceSiftingAppender" class="ch.qos.logback.classic.sift.SiftingAppender">
+		<discriminator> 
+			<key>log_file_name</key>
+			<defaultValue>test-suite</defaultValue>
+		</discriminator>
+		<sift>
+			<appender name="FILE-${log_file_name}" class="ch.qos.logback.core.FileAppender">
+				<file>target/logs/${log_file_name}.log</file>
+				<append>false</append>
+				<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+					<pattern>[%p][%d][%X{stb_mac_address}|%t|%C:%M:%L] %m%n</pattern>
+				</encoder>
+			</appender>
+		</sift> 
+	</appender>
+	<logger name="org.apache.http" additivity="false">
+		<level value="INFO" />		
+		<appender-ref ref="deviceSiftingAppender" />
+	</logger>
+	<root>
+		<appender-ref ref="consoleOutAppender" />	
+		<appender-ref ref="deviceSiftingAppender" />
+	</root>
+</configuration>
