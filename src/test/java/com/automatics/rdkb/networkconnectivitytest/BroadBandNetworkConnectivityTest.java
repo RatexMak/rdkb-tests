@@ -22,18 +22,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.tap.AutomaticsTapApi;
@@ -42,6 +46,7 @@ import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaServerResponse;
 import com.automatics.rdkb.utils.networkconnectivity.BroadBandNetworkConnectivityUtils;
+import com.automatics.rdkb.utils.telemetry.BroadBandTelemetryUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 
 /**
@@ -882,7 +887,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			}
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-			
+
 			/**
 			 * STEP 8 :verify whether "GW IP Connectivity Test Successfull" message is
 			 * present in rdklogs/logs/selfheallog.txt.0 .
@@ -947,4 +952,1424 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 		}
 	}
+
+	/**
+	 * Test Case : Verify whether the Invalid ping servers are set and it's failure
+	 * messages are logged when the ping fails in selfHeal log and verify whether
+	 * the Ping failures are captured in telemetry dashboard.
+	 *
+	 * <p>
+	 * STEPS:
+	 * </p>
+	 * <ol>
+	 * <li>PRE-CONDITION 1 : Telemetry profile configuration for gateway
+	 * configuration.</li>
+	 * <li>PRE-CONDITION 2 : Check and Set the Ping Interval to 15 mins
+	 * 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_pingInterval'using
+	 * WebPA.</li>
+	 * <li>STEP 1.Verification of adding Invalid Ipv4 ping server '1.2.3.4' by using
+	 * Webpa POST command on TR-181
+	 * parameter'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'</li>
+	 * <li>STEP 2.Verification of adding Invalid Ipv4 ping server '2.3.4.5' by using
+	 * Webpa POST command on TR-181
+	 * parameter'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'</li>
+	 * <li>STEP 3.Verification of adding Invalid Ipv4 ping server '3.4.5.6' by using
+	 * Webpa POST command on TR-181
+	 * parameter'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'</li>
+	 * <li>STEP 4.Verification of adding Invalid Ipv6 ping server '2001::2002' by
+	 * using Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'</li>
+	 * <li>STEP 5.Verification of adding Invalid Ipv6 ping server '2002::2003' by
+	 * using Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'</li>
+	 * <li>STEP 6.Verification of adding Invalid Ipv6 ping server '2003::2004' by
+	 * using Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'</li>
+	 * <li>STEP 7.Verify whether 'PING_FAILED:1.2.3.4' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>STEP 8.verify whether 'PING_FAILED:2.3.4.5' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>STEP 9.verify whether 'PING_FAILED:3.4.5.6' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>STEP 10.verify whether 'PING_FAILED:2001::2002' message is present in
+	 * self heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>STEP 11.verify whether 'PING_FAILED:2002::2003' message is present in
+	 * self heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>STEP 12.verify whether 'PING_FAILED:2003::2004' message is present in
+	 * self heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>STEP 13.verify whether 'Ping failure' message is present in
+	 * rdklogs/logs/selfheallog.txt.0 after the setting the Invalid servers. .</li>
+	 * <li>STEP 14.:Verify whether 'PING_FAILED:6' message is present in
+	 * rdklogs/logs/dcmscript.log after getting the ping failure log messages</li>
+	 * <li>POST-CONDITION 1 : Delete the added ping servers in the Ping Server Table
+	 * by using WEBPA DELETE command.</li>
+	 * <li>POST-CONDITION 2 : Begin clear telemetry configuration on the device.
+	 * </ol>
+	 *
+	 * @author Joseph Maduram
+	 * @refactor Govardhan
+	 * @param device {@link Dut}
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, groups = {
+			BroadBandTestGroup.WEBPA }, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-NW-CONNECTIVITY-1004")
+	public void invalidPingServerConnectivityTestByWebpa(Dut device) {
+		// Variable Declaration begins
+		// String to store the test case ID
+		String testId = "TC-RDKB-NW-CONNECTIVITY-104";
+		// stores the test step number
+		int stepNumber = 1;
+		String step = "S" + stepNumber;
+		// String to store the error message
+		String errorMessage = null;
+		// stores the test status
+		boolean status = false;
+		// String to store the added table row number
+		String tableRowNumber = null;
+		// List of String to store the added table row numbers
+		List<String> tableRow = new ArrayList<String>();
+		// string to store the webpaserver response
+		WebPaServerResponse webPaServerResponse = null;
+		// Map of string and List for Ping table
+		Map<String, List<String>> pingServersTable = new HashMap<String, List<String>>();
+		// List of String to store the ping servers
+		List<String> pingServers = new ArrayList<String>();
+		int preConStepNumber = 0;
+		boolean isTelemetryEnabled = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_FOR_TELEMETRY_2_0_ENABLE, BroadBandTestConstants.TRUE,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+		// Variable Declaration ends
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-NW-CONNECTIVITY-104");
+		LOGGER.info(
+				"TEST DESCRIPTION: Verify whether the Invalid ping servers are set and it's failure messages are logged when the ping fails in selfHeal log and verify whether the Ping failures are captured in telemetry dashboard.");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("PRE-CONDITION 1 : Telemetry profile configuration for gateway configuration.");
+		LOGGER.info(
+				"PRE-CONDITION 2 : Check and Set the Ping Interval to 15 mins 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_pingInterval'using WebPA.");
+		LOGGER.info(
+				"Step 1  : Verification of adding Invalid Ipv4 ping server '1.2.3.4' by using Webpa POST command on TR-181 parameter'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.");
+		LOGGER.info(
+				"Step 2  : Verification of adding Invalid Ipv4 ping server '2.3.4.5' by using Webpa POST command on TR-181 parameter'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.");
+		LOGGER.info(
+				"Step 3  : Verification of adding Invalid Ipv4 ping server '3.4.5.6' by using Webpa POST command on TR-181 parameter'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.");
+		LOGGER.info(
+				"Step 4  : Verification of adding Invalid Ipv6 ping server '2001::2002' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.");
+		LOGGER.info(
+				"Step 5  : Verification of adding Invalid Ipv6 ping server '2002::2003' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.");
+		LOGGER.info(
+				"Step 6  : Verification of adding Invalid Ipv6 ping server '2003::2004' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable..");
+		LOGGER.info(
+				"Step 7  : Verify whether 'PING_FAILED:1.2.3.4' message is present in self heallog.txt.0 after the setting the InValid servers.");
+		LOGGER.info(
+				"Step 8  : Verify whether 'PING_FAILED:2.3.4.5' message is present in self heallog.txt.0 after the setting the InValid servers.");
+		LOGGER.info(
+				"Step 9  : Verify whether 'PING_FAILED:3.4.5.6' message is present in self heallog.txt.0 after the setting the InValid servers.");
+		LOGGER.info(
+				"Step 10 : Verify whether 'PING_FAILED:2001::2002' message is present in self heallog.txt.0 after the setting the InValid servers.");
+		LOGGER.info(
+				"Step 11 : Verify whether 'PING_FAILED:2002::2003' message is present in self heallog.txt.0 after the setting the InValid servers.");
+		LOGGER.info(
+				"Step 12 : Verify whether 'PING_FAILED:2003::2004' message is present in self heallog.txt.0 after the setting the InValid servers.");
+		LOGGER.info(
+				"Step 13 : Verify whether 'Ping failure' message is present in rdklogs/logs/selfheallog.txt.0 after the setting the Invalid servers.");
+		LOGGER.info(
+				"Step 14 : Verify whether 'PING_FAILED:6' message is present in rdklogs/logs/dcmscript.log after getting the ping failure log messages.");
+		LOGGER.info(
+				"POST-CONDITION 1 : Delete the added ping servers in the Ping Server Table by using WEBPA DELETE command.");
+		LOGGER.info("POST-CONDITION 2 :  Begin clear telemetry configuration on the device.");
+		LOGGER.info("#######################################################################################");
+
+		try {
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			/**
+			 * PRE-CONDITION 1 : TELEMETRY PROFILE CONFIGURATION FOR GATEWAY CONFIGURATION.
+			 */
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("PRE-CONDITION 1:DESCRIPTION :  TELEMETRY PROFILE CONFIGURATION FOR GATEWAY CONFIGURATION.");
+			LOGGER.info("PRE-CONDITION 1: ACTION : Telemetry profile Configuration for gateway configuration");
+			LOGGER.info(
+					"PRE-CONDITION 1: EXPECTED : Telemetry profile Configuration for gateway configuration should be successful");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "GATEWAY CONFIGURATION TELEMETRY PROFILE COULD NOT BE CONFIGURED.";
+			// Configure Telemetry Profile
+			// Reboot the Device after updating the DCM Log Server URL.
+			if (!BroadBandTelemetryUtils.configureTelemetryProfileNwConnectivty(tapEnv, device)) {
+				errorMessage = "GATEWAY CONFIGURATION TELEMETRY PROFILE COULD NOT BE CONFIGURED.";
+				LOGGER.error(errorMessage);
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+			}
+			BroadBandCommonUtils.rebootDeviceAsPreCondition(tapEnv, device);
+			// Verify dcmscript log file availability
+			BroadBandCommonUtils.doesFileExistPreCondition(tapEnv, device, BroadBandTestConstants.DCMSCRIPT_LOG_FILE);
+			tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTES);
+
+			/**
+			 * PRE-CONDITION 2 : CHECK AND SET THE PING INTERVAL TO 15 MINS
+			 * 'DEVICE.SELFHEAL.CONNECTIVITYTEST.X_RDKCENTRAL-COM_PINGINTERVAL'USING WEBPA.
+			 */
+			LOGGER.info("#######################################################################################");
+			LOGGER.info(
+					"PRE-CONDITION 2:DESCRIPTION :  Check and Set the Ping Interval to 15 mins 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_pingInterval'using WebPA.");
+			LOGGER.info("PRE-CONDITION 2: ACTION : Set the ping Interval to 15 mins using WebPA");
+			LOGGER.info("PRE-CONDITION 2: EXPECTED : ping Interval should be set to 15 mins");
+			LOGGER.info("#######################################################################################");
+			if (!BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.PING_INTERVAL, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.CONSTANT_PING_INTERVAL)) {
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR
+						+ "NOT ABLE TO SET THE PING INTERVAL TO 15 MINS - HENCE BLOCKING THE EXECUTION");
+			}
+			LOGGER.info("PRE-CONDITION 2 : ACTUAL: Ping interval is set as 15 mins");
+
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			/**
+			 * STEP 1:VERIFICATION OF ADDING INVALID IPV4 PING SERVER '1.2.3.4' BY USING
+			 * WEBPA POST COMMAND ON TR-181
+			 * PARAMETER'DEVICE.SELFHEAL.CONNECTIVITYTEST.PINGSERVERLIST.IPV4PINGSERVERTABLE.
+			 */
+
+			status = false;
+			String timeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
+			LOGGER.info("***************************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION :Verification of adding Invalid Ipv4 ping server '1.2.3.4' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.");
+			LOGGER.info("STEP " + stepNumber
+					+ ":  EXPECTED: should be able to set the IPV4 ping server1  as '1.2.3.4'by WebPA");
+			LOGGER.info("***************************************************************************************");
+			errorMessage = "Unable to set the IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.1.X_RDKCENTRAL-COM_Ipv4PingServerURI' valid Ipv4 as '1.2.3.4' using WebPA command.";
+			pingServers.add(BroadBandTestConstants.FIRST_IPV4_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV4_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV4_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Successfully set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.1.X_RDKCENTRAL-COM_Ipv4PingServerURI' valid Ipv4 as '1.2.3.4' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 2:.VERIFICATION OF ADDING INVALID IPV4 PING SERVER '2.3.4.5' BY USING
+			 * WEBPA POST COMMAND ON TR-181
+			 * PARAMETER'DEVICE.SELFHEAL.CONNECTIVITYTEST.PINGSERVERLIST.IPV4PINGSERVERTABLE.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("***************************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION :Verification of adding Invalid Ipv4 ping server '2.3.4.5' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED: should be able to set the IPV4 ping server2  as '2.3.4.5'by WebPA");
+			LOGGER.info("***************************************************************************************");
+			errorMessage = "Unable to set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.2.X_RDKCENTRAL-COM_Ipv4PingServerURI' Invalid Ipv4 as '2.3.4.5' using WebPA command.";
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.SECOND_IPV4_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV4_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV4_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Successfully set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.1.X_RDKCENTRAL-COM_Ipv4PingServerURI' valid Ipv4 as '2.3.4.5' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 3:VERIFICATION OF ADDING INVALID IPV4 PING SERVER '3.4.5.6' BY USING
+			 * WEBPA POST COMMAND ON TR-181
+			 * PARAMETER'DEVICE.SELFHEAL.CONNECTIVITYTEST.PINGSERVERLIST.IPV4PINGSERVERTABLE.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("***************************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION :Verification of adding Invalid Ipv4 ping server '3.4.5.6' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED : should be able to set the IPV4 ping server3  as '3.4.5.6'by WebPA");
+			LOGGER.info("#####################################################################################");
+			errorMessage = "Unable to set the IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.3.X_RDKCENTRAL-COM_Ipv4PingServerURI' Invalid Ipv4 as '3.4.5.6' using WebPA command.";
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.THIRD_IPV4_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV4_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV4_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Successfully set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.3.X_RDKCENTRAL-COM_Ipv4PingServerURI' Invalid Ipv4 as '3.4.5.6' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 4: VERIFICATION OF ADDING INVALID IPV6 PING SERVER '2001::2002' BY USING
+			 * WEBPA POST COMMAND ON TR-181 PARAMETER
+			 * 'DEVICE.SELFHEAL.CONNECTIVITYTEST.PINGSERVERLIST.IPV6PINGSERVERTABLE.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("***************************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION :Verification of adding Invalid Ipv6 ping server '2001::2002' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED : Should be able to set the IPV6 ping server1  as '2001::2002'by WebPA");
+			LOGGER.info("***************************************************************************************");
+			errorMessage = "Unable to set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.1.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2001::2002' using WebPA command.";
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.FIRST_IPV6_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV6_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV6_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Successfully set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.1.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2001::2002' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 5:VERIFICATION OF ADDING INVALID IPV6 PING SERVER '2002::2003' BY USING
+			 * WEBPA POST COMMAND ON TR-181 PARAMETER
+			 * 'DEVICE.SELFHEAL.CONNECTIVITYTEST.PINGSERVERLIST.IPV6PINGSERVERTABLE.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("***************************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : Verification of adding Invalid Ipv6 ping server '2002::2003' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED: Should be able to set the IPV6 ping server2  as '2002::2003'by WebPA");
+			LOGGER.info("***************************************************************************************");
+			errorMessage = "Unable to set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.2.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2002::2003' using WebPA command.";
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.SECOND_IPV6_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV6_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV6_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Successfully set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.2.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2002::2003' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 6: VERIFICATION OF ADDING INVALID IPV6 PING SERVER '2003::2004' BY USING
+			 * WEBPA POST COMMAND ON TR-181 PARAMETER
+			 * 'DEVICE.SELFHEAL.CONNECTIVITYTEST.PINGSERVERLIST.IPV6PINGSERVERTABLE.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("***************************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION: Verification of adding Invalid Ipv6 ping server '2003::2004' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED: should be able to set the IPV6 ping server3  as '2003::2004'by WebPA");
+			LOGGER.info("***************************************************************************************");
+			errorMessage = "Unable to set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.3.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2003::2004' using WebPA command.";
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.THIRD_IPV6_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV6_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV6_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Successfully set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.2.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2003::2004' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 7 :VERIFY WHETHER 'PING_FAILED:1.2.3.4' MESSAGE IS PRESENT IN SELF
+			 * HEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION: :Verify whether 'PING_FAILED:1.2.3.4' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: PING_FAILED:1.2.3.4\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED - 'PING_FAILED:1.2.3.4' failure message  should  get logged in the next self heal window");
+			LOGGER.info("***************************************************************************************");
+			errorMessage = "'PING_FAILED:1.2.3.4' failure message  is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV4_FIRST_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG,
+								BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS
+										+ BroadBandTestConstants.TWENTY_MINUTES_IN_MILLIS,
+								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV4_FIRST_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:1.2.3.4' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PING_FAILED:1.2.3.4' failure message is logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 8 :VERIFY WHETHER 'PING_FAILED:2.3.4.5' MESSAGE IS PRESENT IN SELF
+			 * HEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION: verify whether 'PING_FAILED:2.3.4.5' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute command: grep -i \"PING_FAILED:2.3.4.5\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED : PING_FAILED:2.3.4.5' failure message  should  get logged in the next self heal window");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "'PING_FAILED:2.3.4.5' failure message  is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV4_SECOND_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV4_SECOND_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:2.3.4.5' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PING_FAILED:2.3.4.5' failure message is logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 9 :VERIFY WHETHER 'PING_FAILED:3.4.5.6' MESSAGE IS PRESENT IN SELF
+			 * HEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : Verify whether 'PING_FAILED:3.4.5.6' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute command: grep -i \"PING_FAILED:3.4.5.6\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED : PING_FAILED:3.4.5.6' failure message  should  get logged in the next self heal window");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "'PING_FAILED:3.4.5.6' failure message  is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV4_THIRD_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV4_THIRD_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:3.4.5.6' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PING_FAILED:3.4.5.6' failure message is logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 10 : VERIFY WHETHER 'PING_FAILED:2001::2002' MESSAGE IS PRESENT IN SELF
+			 * HEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION: Verify whether 'PING_FAILED:2001::2002' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute command: grep -i \"PING_FAILED:2001:2002\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED :PING_FAILED:2001::2002' failure message  should  get logged in the next self heal window");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "'PING_FAILED:2001::2002' failure message  is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV6_FIRST_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV6_FIRST_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:2001::2002' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PING_FAILED:2001:2002' failure message is logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 11 :VERIFY WHETHER 'PING_FAILED:2002::2003' MESSAGE IS PRESENT IN SELF
+			 * HEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION: verify whether 'PING_FAILED:2002::2003' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute command: grep -i \"PING_FAILED:2002:2003\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED : PING_FAILED:2002::2003' failure message  should  get logged in the next self heal window");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "'PING_FAILED:2002:2003' failure message  is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV6_SECOND_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV6_SECOND_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:2002::2003' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PING_FAILED:2002:2003' failure message is logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 12 :VERIFY WHETHER 'PING_FAILED:2003::2004' MESSAGE IS PRESENT IN SELF
+			 * HEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : verify whether 'PING_FAILED:2003::2004' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute the command: grep -i \"PING_FAILED:2003:2004\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED :PING_FAILED:2002::2003' failure message  should  get logged in the next self heal window");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "'PING_FAILED:2003:2004' failure message  is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV6_THIRD_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV6_THIRD_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:2003::2004' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PING_FAILED:2003:2004' failure message is logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+			/**
+			 * STEP 13 :VERIFY WHETHER 'PING FAILURE' MESSAGE IS PRESENT IN
+			 * RDKLOGS/LOGS/SELFHEALLOG.TXT.0 AFTER THE SETTING THE INVALID SERVERS.
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION :verify whether 'Ping failure' message  is present in rdklogs/logs/selfheallog.txt.0 after the setting the Invalid  servers.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute the command: grep -i \"Ping to both IPv4 and IPv6 servers are failed\" /rdklogs/logs/SelfHeal.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED: Ping Failure Log  message  should  get logged in the next self heal window");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "'Ping failure' log message is not logged in the next self heal window";
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_FAIL_LOG_MESSAGE,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_FAIL_LOG_MESSAGE.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'Ping failure' message  in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Ping failure' log message is successful logged in the next self heal window");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+			/**
+			 * STEP 14 :VERIFY WHETHER 'PING_FAILED:6' MESSAGE IS PRESENT IN
+			 * RDKLOGS/LOGS/DCMSCRIPT.LOG AFTER GETTING THE PING FAILURE LOG MESSAGES
+			 */
+			stepNumber++;
+			step = "S" + stepNumber;
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION :Verify whether 'PING_FAILED:6' message  is present in rdklogs/logs/dcmscript.log after getting the ping failure log messages");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute webpa command: . Execute the command  grep -i \"PING_FAILED\":\"6\" /rdklogs/logs/dcmscript.log");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED - PING_FAILED:6  marker  should  get logged in the rdklogs/logs/dcmscript.log");
+			LOGGER.info("GOING TO SEARCH THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE");
+			LOGGER.info("******************************************************************************");
+			if (!isTelemetryEnabled) {
+				JSONObject telemetryPayloadData = BroadBandTelemetryUtils.getPayLoadDataAsJson(tapEnv, device,
+						BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE, true);
+				LOGGER.info("SEARCHED THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE: "
+						+ (null != telemetryPayloadData));
+				errorMessage = "Telemetry Marker for Ping Failure is NOT present.";
+				if (null != telemetryPayloadData) {
+					String response = BroadBandTelemetryUtils.getPayloadParameterValue(telemetryPayloadData,
+							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
+					LOGGER.info("response is" + response);
+					status = CommonMethods.isNotNull(response) && BroadBandCommonUtils.compareValues("INT_COMPARISON",
+							BroadBandTestConstants.STRING_VALUE_SIX, response);
+					errorMessage = "Telemetry Marker for Ping Failure is  present BUT with inappropriate value";
+				}
+				if (!status) {
+					errorMessage = "Telemetry Marker for Ping Failure 4 and Ping Failure 2 arenot present";
+					status = BroadBandTelemetryUtils.verifyPingFailedPayloadParamFromDcmScript(tapEnv, device,
+							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
+				}
+				if (status) {
+					LOGGER.info(
+							"STEP " + stepNumber + " : ACTUAL : TELEMETRY MARKER FOR PING FAILURES IS BEEN PRESENT");
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
+			} else {
+				errorMessage = "The count of PING_FAILED is less than 6";
+				int count = getTextCount(tapEnv, device,
+						BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE,
+						BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				if (count >= BroadBandTestConstants.CONSTANT_6) {
+					status = true;
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : For Telemetry 2.0 PING_FAILED count present in selfheal.log is :" + count);
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+		} catch (Exception testException) {
+			errorMessage = "Exception occured while checking the invalid ping server connectivity test by webpa"
+					+ testException.getMessage();
+			LOGGER.error(errorMessage);
+			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+		} finally {
+			int postCondition = 0;
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+
+			/**
+			 * POST-CONDITION 1: Delete the added ping servers in the Ping Server Table by
+			 * using WEBPA DELETE command.
+			 */
+			postCondition++;
+
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("POST-CONDITION " + postCondition
+					+ ":  DESCRIPTION :Delete the added ping servers in the Ping Server Table by using WEBPA DELETE command.");
+			LOGGER.info("POST-CONDITION " + postCondition
+					+ ": ACTION : Delete the added Ping Servers in the Ping Server Table by using WEBPA DELETE command");
+			LOGGER.info("POST-CONDITION " + postCondition
+					+ ": EXPECTED: Should be able to delete the added ping servers in the Ping Server Table using webpa Delete command");
+			LOGGER.info("#####################################################################################");
+			for (int i = 0; i < tableRow.size(); i++) {
+				webPaServerResponse = tapEnv.deleteTableRowUsingRestApi(device, tableRow.get(i));
+				status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+				if (status) {
+					LOGGER.info("Deleted ping servers table row" + tableRow.get(i));
+				}
+				if (status) {
+					LOGGER.info("POST-CONDITION " + postCondition + ": ACTUAL : Deleted ping servers table row");
+				} else {
+					LOGGER.error("POST-CONDITION " + postCondition + ": ACTUAL : Post condition failed ");
+				}
+			}
+
+			/**
+			 * POST CONDITION 2 : Begin clear telemetry configuration on the device.
+			 */
+			postCondition++;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("POST-CONDITION " + postCondition
+					+ ": DESCRIPTION : Begin clear telemetry configuration on the device.");
+			LOGGER.info("POST-CONDITION " + postCondition + ": ACTION : Clear telemetry configuration on the device");
+			LOGGER.info("POST-CONDITION " + postCondition
+					+ ":EXPECTED: Should be able to clear the telemetry configuration on the device");
+			LOGGER.info("#####################################################################################");
+			boolean result = BroadBandTelemetryUtils.clearTelemetryConfiguration(tapEnv, device);
+			if (result) {
+				LOGGER.info("POST-CONDITION " + postCondition
+						+ ": ACTUAL : End clear telemetry configuration on the device");
+			} else {
+				LOGGER.error("POST-CONDITION " + postCondition + ": ACTUAL : Post condition failed");
+			}
+
+			/**
+			 * POST CONDITION 3 : Begin Re-activation operation on the device.
+			 */
+			postCondition++;
+			BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, false, postCondition);
+
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-NW-CONNECTIVITY-1004");
+	}
+
+	/**
+	 * method to get number of occurrence of particular text
+	 * 
+	 * 
+	 * @param tapEnv       {@link AutomaticsTapApi}
+	 * @param device       {@link Dut}
+	 * @param searchText   String representing the Search Text. It needs to be
+	 *                     passed with the required escape character.
+	 * @param logFile      String representing the log file.
+	 * @param pollDuration Long representing the duration for which polling needs to
+	 *                     be performed.
+	 * @param pollInterval Long representing the polling interval.
+	 * 
+	 * @return String representing the search response.
+	 * @refactor Govardhan
+	 */
+	public static int getTextCount(AutomaticsTapApi tapEnv, Dut device, String searchText, String logFile,
+			long pollDuration, long pollInterval) {
+		int count = 0;
+		String testArray[] = null;
+
+		LOGGER.debug("STARTING METHOD getTextCount");
+		try {
+			StringBuffer sbCommand = new StringBuffer(BroadBandTestConstants.GREP_COMMAND);
+			// In case the search text contains space and not wrapped with double quotes.
+			if (searchText.contains(BroadBandTestConstants.SINGLE_SPACE_CHARACTER)
+					&& !searchText.contains(BroadBandTestConstants.DOUBLE_QUOTE)) {
+				sbCommand.append(BroadBandTestConstants.DOUBLE_QUOTE);
+				sbCommand.append(searchText);
+				sbCommand.append(BroadBandTestConstants.DOUBLE_QUOTE);
+			} else {
+				sbCommand.append(searchText);
+			}
+			sbCommand.append(BroadBandTestConstants.SINGLE_SPACE_CHARACTER);
+			sbCommand.append(logFile);
+			LOGGER.info("COMMAND TO BE EXECUTED: " + sbCommand.toString());
+			long startTime = System.currentTimeMillis();
+			String searchResponse = null;
+			do {
+				tapEnv.waitTill(pollInterval);
+				searchResponse = tapEnv.executeCommandUsingSsh(device, sbCommand.toString());
+				if (CommonMethods.isNotNull(searchResponse)) {
+					testArray = searchResponse.split(BroadBandTestConstants.STRING_REGEX_MATCH_LINE);
+				}
+			} while ((System.currentTimeMillis() - startTime) < pollDuration && CommonMethods.isNull(searchResponse));
+			count = testArray.length;
+
+			LOGGER.info(" Total Number of occurance of the text to be searched:" + count);
+			LOGGER.debug("ENDING METHOD getTextCount");
+		} catch (Exception e) {
+			LOGGER.error(" Exception occured while retrieving the number of occurance of the text " + e.getMessage());
+		}
+		return count;
+	}
+
+	/**
+	 * 
+	 * TC-RDKB-NW-CONNECTIVITY-1008: verify the Configuration of ping packet size
+	 * via WebPA and also in device logs
+	 *
+	 * <ol>
+	 * <li>S1)Verify and setting the datablock size as "64" using the TR-181
+	 * parameter-Device.IP.Diagnostics.IPPing.DataBlockSize.</li>
+	 * <li>S2)verify whether the ping DatablockSize is getting logged in
+	 * /opt/secure/data/syscfg.db file</li>
+	 * </ol>
+	 *
+	 * @author Joseph Maduram
+	 * @refactor Govardhan
+	 * 
+	 * @param device {@link Dut}
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, groups = {
+			TestGroup.WEBPA }, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-NW-CONNECTIVITY-1008")
+
+	public void TestPingDataPacketSize(Dut device) {
+		// String to store the test case ID
+		String testId = "TC-RDKB-NW-CONNECTIVITY-108";
+		// String to store the test step number
+		String testStepNumber = "s1";
+		// String to store the error message
+		String errorMessage = null;
+		// stores the test status
+		boolean status = false;
+		// String to store the response
+		String response = null;
+		// String to store the dataBlockSize
+		String dataBlockSize = null;
+		try {
+
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"PRE-CONDITION 1:DESCRIPTION : Get the DatablockSize from the device by using WebPA parameter 'Device.IP.Diagnostics.IPPing.DataBlockSize'");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("PRE-CONDITION : ACTION : Get the DatablockSize from the device by using WebPA");
+			LOGGER.info("PRE-CONDITION : EXPECTED : should be able to get the datablock size");
+			dataBlockSize = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DATABLOCKSIZE);
+			if (CommonMethods.isNull(dataBlockSize)) {
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR
+						+ "DATA BLOCK SIZE IS NULL - HENCE BLOCKING THE EXECUTION");
+			}
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STARTING TEST CASE: TC-RDKB-NW-CONNECTIVITY-1008");
+			LOGGER.info(
+					"TEST DESCRIPTION: verify whether the device reboots when there is a Log ping miss in Self heal log.");
+			LOGGER.info("#######################################################################################");
+
+			/**
+			 * STEP 1:Verify and setting the datablock size as "64" using the TR-181
+			 * parameter-Device.IP.Diagnostics.IPPing.DataBlockSize.
+			 * 
+			 */
+			testStepNumber = "s1";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 1 : verify and setting the datablocksize as '64' using the TR-181 parameter-Device.IP.Diagnostics.IPPing.DataBlockSize.");
+			LOGGER.info("STEP 1 : EXPECTED: should be able to set the Data block Size  as '64'by WebPA");
+			LOGGER.info("#####################################################################################");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_DATABLOCKSIZE, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.DATA_BLOCK_SIZE);
+			errorMessage = "Unable to set the  data block size  'Device.IP.Diagnostics.IPPing.DataBlockSize' as '64' using WebPA command.";
+			LOGGER.info("STEP 1 : ACTUAL:" + (status
+					? "Successfully set the  data block size  'Device.IP.Diagnostics.IPPing.DataBlockSize' as '64' using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 2:verify whether the ping DatablockSize is getting logged in
+			 * /opt/secure/data/syscfg.db file
+			 * 
+			 */
+			status = false;
+			testStepNumber = "s2";
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 2 : verify whether the  ping DatablockSize is getting logged in /opt/secure/data/syscfg.db file");
+			LOGGER.info("STEP 2 : EXPECTED: should be able to get datablocksize by WebPA");
+			LOGGER.info("#####################################################################################");
+
+			status = BroadBandCommonUtils
+					.searchLogFiles(tapEnv, device, BroadBandTraceConstants.DATA_BLOCK_SIZE_LOG_MESSAGE,
+							BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG,
+							BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+					.contains(BroadBandTraceConstants.DATA_BLOCK_SIZE_LOG_MESSAGE.replace("\"", ""));
+
+			errorMessage = "ping datablockSize is not logged in /opt/secure/data/syscfg.db file";
+			LOGGER.info("STEP 2 :  ACTUAL:"
+					+ (status ? "ping DatablockSize is logged in /opt/secure/data/syscfg.db file" : errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		}
+
+		catch (Exception exception) {
+			status = false;
+			errorMessage = "Exception occurred while  checking the data Block Size" + exception.getMessage();
+			LOGGER.error(errorMessage);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		} finally {
+
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"POST CONDITION : Check and Set the  'Device.IP.Diagnostics.IPPing.DataBlockSize' to the pre-existing value using WebPA.");
+			LOGGER.info("#####################################################################################");
+			if (!BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_DATABLOCKSIZE, BroadBandTestConstants.CONSTANT_2, dataBlockSize)) {
+				throw new TestException(
+						"NOT ABLE TO SET THE DATABLOCKSIZE  TO THE PRE-EXISTING VALUE USING WEBPA - HENCE BLOCKING THE EXECUTION");
+			}
+
+		}
+
+		/**
+		 * STEP 3:verify the presence /nvram/syscfg.db file in ATOM Side
+		 */
+		status = false;
+		testStepNumber = "s3";
+		LOGGER.info("#####################################################################################");
+		LOGGER.info("STEP 3 : verify the presence /nvram/syscfg.db file in ATOM Side");
+		LOGGER.info("STEP 3 : EXPECTED: should be able to get /nvram/syscfg.db in ATOM side ");
+		LOGGER.info("#####################################################################################");
+
+		if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+			String command = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CAT_COMMAND,
+					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.LOG_FILE_SYSCFG);
+			response = CommonMethods.executeCommandInAtomConsole(device, tapEnv, command);
+
+			LOGGER.info("COMMAND EXECUTION RESPONSE: " + response);
+
+			if (status = CommonMethods.isNotNull(response)
+					& !response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+
+				LOGGER.info("STEP 3 : Actual : SUCCESSFULLY VERIFIED syscfg.db FILE ON ATOM CONSOLE");
+			} else {
+				errorMessage = "syscfg.db FILE IS NOT EXISTED ON ATOM CONSOLE";
+				LOGGER.error(errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		} else {
+			LOGGER.info("STEP 3 is applicable only for Atom Sync Available Devices..Not applicable for  "
+					+ device.getModel() + "  Model !!!");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+	}
+
+	/**
+	 * 
+	 * 
+	 * TC-RDKB-NW-CONNECTIVITY-1009: Verify whether the Invalid ping servers and
+	 * valid ping servers are set and it's failure messages are logged when the ping
+	 * fails in selfHeal log
+	 * <ol>
+	 * <li>S1)Verification of adding Invalid Ipv4 ping server '1.2.3.4' by using
+	 * Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'</li>
+	 * <li>S2)Verification of adding Invalid Ipv4 ping server '2.3.4.5' by using
+	 * Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'</li>
+	 * <li>S3)Verification of adding valid Ipv4 ping server in table row 3 by using
+	 * Webpa POST command on
+	 * "Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.</li>
+	 * <li>S4)Verification of adding Invalid Ipv6 ping server '2001::2002' by using
+	 * Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'</li>
+	 * <li>S5)Verification of adding Invalid Ipv6 ping server '2002::2003' by using
+	 * Webpa POST command on TR-181 parameter
+	 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'</li>
+	 * <li>S6)Verification of adding valid Ipv6 ping server in table row 3 by using
+	 * Webpa POST command on
+	 * "Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.</li>
+	 * <li>S7)Verify whether 'PING_FAILED:1.2.3.4' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>S8)verify whether 'PING_FAILED:2.3.4.5' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>S9)verify whether 'PING_FAILED:2001::2002' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>S10)verify whether 'PING_FAILED:2002::2003' message is present in self
+	 * heallog.txt.0 after the setting the InValid servers.</li>
+	 * <li>S11)verify whether 'Connectivity successfull' message is present in
+	 * rdklogs/logs/selfheallog.txt.0 after the setting the Invalid servers.</li>
+	 * </ol>
+	 *
+	 * @author Joseph Maduram
+	 * @refactor Govardhan
+	 * @param settop {@link Settop}
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, groups = {
+			BroadBandTestGroup.WEBPA }, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-NW-CONNECTIVITY-1009")
+	public void invalidAndValidPingServerConnectivityTestByWebpa(Dut device) {
+		// String to store the test case ID
+		String testId = "TC-RDKB-NW-CONNECTIVITY-109";
+		// String to store the test step number
+		String testStepNumber = "s1";
+		// String to store the error message
+		String errorMessage = null;
+		// stores the test status
+		boolean status = false;
+		// String to store the added table row number
+		String tableRowNumber = null;
+		// List of String to store the added table row numbers
+		List<String> tableRow = new ArrayList<String>();
+		// string to store the webpaserver response
+		WebPaServerResponse webPaServerResponse = null;
+		// Map of string and List for Ping table
+		Map<String, List<String>> pingServersTable = new HashMap<String, List<String>>();
+		// List of String to store the ping servers
+		List<String> pingServers = new ArrayList<String>();
+		String ipv4PingServer = null;
+		String ipv6PingServer = null;
+		try {
+
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"PRE-CONDITION 1:DESCRIPTION :  Check and Set the Ping Interval to 15 mins 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_pingInterval'using WebPA.");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("PRE-CONDITION : ACTION : Set the ping Interval to 15 mins using WebPA");
+			LOGGER.info("PRE-CONDITION : EXPECTED : ping Interval should be set to 15 mins");
+			if (!BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.PING_INTERVAL, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.CONSTANT_PING_INTERVAL)) {
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR
+						+ "NOT ABLE TO SET THE PING INTERVAL TO 15 MINS - HENCE BLOCKING THE EXECUTION");
+			}
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STARTING TEST CASE: TC-RDKB-NW-CONNECTIVITY-1009");
+			LOGGER.info(
+					"TEST DESCRIPTION: Verify whether the invalid  ping servers and valid ping servers are set by webpa and  is failure messages are logged when the ping fails in selfHeal log.");
+			LOGGER.info("#######################################################################################");
+
+			/**
+			 * STEP 1:Verification of adding Invalid Ipv4 ping server '1.2.3.4' by using
+			 * Webpa POST command on TR-181 parameter
+			 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'
+			 * 
+			 */
+			testStepNumber = "s1";
+			status = false;
+			String timeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 1 : Verification of adding Invalid Ipv4 ping server '1.2.3.4' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'");
+			LOGGER.info("STEP 1 : EXPECTED: should be able to set the IPV4 ping server1  as '1.2.3.4'by WebPA");
+			LOGGER.info("#####################################################################################");
+			pingServers.add(BroadBandTestConstants.FIRST_IPV4_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV4_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV4_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			errorMessage = "Unable to set the   IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.1.X_RDKCENTRAL-COM_Ipv4PingServerURI' valid Ipv4 as '1.2.3.4' using WebPA command.";
+			LOGGER.info("STEP 1 : ACTUAL : " + (status
+					? "Successfully set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.1.X_RDKCENTRAL-COM_Ipv4PingServerURI' valid Ipv4 as '1.2.3.4' using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 2:Verification of adding Invalid Ipv4 ping server '2.3.4.5' by using
+			 * Webpa POST command on TR-181 parameter
+			 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'
+			 * 
+			 */
+
+			testStepNumber = "s2";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 2 : Verification of adding Invalid Ipv4 ping server '2.3.4.5' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'");
+			LOGGER.info("STEP 2 : EXPECTED: should be able to set the IPV4 ping server2  as '2.3.4.5'by WebPA");
+			LOGGER.info("#####################################################################################");
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.SECOND_IPV4_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV4_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV4_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			errorMessage = "Unable to set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.2.X_RDKCENTRAL-COM_Ipv4PingServerURI' Invalid Ipv4 as '2.3.4.5' using WebPA command.";
+			LOGGER.info("STEP 2 : ACTUAL : " + (status
+					? "Successfully set the  IPV4 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.2.X_RDKCENTRAL-COM_Ipv4PingServerURI' Invalid Ipv4 as '2.3.4.5' using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 3:Verification of adding valid Ipv4 ping server in table row 3 by using
+			 * Webpa POST command on
+			 * "Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable."
+			 * 
+			 */
+			testStepNumber = "s3";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 3 : Verification of adding valid Ipv4 ping server in table row 1 by using  Webpa POST command on 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv4PingServerTable.'");
+			LOGGER.info("STEP 3 : EXPECTED: should be able to set the IPV4 ping server1  by WebPA");
+			LOGGER.info("#####################################################################################");
+			pingServersTable.clear();
+			pingServers.clear();
+			ipv4PingServer = BroadBandNetworkConnectivityUtils.resolvePingServer(device, tapEnv,
+					BroadBandTestConstants.IP_VERSION4);
+			pingServers.add(ipv4PingServer);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV4_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV4_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			errorMessage = "Unable to set the  third IPV4 ping server URI with valid Ipv4 ping server using WebPA command.";
+			LOGGER.info("STEP 3 : ACTUAL : " + (status
+					? "Successfully added the valid Ipv4 ping server as  third IPV4 ping server URI using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 4:Verification of adding Invalid Ipv6 ping server '2001::2002' by using
+			 * Webpa POST command on TR-181 parameter
+			 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'
+			 * 
+			 */
+
+			testStepNumber = "s4";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 4 : Verification of adding Invalid Ipv6 ping server '2001::2002' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'");
+			LOGGER.info("STEP 4 : EXPECTED: should be able to set the IPV6 ping server1  as '2001::2002'by WebPA");
+			LOGGER.info("#####################################################################################");
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.FIRST_IPV6_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV6_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV6_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			errorMessage = "Unable to set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.1.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2001::2002' using WebPA command.";
+			LOGGER.info("STEP 4 : ACTUAL : " + (status
+					? "Successfully set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.1.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2001::2002' using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 5:Verification of adding Invalid Ipv6 ping server '2002::2003' by using
+			 * Webpa POST command on TR-181 parameter
+			 * 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'
+			 * 
+			 */
+
+			testStepNumber = "s5";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 5 : Verification of adding Invalid Ipv6 ping server '2002::2003' by using Webpa POST command on TR-181 parameter 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'");
+			LOGGER.info("STEP 5 : EXPECTED: should be able to set the IPV6 ping server2  as '2002::2003'by WebPA");
+			LOGGER.info("#####################################################################################");
+			pingServersTable.clear();
+			pingServers.clear();
+			pingServers.add(BroadBandTestConstants.SECOND_IPV6_PINGSERVER_URI);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV6_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV6_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			errorMessage = "Unable to set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.2.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2002::2003' using WebPA command.";
+			LOGGER.info("STEP 5: ACTUAL : " + (status
+					? "Successfully set the IPV6 ping server URI  'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.2.X_RDKCENTRAL-COM_Ipv6PingServerURI' Invalid Ipv6 as '2002::2003' using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 6:Verification of adding valid Ipv6 ping server in table row 3 by using
+			 * Webpa POST command on
+			 * "Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable."
+			 * 
+			 */
+			testStepNumber = "s6";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 6 : Verification of adding valid Ipv6 ping server in table row 3 by using  Webpa POST command on 'Device.SelfHeal.ConnectivityTest.PingServerList.IPv6PingServerTable.'");
+			LOGGER.info("STEP 6 : EXPECTED: should be able to set the IPV6 ping server  by WebPA");
+			LOGGER.info("#####################################################################################");
+			pingServersTable.clear();
+			pingServers.clear();
+			ipv6PingServer = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+			pingServers.add(ipv6PingServer);
+			pingServersTable.put(BroadBandWebPaConstants.WEBPA_IPV6_PING_SERVER_URI, pingServers);
+			webPaServerResponse = tapEnv.postWebpaTableParamUsingRestApi(device,
+					BroadBandWebPaConstants.WEBPA_IPV6_PING_ADD_TABLE, pingServersTable);
+			tableRowNumber = webPaServerResponse.getRow();
+			tableRow.add(tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			errorMessage = "Unable to set the  third IPV6 ping server URI with valid Ipv6 ping server using WebPA command.";
+			LOGGER.info("STEP 6 : ACTUAL : " + (status
+					? "Successfully added the valid Ipv6 ping server as  third IPV6 ping server URI using WebPA command."
+					: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 7 :verify whether "PING_FAILED:1.2.3.4" message is present in self
+			 * heallog.txt.0 after the setting the InValid servers.
+			 */
+			testStepNumber = "s7";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 7 : Verify whether 'PING_FAILED:1.2.3.4' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info(
+					"STEP 7 : EXPECTED - 'PING_FAILED:1.2.3.4' failure message  should  get logged in the next self heal window");
+			LOGGER.info("#####################################################################################");
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV4_FIRST_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG,
+								BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS
+										+ BroadBandTestConstants.TWENTY_MINUTES_IN_MILLIS,
+								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV4_FIRST_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:1.2.3.4' message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			errorMessage = "'PING_FAILED:1.2.3.4' failure message  is not logged in the next self heal window";
+			LOGGER.info("STEP 7 : ACTUAL: "
+					+ (status ? " 'PING_FAILED:1.2.3.4' failure message is logged in the next self heal window"
+							: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 8 :verify whether "PING_FAILED:2.3.4.5" message is present in self
+			 * heallog.txt.0 after the setting the InValid servers.
+			 */
+			testStepNumber = "s8";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 8 : verify whether 'PING_FAILED:2.3.4.5' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info(
+					"STEP 8 : EXPECTED - 'PING_FAILED:2.3.4.5' failure message  should  get logged in the next self heal window");
+			LOGGER.info("#####################################################################################");
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV4_SECOND_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG,
+								BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV4_SECOND_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:2.3.4.5 message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			errorMessage = "'PING_FAILED:2.3.4.5' failure message  is not logged in the next self heal window";
+			LOGGER.info("STEP 8 : ACTUAL: "
+					+ (status ? " 'PING_FAILED:2.3.4.5' failure message is logged in the next self heal window"
+							: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 9 :verify whether "PING_FAILED:2001::2002" message is present in self
+			 * heallog.txt.0 after the setting the InValid servers.
+			 */
+			testStepNumber = "s9";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 9 : verify whether 'PING_FAILED:2001::2002' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info(
+					"STEP 9 : EXPECTED - 'PING_FAILED:2001::2002' failure message  should  get logged in the next self heal window");
+			LOGGER.info("#####################################################################################");
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV6_FIRST_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG,
+								BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV6_FIRST_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error("error occured while checking the 'PING_FAILED:2001::2002 message in self heallog.txt.0  "
+						+ errorMessage);
+			}
+			errorMessage = "'PING_FAILED:2001::2002' failure message  is not logged in the next self heal window";
+
+			LOGGER.info("STEP 9 : ACTUAL: "
+					+ (status ? " 'PING_FAILED:2001:2002' failure message is logged in the next self heal window"
+							: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 10 :verify whether "PING_FAILED:2002::2003" message is present in self
+			 * heallog.txt.0 after the setting the InValid servers.
+			 */
+			testStepNumber = "s10";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 10 : verify whether 'PING_FAILED:2002::2003' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
+			LOGGER.info(
+					"STEP 10 : EXPECTED - 'PING_FAILED:2002::2003' failure message  should  get logged in the next self heal window");
+			LOGGER.info("#####################################################################################");
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_IPV6_SECOND_URI_FAIL,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG,
+								BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_IPV6_SECOND_URI_FAIL.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error(
+						"error occured while checking the '2002::2003 message in self heallog.txt.0  " + errorMessage);
+			}
+			errorMessage = "'PING_FAILED:2002:2003' failure message  is not logged in the next self heal window";
+			LOGGER.info("STEP 10 : ACTUAL: "
+					+ (status ? " 'PING_FAILED:2002:2003' failure message is logged in the next self heal window"
+							: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 11 :verify whether "ping to the other list is successfull" message is
+			 * present in rdklogs/logs/selfheallog.txt.0 after the setting the Invalid
+			 * servers.
+			 */
+			testStepNumber = "s11";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 11 : verify whether 'Connectivity successfull' message  is present in rdklogs/logs/selfheallog.txt.0 after the setting the Invalid  servers.");
+			LOGGER.info(
+					"STEP 11 : EXPECTED - Connectivity successfull Log  message  should  get logged in the next self heal window");
+			LOGGER.info("#####################################################################################");
+			try {
+				status = BroadBandCommonUtils
+						.searchLogFiles(tapEnv, device, BroadBandTraceConstants.PING_SERVER_SUCCESS_LOG_MESSAGE,
+								BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+						.contains(BroadBandTraceConstants.PING_SERVER_SUCCESS_LOG_MESSAGE.replace("\"", ""));
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error(
+						"error occured while checking the 'ping to the other list is successfull message in self heallog.txt.0  "
+								+ errorMessage);
+			}
+			errorMessage = "'Connectivity successfull' log message is not logged in the next self heal window";
+			LOGGER.info("STEP 11 : ACTUAL: "
+					+ (status ? "'Connectivity successfull' log message is successful in the next self heal window"
+							: errorMessage));
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		} catch (Exception testException) {
+			errorMessage = "Exception occured while checking the valid and invalid ping server connectivity test "
+					+ testException.getMessage();
+			LOGGER.error(errorMessage);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"POST-CONDITION 1: DESCRIPTION :delete the added ping servers in the Ping Server Table by using WEBPA DELETE command.");
+			LOGGER.info(
+					"POST-CONDITION : ACTION : Delete the added Ping Servers in the Ping Server Table by using WEBPA DELETE command");
+			LOGGER.info(
+					"POST-CONDITION :EXPECTED: Should be able to delete the added ping servers in the Ping Server Table using webpa Delete command");
+			LOGGER.info("#####################################################################################");
+
+			for (int i = 0; i < tableRow.size(); i++) {
+				webPaServerResponse = tapEnv.deleteTableRowUsingRestApi(device, tableRow.get(i));
+				status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+				if (status) {
+					LOGGER.info("Deleted ping servers table row" + tableRow.get(i));
+				}
+			}
+
+		}
+	}
+
 }

@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -300,7 +301,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	}
 
 	/**
-	 * Test case is created as part of NEW FEATURE AUTOMATION based on the RDKB-1968
+	 * Test case is created as part of NEW FEATURE AUTOMATION 
 	 * 
 	 * Test Case # 2: Verify default SSID using SNMP.
 	 *
@@ -629,5 +630,156 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 					true);
 		}
 	}
+	
+	  /**
+     * Cross-verify the Default Private Wi-Fi SSID and password retrieved from WebPA with the configurations from SNMP
+     * <ol>
+     * <li>Cross-verify the 2.4 GHz Default Private Wi-Fi SSID retrieved from WebPA with the value retrieved from SNMP
+     * </li>
+     * <li>Cross-verify the 5 GHz Default Private Wi-Fi SSID retrieved from WebPA with the value retrieved from SNMP
+     * </li>
+     * <li>Cross-verify the 2.4 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from
+     * SNMP</li>
+     * <li>Cross-verify the 5 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from SNMP
+     * </li>
+     * </ol>
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-DEF-SSID-5005", testDecription = "Cross-verify the Default Private Wi-Fi SSID and password retrieved from WebPA with the configurations from SNMP")
+    public void testToVerifyDefaultPrivateWiFiSsidAndPassword(Dut settop) {
 
+	// Variable Declaration begins
+	String testCaseId = "";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	BroadBandResultObject result = null;
+	// Variable Declaration Ends
+
+	testCaseId = "TC-RDKB-DEF-SSID-505";
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-DEF-SSID-5005");
+	LOGGER.info(
+		"TEST DESCRIPTION: Cross-verify the Default Private Wi-Fi SSID and password retrieved from WebPA with the configurations from SNMP");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info(
+		"1. Cross-verify the 2.4 GHz Default Private Wi-Fi SSID retrieved from WebPA with the value retrieved from SNMP");
+	LOGGER.info(
+		"2. Cross-verify the 5 GHz Default Private Wi-Fi SSID retrieved from WebPA with the value retrieved from SNMP");
+	LOGGER.info(
+		"3. Cross-verify the 2.4 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from SNMP");
+	LOGGER.info(
+		"4. Cross-verify the 5 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from SNMP");
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    stepNum = "S1";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Cross-verify the 2.4 GHz Default Private Wi-Fi SSID retrieved from WebPA with the value retrieved from SNMP");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute the webpa get command on the parameter \"Device.WiFi.SSID.10001.X_COMCAST-COM_DefaultSSID\" and execute the SNMP get command on OID \"1.3.6.1.4.1.17270.50.2.2.2.1.1.16.10001\" and compare these SSIDs retrieved from two different protocols.");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : Default Private Wi-Fi SSID of 2.4 GHz retrieved from WebPA should be same as the value obtained from SNMP");
+	    LOGGER.info("**********************************************************************************");
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+		    BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ,
+		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_SSID_2_4);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : Default Private Wi-Fi SSID of 2.4 GHz is successfully retrieved from webPA and cross-verified with the SSID obtained from SNMP , both values are same !");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S2";
+	    status = false;
+	    result = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION : Cross-verify the 5 GHz Default Private Wi-Fi SSID retrieved from WebPA with the value retrieved from SNMP");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute the webpa get command on the parameter \"Device.WiFi.SSID.10101.X_COMCAST-COM_DefaultSSID\" and execute the SNMP get command on OID \"1.3.6.1.4.1.17270.50.2.2.2.1.1.16.10101\" and compare these SSIDs retrieved from two different protocols.");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : Default Private Wi-Fi SSID of 5 GHz retrieved from WebPA should be same as the value obtained from SNMP");
+	    LOGGER.info("**********************************************************************************");
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+		    BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ,
+		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_SSID_5);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info(
+			"STEP 2: ACTUAL : Default Private Wi-Fi SSID of 5 GHz is successfully retrieved from webPA and cross-verified with the SSID obtained from SNMP , both values are same !");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S3";
+	    status = false;
+	    result = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Cross-verify the 2.4 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from SNMP");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute the webpa get command on the parameter \"Device.WiFi.AccessPoint.10001.Security.X_COMCAST-COM_DefaultKeyPassphrase\" and execute the SNMP get command on OID \"1.3.6.1.4.1.17270.50.2.2.3.1.1.4.10001\" and compare these passwords retrieved from two different protocols.");
+	    LOGGER.info(
+		    "STEP 3: EXPECTED : Default Private Wi-Fi password of 2.4 GHz retrieved from WebPA should be same as the value obtained from SNMP");
+	    LOGGER.info("**********************************************************************************");
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_2_4,
+		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_PASSWORD_2_4);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info(
+			"STEP 3: ACTUAL : Default Private Wi-Fi password of 2.4 GHz is successfully retrieved from webPA and cross-verified with the SSID obtained from SNMP , both values are same !");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S4";
+	    status = false;
+	    result = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Cross-verify the 5 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from SNMP");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute the webpa get command on the parameter \"Device.WiFi.AccessPoint.10101.Security.X_COMCAST-COM_DefaultKeyPassphrase\" and execute the SNMP get command on OID \"1.3.6.1.4.1.17270.50.2.2.3.1.1.4.10101\" and compare these passwords retrieved from two different protocols.");
+	    LOGGER.info(
+		    "STEP 4: EXPECTED : Default Private Wi-Fi password of 5 GHz retrieved from WebPA should be same as the value obtained from SNMP");
+	    LOGGER.info("**********************************************************************************");
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_5,
+		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_PASSWORD_5);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : Default Private Wi-Fi password of 5 GHz is successfully retrieved from webPA and cross-verified with the SSID obtained from SNMP , both values are same !");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, settop, testCaseId, stepNum, status, errorMessage,
+		    true);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-DEF-SSID-5005");
+    }
 }

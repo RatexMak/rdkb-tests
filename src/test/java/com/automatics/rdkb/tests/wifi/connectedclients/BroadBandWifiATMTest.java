@@ -72,7 +72,6 @@ public class BroadBandWifiATMTest extends AutomaticsTestBase {
 			LOGGER.info("STARTING TEST CASE: TC-RBKB-WIFI-ATM-1002");
 			LOGGER.info(
 					"TEST DESCRIPTION: Validate AirTimeManagement by Assigning Percentages to the Stations added via dmcli. (2.4Ghz)");
-			LOGGER.info("NOTES : This Test script written as a part of automation testing of RDKB-14796");
 			LOGGER.info("STEP 1: Do factory reset using webpa set operation");
 			LOGGER.info("STEP 2: Add 2 Stations  in APGroup1");
 			LOGGER.info("STEP 3: Assigning ATM percentage for the Stations (100% for Sta1 and 0% for Sta2)");
