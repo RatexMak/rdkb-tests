@@ -698,57 +698,6 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
-	 /*  *//**
-	     * STEP 14 : Verify whether the splunk query has the Partner ID
-	     *//*
-	    stepNumber++;
-	    stepNum = "S" + stepNumber;
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify whether the splunk query has the Partner ID");
-	    LOGGER.info("STEP " + stepNumber
-		    + ": ACTION : Retrieve the logs corresponding to MAC Address of gateway from Splunk");
-	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Splunk response should have Partner ID  parameter");
-	    LOGGER.info("**********************************************************************************");
-	    startTime = System.currentTimeMillis();
-	    do {
-		try {
-		    LOGGER.info(
-			    "***** RETRIEVING THE LOGS FROM SPLUNK CORRESPONDING TO THE GATEWAY MAC ADDRESS! *****");
-		    errorMessage = "Unable to retrieve logs correspoding to the gateway from Splunk";
-		    String splunkSearchString = "index=rdk-json(" + settop.getHostMacAddress() + ")";
-		    Collection<String> splunkResponse = SplunkUtils.searchInSplunk(tapEnv, splunkSearchString, null, -1,
-			    SPLUNK_START_INDEX);
-		    if (!splunkResponse.isEmpty() && splunkResponse.size() != BroadBandTestConstants.CONSTANT_0) {
-			LOGGER.info("***** VERIFYING THE PARTNER ID IN LOGS RETRIEVED FROM SPLUNK! *****");
-			errorMessage = "Splunk logs doesn't contain Partner ID";
-
-			expectedPartnerId = BroadBandCommonUtils.concatStringUsingStringBuffer(
-				BroadBandTestConstants.DOUBLE_QUOTE, "PartnerId", BroadBandTestConstants.DOUBLE_QUOTE,
-				BroadBandTestConstants.DELIMITER_COLON, BroadBandTestConstants.DOUBLE_QUOTE, partnerId,
-				BroadBandTestConstants.DOUBLE_QUOTE);
-			LOGGER.info("***** EXEPECTED PARTNER ID STRING : " + expectedPartnerId);
-			status = SplunkUtils.verifySplunkResults(splunkResponse, expectedPartnerId);
-
-			if (!status) {
-			    LOGGER.info("***** SPLUNK LOGS DOESN'T CONTAIN PARTNER ID, HENCE TRYING AGAIN! *****");
-			}
-		    } else {
-			LOGGER.info("***** UNABLE TO RETRIEVE LOGS FROM SPLUNK, HENCE TRYING AGAIN! *****");
-		    }
-		} catch (Exception e) {
-		    LOGGER.error("Exception at verifying splunk results : " + e.getMessage());
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWENTY_MINUTES_IN_MILLIS
-		    && !status
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TEN_SECOND_IN_MILLIS));
-	    if (status) {
-		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Splunk response is having the expected Partner ID");
-	    } else {
-		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);*/
 	} catch (Exception exception) {
 	    errorMessage = "Exception occurred during execution : " + exception.getMessage();
 	    LOGGER.error(errorMessage);
@@ -803,12 +752,7 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_START_TIME,
 			BroadBandTestConstants.CONSTANT_0, maintenanceWindowStartTime);
-	    } else {
-		/*status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
-			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_START_TIME,
-			BroadBandTestConstants.CONSTANT_0,
-			BroadBandTestConstants.DEFAULT_FIRMWARE_UPGRADE_MAINTENANCE_WINDOW_START_TIME);*/
-	    }
+	    } 
 	    if (status) {
 		LOGGER.info("POST-CONDITION " + postCondNumber + ": ACTUAL : "
 			+ BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_START_TIME
@@ -830,11 +774,6 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_END_TIME,
 			BroadBandTestConstants.CONSTANT_0, maintenanceWindowEndTime);
-	    } else {
-		/*status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
-			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_END_TIME,
-			BroadBandTestConstants.CONSTANT_0,
-			BroadBandTestConstants.DEFAULT_FIRMWARE_UPGRADE_MAINTENANCE_WINDOW_END_TIME);*/
 	    }
 	    if (status) {
 		LOGGER.info("POST-CONDITION " + postCondNumber + ": ACTUAL : "
