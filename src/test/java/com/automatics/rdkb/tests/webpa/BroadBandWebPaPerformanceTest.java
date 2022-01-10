@@ -8,6 +8,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -34,6 +35,11 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
 	private static final Integer WEBPA_PERFORMANCE_NUMBER_OF_ITERATION_10 = 10;
 
 	private static final Integer WEBPA_PERFORMANCE_NUMBER_OF_ITERATION_5 = 5;
+	
+    /**
+     * Integer to store Iterations of Performance test
+     */
+    private static final Integer WEBPA_PERFORMANCE_MAXIMUM_NUMBER_OF_ITERATION = 10;
 
 	/**
 	 * Calculating End to End WebPA request Processing Time and Box Processing Time
@@ -767,8 +773,6 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
 		long collectiveTime = 0;// Long to add averagetime on every iteration
 		long timeDifference = 0;// long to store time difference
 		long meanAverageTime = 0;// Long to store averagetime
-		// long expectedMeanAvgTime = SupportedModelHandler.isSkyHubDevice(device) ?
-		// 30000 : 6000;
 		long expectedMeanAvgTime = 6000;
 		Integer iteration = 0;// Map to store response
 		// Webpaparamter list store parameter objects
@@ -1160,4 +1164,378 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
 		}
 		LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-WEBPA-PERF-1005 ####################");
 	}
+	
+    /**
+     * 
+     * Calculate Average Response Time for two,three and four Get parameters*
+     * <ol>
+     * <li>PRE-CONDITION: Check whether Webpa is Up and Running.</li>*
+     * <li>STEP 1: a)Verify webpa get response from device with two parameters
+     *                 b)Repeat the "ITERATION STEP 1: a" for ten times totally 10 steps
+     *                 c)Calculate Success rate for WEBPA request with two Get parameters.</li>
+     * <li>STEP 2: Calculate Average Response Time for WEBPA request with two Get parameters.</li>
+     * <li>STEP 3: a)Verify webpa get response from device with three parameters
+     *                 b)Repeat the "ITERATION STEP 3: a" for ten times totally 10 steps
+     *                 c)Calculate Success rate for WEBPA request with three Get parameters.</li>
+     * <li>STEP 4: Calculate Average Response Time for WEBPA request with three Get parameters.</li>
+     * <li>STEP 5: a)Verify webpa get response from device with four parameters
+     *                 b)Repeat the "ITERATION STEP 5: a" for ten times totally 10 steps
+     *                 c)Calculate Success rate for WEBPA request with four Get parameters.</li>
+     * <li>STEP 6: Calculate Average Response Time for WEBPA request with four Get parameters.</li>
+     * </ol>
+     * @author Deepika
+     * @Refactor Sruthi Santhosh
+     */
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, groups = {
+           BroadBandTestGroup.WEBPA, BroadBandTestGroup.WIFI }, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-WEBPA-PERF-1006")
+    public void wepaPerformanceTestWithGetParamters(Dut device) {
+       boolean status = false;// boolean to store the test case status
+       String testId = "TC-RDKB-WEBPA-PERF-106";// Test case id
+       String testStep = null;// Test step number
+       String errorMessage = null;// String to store the error message
+       Integer successCount = 0;// Integer to successcount
+       long collectiveTime = 0;// Long to store addition of time difference
+       long averageTime = 0;// Long to Average response time
+       try {
+           LOGGER.info("#################### STARTING TEST CASE: TC-RDKB-WEBPA-PERF-1006 #####################");
+           LOGGER.info("TEST DESCRIPTION:Calculate Average Response Time for WEBPA request with five Get parameters ");
+           LOGGER.info("TEST STEPS : ");
+           LOGGER.info("PRE-CONDITION :Check whether Webpa is Up and Running");
+           LOGGER.info("STEP 1:a)Verify webpa get response from device with two parameters\r\n"
+                  + "             b)Repeat the \"ITERATION STEP 1: a\" for ten times totally 10 steps\r\n"
+                  + "             c)Calculate Success rate for WEBPA request with two Get parameters.");
+           LOGGER.info("STEP 2:Calculate Average Response Time for WEBPA request with two Get parameters ");
+           LOGGER.info("STEP 3:a)Verify webpa get response from device with three parameters\r\n"
+                  + "      b)Repeat the \"ITERATION STEP 3: a\" for ten times totally 10 steps\r\n"
+                  + "      c)Calculate Success rate for WEBPA request with three Get parameters.");
+           LOGGER.info("STEP 4:Calculate Average Response Time for WEBPA request with three Get parameters ");
+           LOGGER.info("STEP 5:a)Verify webpa get response from device with four parameters\r\n"
+                  + "      b)Repeat the \"ITERATION STEP 5: a\" for ten times totally 10 steps\r\n"
+                  + "      c)Calculate Success rate for WEBPA request with four Get parameters.");
+           LOGGER.info("STEP 6:Calculate Average Response Time for WEBPA request with four Get parameters ");
+           LOGGER.info("#####################################################################################");
+
+           LOGGER.info("####################################STARTING PRE-CONFIGURATIONS############################");
+           LOGGER.info("PRECONDITION:Verify whether Webpa is Up and Running");
+           LOGGER.info(
+                  "DESCRIPTION:Verifying Successful webpa Get response ,in case of failure rechecking for 8 minutes");
+           LOGGER.info("##########################################################################");
+           status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+           errorMessage = "Webpa is not Up and Running";
+           if (!status) {
+              throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+           }
+           LOGGER.info("PRE-CONDITION  : ACTUAL : WEBPA IS UP AND RUNNING");
+           LOGGER.info("###############################COMPLETED PRE-CONFIGURATIONS###############################");
+
+           /**
+            * STEP 1:a)Verify webpa get response from device with two parameters\r\n + b)Repeat the "ITERATION STEP 1:
+            * a" for ten times totally 10 steps\r\n + c)Calculate Success rate for WEBPA request with two Get
+            * parameters.
+            */
+           testStep = "s1";
+           status = false;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info("STEP 1:DESCRIPTION:Calculate Success rate for WEBPA request with two Get parameters");
+           LOGGER.info("STEP 1:ACTION:a)Verify webpa get response from device with two parameters\\r\\n\" + \r\n"
+                  + "                    b)Repeat it for ten times totally 10 steps\\r\\n\"");
+           LOGGER.info("STEP 1:EXPECTED: Success rate for WEBPA request with two Get parameters should be 10/10 rate");
+           LOGGER.info("**********************************************************************************");
+           errorMessage = "Success rate is Zero,reason might be webpa is not responding";
+           String[] webpaGetParameters = BroadBandWebPaUtils.webpaGetParameters(2);
+           successCount = wepaPerformanceIterationTest(webpaGetParameters, device, testStep);
+           status=(successCount != 0);
+           if(status) { 
+              LOGGER.info("STEP 1: ACTUAL:Success rate for WEBPA request with two Get parameters " + successCount
+                     + "/" + WEBPA_PERFORMANCE_MAXIMUM_NUMBER_OF_ITERATION);
+           } else {
+              LOGGER.error("STEP 1:ACTUAL:" + errorMessage);
+           }
+           LOGGER.info("**********************************************************************************");
+           tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+           /**
+            * STEP 2: Calculate Average Response Time for WEBPA request with two Get parameters
+            */
+           testStep = "s2";
+           status = false;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info("STEP 2:DESCRIPTION:Calculate Average Response Time for WEBPA request with two Get parameters");
+           LOGGER.info("STEP 2:ACTION:CollectiveTime/Successcount should be less than 1000msec");
+           LOGGER.info(
+                  "STEP 2:EXPECTED: Average Response Time for WEBPA request with two Get parameters should be less than 1000msec");
+           LOGGER.info("**********************************************************************************");
+           averageTime = collectiveTime / successCount;
+           errorMessage = "Average Response Time for WEBPA request with two Get parameters is greater than 1000msec. ACTUAL RESPONSE : "
+                  + averageTime + " msec";
+           status=(averageTime <= 1000);
+                  if(status) {
+              LOGGER.info("STEP 2:ACTUAL:Average Response Time for WEBPA request with two Get parameters for "
+                     + successCount + " Successful iterations is :" + averageTime + "msec");
+           } else {
+              LOGGER.error("STEP 2:ACTUAL: " + errorMessage);
+           }
+           LOGGER.info("**********************************************************************************");
+           tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+           /**
+            * STEP 3:a)Verify webpa get response from device with two parameters\r\n + b)Repeat the "ITERATION STEP 3:
+            * a" for ten times totally 10 steps\r\n + c)Calculate Success rate for WEBPA request with two Get
+            * parameters.
+            */
+           testStep = "s3";
+           status = false;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info("STEP 3:DESCRIPTION:Calculate Success rate for WEBPA request with three Get parameters");
+           LOGGER.info("STEP 3:ACTION:a)Verify webpa get response from device with three parameters\\r\\n\" + \r\n"
+                  + "                    b)Repeat it for ten times totally 10 steps\\r\\n\"");
+           LOGGER.info(
+                  "STEP 3:EXPECTED: Success rate for WEBPA request with three Get parameters should be 10/10 rate");
+           LOGGER.info("**********************************************************************************");
+           errorMessage = "Success rate is Zero,reason might be webpa is not responding";
+           webpaGetParameters = BroadBandWebPaUtils.webpaGetParameters(3);
+           successCount = wepaPerformanceIterationTest(webpaGetParameters, device, testStep);
+           status=(successCount != 0);
+           if(status) { 
+              LOGGER.info("STEP 3: ACTUAL:Success rate for WEBPA request with three Get parameters " + successCount
+                     + "/" + WEBPA_PERFORMANCE_MAXIMUM_NUMBER_OF_ITERATION);
+           } else {
+              LOGGER.error("STEP 3:ACTUAL:" + errorMessage);
+           }
+           LOGGER.info("**********************************************************************************");
+           tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+           /**
+            * STEP 4: Calculate Average Response Time for WEBPA request with three Get parameters
+            */
+           testStep = "s4";
+           status = false;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info(
+                  "STEP 4:DESCRIPTION:Calculate Average Response Time for WEBPA request with three Get parameters");
+           LOGGER.info("STEP 4:ACTION:CollectiveTime/Successcount should be less than 1000msec");
+           LOGGER.info(
+                  "STEP 4:EXPECTED: Average Response Time for WEBPA request with three Get parameters should be less than 1000msec");
+           LOGGER.info("**********************************************************************************");
+           averageTime = collectiveTime / successCount;
+           errorMessage = "Average Response Time for WEBPA request with three Get parameters is greater than 1000msec. ACTUAL RESPONSE : "
+                  + averageTime + " msec";
+           status=(averageTime <= 1000);
+           if(status) {
+              LOGGER.info("STEP 4:ACTUAL:Average Response Time for WEBPA request with three Get parameters for "
+                     + successCount + " Successful iterations is :" + averageTime + "msec");
+           } else {
+              LOGGER.error("STEP 4:ACTUAL: " + errorMessage);
+           }
+           LOGGER.info("**********************************************************************************");
+           tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+           /**
+            * STEP 5:a)Verify webpa get response from device with four parameters\r\n + b)Repeat the "ITERATION STEP 5:
+            * a" for ten times totally 10 steps\r\n + c)Calculate Success rate for WEBPA request with four Get
+            * parameters.
+            */
+           testStep = "s5";
+           status = false;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info("STEP 5:DESCRIPTION:Calculate Success rate for WEBPA request with four Get parameters");
+           LOGGER.info("STEP 5:ACTION:a)Verify webpa get response from device with four parameters\\r\\n\" + \r\n"
+                  + "                    b)Repeat it for ten times totally 10 steps\\r\\n\"");
+           LOGGER.info(
+                  "STEP 5:EXPECTED: Success rate for WEBPA request with four Get parameters should be 10/10 rate");
+           LOGGER.info("**********************************************************************************");
+           errorMessage = "Success rate is Zero,reason might be webpa is not responding";
+           webpaGetParameters = BroadBandWebPaUtils.webpaGetParameters(4);
+           successCount = wepaPerformanceIterationTest(webpaGetParameters, device, testStep);
+           status=(successCount != 0);
+           if(status) {  
+              LOGGER.info("STEP 5: ACTUAL:Success rate for WEBPA request with four Get parameters " + successCount
+                     + "/" + WEBPA_PERFORMANCE_MAXIMUM_NUMBER_OF_ITERATION);
+           } else {
+              LOGGER.error("STEP 5:ACTUAL:" + errorMessage);
+           }
+           LOGGER.info("**********************************************************************************");
+           tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+           /**
+            * STEP 6: Calculate Average Response Time for WEBPA request with four Get parameters
+            */
+           testStep = "s6";
+           status = false;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info(
+                  "STEP 6:DESCRIPTION:Calculate Average Response Time for WEBPA request with four Get parameters");
+           LOGGER.info("STEP 6:ACTION:CollectiveTime/Successcount should be less than 1000msec");
+           LOGGER.info(
+                  "STEP 6:EXPECTED: Average Response Time for WEBPA request with four Get parameters should be less than 1000msec");
+           LOGGER.info("**********************************************************************************");
+           averageTime = collectiveTime / successCount;
+           errorMessage = "Average Response Time for WEBPA request with three Get parameters is greater than 1000msec. ACTUAL RESPONSE : "
+                  + averageTime + " msec";
+           status=(averageTime <= 1000);
+           if(status) {
+              LOGGER.info("STEP 6:ACTUAL:Average Response Time for WEBPA request with four Get parameters for "
+                     + successCount + " Successful iterations is :" + averageTime + "msec");
+           } else {
+              LOGGER.error("STEP 6:ACTUAL: " + errorMessage);
+           }
+           LOGGER.info("**********************************************************************************");
+           tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+       } catch (Exception exception) {
+           errorMessage = exception.getMessage();
+           LOGGER.info("Failure in executing Webpa get command with two/three/four parameters \n" + errorMessage);
+           CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, testStep, status, errorMessage, true);
+       }
+
+    }
+
+    /**
+     * wepaPerformanceIterationTest method to perform webpa command to be iterated for 10 times
+     * 
+     * @param webpaGetParameters 
+     *              Contains the webpa commands to be executed
+     * @param device Dut
+     * @param testStep 
+     *              Contains the value of the test step being executed
+     * @Refactor Sruthi Santhosh             
+     */
+    public Integer wepaPerformanceIterationTest(String[] webpaGetParameters, Dut device, String testStep) {
+       Integer successCount = 0;// Integer to successcount
+       long collectiveTime = 0;// Long to store addition of time difference
+       Integer iteration = 0;// Integer to store iteration value
+       long timeDifference = 0;// long to store time difference
+       try {
+       for (int count = 0; count < WEBPA_PERFORMANCE_MAXIMUM_NUMBER_OF_ITERATION; count++) {
+           iteration = count + 1;
+           LOGGER.info("**********************************************************************************");
+           LOGGER.info("ITERATION :" + iteration + " of " + testStep
+                  + ": Verify webpa get response from device with two parameters");
+           timeDifference = BroadBandWebPaUtils.executeAndVerifyGetWebpaResponseReturnTimeDifference(webpaGetParameters, device);
+           if (timeDifference != 0) {
+              successCount++;
+              collectiveTime += timeDifference;
+           } else {
+              LOGGER.error("Failure in capturing time difference of webpa execution");
+           }
+       }
+       }catch (Exception exception) {
+           LOGGER.info("Failure in executing Webpa get command iteration with two/three/four parameters \n" + exception.getMessage());
+       }
+       return successCount;
+    }
+
+    /**
+     * Verify multiple webpa requests in parallel
+     * <ol>
+     * <li>PRE-CONDITION 1:Verify WebPa process is running in device</li>
+     * <li>PRE-CONDITION 2:Verify parodus process is running</li>
+     * <li>Step 1 :Verify parallel Webpa requests for multiple component webpa parameters</li>
+     * </ol>
+     * 
+     * @author Ashwin sankara
+     * @Refactor Alan_Bivera
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-WEBPA-PARALLEL-1006")
+    public void testVerifyParallelWebPaRequests(Dut device) {
+
+	// Variable Declaration begins
+	// String to store test case id
+	String testCaseId = "TC-RDKB-WEBPA-PARALLEL-006";
+	// String to store step number
+	String stepNum = "s1";
+	// String to store error message
+	String errorMessage = "";
+	// boolean to store step result
+	boolean status = false;
+	// Variable Declation Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBPA-PARALLEL-1006");
+	LOGGER.info("TEST DESCRIPTION: Verify multiple webpa requests in parallel");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION 1:Verify WebPa process is running in device");
+	LOGGER.info("PRE-CONDITION 2:Verify parodus process is running");
+	LOGGER.info("1. Verify parallel webpa requests for multiple component webpa parameters");
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : Verify WebPa process is running in device");
+	    LOGGER.info("PRE-CONDITION 1: ACTION : Execute command:pid of webpa");
+	    LOGGER.info("PRE-CONDITION 1: EXPECTED : Response should contain the process id of webpa");
+	    LOGGER.info("#####################################################################");
+	    long startTime = System.currentTimeMillis();
+	    errorMessage = BroadBandTestConstants.PRE_CONDITION_ERROR + "Unable to verify pid of webpa process";
+	    do {
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.getPidOfProcessResolvingArch(device, tapEnv,
+			BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS && !status
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1: ACTUAL : Pid for Webpa process is obtained.");
+	    } else {
+		errorMessage = BroadBandTestConstants.PRE_CONDITION_ERROR + "Unable to verify pid of webpa process";
+		LOGGER.error("PRE-CONDITION 1: ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("#####################################################################");
+	    LOGGER.info("PRE-CONDITION 2 : DESCRIPTION : Verify parodus process is running");
+	    LOGGER.info("PRE-CONDITION 2: ACTION : Execute command:pidof parodus");
+	    LOGGER.info("PRE-CONDITION 2: EXPECTED : Pid for parodus process is obtained.");
+	    LOGGER.info("#####################################################################");
+	    errorMessage = BroadBandTestConstants.PRE_CONDITION_ERROR + "Unable to verify pid of parodus process";
+	    status = CommonMethods.isNotNull(
+		    CommonMethods.getPidOfProcess(device, tapEnv, BroadBandTestConstants.PROCESS_NAME_PARODUS));
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 2: ACTUAL : Pid for parodus process is obtained.");
+	    } else {
+		errorMessage = BroadBandTestConstants.PRE_CONDITION_ERROR + "Unable to verify pid of parodus process";
+		LOGGER.error("PRE-CONDITION 2: ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Unable to verify multiple webpa requests in parallel";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify parallel webpa requests for multiple component webpa parameters");
+	    LOGGER.info("STEP 1: ACTION : Execute webpa requests at same time for multiple component webpa parameters");
+	    LOGGER.info("STEP 1: EXPECTED : WebPA requests executed successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    List<String> paramList = new ArrayList<String>();
+	    paramList.add(BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_10001_SSID);
+	    paramList.add(BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_FIRMWARE_NAME);
+	    paramList.add(BroadBandWebPaConstants.WEBPA_COMMAND_LAST_REBOOT_REASON);
+	    paramList.add(BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_MANUFACTURER_INFO);
+
+	    List<String> response = new ArrayList<String>();
+	    response = BroadBandWebPaUtils.executeParallelWebPaRequests(device, tapEnv, paramList);
+	    LOGGER.info("STEP 1: Response for parallel requests: " + response);
+	    status = true;
+	    for (String output : response) {
+		status = status && CommonMethods.isNotNull(output);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : WebPA requests executed successfully");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WEBPA-PARALLEL-1006");
+	LOGGER.info("#######################################################################################");
+    }
+  
+   
 }

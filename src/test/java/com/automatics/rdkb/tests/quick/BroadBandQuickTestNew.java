@@ -195,7 +195,7 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 
 	    if (!buildImageWithoutExtension.equalsIgnoreCase(currentFirmwareVersion)) {
 
-		LOGGER.info("Going to verify the build availability in CDL SERVER");
+		LOGGER.info("Going to verify the build availability in DAC 15 and PROD CDL SERVER");
 		LOGGER.info(
 			"********************************************************************************************************");
 		/**

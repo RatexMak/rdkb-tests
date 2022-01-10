@@ -20,6 +20,7 @@ package com.automatics.rdkb.tests.cdl;
 
 import java.util.Map;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -29,18 +30,24 @@ import com.automatics.device.Dut;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.constants.BroadBandCdlConstants;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
+import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.cdl.BroadBandXconfCdlUtils;
 import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
+import com.automatics.rdkb.utils.dmcli.DmcliUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
+import com.automatics.utils.xconf.XConfUtils;
 
 /**
  * Class for XCONF CDL tests 
@@ -698,6 +705,57 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
+	 /*  *//**
+	     * STEP 14 : Verify whether the splunk query has the Partner ID
+	     *//*
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify whether the splunk query has the Partner ID");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Retrieve the logs corresponding to MAC Address of gateway from Splunk");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Splunk response should have Partner ID  parameter");
+	    LOGGER.info("**********************************************************************************");
+	    startTime = System.currentTimeMillis();
+	    do {
+		try {
+		    LOGGER.info(
+			    "***** RETRIEVING THE LOGS FROM SPLUNK CORRESPONDING TO THE GATEWAY MAC ADDRESS! *****");
+		    errorMessage = "Unable to retrieve logs correspoding to the gateway from Splunk";
+		    String splunkSearchString = "index=rdk-json(" + settop.getHostMacAddress() + ")";
+		    Collection<String> splunkResponse = SplunkUtils.searchInSplunk(tapEnv, splunkSearchString, null, -1,
+			    SPLUNK_START_INDEX);
+		    if (!splunkResponse.isEmpty() && splunkResponse.size() != BroadBandTestConstants.CONSTANT_0) {
+			LOGGER.info("***** VERIFYING THE PARTNER ID IN LOGS RETRIEVED FROM SPLUNK! *****");
+			errorMessage = "Splunk logs doesn't contain Partner ID";
+
+			expectedPartnerId = BroadBandCommonUtils.concatStringUsingStringBuffer(
+				BroadBandTestConstants.DOUBLE_QUOTE, "PartnerId", BroadBandTestConstants.DOUBLE_QUOTE,
+				BroadBandTestConstants.DELIMITER_COLON, BroadBandTestConstants.DOUBLE_QUOTE, partnerId,
+				BroadBandTestConstants.DOUBLE_QUOTE);
+			LOGGER.info("***** EXEPECTED PARTNER ID STRING : " + expectedPartnerId);
+			status = SplunkUtils.verifySplunkResults(splunkResponse, expectedPartnerId);
+
+			if (!status) {
+			    LOGGER.info("***** SPLUNK LOGS DOESN'T CONTAIN PARTNER ID, HENCE TRYING AGAIN! *****");
+			}
+		    } else {
+			LOGGER.info("***** UNABLE TO RETRIEVE LOGS FROM SPLUNK, HENCE TRYING AGAIN! *****");
+		    }
+		} catch (Exception e) {
+		    LOGGER.error("Exception at verifying splunk results : " + e.getMessage());
+		}
+	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWENTY_MINUTES_IN_MILLIS
+		    && !status
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TEN_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Splunk response is having the expected Partner ID");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);*/
 	} catch (Exception exception) {
 	    errorMessage = "Exception occurred during execution : " + exception.getMessage();
 	    LOGGER.error(errorMessage);
@@ -752,7 +810,12 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_START_TIME,
 			BroadBandTestConstants.CONSTANT_0, maintenanceWindowStartTime);
-	    } 
+	    } else {
+		/*status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_START_TIME,
+			BroadBandTestConstants.CONSTANT_0,
+			BroadBandTestConstants.DEFAULT_FIRMWARE_UPGRADE_MAINTENANCE_WINDOW_START_TIME);*/
+	    }
 	    if (status) {
 		LOGGER.info("POST-CONDITION " + postCondNumber + ": ACTUAL : "
 			+ BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_START_TIME
@@ -774,6 +837,11 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_END_TIME,
 			BroadBandTestConstants.CONSTANT_0, maintenanceWindowEndTime);
+	    } else {
+		/*status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_COMMAND_MAINTENANCE_WINDOW_END_TIME,
+			BroadBandTestConstants.CONSTANT_0,
+			BroadBandTestConstants.DEFAULT_FIRMWARE_UPGRADE_MAINTENANCE_WINDOW_END_TIME);*/
 	    }
 	    if (status) {
 		LOGGER.info("POST-CONDITION " + postCondNumber + ": ACTUAL : "
@@ -787,6 +855,1168 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-XCONF-1001");
 	LOGGER.info("#######################################################################################");
+    }
+    /**
+     * <li>1. Update auto exclude enable as false using webpa<\li>
+     * <li>2. Update Xconf url as empty using dmcli & delete swupdate.conf file<\li>
+     * <li>3. Verify prod xconf url used as default for cdl in xconf log file<\li>
+     * <li>4. Verify http 404 response from the xconf log file<\li>
+     * 
+     * @author ArunKumar Jayachandran
+     * @refactor anandam
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1001")
+    public void verifyAutoExcludeFromFWUpgrade1(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1001");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is false url is empty & swupdate.conf is empty");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as false using webpa");
+	LOGGER.info("2. Update Xconf url as empty using dmcli & delete swupdate.conf file");
+	LOGGER.info("3. Verify prod xconf url used as default for cdl in xconf log file");
+	LOGGER.info("4. Verify http 404 response from the xconf log file");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-101";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	// String to store response
+	String response = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	long startTime = BroadBandTestConstants.CONSTANT_0;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    /* Step 1: configure auto exclude enable as false */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.FALSE);
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount,
+		    BroadBandTestConstants.EMPTY_STRING, true);
+
+	    // step 3:
+	    stepCount++;
+	    stepNumber = "s" + stepCount;
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION: Verify prod xconf url used as default for cdl in xconf log file");
+	    LOGGER.info("STEP " + stepCount
+		    + ": ACTION: Execute command: grep -i \"Device retrieves firmware update from url=\" /rdklogs/logs/xconf.txt.0");
+	    LOGGER.info("STEP " + stepCount
+		    + ": EXPECTED: Should get the log message for xconf url as " + BroadbandPropertyFileHandler.getProdCDLServerURL());
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the log message firmware update url as " + BroadbandPropertyFileHandler.getProdCDLServerURL() +"  in xconf log file";
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.FILE_FIRMWARE_SCHED_SH);
+	    startTime = System.currentTimeMillis();
+	    do {
+		tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		response = BroadBandCommonUtils.searchLogsInArmConsoleOrConsole(device, tapEnv,
+			BroadbandPropertyFileHandler.getProdCDLServerURL());
+		response = CommonMethods.isNotNull(response) ? response.trim() : null;
+	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS
+		    && CommonMethods.isNull(response));
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTraceConstants.LOG_MESSAGE_FW_UPDATE_FROM_URL);
+	    if (status) {
+		LOGGER.info("STEP " + stepCount
+			+ ": ACTUAL: Successfully verified prod xconf url used for CDL in xconf log file");
+	    } else {
+		LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepCount++;
+	    stepNumber = "s" + stepCount;
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepCount + ": DESCRIPTION: Verify http 404 response from the xconf log file");
+	    LOGGER.info("STEP " + stepCount
+		    + ": ACTION: Execute command: grep -i \"HTTP RESPONSE CODE is 404\" /rdklogs/logs/xconf.txt.0");
+	    LOGGER.info("STEP " + stepCount
+		    + ": EXPECTED: Should get the HTTP code as 404 and CDL should skip for prod xconf url");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the log message http 404 in xconf log file";
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_HTTP_RESPONSE_CODE_404,
+		    BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	    if (status) {
+		LOGGER.info("STEP " + stepCount
+			+ ": ACTUAL: Successfully verified the log message http 404 response in xconf log file");
+	    } else {
+		LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1001");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as false using webpa<\li>
+     * <li>2. Update Xconf url as empty using dmcli & delete swupdate.conf file<\li>
+     * <li>3. Update swupdate.conf file with MOCK xcocnf url and verify triggered cdl successfull with latest firmware
+     * version through xconf<\li>
+     * 
+     * @author ArunKumar Jayachandran
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1002")
+    public void verifyAutoExcludeFromFWUpgrade2(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1002");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is false url is empty & swupdate.conf is MOCK XCONF URL");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as false using webpa");
+	LOGGER.info("2. Update Xconf url as empty using dmcli & delete swupdate.conf file");
+	LOGGER.info(
+		"3. Update swupdate.conf file with MOCK xcocnf url and verify triggered cdl successfull with latest firmware version through xconf");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-102";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	String initialFirmwareVersion = null;
+	String cdlLogsForValidation = null;
+	String latestFirmwareVersion = null;
+	boolean hasLatestBuildChanged = false;
+	String buildExtension = null;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    /* Step 1: configure auto exclude enable as false */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.FALSE);
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount,
+		    BroadBandTestConstants.EMPTY_STRING, true);
+
+	    // Step 3:
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Update swupdate.conf file with MOCK xcocnf url and verify triggered cdl successfull with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": ACTION : Trigger the cdl with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Cdl must successful with latest firmware version");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    initialFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT FIRMWARE VERSION: " + initialFirmwareVersion);
+	    // add signed extension to the current image
+	    buildExtension = BroadBandTestConstants.SIGNED_BUILD_IMAGE_EXTENSION;
+	    try {
+		buildExtension = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PROP_KEY_SIGNED_EXTENSION);
+	    } catch (Exception e) {
+		buildExtension = BroadBandTestConstants.SIGNED_BUILD_IMAGE_EXTENSION;
+		LOGGER.info("No platform dpeendent extensions are mentioned in  automatics properties");
+
+	    }
+	    latestFirmwareVersion = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    if (CommonMethods.isNull(latestFirmwareVersion)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestFirmwareVersion = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestFirmwareVersion);
+	    }
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    cdlLogsForValidation = BroadBandXconfCdlUtils.triggerXconfCodeDownloadWithSwupdateOption(device, tapEnv,
+		    latestFirmwareVersion, true);
+	    errorMessage = "Failed to get cdl logs from /rdklogs/logs/xconf.txt.0";
+	    status = CommonMethods.isNotNull(cdlLogsForValidation) && BroadBandXconfCdlUtils.verifyCdlandReboot(device,
+		    tapEnv, latestFirmwareVersion, cdlLogsForValidation);
+	    LOGGER.info("FLASHED THE LATEST BUILD ON THE DEVICE: " + status);
+	    if (status) {
+		hasLatestBuildChanged = status;
+		LOGGER.info(
+			"STEP " + stepCount + " : ACTUAL : Cdl successful with latest firmware version through xconf");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    if (hasLatestBuildChanged) {
+		/**
+		 * POST CONDITION : VERIFY THAT DEVICE IS UPGRADED WITH THE PREVIOUS FIRMWARE VERSION.
+		 */
+		BroadBandPostConditionUtils.executePostConditionToTriggerCdl(device, tapEnv, true, false,
+			BroadBandTestConstants.CONSTANT_1, initialFirmwareVersion);
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1002");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as false using webpa<\li>
+     * <li>2. Update Xconf url as CI XCONF URL using webpa & delete swupdate.conf file<\li>
+     * <li>3. Update swupdate.conf file with MOCK xcocnf url and verify triggered cdl successfull with latest firmware
+     * version through xconf<\li>
+     * 
+     * @author ArunKumar Jayachandran
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1003")
+    public void verifyAutoExcludeFromFWUpgrade3(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1003");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is false url is CI XCONF URL & swupdate.conf is MOCK XCONF URL");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as false using webpa");
+	LOGGER.info("2. Update Xconf url as CI XCONF URL using webpa & delete swupdate.conf file");
+	LOGGER.info(
+		"3. Update swupdate.conf file with MOCK xcocnf url and verify triggered cdl successfull with latest firmware version through xconf");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-103";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	String initialFirmwareVersion = null;
+	String cdlLogsForValidation = null;
+	String latestFirmwareVersion = null;
+	boolean hasLatestBuildChanged = false;
+	String ciXconfUrl = BroadbandPropertyFileHandler.getCIServerSwupdateURL();
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+
+	    /* Step 1: configure auto exclude enable as false */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.FALSE);
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount, ciXconfUrl, true);
+
+	    // Step 3:
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Update swupdate.conf file with MOCK xcocnf url and verify triggered cdl successfull with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": ACTION : Trigger the cdl with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Cdl must successful with latest firmware version");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    initialFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT FIRMWARE VERSION: " + initialFirmwareVersion);
+	    latestFirmwareVersion = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    if (CommonMethods.isNull(latestFirmwareVersion)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestFirmwareVersion = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestFirmwareVersion);
+	    }
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    cdlLogsForValidation = BroadBandXconfCdlUtils.triggerXconfCodeDownloadWithSwupdateOption(device, tapEnv,
+		    latestFirmwareVersion, true);
+	    errorMessage = "Failed to get cdl logs from /rdklogs/logs/xconf.txt.0";
+	    status = CommonMethods.isNotNull(cdlLogsForValidation) && BroadBandXconfCdlUtils.verifyCdlandReboot(device,
+		    tapEnv, latestFirmwareVersion, cdlLogsForValidation);
+	    LOGGER.info("FLASHED THE LATEST BUILD ON THE DEVICE: " + status);
+	    if (status) {
+		hasLatestBuildChanged = status;
+		LOGGER.info(
+			"STEP " + stepCount + " : ACTUAL : Cdl successful with latest firmware version through xconf");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    if (hasLatestBuildChanged) {
+		/**
+		 * POST CONDITION : VERIFY THAT DEVICE IS UPGRADED WITH THE PREVIOUS FIRMWARE VERSION.
+		 */
+		BroadBandPostConditionUtils.executePostConditionToTriggerCdl(device, tapEnv, true, false,
+			BroadBandTestConstants.CONSTANT_1, initialFirmwareVersion);
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1003");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as false using webpa<\li>
+     * <li>2. Update Xconf url as MOCK XCONF URL using webpa & delete swupdate.conf file<\li>
+     * <li>3. Verify triggered cdl successfull with latest firmware version through xconf without swupdate.conf
+     * file<\li>
+     * 
+     * @author ArunKumar Jayachandran
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1004")
+    public void verifyAutoExcludeFromFWUpgrade4(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1004");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is false url is MOCK XCONF URL & swupdate.conf is empty");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as false using webpa");
+	LOGGER.info("2. Update Xconf url as MOCK XCONF URL using webpa & delete swupdate.conf file");
+	LOGGER.info(
+		"3. Verify triggered cdl successfull with latest firmware version through xconf without swupdate.conf file");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-104";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	// variable declaration ends
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	String mockXconfUrl = XConfUtils.getXconfServerUrl(device);
+	String initialFirmwareVersion = null;
+	String cdlLogsForValidation = null;
+	String latestFirmwareVersion = null;
+	boolean hasLatestBuildChanged = false;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    /* Step 1: configure auto exclude enable as false */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.FALSE);
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount, mockXconfUrl, true);
+
+	    // Step 3:
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Verify triggered cdl successfull with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": ACTION : Trigger the cdl with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Cdl must successful with latest firmware version");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    initialFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT FIRMWARE VERSION: " + initialFirmwareVersion);
+	    latestFirmwareVersion = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    if (CommonMethods.isNull(latestFirmwareVersion)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestFirmwareVersion = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestFirmwareVersion);
+	    }
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    cdlLogsForValidation = BroadBandXconfCdlUtils.triggerXconfCodeDownloadWithSwupdateOption(device, tapEnv,
+		    latestFirmwareVersion, false);
+	    errorMessage = "Failed to get cdl logs from /rdklogs/logs/xconf.txt.0";
+	    status = CommonMethods.isNotNull(cdlLogsForValidation) && BroadBandXconfCdlUtils.verifyCdlandReboot(device,
+		    tapEnv, latestFirmwareVersion, cdlLogsForValidation);
+	    LOGGER.info("FLASHED THE LATEST BUILD ON THE DEVICE: " + status);
+	    if (status) {
+		hasLatestBuildChanged = status;
+		LOGGER.info(
+			"STEP " + stepCount + " : ACTUAL : Cdl successful with latest firmware version through xconf");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    if (hasLatestBuildChanged) {
+		/**
+		 * POST CONDITION : VERIFY THAT DEVICE IS UPGRADED WITH THE PREVIOUS FIRMWARE VERSION.
+		 */
+		BroadBandPostConditionUtils.executePostConditionToTriggerCdl(device, tapEnv, true, false,
+			BroadBandTestConstants.CONSTANT_1, initialFirmwareVersion);
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1004");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as true using RFC<\li>
+     * <li>2. Update Xconf url as empty using dmcli & delete swupdate.conf file<\li>
+     * <li>3. Verify device is excluded from FW upgrade for triggered CDL<\li>
+     * <li>4. verify xconf file is empty<\li>
+     * 
+     * @author ajayac200
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1005")
+    public void verifyAutoExcludeFromFWUpgrade5(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1005");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is true url is empty & swupdate.conf is empty");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as true using RFC");
+	LOGGER.info("2. Update Xconf url as empty using dmcli & delete swupdate.conf file");
+	LOGGER.info("3. Verify device is excluded from FW upgrade for triggered CDL");
+	LOGGER.info("4. verify xconf file is empty");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-105";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	// String to store response
+	String response = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    /* Step 1: configure auto exclude enable as true */
+	    stepNumber = "s" + stepCount;
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepCount + ": DESCRIPTION: Update auto exclude enable as true using RFC");
+	    LOGGER.info("STEP " + stepCount
+		    + ": ACTION: Execute command: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.FWUpdate.AutoExcluded.Enable as true");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED: Should update the AutoExclude.Enable parameter as true");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the AutoExclude.Enable parameter as true using RFC";
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTestConstants.FEATURE_NAME_AUTO_EXCLUDE, true);
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepCount + ": ACTUAL: Successfully updated AutoExclude.Enable as true using RFC");
+	    } else {
+		LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount,
+		    BroadBandTestConstants.EMPTY_STRING, true);
+
+	    // step 3:
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Verify device is excluded from FW upgrade for triggered CDL");
+	    LOGGER.info("STEP " + stepCount
+		    + ": ACTION : Trigger the cdl and verify the excluded log message in Console log");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Device should log excluded from FW upgrade message");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.FILE_FIRMWARE_SCHED_SH);
+	    long startTime = System.currentTimeMillis();
+	    do {
+		tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		response = BroadBandCommonUtils.searchLogsInArmConsoleOrConsole(device, tapEnv,
+			BroadBandTraceConstants.LOG_MESSAGE_EXCLUDED_FROM_FW_UPGRADE);
+		response = CommonMethods.isNotNull(response) ? response.trim() : null;
+	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+		    && CommonMethods.isNull(response));
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		LOGGER.info("STEP " + stepCount + " : ACTUAL : Cdl not initiated as auto xconf enable is false");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	    // step 4:
+	    stepCount++;
+	    stepNumber = "s" + stepCount;
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepCount + ": DESCRIPTION: verify xconf file is empty");
+	    LOGGER.info("STEP " + stepCount + ": ACTION: Execute command: cat /rdklogs/logs/xconf.txt.0");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED: xconf log file should be empty");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Firmware download started";
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandTestConstants.CAT_COMMAND + BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    status = CommonMethods.isNull(response)
+		    || !CommonMethods.isFileExists(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    if (status) {
+		LOGGER.info("STEP " + stepCount + ": ACTUAL: Successfully verified xconf log file is empty");
+	    } else {
+		LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("POST-CONDITION: DESCRIPTION: Update auto exclude enable as false using webpa");
+	    LOGGER.info(
+		    "POST-CONDITION: ACTION: Execute webpa command: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.FWUpdate.AutoExcluded.Enable as true");
+	    LOGGER.info(
+		    "POST-CONDITION: EXPECTED: Webpa set operation should success and auto excluded should be enabled");
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLUDED_ENABLE,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = (HttpStatus.SC_OK == CommonMethods.clearParamsInServer(device, tapEnv, false,
+		    BroadBandTestConstants.FEATURE_NAME_AUTO_EXCLUDE));
+	    LOGGER.info("POST-CONDITION: ACTUAL: Disabled firmware exclusion status as false");
+	    LOGGER.info("POST-CONFIGURATIONS: FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1005");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as true using webpa<\li>
+     * <li>2. Update Xconf url as empty using dmcli & delete swupdate.conf file<\li>
+     * <li>3. Update swupdate.conf file with MOCK url & Verify triggered cdl successfull with latest firmware version
+     * through xconf<\li>
+     * 
+     * @author ajayac200
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1006")
+    public void verifyAutoExcludeFromFWUpgrade6(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1006");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is true url is empty & swupdate.conf is MOCK XCONF URL");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as true using webpa");
+	LOGGER.info("2. Update Xconf url as empty using dmcli & delete swupdate.conf file");
+	LOGGER.info(
+		"3. Update swupdate.conf file with MOCK url & Verify triggered cdl successfull with latest firmware version through xconf");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-106";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	String cdlLogsForValidation = null;
+	String initialFirmwareVersion = null;
+	String latestFirmwareVersion = null;
+	boolean hasLatestBuildChanged = false;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    LOGGER.info("#######################################################################################");
+
+	    /* Step 1: configure auto exclude enable as true */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.TRUE);
+
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount,
+		    BroadBandTestConstants.EMPTY_STRING, true);
+
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Update swupdate.conf file with MOCK url & Verify triggered cdl successfull with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": ACTION : Trigger the cdl with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Cdl must successful with latest firmware version");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    initialFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT FIRMWARE VERSION: " + initialFirmwareVersion);
+	    latestFirmwareVersion = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    if (CommonMethods.isNull(latestFirmwareVersion)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestFirmwareVersion = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestFirmwareVersion);
+	    }
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    cdlLogsForValidation = BroadBandXconfCdlUtils.triggerXconfCodeDownloadWithSwupdateOption(device, tapEnv,
+		    latestFirmwareVersion, true);
+	    errorMessage = "Failed to get cdl logs from /rdklogs/logs/xconf.txt.0";
+	    status = CommonMethods.isNotNull(cdlLogsForValidation) && BroadBandXconfCdlUtils.verifyCdlandReboot(device,
+		    tapEnv, latestFirmwareVersion, cdlLogsForValidation);
+	    LOGGER.info("FLASHED THE LATEST BUILD ON THE DEVICE: " + status);
+	    if (status) {
+		hasLatestBuildChanged = status;
+		LOGGER.info(
+			"STEP " + stepCount + " : ACTUAL : Cdl successful with latest firmware version through xconf");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    if (hasLatestBuildChanged) {
+		/**
+		 * POST CONDITION : VERIFY THAT DEVICE IS UPGRADED WITH THE PREVIOUS FIRMWARE VERSION.
+		 */
+		BroadBandPostConditionUtils.executePostConditionToTriggerCdl(device, tapEnv, true, false,
+			BroadBandTestConstants.CONSTANT_1, initialFirmwareVersion);
+	    }
+	    BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLUDED_ENABLE,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1006");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as true using webpa<\li>
+     * <li>2. Update Xconf url as CI XCONF URL using webpa & delete swupdate.conf file<\li>
+     * <li>3. Update swupdate.conf file with MOCK url & Verify triggered cdl successfull with latest firmware version
+     * through xconf<\li>
+     * 
+     * @author ajayac200
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1007")
+    public void verifyAutoExcludeFromFWUpgrade7(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1007");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is true url is CI XCONF URL & swupdate.conf is MOCK XCONF URL");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as true using webpa");
+	LOGGER.info("2. Update Xconf url as CI XCONF URL using webpa & delete swupdate.conf file");
+	LOGGER.info(
+		"3. Update swupdate.conf file with MOCK url & Verify triggered cdl successfull with latest firmware version through xconf");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-107";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	String cdlLogsForValidation = null;
+	String initialFirmwareVersion = null;
+	String latestFirmwareVersion = null;
+	boolean hasLatestBuildChanged = false;
+	String ciXconfUrl = BroadbandPropertyFileHandler.getCIServerSwupdateURL();
+	String buildExtension = null;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    /* Step 1: configure auto exclude enable as false */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.TRUE);
+
+	    /* Step 2: configure auto exclude url as empty */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount, ciXconfUrl, true);
+
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Update swupdate.conf file with MOCK url & Verify triggered cdl successfull with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": ACTION : Trigger the cdl with latest firmware version through xconf");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Cdl must successful with latest firmware version");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    initialFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT FIRMWARE VERSION: " + initialFirmwareVersion);
+	    // add signed extension to the current image
+	    buildExtension = BroadBandTestConstants.SIGNED_BUILD_IMAGE_EXTENSION;
+	    try {
+		buildExtension = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PROP_KEY_SIGNED_EXTENSION);
+	    } catch (Exception e) {
+		buildExtension = BroadBandTestConstants.SIGNED_BUILD_IMAGE_EXTENSION;
+		LOGGER.info("No platform dpeendent extensions are mentioned in  automatics properties");
+
+	    }
+	    latestFirmwareVersion = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    if (CommonMethods.isNull(latestFirmwareVersion)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestFirmwareVersion = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestFirmwareVersion);
+	    }
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestFirmwareVersion);
+	    cdlLogsForValidation = BroadBandXconfCdlUtils.triggerXconfCodeDownloadWithSwupdateOption(device, tapEnv,
+		    latestFirmwareVersion, true);
+	    errorMessage = "Failed to get cdl logs from /rdklogs/logs/xconf.txt.0";
+	    status = CommonMethods.isNotNull(cdlLogsForValidation) && BroadBandXconfCdlUtils.verifyCdlandReboot(device,
+		    tapEnv, latestFirmwareVersion, cdlLogsForValidation);
+	    LOGGER.info("FLASHED THE LATEST BUILD ON THE DEVICE: " + status);
+	    if (status) {
+		hasLatestBuildChanged = status;
+		LOGGER.info(
+			"STEP " + stepCount + " : ACTUAL : Cdl successful with latest firmware version through xconf");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    if (hasLatestBuildChanged) {
+		/**
+		 * POST CONDITION : VERIFY THAT DEVICE IS UPGRADED WITH THE PREVIOUS FIRMWARE VERSION.
+		 */
+		BroadBandPostConditionUtils.executePostConditionToTriggerCdl(device, tapEnv, true, false,
+			BroadBandTestConstants.CONSTANT_1, initialFirmwareVersion);
+	    }
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	    CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLUDED_ENABLE,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1007");
+	// ###############################################################//
+    }
+
+    /**
+     * <li>1. Update auto exclude enable as true using webpa<\li>
+     * <li>2. Update Xconf url as MOCK XCONF URL using webpa & delete swupdate.conf file<\li>
+     * <li>3. Verify device is excluded from FW upgrade for triggered CDL<\li>
+     * <li>4. verify xconf file is empty<\li>
+     * 
+     * @author ajayac200
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-CDL-EXCLUDE-1008")
+    public void verifyAutoExcludeFromFWUpgrade8(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-EXCLUDE-1008");
+	LOGGER.info(
+		"TEST DESCRIPTION: Test to verify fw update exclusion & url selection as exclusion is true url is MOCK XCONF URL & swupdate.conf is empty");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update auto exclude enable as true using webpa");
+	LOGGER.info("2. Update Xconf url as MOCK XCONF URL using webpa & delete swupdate.conf file");
+	LOGGER.info("3. Verify device is excluded from FW upgrade for triggered CDL");
+	LOGGER.info("4. verify xconf file is empty");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-CDL-EXCLUDE-108";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	String response = null;
+	int stepCount = BroadBandTestConstants.CONSTANT_1;
+	String mockXconfUrl = XConfUtils.getXconfServerUrl(device);
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("#######################################################################################");
+
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_ECHO,
+				BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
+				BroadBandTestConstants.STRING_GREATER_SYMBOL,
+				BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    } catch (Exception e) {
+		LOGGER.info("Failed to clear xconf log file " + e.getMessage());
+	    }
+	    /* Step 1: configure auto exclude enable as true */
+	    stepCount = configureAutoExcludeEnableParameter(device, tapEnv, testCaseId, stepCount,
+		    BroadBandTestConstants.TRUE);
+
+	    /* Step 2: configure auto exclude url as mockXconfUrl */
+	    stepCount = configureAutoExcludeUrlParameter(device, tapEnv, testCaseId, ++stepCount, mockXconfUrl, true);
+
+	    // step 3:
+	    stepNumber = "s" + ++stepCount;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepCount
+		    + ": DESCRIPTION : Verify device is excluded from FW upgrade for triggered CDL");
+	    LOGGER.info("STEP " + stepCount
+		    + ": ACTION : Trigger the cdl and verify the excluded log message in Console log");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED : Device should log excluded from FW upgrade message");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to trigger the image upgrade on the device with latest firmware version.";
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.FILE_FIRMWARE_SCHED_SH);
+	    long startTime = System.currentTimeMillis();
+	    do {
+		tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		response = BroadBandCommonUtils.searchLogsInArmConsoleOrConsole(device, tapEnv,
+			BroadBandTraceConstants.LOG_MESSAGE_EXCLUDED_FROM_FW_UPGRADE);
+		response = CommonMethods.isNotNull(response) ? response.trim() : null;
+	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+		    && CommonMethods.isNull(response));
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		LOGGER.info("STEP " + stepCount + " : ACTUAL : Cdl not initiated as auto xconf enable is false");
+	    } else {
+		LOGGER.error("STEP " + stepCount + " : ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	    // step 4:
+	    stepCount++;
+	    stepNumber = "s" + stepCount;
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepCount + ": DESCRIPTION: verify xconf file is empty");
+	    LOGGER.info("STEP " + stepCount + ": ACTION: Execute command: cat /rdklogs/logs/xconf.txt.0");
+	    LOGGER.info("STEP " + stepCount + ": EXPECTED: xconf log file should be empty");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Firmware download started";
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandTestConstants.CAT_COMMAND + BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    status = CommonMethods.isNull(response)
+		    || !CommonMethods.isFileExists(device, tapEnv, BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0);
+	    if (status) {
+		LOGGER.info("STEP " + stepCount + ": ACTUAL: Successfully verified xconf log file is empty");
+	    } else {
+		LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying auto exclude from firmware upgrade" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLUDED_ENABLE,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CDL-EXCLUDE-1008");
+	// ###############################################################//
+    }
+
+    public static int configureAutoExcludeEnableParameter(Dut device, AutomaticsTapApi tapEnv, String testCaseId,
+	    int stepCount, String flag) {
+	String stepNumber = null;
+	boolean status = false;
+	String errorMessage = null;
+
+	stepNumber = "s" + stepCount;
+	status = false;
+	LOGGER.info("******************************************************************************");
+	LOGGER.info("STEP " + stepCount + ": DESCRIPTION: Update auto exclude enable as " + flag + " using webpa");
+	LOGGER.info("STEP " + stepCount
+		+ ": ACTION: Execute webpa command:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.FWUpdate.AutoExcluded.Enable as "
+		+ flag);
+	LOGGER.info("STEP " + stepCount + ": EXPECTED: Webpa set operation should success and auto excluded should be "
+		+ flag);
+	LOGGER.info("******************************************************************************");
+	errorMessage = "Failed to update the parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.FWUpdate.AutoExcluded.Enable as "
+		+ flag + " using webpa";
+	status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLUDED_ENABLE, BroadBandTestConstants.CONSTANT_3,
+		flag, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	if (status) {
+	    LOGGER.info("STEP " + stepCount + ": ACTUAL: Successfully verified auto excluded enable as " + flag);
+	} else {
+	    LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	}
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	// ##################################################################################################//
+	return stepCount;
+    }
+
+    public static int configureAutoExcludeUrlParameter(Dut device, AutomaticsTapApi tapEnv, String testCaseId,
+	    int stepCount, String xconfUrl, boolean isFileRemovalRequired) {
+	String stepNumber = null;
+	boolean status = false;
+	String errorMessage = null;
+
+	stepNumber = "s" + stepCount;
+	status = false;
+	LOGGER.info("******************************************************************************");
+	LOGGER.info("STEP " + stepCount + ": DESCRIPTION: Update Xconf url as " + xconfUrl
+		+ " using webpa or dmcli & delete swupdate.conf file");
+	LOGGER.info("STEP " + stepCount
+		+ ": ACTION: Execute webpa or dmcli command: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.FWUpdate.AutoExcluded.XconfUrl string "
+		+ xconfUrl + " & rm -rf /nvram/swupdate.conf");
+	LOGGER.info("STEP " + stepCount + ": EXPECTED: Xconf url should be " + xconfUrl
+		+ " and swupdate.conf file should be removed successfully");
+	LOGGER.info("******************************************************************************");
+	errorMessage = "Failed to update the parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.FWUpdate.AutoExcluded.XconfUrl as "
+		+ xconfUrl + " or failed to delete the swupdate.conf file";
+	if (xconfUrl.equalsIgnoreCase(BroadBandTestConstants.EMPTY_STRING)) {
+	    status = DmcliUtils.verifyElseSetParameterUsingDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLCUDED_XCONF_URL,
+		    BroadBandTestConstants.DMCLI_SUFFIX_TO_SET_STRING_PARAMETER, xconfUrl);
+	} else {
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FWUPDATE_AUTO_EXCLCUDED_XCONF_URL,
+		    BroadBandTestConstants.CONSTANT_0, xconfUrl, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	}
+
+	if (isFileRemovalRequired && status) {
+	    status = false;
+	    status = CommonUtils.deleteFile(device, tapEnv, BroadBandTestConstants.SOFTWARE_UPDATE_CONF_FILE);
+	}
+	if (status) {
+	    LOGGER.info("STEP " + stepCount + ": ACTUAL: Successfully updated the auto exclude xconf url as " + xconfUrl
+		    + " and removed swupdate.conf file");
+	} else {
+	    LOGGER.error("STEP " + stepCount + ": ACTUAL: " + errorMessage);
+	}
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	// ##################################################################################################//
+	return stepCount;
     }
 
 }

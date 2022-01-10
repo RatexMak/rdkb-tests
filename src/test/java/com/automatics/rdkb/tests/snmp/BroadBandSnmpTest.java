@@ -17,27 +17,49 @@
  */
 package com.automatics.rdkb.tests.snmp;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
+import com.automatics.constants.SnmpConstants;
 import com.automatics.device.Device;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.error.ErrorType;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
+import com.automatics.rdkb.constants.BroadBandCdlConstants;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
+import com.automatics.rdkb.constants.BroadBandSnmpConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
+import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
+import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.cdl.BroadBandCodeDownloadUtils;
+import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.snmp.SnmpDataType;
+import com.automatics.snmp.SnmpProtocol;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -882,8 +904,6 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	    LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-SIGTONOISE-1021");
 	    LOGGER.info(
 		    "TEST DESCRIPTION:Verify the values of DOCS-IF-MIB::docsIfSigQSignalNoise in the given MIB range");
-	    LOGGER.info(
-		    "NOTES :Test case is created as part of NEW FEATURE AUTOMATION based on RDKB-14936 - [New Feature Automation]");
 	    LOGGER.info("TEST STEPS : ");
 
 	    LOGGER.info("1: Execute SNMPWALK command on OID docsIfSigQSignalNoise (1.3.6.1.2.1.10.127.1.1.4.1.5)");
@@ -1400,7 +1420,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			    BroadBandSnmpMib.ECM_DEV_MAX_CPE.getOid(),
 			    BroadBandSnmpMib.ECM_DEV_MAX_CPE.getTableIndex());
 		    if (CommonMethods.isNotNull(response)) {
-			// initially response is compared between static values 1 and 5,now it is modified as
+			// initially response is compared between static values 1 and 5,now it is
+			// modified as
 			// comparison between snmp and webpa response.
 			errorMessage = "Expected Device's maximum CEP value using snmp and webpa are not same";
 			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
@@ -1703,6 +1724,2877 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	    LOGGER.error(errorMessage);
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-SNMP-1025");
+    }
+
+    /**
+     * Verify the cable modem SNMPv3 parameters from RDK using RFC/XConf (Broadcom RDKB platforms)
+     * <ol>
+     * <li>Verify default value for SNMPV2 support using TR-181 parameters</li>
+     * <li>Verify default value for SNMPV3 support using TR-181 parameters</li>
+     * <li>Verify default value of Snmpv3DHKickstart enabled status</li>
+     * <li>Verify default value of TableNumberOfEntries for Snmpv3DHKickstart</li>
+     * <li>Enable SNMPv3 using TR-181 parameters through WebPA/Dmcli</li>
+     * <li>Configure SNMPv3 related security parameters and security numbers in RFC</li>
+     * <li>Verify SNMPV3 support using TR-181 parameters</li>
+     * <li>Verify Snmpv3DHKickstart enabled status</li>
+     * <li>Verify TableNumberOfEntries for Snmpv3DHKickstart</li>
+     * <li>Verify SNMPv3 security name values using TR-181 parameters</li>
+     * <li>Verify SNMPv3 security number values using TR-181 parameters</li>
+     * <li>Verify snmpv3 security parameters enabled via rfc logs from dcmrfc.log file</li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Gnanaprakasham S
+     * @refactor Govardhan
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-SNMP-1027")
+    public void verifyCableModelSnmpv3ParameterConfigurationViaRfc(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SNMP-127";
+	String stepNum = null;
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1027");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify the cable modem SNMPv3 parameters from RDK using RFC/XConf (Broadcom RDKB platforms)");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify default value for SNMPV2 support using TR-181 parameters");
+	LOGGER.info("2. Verify default value for SNMPV3 support using TR-181 parameters");
+	LOGGER.info("3. Verify default value of Snmpv3DHKickstart enabled status");
+	LOGGER.info("4. Verify default value of TableNumberOfEntries for Snmpv3DHKickstart");
+	LOGGER.info("5. Enable SNMPv3 using TR-181 parameters through WebPA/Dmcli");
+	LOGGER.info("6. Configure SNMPv3 related security parameters and security numbers in RFC");
+	LOGGER.info("7. Verify SNMPV3 support using TR-181 parameters");
+	LOGGER.info("8. Verify Snmpv3DHKickstart enabled status");
+	LOGGER.info("9. Verify TableNumberOfEntries for Snmpv3DHKickstart");
+	LOGGER.info("10. Verify SNMPv3 security name values using TR-181 parameters");
+	LOGGER.info("11. Verify SNMPv3 security number values using TR-181 parameters");
+	LOGGER.info("12. Verify snmpv3 security parameters enabled via rfc logs from dcmrfc.log file");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    List<String> parameters = new ArrayList<String>();
+
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_2_SUPPORT);
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_SUPPORT);
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART);
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_TABLE_NUMBER);
+
+	    String[] parametersArray = new String[parameters.size()];
+	    parametersArray = parameters.toArray(parametersArray);
+
+	    Map<String, String> deviceStatusResponse = BroadBandWebPaUtils
+		    .getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv, parametersArray);
+
+	    // In some case SNMPv3 may be configured via RFC rule. So in this scenario we
+	    // can skip the step for checking
+	    // default value for snmpv3
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_RFC_VALUE_CONFIG_FILE);
+	    boolean isSnmpv3EnabledByRfc = false;
+
+	    if (CommonMethods.isNotNull(response)) {
+		response = CommonMethods.patternFinder(response,
+			"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support\\W+(\\w+)");
+		if (CommonMethods.isNotNull(response)) {
+		    isSnmpv3EnabledByRfc = Boolean.parseBoolean(response.trim());
+		    LOGGER.info("SNMPv3 is enabled by RFC configuration : " + isSnmpv3EnabledByRfc);
+		}
+	    }
+
+	    stepNum = "s1";
+	    errorMessage = "SNMPv2 support is not available/enabled by default";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify default value for SNMPV2 support using TR-181 parameters");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V2Support\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V2Support");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : Default value of SNMPv2 support must be enabled and the value of TR-181 parameter should be true");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = deviceStatusResponse.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_2_SUPPORT);
+	    status = CommonMethods.isNotNull(response) && Boolean.parseBoolean(response);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : SUCCESSFULLY VERIFIED SNMPV2 IS ENABLED BY DEFAULT USING Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V2Support PARAMETER");
+	    } else {
+		LOGGER.error(
+			"STEP 1: ACTUAL : snmpv2 is not enabled by default. current enabled status is : " + status);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Failed to verify SNMPv3 supported status using TR-181 parameter";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify default value for SNMPV3 support using TR-181 parameters");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : Default value of SNMPv3 support must be disabled and the value of TR-181 parameter should be false (if snmpv3 enabled In RFC rule, value can be true)");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (!isSnmpv3EnabledByRfc) {
+		response = deviceStatusResponse.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_SUPPORT);
+		status = CommonMethods.isNotNull(response) && !Boolean.parseBoolean(response);
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 2: ACTUAL : SUCCESSFULLY VERIFIED SNMPV3 IS DISABLED BY DEFAULT USING Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support PARAMETER");
+		} else {
+		    errorMessage = "snmpv3 is not disabled by default. current enabled status is : " + status;
+		    LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			"Snmpv3 is enabled via RFC. So step 2 is not applicable", false);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "Snmpv3DHKickstart is not disabled by default";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Verify default value of Snmpv3DHKickstart enabled status");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled");
+	    LOGGER.info(
+		    "STEP 3: EXPECTED : Snmpv3DHKickstart must be disabled by default and the value of TR-181 parameter should be false");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = deviceStatusResponse.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART);
+	    status = CommonMethods.isNotNull(response) && Boolean.parseBoolean(response);
+
+	    if (!status) {
+		LOGGER.info(
+			"STEP 3: ACTUAL : SUCCESSFULLY VERIFIED Snmpv3DHKickstart IS DISABLED BY DEFAULT USING Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled PARAMETER");
+	    } else {
+		errorMessage = "Snmpv3DHKickstart is not disabled by default. current enabled status is : " + status;
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, !status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Failed to verify TableNumberOfEntries as 5 for Snmpv3DHKickstart";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify default value of TableNumberOfEntries for Snmpv3DHKickstart");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.TableNumberOfEntries\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.TableNumberOfEntries");
+	    LOGGER.info("STEP 4: EXPECTED : TableNumberOfEntries value must be 5 by default");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = deviceStatusResponse
+		    .get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_TABLE_NUMBER);
+	    status = CommonMethods.isNotNull(response) && response.equals(BroadBandTestConstants.STRING_VALUE_5);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : SUCCESSFULLY VERIFIED TABLE NUMBER OF ENTRIES FOR Snmpv3DHKickstart IS 5");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage + " obtained value is : " + response);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "Failed to enabled SNMPv3 support";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Enable SNMPv3 using TR-181 parameters through WebPA/Dmcli");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Set \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support\" parameter value as true for eg : dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support bool true");
+	    LOGGER.info("STEP 5: EXPECTED : Snmpv3 must be enabled");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (!isSnmpv3EnabledByRfc) {
+
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_SUPPORT, WebPaDataTypes.BOOLEAN.getValue(),
+			BroadBandTestConstants.TRUE);
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 5: ACTUAL : SUCCESSFULLY CONFIGURED Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support PARAMETER VALUE AS TRUE ");
+		} else {
+		    errorMessage = "Failed to configure Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support parameter value as true";
+		    LOGGER.error("STEP 5: ACTUAL :  " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			"Snmpv3 is enabled via RFC. So step 5 is not applicable", false);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Failed to configure SNMPv3 related security parameters in RFC";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 6: DESCRIPTION : Configure SNMPv3 related security parameters and security numbers in RFC");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Configure the below paramaters with corresponding values in RFCDevice.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.EnabledDevice.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table.{i}.SecurityName  Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table.{1}.SecurityNumber");
+	    LOGGER.info("STEP 6: EXPECTED : Snmpv3 related security parameters must be configured in RFC");
+	    LOGGER.info("**********************************************************************************");
+
+	    try {
+		status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+			BroadBandTestConstants.SNMPV3_DH_KICKSTART_TABLE_RFC_FEATURE, true);
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred while enabling rfc feature : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : SUCCESSFULLY CONFIGURED CABLE MODEM SNMPV3 PARAMETERS IN XCONF VIA RFC");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : Failed to configure cable modem snmpv3 parameters in xconf via rfc ");
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    errorMessage = "Failed to enabled SNMPv3 support using Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify SNMPV3 support using TR-181 parameters");
+	    LOGGER.info(
+		    "STEP 7: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support");
+	    LOGGER.info(
+		    "STEP 7: EXPECTED : SNMPv3 support must be enabled and the value of TR-181 parameter should be true");
+	    LOGGER.info("**********************************************************************************");
+
+	    deviceStatusResponse = BroadBandWebPaUtils.getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    parametersArray);
+
+	    response = deviceStatusResponse.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_SUPPORT);
+	    status = CommonMethods.isNotNull(response) && Boolean.parseBoolean(response);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 7: ACTUAL : SUCCESSFULLY VERIFIED SNMPV3 IS ENABLED AFTER REBOOT USING Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support PARAMETER");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : SNMPV3 is not enabled after reboot");
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    errorMessage = "Failed to enable Snmpv3DHKickstart using Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Verify Snmpv3DHKickstart enabled status");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled");
+	    LOGGER.info(
+		    "STEP 8: EXPECTED : Snmpv3DHKickstart must be enabled and the value of TR-181 parameter should be true");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = deviceStatusResponse.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART);
+	    status = CommonMethods.isNotNull(response) && Boolean.parseBoolean(response);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 8: ACTUAL : SUCCESSFULLY VERIFIED Snmpv3DHKickstart IS ENABLED AFTER REBOOT USING Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Enabled PARAMETER");
+	    } else {
+		LOGGER.error(
+			"STEP 8: ACTUAL : Snmpv3DHKickstart is not enabled after reboot current enabled status is : "
+				+ status);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "Failed to verify TableNumberOfEntries for Snmpv3DHKickstart";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify TableNumberOfEntries for Snmpv3DHKickstart");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.TableNumberOfEntries\" parameter through WebPA/Dmcli for eg : dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.TableNumberOfEntries");
+	    LOGGER.info("STEP 9: EXPECTED : TableNumberOfEntries value must be 5 by default");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = deviceStatusResponse
+		    .get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_TABLE_NUMBER);
+	    status = CommonMethods.isNotNull(response) && response.equals(BroadBandTestConstants.STRING_VALUE_5);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 9: ACTUAL : SUCCESSFULLY VERIFIED TABLE NUMBER OF ENTRIES FOR Snmpv3DHKickstart IS 5");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage + " obtained response is : " + response);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s10";
+	    errorMessage = "Failed to configure the snmpv3 security name through RFC settings";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Verify Snmpv3DHKickstart security name values using TR-181 parameters");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table.{i}.SecurityName\" parameters via webpa/dmcli and verify values");
+	    LOGGER.info(
+		    "STEP 10: EXPECTED : Snmpv3DHKickstart security name values must be same as value configured in RFC settings");
+	    LOGGER.info("**********************************************************************************");
+
+	    parameters.clear();
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NAME
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_ONE));
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NAME
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_TWO));
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NAME
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_THREE));
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NAME
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_FOUR));
+	    parametersArray = new String[parameters.size()];
+	    parametersArray = parameters.toArray(parametersArray);
+
+	    deviceStatusResponse = BroadBandWebPaUtils.getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    parametersArray);
+	    List<String> list = Collections
+		    .unmodifiableList(Arrays.asList(BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NAME_1,
+			    BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NAME_2,
+			    BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NAME_3,
+			    BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NAME_4));
+	    boolean validation = true;
+
+	    for (int iteration = 0; iteration < parameters.size(); iteration++) {
+
+		response = deviceStatusResponse
+			.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NAME
+				.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(iteration + 1)));
+		LOGGER.info("Obtained security name is : " + response);
+
+		if (CommonMethods.isNotNull(response)) {
+		    status = response.equals(list.get(iteration));
+
+		    if (status) {
+			LOGGER.info(
+				"Successfully verified \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table."
+					+ iteration + 1 + ".SecurityName values is " + list.get(iteration));
+		    } else {
+			validation = false;
+			LOGGER.error(
+				"Snmpv3DHKickstart security name is not configurable by RFC configuration. Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table."
+					+ iteration + 1 + ".SecurityName configured as " + list.get(iteration)
+					+ " rfc. but after obtained value frm device is " + response);
+		    }
+		}
+	    }
+
+	    if (!validation) {
+		status = validation;
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 10: ACTUAL : SUCCESSFULLY VERIFIED Snmpv3DHKickstart SECURITY NAME IS CONFIGURABLE VIA RFC");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s11";
+	    errorMessage = "Failed to configure the snmpv3 security number through RFC settings";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 11: DESCRIPTION : Verify Snmpv3DHKickstart security number values using TR-181 parameters");
+	    LOGGER.info(
+		    "STEP 11: ACTION : Execute \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table.{i}.SecurityNumber\" parameters via webpa/dmcli and verify values");
+	    LOGGER.info(
+		    "STEP 11: EXPECTED : Snmpv3DHKickstart security number values must be same as value configured in RFC settings");
+	    LOGGER.info("**********************************************************************************");
+
+	    parameters.clear();
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NUMBER
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_ONE));
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NUMBER
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_TWO));
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NUMBER
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_THREE));
+	    parameters.add(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NUMBER
+		    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_FOUR));
+	    parametersArray = new String[parameters.size()];
+	    parametersArray = parameters.toArray(parametersArray);
+
+	    deviceStatusResponse = BroadBandWebPaUtils.getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    parametersArray);
+
+	    List<String> securityNumberlist = Collections
+		    .unmodifiableList(Arrays.asList(BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_1,
+			    BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_2,
+			    BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_3,
+			    BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_4));
+
+	    validation = true;
+
+	    for (int iteration = 0; iteration < parameters.size(); iteration++) {
+
+		response = deviceStatusResponse
+			.get(BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NUMBER
+				.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(iteration + 1)));
+		LOGGER.info("Obtained security number is : " + response);
+
+		if (CommonMethods.isNotNull(response)) {
+		    status = response.equals(securityNumberlist.get(iteration));
+
+		    if (status) {
+			LOGGER.info(
+				"Successfully verified \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table."
+					+ iteration + 1 + ".SecurityName values is "
+					+ securityNumberlist.get(iteration));
+		    } else {
+			validation = false;
+			LOGGER.error(
+				"Snmpv3DHKickstart security number is not configurable by RFC configuration. Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.Snmpv3DHKickstart.Table."
+					+ iteration + 1 + ".SecurityNumber configured as "
+					+ securityNumberlist.get(iteration)
+					+ " rfc. but after obtained value from device is " + response);
+		    }
+		}
+	    }
+
+	    if (!validation) {
+		status = validation;
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 11: ACTUAL : SUCCESSFULLY VERIFIED Snmpv3DHKickstart SECURITY NUMBER IS CONFIGURABLE VIA RFC");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s12";
+	    errorMessage = "Failed to verify snmpv3 security parameters enabled via rfc logs from dcmrfc.log file.";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 12: DESCRIPTION : Verify snmpv3 security parameters enabled via rfc logs from dcmrfc.log file");
+	    LOGGER.info(
+		    "STEP 12: ACTION : Execute \"cat dcmrfc.log | grep -inr \"snmp\"\" command and verify rfc logs");
+	    LOGGER.info(
+		    "STEP 12: EXPECTED : snmpv3 security parameters enabled via rfc logs logs must be present in dcmrfc.log file");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_GET_SNMPV3_DH_KICKSTART_LOGS);
+
+	    if (CommonMethods.isNotNull(response)) {
+
+		status = response
+			.contains(BroadBandTestConstants.TR181_DOT
+				+ BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART)
+			&& response.contains(BroadBandTestConstants.TR181_DOT
+				+ (BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NAME
+					.replace(BroadBandTestConstants.TR181_NODE_REF,
+						BroadBandTestConstants.STRING_VALUE_ONE)))
+			&& response.contains(BroadBandTestConstants.TR181_DOT
+				+ (BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_DH_KICKSTART_SECURITY_NUMBER
+					.replace(BroadBandTestConstants.TR181_NODE_REF,
+						BroadBandTestConstants.STRING_VALUE_ONE)));
+
+	    } else {
+		errorMessage = "Obtained null response. Failed to get the logs related to snmpv3 security parameters configurable via rfc logs from dcmrfc.log file. ";
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 12: ACTUAL : SUCCESSFULLY VERIFIED SNMPV3 SECURITY PARAMETERS ENABLED VIA RFC LOGS FROM dcmrfc.log FILE");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    status = false;
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("POST-CONDITION : DESCRIPTION : Disabled SNMPV3 and removed rfc override from device");
+	    LOGGER.info(
+		    "POST-CONDITION : ACTION : 1)set snmp as v2 2) Disable snmpv3 using TR-181 parameter 3) remove rfc override 4) reboot");
+	    LOGGER.info("POST-CONDITION : EXPECTED : Disabled SNMPv3 successfully");
+
+	    try {
+		System.setProperty(BroadBandTestConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V2.toString());
+		BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_SUPPORT, WebPaDataTypes.BOOLEAN.getValue(),
+			BroadBandTestConstants.FALSE);
+		tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_REMOVE_RFC_OVERRIDE);
+		tapEnv.executeCommandUsingSsh(device, "cp /etc/rfc.properties /nvram/");
+		status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+
+		if (!status) {
+		    LOGGER.error("Device is not accessible after reboot");
+		} else {
+
+		    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_SNMP_VERSION_3_SUPPORT);
+		    status = CommonMethods.isNotNull(response) && !Boolean.parseBoolean(response);
+
+		    if (status) {
+			LOGGER.info("Successfully verified deivce is disbled with snmpv3 after test case execution");
+		    }
+		}
+
+		tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_REMOVE_RFC_OVERRIDE);
+
+	    } catch (Exception exception) {
+		LOGGER.info("Exception occurred in post condition :" + exception.getMessage());
+	    }
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SNMP-1027");
+    }
+
+    /**
+     * Test to verify ITG DOCS MIB OID
+     * 
+     * Test verifies DocsisEventCount,DocsisEventText,DocsDevServerBootState,
+     * DocsIfCmStatusTxPower,DocsIfDownChannelPower,DocsIfSigQSignalNoise
+     * 
+     * @author Karthick Pandiyan
+     * @refactor anandam
+     * 
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.SNMP_OPERATIONS })
+    @TestDetails(testUID = "TC-RDKB-SNMP-1007", testDecription = "Verify the Current software version using DOCS-CABLE-DEVICE-MIB::docsDevSwCurrentVers( 1.3.6.1.2.1.69.1.3.5.0)")
+    public void testToVerifyITGDocsMIB(Dut device) {
+
+	String testCaseId = "TC-RDKB-SNMP-007";
+	List<String> match = new ArrayList<String>();
+	String errorMessage = null;
+	String stepNumber = "s1";
+	boolean status = false;
+	try {
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1007");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Verify the Current software version using DOCS-CABLE-DEVICE-MIB::docsDevSwCurrentVers( 1.3.6.1.2.1.69.1.3.5.0)");
+	    LOGGER.info("1. Verify DocsisEventCount (1.3.6.1.2.1.69.1.5.8.1.4) SNMP OID");
+	    LOGGER.info("2. Verify DocsisEventText (1.3.6.1.2.1.69.1.5.8.1.7) SNMP OID");
+	    LOGGER.info("3. Verify DocsDevServerBootState (1.3.6.1.2.1.69.1.4.1) SNMP OID");
+	    LOGGER.info("4. Verify DocsIfCmStatusTxPower (1.3.6.1.2.1.10.127.1.2.2.1.3) SNMP OID");
+	    LOGGER.info("5. Verify DocsIfDownChannelPower (1.3.6.1.2.1.10.127.1.1.1.1.6) SNMP OID");
+	    LOGGER.info("6. Verify DocsIfSigQSignalNoise (1.3.6.1.2.1.10.127.1.1.4.1.5) SNMP OID");
+	    LOGGER.info("#######################################################################################");
+
+	    errorMessage = "Failed to verify DOCSIS Event Count";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: Verify DocsisEventCount (1.3.6.1.2.1.69.1.5.8.1.4) SNMP OID ");
+	    LOGGER.info(
+		    "EXPECTED: Should check all the returned value mibs, all values should be integer and more than 0");
+	    LOGGER.info("**********************************************************************************");
+	    // Do snmpwalk on docsis event count
+	    String snmpCommandOutput = BroadBandSnmpUtils.snmpWalkOnEcm(tapEnv, device,
+		    BroadBandSnmpMib.ESTB_DOCS_IS_EVENT_COUNT.getOid());
+	    match = BroadBandCommonUtils.patternFinderForMultipleMatches(snmpCommandOutput,
+		    BroadBandTestConstants.DOCSIS_EVENT_COUNT_PATTERN);
+	    LOGGER.info("Matched string " + match);
+	    int eventCount = match.size();
+	    status = BroadBandCommonUtils.compareListWithLimitValue(match, 1);
+	    if (!status) {
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("ACTUAL: Verification of DOCSIS Event Count " + status);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	    stepNumber = "s2";
+	    status = false;
+	    errorMessage = "Failed to verify DOCSIS Event text";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: Verify DocsisEventText (1.3.6.1.2.1.69.1.5.8.1.7) SNMP OID ");
+	    LOGGER.info("EXPECTED: Corresponding text should be available for each event in event count");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.verifyDocsisEventText(tapEnv, device, eventCount);
+	    if (!status) {
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("ACTUAL: Verification of DOCSIS Event text : " + status);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	    stepNumber = "s3";
+	    status = false;
+	    errorMessage = "Failed to verify DOCS Dev Server Boot State";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: Verify DocsDevServerBootState (1.3.6.1.2.1.69.1.4.1) SNMP OID ");
+	    LOGGER.info("EXPECTED: Should return boot state value and it should be operational( 1 )");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.verifyDocsDevServerBootState(tapEnv, device);
+	    if (!status) {
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("ACTUAL: Verification of DOCS Dev Server Boot State : " + status);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	    stepNumber = "s4";
+	    status = false;
+	    errorMessage = "Failed to verify DOCSIF CM status TX power";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: Verify DocsIfCmStatusTxPower (1.3.6.1.2.1.10.127.1.2.2.1.3) SNMP OID ");
+	    LOGGER.info("EXPECTED: DocsifCmStatusTxPower value should be in between 80 to 580");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.verifyDocsIfCmStatusTxPower(tapEnv, device);
+	    if (!status) {
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("ACTUAL: Verification of DOCSIF CM status TX power : " + status);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	    stepNumber = "s5";
+	    status = false;
+	    errorMessage = "Failed to verify DOCSIF Down Channel Power";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: Verify DocsIfDownChannelPower (1.3.6.1.2.1.10.127.1.1.1.1.6) SNMP OID ");
+	    LOGGER.info("EXPECTED: DocsIfDownChannelPower value should be in between -150 to 150");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.verifyDocsIfDownChannelPower(tapEnv, device);
+	    if (!status) {
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("ACTUAL: Verification of DOCSIF Down Channel Power : " + status);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	    stepNumber = "s6";
+	    status = false;
+	    errorMessage = "Failed to verify DOCSIF SigQSignal Noise";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: Verify DocsIfSigQSignalNoise (1.3.6.1.2.1.10.127.1.1.4.1.5) SNMP OID ");
+	    LOGGER.info("EXPECTED: DocsIfSigQSignalNoise OID return value should be more than 120");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.verifyDocsIfSigQSignalNoise(tapEnv, device);
+	    if (!status) {
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("ACTUAL: Verification of DOCSIF SigQSignal Noise : " + status);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = e.getMessage();
+	    LOGGER.error(errorMessage);
+	    status = false;
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	}
+    }
+
+    /**
+     * Verify Access Points security mode via SNMP parameter
+     * <ol>
+     * <li>STEP 1: Verify Retrieving the Security mode of access point via WEBPA Parameter</li>
+     * <li>STEP 2: Verify Retrieving the Security mode of access point via SNMP Parameter and compare with WEBPA
+     * response</li>
+     * <li>STEP 3: Repeat step 1-2 for remaining 15 accesspoints(Total number of steps-32)</li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * @author dsekar054
+     * @refactor anandam
+     *
+     */
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-SNMP-5050", testDecription = "Verify Access Points security mode via snmp parameter")
+    public void testToVerifySnmpSecurityMode(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SNMP-550";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	String webPaResponse = null;
+	String webPaParam = null;
+	String snmpResponse = null;
+	String replaceValue = null;
+	int internalIteration = 1;
+	int stepNumber = 0;
+	int webPaSecurityModevalue = 0;
+	// Variable Declation Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-5050");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify system description, Modem Configuration Filename,EMTA Address,Cable Interface MAC Address,Serial Number via SNMP and cross validate with WEBPA");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify Retrieving the Security mode of access point via WEBPA Parameter");
+	LOGGER.info(
+		"2. Verify Retrieving the Security mode of access point via SNMP Parameter and compare with webpa Response");
+	LOGGER.info("3. Repeat step 1-3 for remaining 15 accesspoints(Total Number of steps-32)");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    for (int iteration = BroadBandTestConstants.CONSTANT_1; iteration <= BroadBandTestConstants.CONSTANT_16; iteration++) {
+		if (iteration != BroadBandTestConstants.CONSTANT_2 && iteration != BroadBandTestConstants.CONSTANT_3
+			&& iteration != BroadBandTestConstants.CONSTANT_5
+			&& iteration != BroadBandTestConstants.CONSTANT_11
+			&& iteration != BroadBandTestConstants.CONSTANT_13) {
+		    stepNumber++;
+		    stepNum = "S" + stepNumber;
+		    errorMessage = "Unable to get security mode from  WebPa response";
+		    status = false;
+		    if (iteration <= BroadBandTestConstants.CONSTANT_8) {
+
+			replaceValue = BroadBandSnmpConstants.SNMP_COMMAND_2_4_GHZ_SECURITY_MODE
+				.replace(BroadBandTestConstants.STRING_REPLACE, String.valueOf(iteration));
+
+		    } else {
+			if (internalIteration != BroadBandTestConstants.CONSTANT_3
+				&& internalIteration != BroadBandTestConstants.CONSTANT_5) {
+			    replaceValue = BroadBandSnmpConstants.SNMP_COMMAND_5_GHZ_SECURITY_MODE
+				    .replace(BroadBandTestConstants.STRING_REPLACE, String.valueOf(internalIteration));
+			    internalIteration++;
+			} else {
+			    replaceValue = BroadBandSnmpConstants.SNMP_COMMAND_5_GHZ_SECURITY_MODE.replace(
+				    BroadBandTestConstants.STRING_REPLACE, String.valueOf(++internalIteration));
+			    internalIteration++;
+			}
+		    }
+
+		    LOGGER.info("**********************************************************************************");
+		    LOGGER.info("STEP " + stepNumber
+			    + ": DESCRIPTION : Verify Retrieving the Security mode of access point via WEBPA Parameter:Device.WiFi.AccessPoint.2.Security.ModeEnabled");
+		    LOGGER.info("STEP " + stepNumber + ": ACTION : \"Execute dmcli  command : "
+			    + BroadBandWebPaConstants.WEBPA_PARAM_SECURITY_MODE_OF_WIFI
+				    .replace(BroadBandTestConstants.TR181_NODE_REF, replaceValue));
+		    LOGGER.info("STEP " + stepNumber
+			    + ": EXPECTED : Security mode of access point  is retrieve via WEBPA ");
+		    LOGGER.info("**********************************************************************************");
+
+		    webPaParam = BroadBandWebPaConstants.WEBPA_PARAM_SECURITY_MODE_OF_WIFI
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, replaceValue);
+
+		    webPaResponse = tapEnv.executeWebPaCommand(device, webPaParam);
+		    status = CommonMethods.isNotNull(webPaResponse);
+		    if (status) {
+			webPaSecurityModevalue = BroadBandTestConstants.MAP_SECURITY_MODE_AND_KEY_TO_GET_POSSIBLE_SECURITY_MODE_VALUES
+				.get(webPaResponse);
+			LOGGER.info("STEP " + stepNumber
+				+ ": ACTUAL : Security mode value retieved successfully from WEBPA param "
+				+ webPaParam);
+		    } else {
+			LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+		    }
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		    stepNumber++;
+		    stepNum = "S" + stepNumber;
+		    errorMessage = "Unable to get security mode from  snmp response";
+		    status = false;
+
+		    LOGGER.info("**********************************************************************************");
+		    LOGGER.info("STEP " + stepNumber
+			    + ": DESCRIPTION : Verify Retrieving the Security mode of access point via SNMP Parameter:Device.WiFi.AccessPoint.2.Security.ModeEnabled");
+		    LOGGER.info("STEP " + stepNumber + ": ACTION : \"Execute SNMP  command : "
+			    + BroadBandSnmpMib.ECM_WIFI_RADIO_MODE_2_4.getOid());
+		    LOGGER.info("STEP " + stepNumber + ": EXPECTED : SNMP command executed successfully");
+		    LOGGER.info("**********************************************************************************");
+
+		    snmpResponse = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+			    BroadBandSnmpMib.ECM_WIFI_RADIO_MODE_2_4.getOid(), replaceValue);
+		    LOGGER.error("snmpresponse : " + snmpResponse);
+		    if (CommonMethods.isNotNull(snmpResponse)) {
+			status = BroadBandSnmpUtils.validateSNMPResponse(tapEnv, device, snmpResponse,
+				String.valueOf(webPaSecurityModevalue));
+		    }
+		    if (status) {
+			LOGGER.info("STEP " + stepNumber
+				+ ": ACTUAL : Security mode value retieved successfully from SNMP param with response "
+				+ snmpResponse);
+		    } else {
+			LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + "  " + snmpResponse);
+		    }
+
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+		}
+	    }
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to get security mode from  snmp response";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify Retrieving the Security mode of access point via WEBPA Parameter:Device.WiFi.AccessPoint.2.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : \"Execute dmcli  command : Device.WiFi.AccessPoint.10003.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Security mode of access point  is retrieve via WEBPA ");
+	    LOGGER.info("**********************************************************************************");
+
+	    webPaResponse = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PUBLIC_SECURITY_MODEENABLED);
+	    status = CommonMethods.isNotNull(webPaResponse);
+	    if (status) {
+
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Security mode value retieved successfully from WEBPA param " + webPaParam);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to get security mode from  snmp response";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify Retrieving the Security mode of access point via WEBPA Parameter:Device.WiFi.AccessPoint.2.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : \"Execute dmcli  command : Device.WiFi.AccessPoint.10103.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Security mode of access point  is retrieve via WEBPA ");
+	    LOGGER.info("**********************************************************************************");
+
+	    webPaResponse = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PUBLIC_SECURITY_MODEENABLED);
+	    status = CommonMethods.isNotNull(webPaResponse);
+	    if (status) {
+
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Security mode value retieved successfully from WEBPA param " + webPaParam);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to get security mode from  snmp response";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify Retrieving the Security mode of access point via WEBPA Parameter:Device.WiFi.AccessPoint.2.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : \"Execute dmcli  command : Device.WiFi.AccessPoint.10005.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Security mode of access point  is retrieve via WEBPA ");
+	    LOGGER.info("**********************************************************************************");
+
+	    webPaResponse = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4GHZ_SECURED_XFINITY);
+	    status = CommonMethods.isNotNull(webPaResponse);
+	    if (status) {
+
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Security mode value retieved successfully from WEBPA param " + webPaParam);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to get security mode from  snmp response";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify Retrieving the Security mode of access point via WEBPA Parameter:Device.WiFi.AccessPoint.2.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : \"Execute dmcli  command : Device.WiFi.AccessPoint.10105.Security.ModeEnabled");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Security mode of access point  is retrieve via WEBPA ");
+	    LOGGER.info("**********************************************************************************");
+
+	    webPaResponse = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5GHZ_SECURED_XFINITY);
+	    status = CommonMethods.isNotNull(webPaResponse);
+	    if (status) {
+
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Security mode value retieved successfully from WEBPA param " + webPaParam);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	LOGGER.info(" ENDING TEST CASE: TC-RDKB-SNMP-5050");
+    }
+
+    /**
+     * Test to verify enabling/disabling bridge mode through SNMP v3 is successful
+     * 
+     * <ol>
+     * <li>PRE CONDITION 1: Disable codebig first enable using webpa</li>
+     * <li>STEP 1: Enable SNMPv3 support using RFC</li>
+     * <li>STEP 2: Verify SNMPv3 support parameter is enabled in dcmrfc.log file</li>
+     * <li>STEP 3: Verify SNMPv3 support is enabled using webpa</li>
+     * <li>STEP 4:Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 1 to enable
+     * bridge mode and retrieve the lan mode via webpa and cross check whether the bridge mode is enabled</li>
+     * <li>STEP 5: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 2 to
+     * disablebridge mode and retrieve the lan mode via webpa and cross check whether the bridge mode is disabled</li>
+     * <li>STEP 6: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 2 to disable
+     * MoCA and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is disabled</li>
+     * <li>STEP 7: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 1 to enable
+     * MoCA and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is enabled</li>
+     * <li>STEP 8:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10001) to get the value of 2.4
+     * GHz private Wi-Fi SSID</li>
+     * <li>STEP 9:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101) to get the value of 5 GHz
+     * private Wi-Fi SSID</li>
+     * <li>STEP 10: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID</li>
+     * <li>STEP 11: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID</li>
+     * <li>STEP 12: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001) to get the value of 2.4
+     * GHz private Wi-Fi Passphrase</li>
+     * <li>STEP 13:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10101) to get the value of 5 GHz
+     * private Wi-Fi Passphrase</li>
+     * <li>STEP 14: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.2.0) to get the value of number of
+     * Ping Per Server</li>
+     * <li>STEP 15: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.3.0) to get the value of minimum
+     * number of Ping Server</li>
+     * <li>STEP 16: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.4.0) to get the value of Ping Interval
+     * </li>
+     * <li>STEP 17:Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.5.0) to get the value of Ping response
+     * wait time</li>
+     * <li>STEP 18:Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.7.0) to get the value of Resource Usage
+     * Compute Window</li>
+     * <li>STEP 19: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.8.0) to get the average value of CPU
+     * Threshold</li>
+     * <li>STEP 20: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.9.0) to get the average value of
+     * Memory Threshold</li>
+     * <li>STEP 21:Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.10.0) to get the value of maximum
+     * Reboot Count</li>
+     * <li>STEP 22: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.11.0) to get the value of maximum
+     * Subsystem Reset Count</li>
+     * <li>STEP 23: Execute SNMP v3 SET command on OID (1.3.6.1.2.1.1.1.0) which is a READ-ONLY MIB</li>
+     * <li>STEP 24: Execute SNMP v3 SET command on OID (.1.3.6.1.4.1.17270.44.1.1.4.0) with incorrect value out of
+     * expected range(Expected Range is between 15 and 1440, both inclusive)</li>
+     * <li>POST-CONDITION 1: Set the device back to router mode if device is in Bridge mode</li>
+     * <li>POST-CONDITION 2: Revert back the moca value</li>
+     * <li>POST-CONDITION 3: Verify disabling the public wifi using webpa</li>
+     * </ol>
+     * 
+     * @param device
+     *            The device to be used.
+     * @refactor anandam
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-SNMP-1012")
+    public void testSnmpV3EnableDisableBridgeMode(Dut device) {
+	String testCaseId = "TC-RDKB-SNMP-112";
+	String stepNumber = "s1";
+	boolean status = false; // stores the test status
+	String errorMessage = null; // stores the error message
+	String webpaOutput = null; // stores Webpa output
+	String snmpOutput = null; // stores SNMP output
+	String response = null;
+	boolean isMocaEnabled = false;
+	boolean isPublicWifiEnabled = false;
+	int stepNum = 1;
+	boolean isBridgeModeDisabled = false;
+	BroadBandResultObject result = null; // stores test result and error message
+	ExecutionStatus testStatus = ExecutionStatus.FAILED; // stores the execution status
+	String systemCommand = null;
+	String webPaOutput = null;
+	boolean isSNMPv3Enabled = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_SNMPV3_SUPPORT, BroadBandTestConstants.TRUE,
+		BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	boolean isBussinessDevice = DeviceModeHandler.isBusinessClassDevice(device);
+	boolean isFibreDevice = DeviceModeHandler.isFibreDevice(device);
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE :TC-RDKB-SNMP-1012");
+	    LOGGER.info("TEST DESCRIPTION: Test to Verify enabling/disabling parameters through SNMP v3 is successful");
+	    LOGGER.info("PRE CONDITION 1: Disable codebig first enable using webpa");
+	    LOGGER.info("STEP 1: Enable SNMPv3 support using RFC");
+	    LOGGER.info("STEP 2: Verify SNMPv3 support parameter is enabled in dcmrfc.log file");
+	    LOGGER.info("STEP 3: Verify SNMPv3 support is enabled using webpa");
+	    LOGGER.info(
+		    "STEP 4:Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 1 to enable bridge mode and retrieve the lan mode via webpa and cross check whether the bridge mode is enabled");
+	    LOGGER.info(
+		    "STEP 5:  Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 2 to disablebridge mode and retrieve the lan mode via webpa and cross check whether the bridge mode is disabled");
+	    LOGGER.info(
+		    "STEP 6: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 2 to disable MoCA and retrieve the MoCA Interface status via webpa and cross check  whether the MoCA is disabled ");
+	    LOGGER.info(
+		    "STEP 7: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 1  to enable MoCA and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is enabled");
+	    LOGGER.info(
+		    "STEP 8:Execute SNMP v3  GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10001)  to get the value of  2.4 GHz private Wi-Fi SSID");
+	    LOGGER.info(
+		    "STEP 9:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101) to get the value of 5 GHz private Wi-Fi SSID");
+	    LOGGER.info(
+		    "STEP 10: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID");
+	    LOGGER.info(
+		    "STEP 11: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID");
+	    LOGGER.info(
+		    "STEP 12: Execute SNMP v3 GET command on OID(1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10002) to get the value of 2.4 GHz Xfinity Home SSID");
+	    LOGGER.info(
+		    "STEP 13: SNMP v3  GET command on OID(1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10102) to get the value of 5 GHz Xfinity Home SSID");
+	    LOGGER.info(
+		    "STEP 14: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001) to get the value of  2.4 GHz private Wi-Fi Passphrase");
+	    LOGGER.info(
+		    "STEP 15:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10101) to get the value of 5 GHz private Wi-Fi Passphrase");
+	    LOGGER.info(
+		    "STEP 16:  Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.2.0) to get the value of number of Ping Per Server");
+	    LOGGER.info(
+		    "STEP 17: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.3.0) to get the value of minimum number of Ping Server ");
+	    LOGGER.info(
+		    "STEP 18: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.4.0) to get the value of Ping Interval ");
+	    LOGGER.info(
+		    "STEP 19:Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.5.0) to get the value of Ping response wait time");
+	    LOGGER.info(
+		    "STEP 20:Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.7.0) to get the value of  Resource Usage Compute Window");
+	    LOGGER.info(
+		    "STEP 21: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.8.0) to get the average value of CPU Threshold");
+	    LOGGER.info(
+		    "STEP 22: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.9.0) to get the average value of Memory Threshold");
+	    LOGGER.info(
+		    "STEP 23:Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.10.0) to get the value of maximum Reboot Count");
+	    LOGGER.info(
+		    "STEP 24: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.11.0) to get the value of maximum Subsystem Reset Count");
+	    LOGGER.info("STEP 25: Execute SNMP v3 SET command on OID (1.3.6.1.2.1.1.1.0) which is a READ-ONLY MIB");
+	    LOGGER.info(
+		    "STEP 26: Execute SNMP v3 SET command on OID (.1.3.6.1.4.1.17270.44.1.1.4.0) with incorrect value out of expected range(Expected Range is between 15 and 1440, both inclusive)");
+	    LOGGER.info("POST-CONDITION 1: Set the device back to router mode if device is in Bridge mode");
+	    LOGGER.info("POST-CONDITION 2: Revert back the moca value");
+	    LOGGER.info("POST-CONDITION 3: Verify disabling the public wifi using webpa");
+	    LOGGER.info("POST-CONDITION 4: Verify disabling XHS SSID using webpa");
+	    LOGGER.info("#######################################################################################");
+
+	    LOGGER.info("################################# STARTING PRE-CONFIGURATIONS #############################");
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("############################# COMPLETED PRE-CONFIGURATIONS #############################");
+	    if (!isSNMPv3Enabled) {
+
+		stepNumber = "S" + stepNum;
+		status = false;
+		LOGGER.info("******************************************************************************");
+		LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Enable SNMPv3 support using RFC");
+		LOGGER.info("STEP " + stepNum + ": ACTION: 1. update RFC server url 2. post payload data 3. reboot");
+		LOGGER.info("STEP " + stepNum + ": EXPECTED: Device rebooted after posting rfc profile successfully");
+		LOGGER.info("******************************************************************************");
+
+		errorMessage = "Failed to enable SNMPv3 support using RFC";
+		status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+			BroadBandTestConstants.SNMPV3, true);
+		if (status) {
+		    LOGGER.info("STEP " + stepNum
+			    + ": ACTUAL: Successfully posted the payload data to enable SNMPv3 support & rebooted the device to get the latest RFC configuration ");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+		stepNum++;
+		stepNumber = "S" + stepNum;
+		status = false;
+		LOGGER.info("******************************************************************************");
+		LOGGER.info("STEP " + stepNum
+			+ ": DESCRIPTION: Verify SNMPv3 support parameter is enabled in dcmrfc.log file");
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTION: Execute command: grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support value=true\" /rdklogs/logs/dcmrfc.log");
+		LOGGER.info("STEP " + stepNum + ": EXPECTED: enabled the SNMPv3 support using RFC");
+		LOGGER.info("******************************************************************************");
+		errorMessage = "Failed to get log message of SNMPv3 support value = true in dcmrfc.log file";
+		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_SNMPV3_SUPPORT, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+			BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		status = CommonMethods.isNotNull(response)
+			&& CommonUtils.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.TRUE);
+		if (status) {
+		    LOGGER.info("STEP " + stepNum + ": ACTUAL: Successfully enabled the SNMPv3 support using RFC");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		stepNum++;
+		stepNumber = "S" + stepNum;
+		status = false;
+		LOGGER.info("******************************************************************************");
+		LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Verify SNMPv3 support is enabled using webpa ");
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTION: Execute webpa command to get value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support");
+		LOGGER.info("STEP " + stepNum + ": EXPECTED: Webpa get request is success and parameter value is true");
+		LOGGER.info("******************************************************************************");
+		errorMessage = "Failed to get the response for webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support";
+
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_SNMPV3_SUPPORT);
+		status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+		if (status) {
+		    LOGGER.info("STEP " + stepNum
+			    + ": ACTUAL: Successfully verified the SNMPv3 support is enabled using webpa operation");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    } else {
+		errorMessage = "Snmpv3 is by default enabled. So step 1-3 is not applicable as SNMPv3 is already enabled in the device ";
+		stepNum = 1;
+		while (stepNum <= 3) {
+		    stepNumber = "s" + stepNum;
+		    errorMessage += ",Marked as Not Applicable";
+		    LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+			    errorMessage, false);
+		    stepNum++;
+		}
+	    }
+	    /**
+	     * Step 4 : Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 1 to
+	     * enable bridge mode and retrieve the lan mode via webpa and cross check whether the bridge mode is enabled
+	     * 
+	     */
+	    stepNum = BroadBandTestConstants.CONSTANT_4;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Enable bridge mode via SNMPv3 and retrieve the lan mode via webpa and cross check  whether the bridge mode is enabled ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 1 to enable bridge mode and retrieve the lan mode via webpa and cross check  whether the bridge mode is enabled ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: on executing, SNMP should return the Integer 1 and  lan mode via webpa should return 'bridge-static'");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    snmpOutput = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
+		    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_ONE,
+		    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex());
+	    status = CommonMethods.isNotNull(snmpOutput) && snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_ONE);
+	    errorMessage = "Bridge mode can not be enabled using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("GOING TO WAIT FOR 90 SECONDS.");
+		tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+		errorMessage = "Unable to verify the WebPA process is up after setting the Lan Mode to 'Bridge-Static'";
+		status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+		// In case the 8 minutes wait for WebPA Process to be up is not sufficient, performing the check again.
+		if (!status) {
+		    status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+		}
+	    }
+	    if (status) {
+		errorMessage = "Unable to retrieve the Lan Mode using WebPA.";
+		// Retrieve the lan mode via webpa and cross check whether the bridge mode is enabled
+		webpaOutput = tapEnv.executeWebPaCommand(device,
+			BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS);
+		status = CommonMethods.isNotNull(webpaOutput)
+			&& webpaOutput.equalsIgnoreCase(BroadBandTestConstants.LAN_MANAGEMENT_MODE_BRIDGE_STATIC);
+		errorMessage = "Unable to verify the Lan Mode using WebPA. Expected: Bridge-Static, Actual: "
+			+ webpaOutput;
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Bridge mode is enabled using SNMP v3 Query & retrieved the lan mode via webpa and verified, Bridge mode is enabled");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	    /**
+	     * Step 5 : Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 2 to
+	     * disable bridge mode and retrieve the lan mode via webpa and cross check whether the bridge mode is
+	     * disabled
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Disable bridge mode via SNMPv3 and retrieve the lan mode via webpa and cross check whether the bridge mode is disabled");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute SNMP v3  SET command on OID(1.3.6.1.4.1.17270.50.2.3.2.1.1.32) with set value as 2 to disable bridge mode nd retrieve the lan mode via webpa and cross check whether the bridge mode is disabled");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: on executing, SNMP should return the Integer 1 and  lan mode via webpa should return 'router'");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    snmpOutput = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
+		    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_TWO,
+		    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex());
+	    status = CommonMethods.isNotNull(snmpOutput) && snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_TWO);
+	    errorMessage = "Bridge mode can not be disabled using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("GOING TO WAIT FOR 90 SECONDS.");
+		tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+		errorMessage = "Unable to verify the WebPA process is up after setting the Lan Mode to 'Router'";
+		status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+		// In case the 8 minutes wait for WebPA Process to be up is not sufficient, performing the check again.
+		if (!status) {
+		    status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+		}
+	    }
+	    if (status) {
+		errorMessage = "Unable to retrieve the Lan Mode using WebPA.";
+		// Retrieve the lan mode via webpa and cross check whether the bridge mode is enabled
+		webpaOutput = tapEnv.executeWebPaCommand(device,
+			BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS);
+		status = CommonMethods.isNotNull(webpaOutput)
+			&& webpaOutput.equalsIgnoreCase(BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER);
+		isBridgeModeDisabled = status;
+		errorMessage = "Unable to verify the Lan Mode using WebPA. Expected: Router, Actual: " + webpaOutput;
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Bridge mode is disabled using SNMP v3 Query & retrieved the lan mode via webpa and verified, Bridge mode is disabled");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	    /**
+	     * Step 6: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 2 to
+	     * disable MoCA and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is
+	     * disabled
+	     * 
+	     */
+	    if (!isBussinessDevice) {
+		stepNum++;
+		stepNumber = "S" + stepNum;
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+			+ ": DESCRIPTION: Disable MoCA via SNMPv3and retrieve the MoCA Interface status via webpa and cross check  whether the MoCA is disabled ");
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTION: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 2 to disable MoCA and retrieve the MoCA Interface status via webpa and cross check  whether the MoCA is disabled ");
+		LOGGER.info("STEP " + stepNum
+			+ ": EXPECTED: on executing, SNMP should return the Integer value 1 and MoCA Interface status via Webpa should return 'false'");
+		LOGGER.info("**********************************************************************************");
+		System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+		snmpOutput = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
+			BroadBandSnmpMib.ESTB_VERIFY_MOCA_INTERFACE_STATUS.getOid(), SnmpDataType.INTEGER,
+			BroadBandTestConstants.STRING_VALUE_TWO, BroadBandTestConstants.STRING_VALUE_FORTY);
+		status = CommonMethods.isNotNull(snmpOutput)
+			&& snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_TWO);
+		errorMessage = "MoCA can not be disabled using SNMP v3 Query";
+		if (status) {
+		    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		    // Retrieve the moca status via webpa and cross check whether the MoCA is disabled
+		    webpaOutput = tapEnv.executeWebPaCommand(device,
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_INTERFACE_ENABLE);
+		    status = CommonMethods.isNotNull(webpaOutput)
+			    && webpaOutput.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+		    errorMessage = (!status && CommonMethods.isNotNull(webpaOutput)
+			    && webpaOutput.equalsIgnoreCase(BroadBandTestConstants.TRUE))
+				    ? "Retrieved the MoCA status via webpa and verified, MoCA can not be disabled using SNMP v3"
+				    : "Checking the MoCA state via webpa failed, MoCA status can not be verified";
+		}
+		if (status) {
+		    LOGGER.info("STEP " + stepNum
+			    + ": ACTUAL: MoCA is disabled using SNMP v3 Query & retrieved the MoCA status via webpa and verified, MoCA is disabled");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 7: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 1 to
+		 * enable MoCA and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is
+		 * enabled
+		 * 
+		 */
+		stepNum++;
+		stepNumber = "S" + stepNum;
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+			+ ": DESCRIPTION: Enable MoCA via SNMPv3and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is enabled");
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTION: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.31621.1.1.1.1.1.1.40) with set value as 1  to enable MoCA and retrieve the MoCA Interface status via webpa and cross check whether the MoCA is enabled");
+		LOGGER.info("STEP " + stepNum
+			+ ": EXPECTED: on executing, SNMP should return the Integer value 1 and MoCA Interface status via Webpa should return 'true'");
+		LOGGER.info("**********************************************************************************");
+		System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+		snmpOutput = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
+			BroadBandSnmpMib.ESTB_VERIFY_MOCA_INTERFACE_STATUS.getOid(), SnmpDataType.INTEGER,
+			BroadBandTestConstants.STRING_VALUE_ONE, BroadBandTestConstants.STRING_VALUE_FORTY);
+		status = CommonMethods.isNotNull(snmpOutput)
+			&& snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_ONE);
+		errorMessage = "MoCA can not be enabled using SNMP v3 Query";
+		if (status) {
+		    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		    // Retrieve the moca status via webpa and cross check whether the MoCA is enabled
+		    webpaOutput = tapEnv.executeWebPaCommand(device,
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_INTERFACE_ENABLE);
+		    status = CommonMethods.isNotNull(webpaOutput)
+			    && webpaOutput.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+		    isMocaEnabled = status;
+		    errorMessage = (!status && CommonMethods.isNotNull(webpaOutput)
+			    && webpaOutput.equalsIgnoreCase(BroadBandTestConstants.FALSE))
+				    ? "Retrieved the MoCA status via webpa and verified, MoCA can not be enabled using SNMP v3"
+				    : "Checking the MoCA state via webpa failed, MoCA status can not be verified";
+		}
+		if (status) {
+		    LOGGER.info("STEP " + stepNum
+			    + ": ACTUAL: MoCA is enabled using SNMP v3 Query & retrieved the MoCA status via webpa and verified, MoCA is enabled");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    } else {
+		errorMessage = "Moca is not applicable for Business models ";
+		stepNum = 6;
+		while (stepNum <= 7) {
+		    stepNumber = "s" + stepNum;
+		    errorMessage += ",Marked as Not Applicable";
+		    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+			    errorMessage, false);
+		    stepNum++;
+		}
+	    }
+	    /**
+	     * Step 8: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10001) to get the value of
+	     * 2.4 GHz private Wi-Fi SSID
+	     * 
+	     */
+	    stepNum = BroadBandTestConstants.CONSTANT_8;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Retieve 2.4 GHz private Wi-Fi SSID using SNMPv3");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3  GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10001)  to get the value of  2.4 GHz private Wi-Fi SSID");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: The private Wi-Fi SSID of 2.4GHz Radio should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    systemCommand = BroadBandWebPaUtils.getWiFiInterface(device, tapEnv, BroadBandTestConstants.BAND_2_4GHZ,
+		    BroadBandTestConstants.PRIVATE_WIFI_TYPE, BroadBandTestConstants.SSID_PARAM);
+	    result = BroadBandSnmpUtils.retrieveSnmpOutputAndVerifyWithSystemCommandOutput(tapEnv, device,
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_2_4.getOid(),
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_2_4.getTableIndex(), systemCommand,
+		    "private Wi-Fi SSID of 2.4GHz");
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    testStatus = result.getExecutionStatus();
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: The private Wi-Fi SSID of 2.4GHz Radio can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
+
+	    /**
+	     * Step 9 : Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101) to get the value of
+	     * 5 GHz private Wi-Fi SSID
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    testStatus = ExecutionStatus.FAILED;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Retieve value of 5 GHz private Wi-Fi SSID using SNMPv3");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101) to get the value of 5 GHz private Wi-Fi SSID");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: The private Wi-Fi SSID of 5GHz Radio should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    systemCommand = BroadBandWebPaUtils.getWiFiInterface(device, tapEnv, BroadBandTestConstants.BAND_5GHZ,
+		    BroadBandTestConstants.PRIVATE_WIFI_TYPE, BroadBandTestConstants.SSID_PARAM);
+	    result = BroadBandSnmpUtils.retrieveSnmpOutputAndVerifyWithSystemCommandOutput(tapEnv, device,
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_5.getOid(),
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_5.getTableIndex(), systemCommand,
+		    "private Wi-Fi SSID of 5GHz");
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    testStatus = result.getExecutionStatus();
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: The private Wi-Fi SSID of 5 GHz Radio can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
+
+	    /**
+	     * Step 10 : Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID
+	     * 
+	     */
+	    if (!isFibreDevice) {
+		stepNum++;
+		stepNumber = "S" + stepNum;
+		status = false;
+		testStatus = ExecutionStatus.FAILED;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Retrieve Xfinity Wi-Fi 2.4Ghz SSID using webpa");
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTION: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID");
+		LOGGER.info("STEP " + stepNum
+			+ ": EXPECTED: The Xfinity Wi-Fi SSID of 2.4GHz Radio should be retrieved using webpa Query");
+		LOGGER.info("**********************************************************************************");
+		System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+		// Enable 2.4 GHz xfinity Wifi
+		LOGGER.info("### Enabling 2.4 GHz xfinity Wi-Fi ###");
+		status = BroadBandWebPaUtils.settingWebpaparametersForPublicWifi(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID_ENABLE_STATUS)
+			&& BroadBandWebPaUtils.checkAndEnableSSIDForGivenInterface(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID_ENABLE_STATUS);
+		errorMessage = "Unable to check 2.4 Ghz SSID of Xfinity Wi-Fi using SNMP v3, since Xfinity Wi-Fi can not be enabled";
+		testStatus = ExecutionStatus.NOT_TESTED;
+		isPublicWifiEnabled = status;
+		if (status) {
+		    status = false;
+		    String ssidRetrievedFromSystemCommand = null;
+		    tapEnv.waitTill(BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS);
+		    systemCommand = BroadBandWebPaUtils.getWiFiInterface(device, tapEnv,
+			    BroadBandTestConstants.BAND_2_4GHZ, BroadBandTestConstants.PUBLIC_WIFI_TYPE,
+			    BroadBandTestConstants.SSID_PARAM);
+		    ssidRetrievedFromSystemCommand = BroadBandWebPaUtils.getSsidNameRetrievedUsingDeviceCommand(device,
+			    tapEnv, systemCommand);
+		    status = CommonMethods.isNotNull(ssidRetrievedFromSystemCommand);
+		    errorMessage = "Using system command unable to retrieve " + BroadBandTestConstants.SSID_PARAM
+			    + " Radio";
+		    if (status) {
+
+			status = false;
+			String ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID);
+			LOGGER.info("2.4GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
+			status = CommonMethods.isNotNull(ssidNameFromWebPa) && CommonUtils
+				.patternSearchFromTargetString(ssidRetrievedFromSystemCommand, ssidNameFromWebPa);
+			testStatus = status ? ExecutionStatus.PASSED : ExecutionStatus.FAILED;
+			errorMessage = "webpa response failed for Device.WiFi.SSID.10003.SSID :" + ssidNameFromWebPa;
+		    }
+		}
+		if (status) {
+		    LOGGER.info("STEP " + stepNum
+			    + ": ACTUAL: The Xfinity Wi-Fi SSID of 2.4GHz Radio can be retrieved using webpa");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
+
+		/**
+		 * Step 11 : Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID
+		 * 
+		 */
+		stepNum++;
+		stepNumber = "S" + stepNum;
+		status = false;
+		testStatus = ExecutionStatus.FAILED;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP " + stepNum + ": DESCRIPTION: Retrieve value of 5 GHz Xfinity Wi-Fi SSID using webpa");
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTION: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID");
+		LOGGER.info("STEP " + stepNum
+			+ ": EXPECTED: The Xfinity Wi-Fi SSID of 5GHz Radio should be retrieved using webpa Query");
+		LOGGER.info("**********************************************************************************");
+		System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+		// Enable 5 GHz xfinity Wifi
+		LOGGER.info("### Enabling 5 GHz xfinity Wi-Fi ###");
+		status = BroadBandWebPaUtils.settingWebpaparametersForPublicWifi(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID_ENABLE_STATUS)
+			&& BroadBandWebPaUtils.checkAndEnableSSIDForGivenInterface(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID_ENABLE_STATUS);
+		errorMessage = "Unable to check 5 Ghz SSID of Xfinity Wi-Fi using SNMP v3, since Xfinity Wi-Fi can not be enabled";
+		testStatus = ExecutionStatus.NOT_TESTED;
+		isPublicWifiEnabled = (isPublicWifiEnabled) ? isPublicWifiEnabled : status;
+		if (status) {
+		    status = false;
+		    String ssidRetrievedFromSystemCommand = null;
+		    tapEnv.waitTill(BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS);
+		    systemCommand = BroadBandWebPaUtils.getWiFiInterface(device, tapEnv,
+			    BroadBandTestConstants.BAND_5GHZ, BroadBandTestConstants.PUBLIC_WIFI_TYPE,
+			    BroadBandTestConstants.SSID_PARAM);
+		    ssidRetrievedFromSystemCommand = BroadBandWebPaUtils.getSsidNameRetrievedUsingDeviceCommand(device,
+			    tapEnv, systemCommand);
+		    status = CommonMethods.isNotNull(ssidRetrievedFromSystemCommand);
+		    errorMessage = "Using system command unable to retrieve " + BroadBandTestConstants.SSID_PARAM
+			    + " Radio";
+		    if (status) {
+			status = false;
+			String ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
+			LOGGER.info("5GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
+			status = CommonMethods.isNotNull(ssidNameFromWebPa) && CommonUtils
+				.patternSearchFromTargetString(ssidRetrievedFromSystemCommand, ssidNameFromWebPa);
+			testStatus = status ? ExecutionStatus.PASSED : ExecutionStatus.FAILED;
+			errorMessage = "Using webpa unable to retrieve "
+				+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID + " Radio:"
+				+ ssidNameFromWebPa;
+		    }
+		}
+		if (status) {
+		    LOGGER.info("STEP " + stepNum
+			    + ": ACTUAL: The Xfinity Wi-Fi SSID of 5 GHz Radio can be retrieved using webpa");
+		} else {
+		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
+	    } else {
+		errorMessage = "Xfinity wifi is not applicable for fibre models ";
+		stepNum = 10;
+		while (stepNum <= 11) {
+		    stepNumber = "s" + stepNum;
+		    errorMessage += ",Marked as Not Applicable";
+		    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+			    errorMessage, false);
+		    stepNum++;
+		}
+	    }
+
+	    /**
+	     * Step 12 : Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001) to get the value of
+	     * 2.4 GHz private Wi-Fi Passphrase
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    testStatus = ExecutionStatus.FAILED;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Retrieve the value of  2.4 GHz private Wi-Fi Passphrase using SNMPv3");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001) to get the value of  2.4 GHz private Wi-Fi Passphrase");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: The private Wi-Fi Passphrase of 2.4GHz Radio should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    result = BroadBandSnmpUtils.retrieveSnmpOutputAndVerifyWithWebPaOutput(tapEnv, device,
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_PASSPHRASE.getOid(),
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_PASSPHRASE.getTableIndex(),
+		    BroadBandWebPaConstants.WEBPA_WAREHOUSE_WIRELESS_SSID_PASSWORD_PRIVATE_2G,
+		    "private Wi-Fi Passphrase of 2.4GHz");
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    testStatus = result.getExecutionStatus();
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: The private Wi-Fi Passphrase of 2.4GHz Radio can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
+
+	    /**
+	     * Step 13 : Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10101) to get the value of
+	     * 5 GHz private Wi-Fi Passphrase
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    testStatus = ExecutionStatus.FAILED;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNum + ": DESCRIPTION: Retrieve value of 5 GHz private Wi-Fi Passphrase using SNMPv3");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10101) to get the value of 5 GHz private Wi-Fi Passphrase");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: The private Wi-Fi Passphrase of 5GHz Radio should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    result = BroadBandSnmpUtils.retrieveSnmpOutputAndVerifyWithWebPaOutput(tapEnv, device,
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_5_PASSPHRASE.getOid(),
+		    BroadBandSnmpMib.ECM_PRIVATE_WIFI_5_PASSPHRASE.getTableIndex(),
+		    BroadBandWebPaConstants.WEBPA_WAREHOUSE_WIRELESS_SSID_PASSWORD_PRIVATE_5G,
+		    "private Wi-Fi Passphrase of 2.4GHz");
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    testStatus = result.getExecutionStatus();
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: The private Wi-Fi Passphrase of 5 GHz Radio can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
+
+	    /**
+	     * Step 14 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.2.0) to get the value of number
+	     * of Ping Per Server
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.2.0) to get the value of number of Ping Per Server");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.2.0) to get the value of number of Ping Per Server");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Value of no. of ping per server should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_NO_OF_PINGS_PER_SERVER.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_THREE);
+	    errorMessage = "Value of no. of ping per server can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Value of no. of ping per server can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 15 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.3.0) to get the value of minimum
+	     * number of Ping Server
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.3.0) to get the value of minimum number of Ping Server");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.3.0) to get the value of minimum number of Ping Server");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Value of minimum number of Ping Server should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_MIN_NO_OF_PING_SERVER.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE);
+	    errorMessage = "Value of minimum number of Ping Server can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Value of minimum number of Ping Server can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 16 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.4.0) to get the value of Ping
+	     * Interval
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.4.0) to get the value of Ping Interval ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.4.0) to get the value of Ping Interval");
+	    LOGGER.info(
+		    "STEP " + stepNum + ": EXPECTED: Value of Ping Interval should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_PING_INTERVAL.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim()
+			    .equalsIgnoreCase(BroadBandTestConstants.CONSTANT_DEFAULT_PING_INTERVAL);
+	    errorMessage = "Value of Ping Interval can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNum + ": ACTUAL: Value of Ping Interval can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 17 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.5.0) to get the value of Ping
+	     * response wait time
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.5.0) to get the value of Ping response wait time");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.5.0) to get the value of Ping response wait time");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Value of Ping response wait time should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_PING_RESPONSE_WAIT_TIME.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim()
+			    .equalsIgnoreCase(BroadBandTestConstants.CONSTANT_PING_RESP_WAIT_TIME);
+	    errorMessage = "Value of Ping response wait time can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Value of Ping response wait time can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 18 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.7.0) to get the value of Resource
+	     * Usage Compute Window
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.7.0) to get the value of  Resource Usage Compute Window");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.7.0) to get the value of ResourceUsage Compute Window");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Value of Resource Usage Compute Window should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_15);
+	    errorMessage = "Value of Resource Usage Compute Window response wait time can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Value of Resource Usage Compute Window can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 19 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.8.0) to get the average value of
+	     * CPU Threshold
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.8.0) to get the average value of CPU Threshold");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.8.0) to get the average value of CPU Threshold");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Average value of CPU Threshold should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_AVG_CPU_THRESHOLD.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_100);
+	    errorMessage = "Average value of CPU Threshold can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Average value of CPU Threshold can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 20 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.9.0) to get the average value of
+	     * Memory Threshold
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.9.0) to get the average value of Memory Threshold");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.9.0) to get the average value of Memory Threshold");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Average value of Memory Threshold should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_AVG_MEMORY_THRESHOLD.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_100);
+	    errorMessage = "Average value of Memory Threshold can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Average value of Memory Threshold can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 21 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.10.0) to get the value of maximum
+	     * Reboot Count
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + " : DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.10.0) to get the value of maximum Reboot Count");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.10.0) to get the value of maximum Reboot Count");
+	    LOGGER.info("STEP " + stepNum
+		    + " : EXPECTED: Value of maximum Reboot Count should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_MAX_REBOOT_COUNT.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_THREE);
+	    errorMessage = "Value of maximum Reboot Count can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Value of maximum Reboot Count can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 22 : Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.11.0) to get the value of maximum
+	     * Subsystem Reset Count
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    String rfcResponse = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + " : DESCRIPTION: Execute SNMP v3  WALK command on OID (1.3.6.1.4.1.17270.44.1.1.11.0) to get the value of maximum Subsystem Reset Count");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 WALK command on OID (1.3.6.1.4.1.17270.44.1.1.11.0) to get the value of maximum Subsystem Reset Count");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Value of maximum Subsystem Reset Count should be retrieved using SNMP v3 Query");
+	    LOGGER.info("**********************************************************************************");
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    response = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SELFHEAL_MAX_SUB_SYSTEM_RESET_COUNT.getOid());
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonMethods.patternMatcher(response, BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+		    && response.split("=")[1].trim().equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_THREE);
+	    errorMessage = "Value of maximum Subsystem Reset Count can't be retrieved using SNMP v3 Query";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: Value of maximum Subsystem Reset Count can be retrieved using SNMP v3 Query");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    /**
+	     * Step 23 : Execute SNMP v3 SET command on OID (1.3.6.1.2.1.1.1.0) which is a READ-ONLY MIB
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3 SET command on OID (1.3.6.1.2.1.1.1.0) which is a READ-ONLY MIB");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 SET command on OID (1.3.6.1.2.1.1.1.0) which is a READ-ONLY MIB");
+	    LOGGER.info("STEP " + stepNum + ": EXPECTED: Set should not be successful as its a read only MIB");
+	    LOGGER.info("**********************************************************************************");
+	    // Set any String Value
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    snmpOutput = BroadBandSnmpUtils.retrieveSnmpV3SetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+		    BroadBandSnmpMib.ECM_SYS_DESCR.getOid(), SnmpDataType.STRING,
+		    BroadBandTestConstants.PROCESS_NAME_SESHAT);
+	    String failedReason = CommonMethods.patternFinder(snmpOutput,
+		    BroadBandTestConstants.PATTERN_FINDER_FAILURE_REASON);
+	    status = CommonMethods.isNotNull(failedReason)
+		    && failedReason.equalsIgnoreCase(BroadBandTestConstants.NOT_WRITABLE);
+	    errorMessage = "Unable to do SNMP operation, SNMP v3 operation on OID (1.3.6.1.2.1.1.1.0) failed";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum + ": ACTUAL: The READ-ONLY MIB can not be writable through SNMP v3");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	    /**
+	     * Step 24 : Execute SNMP v3 SET command on OID (.1.3.6.1.4.1.17270.44.1.1.4.0) with incorrect value out of
+	     * expected range.
+	     * 
+	     */
+	    stepNum++;
+	    stepNumber = "S" + stepNum;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION: Execute SNMP v3 SET command on OID (.1.3.6.1.4.1.17270.44.1.1.4.0) with incorrect value out of expected range(Expected Range is between 15 and 1440, both inclusive)");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION: Execute SNMP v3 SET command on OID (.1.3.6.1.4.1.17270.44.1.1.4.0) with incorrect value out of expected range(Expected Range is between 15 and 1440, both inclusive)");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED: Set should not be successful as the set value is out of expected range");
+	    LOGGER.info("**********************************************************************************");
+	    // Expected Range for Ping Interval is between 15 and 1440, both inclusive
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+	    snmpOutput = BroadBandSnmpUtils.retrieveSnmpV3SetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+		    BroadBandSnmpMib.ECM_SELFHEAL_PING_INTERVAL.getOid() + ".0", SnmpDataType.UNSIGNED_INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_SIX);
+	    failedReason = CommonMethods.patternFinder(snmpOutput,
+		    BroadBandTestConstants.PATTERN_FINDER_FAILURE_REASON);
+	    status = CommonMethods.isNotNull(failedReason)
+		    && failedReason.equalsIgnoreCase(BroadBandTestConstants.WRONG_VALUE);
+	    errorMessage = "Unable to do SNMP operation, SNMP v3 operation on OID (.1.3.6.1.4.1.17270.44.1.1.4.0) failed";
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL: SNMP v3 SET was not successful as the set value is out of expected range");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	} catch (Exception testException) {
+	    errorMessage = "Exception occurred while trying to validate Enable/Disable Bridge Mode using SNMP v3: "
+		    + testException.getMessage();
+	    LOGGER.error(errorMessage);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	} finally {
+	    int postCondition = 0;
+	    System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V2.toString());
+
+	    status = false;
+	    boolean isSnmpReactivated = false;
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+
+	    if (!isBridgeModeDisabled) {
+		postCondition++;
+		errorMessage = "Failed to disable Bridge mode using webpa and snmp";
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("POST-CONDITION " + postCondition
+			+ ": DESCRIPTION : Verify disabling the bridge mode using webpa/SNMP");
+		LOGGER.info("POST-CONDITION " + postCondition + ": ACTION : Set values router using webpa");
+		LOGGER.info(
+			"POST-CONDITION " + postCondition + ": EXPECTED : Bridge mode should be disabled successfully");
+		LOGGER.info("#######################################################################################");
+		try {
+		    LOGGER.info("GOING TO DISABLE BRIDGE MODE USING WEBPA.");
+		    status = BroadBandWiFiUtils.setWebPaParams(device,
+			    BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS,
+			    BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER, BroadBandTestConstants.CONSTANT_0);
+
+		    if (!status) {
+			isSnmpReactivated = true;
+			LOGGER.error("FAILED TO DISABLE BRIDGE MODE USING WEBPA, GOING TO TRY USING SNMP");
+			snmpOutput = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
+				BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(), SnmpDataType.INTEGER,
+				BroadBandTestConstants.STRING_VALUE_TWO,
+				BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex());
+			status = CommonMethods.isNotNull(snmpOutput)
+				&& snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_TWO);
+		    }
+
+		    if (isSnmpReactivated) {
+			LOGGER.info("GOING TO CHECK IF SNMP PROCESS CAME UP, AFTER DISABLING BRIDGE MODE.");
+			status = BroadBandSnmpUtils.checkSnmpIsUp(tapEnv, device);
+			LOGGER.info("IS SNMP PROCESS UP AFTER DISABLING BRIDGE MODE USING SNMP : " + status);
+		    } else {
+			LOGGER.info("GOING TO CHECK IF WEBPA PROCESS CAME UP, AFTER DISABLING BRIDGE MODE.");
+			status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+			LOGGER.info("IS WEBPA PROCESS UP AFTER DISABLING BRIDGE MODE USING WEBPA : " + status);
+		    }
+
+		} catch (Exception exception) {
+		    LOGGER.error(
+			    "FOLLOWING EXCEPTION OCCURED IN POST - CONDITION, WHILE DISABLING BRIDGE MODE (USING WEBPA) : "
+				    + exception.getMessage());
+		}
+		if (status) {
+		    LOGGER.info("POST-CONDITION " + postCondition + ": ACTUAL: Bridge mode disabled successfully");
+		} else {
+		    LOGGER.info("POST-CONDITION " + postCondition + ": ACTUAL: " + errorMessage);
+		}
+	    }
+
+	    if (!isMocaEnabled) {
+		postCondition++;
+		BroadBandPostConditionUtils.executePostConditionRevertDefaultMocaStatus(device, tapEnv, true,
+			postCondition);
+	    }
+	    // Adding a static wait time for the WiFi Driver to be up.
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	    if (isPublicWifiEnabled) {
+		postCondition++;
+		BroadBandPostConditionUtils.executePostConditionToDisableXfinityWifi(device, tapEnv, postCondition);
+	    }
+
+	}
+    }
+
+    /**
+     * Test to Verify that the device does not respond to invalid community string STEPS:
+     * <ol>
+     * <li>Step 1 : Execute SNMP get(read) operation for the MIB sysDescr.0 (1.3.6.1.2.1.1.1.0) with invalid
+     * communitystring and verify that the device gives timeout response</li>
+     * <li>Step 2: Execute SNMP set(write) operation for the MIB docsdevresetnow (.1.3.6.1.2.1.69.1.1.3.0) with integer
+     * 1using invalid community string and verify that the device gives timeout response</li>
+     * </ol>
+     * 
+     * @param device
+     *            The device to be used.
+     * 
+     * @author Sathurya Ravi
+     * @refactor anandam
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.SNMP_OPERATIONS })
+    @TestDetails(testUID = "TC-RDKB-SNMP-1021", testDecription = "Verify that the device does not respond to invalid community string using sysDescr.0 (1.3.6.1.2.1.1.1.0)")
+    public void testSnmpGetOnCableModemForInvalidCommunityString(Dut device) {
+	// stores the test case id
+	String testCaseId = "TC-RDKB-SNMP-121";
+	// stores the step number
+	String stepNumber = "s1";
+	// stores the test result
+	boolean status = false;
+	// stores the error message
+	String errorMessage = null;
+	// stores the command response
+	String snmpGetResponse = null;
+	boolean isSnmpv3EnabledByRfc = false;
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1021");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Test to Verify that the device does not respond to invalid community string");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info(
+		    "Step 1. Execute SNMP get(read) operation for the MIB sysDescr.0 (1.3.6.1.2.1.1.1.0) with invalid community string and verify that the device gives timeout response");
+	    LOGGER.info(
+		    "Step 2. Execute SNMP set(write) operation for the MIB docsdevresetnow (.1.3.6.1.2.1.69.1.1.3.0) with integer 1 using invalid community string and verify that the device gives timeout response");
+
+	    status = false;
+	    stepNumber = "s1";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION: Verify whether the device can respond to invalid Community String ");
+	    LOGGER.info(
+		    "STEP 1: ACTION: Execute SNMP get operation for the MIB sysDescr.0 (1.3.6.1.2.1.1.1.0) with invalid community string and verify that the device gives timeout response");
+	    LOGGER.info("STEP 1: EXPECTED: The device should return timeout response");
+	    LOGGER.info("**********************************************************************************");
+	    // Execute SNMP get operation for the MIB sysDescr.0
+	    // (1.3.6.1.2.1.1.1.0)
+	    snmpGetResponse = BroadBandSnmpUtils.snmpGetOnEcmForInvalidCommunityString(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SYS_DESCR.getOid(), BroadBandSnmpMib.ECM_SYS_DESCR.getTableIndex());
+	    LOGGER.info("SNMP command output for sysDescr.0 (1.3.6.1.2.1.1.1.0) : " + snmpGetResponse);
+	    if (null != snmpGetResponse) {
+		// Verify the response from the SNMP get is a Timeout response
+		status = (snmpGetResponse.trim()).contains(BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+			|| (snmpGetResponse.trim()).isEmpty();
+		if (!status) {
+		    errorMessage = "The device is responding for invalid Community String for the SNMP get on MIB sysDescr.0 (1.3.6.1.2.1.1.1.0) . ACTUAL : Response: "
+			    + snmpGetResponse;
+		    LOGGER.error(errorMessage);
+		}
+	    } else {
+		status = false;
+		errorMessage = "The device has returned some Junk value for the MIB sysDescr.0 (1.3.6.1.2.1.1.1.0)";
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : Successfully verified the SNMP get operation using invalid Community String");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, true);
+
+	    /**
+	     * Step 2 : Execute SNMP set operation for the MIB DevResetNow (.1.3.6.1.2.1.69.1.1.3.0) with integer 1 and
+	     * verify that the device gives timeout response
+	     */
+	    status = false;
+	    stepNumber = "s2";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION: Verify whether the SNMP set can be performed with invalid community string");
+	    LOGGER.info(
+		    "STEP 2: ACTION: Execute SNMP set operation for the MIB docsdevresetnow (.1.3.6.1.2.1.69.1.1.3.0) with integer 1 using invalid community string and verify that the device gives timeout response");
+	    LOGGER.info("STEP 2: EXPECTED: The device should return timeout response");
+	    LOGGER.info("**********************************************************************************");
+	    // Execute SNMP get operation for the MIB DevResetNow
+	    // (.1.3.6.1.2.1.69.1.1.3.0)
+	    snmpGetResponse = BroadBandSnmpUtils.snmpSetOnEcmForInvalidCommunityString(tapEnv, device,
+		    BroadBandSnmpMib.ECM_RESET_MIB.getOid(), SnmpDataType.INTEGER, "1", "0");
+	    LOGGER.info("SNMP command output for docsdevresetnow (.1.3.6.1.2.1.69.1.1.3.0) : " + snmpGetResponse);
+	    if (null != snmpGetResponse) {
+		// Verify the response from the SNMP set is a Timeout response
+		status = (snmpGetResponse.trim()).contains(BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+			|| (snmpGetResponse.trim()).isEmpty();
+		if (!status) {
+		    errorMessage = "The device is responding for the invalid Community String for the SNMP get on MIB docsdevresetnow (.1.3.6.1.2.1.69.1.1.3.0) . ACTUAL : Response:  "
+			    + snmpGetResponse;
+		    LOGGER.error(errorMessage);
+		}
+	    } else {
+		errorMessage = "The device has returned inappropriate value for the  MIB docsdevresetnow (.1.3.6.1.2.1.69.1.1.3.0). Actual response: "
+			+ snmpGetResponse;
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 2: ACTUAL : Successfully verified the SNMP set operation using invalid Community String");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = "Unable to validate the SNMP get and set with Invalid Community string"
+		    + exception.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SNMP-1021");
+    }
+
+    /**
+     * Test to verify whether the device MTA can respond for invalid community string
+     * 
+     * <ol>
+     * <li>STEP 1: Perform SNMP get on the MTA IP with Invalid MTA Community String</li>
+     * <li>STEP 2: Perform SNMP set on the MTA IP with Invalid MTA Community String</li>
+     * </ol>
+     * 
+     * @author Sathurya Ravi
+     * @param device
+     *            The device to be used.
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-SNMP-1022", testDecription = "Validate that the device does not give valid SNMP response  for invalid MTA community String")
+
+    public void testSnmpGetSetOnMtaSideForInvalidCommunityString(Dut device) {
+
+	String testCaseId = "TC-RDKB-SNMP-122";
+	String stepNumber = "s1";
+	boolean status = false;
+	String errorMessage = null;
+	String snmpGetResponse = null;
+	String mtaAddress = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_COMMAND_MTA_IP_OF_DEVICE);
+	LOGGER.info("mtaAddress:  " + mtaAddress);
+
+	try {
+
+	    if (CommonMethods.isNotNull(mtaAddress) && !mtaAddress.equals("0.0.0.0")) {
+		status = false;
+		stepNumber = "s1";
+
+		/**
+		 * Step 1 : Perform SNMP get on the MTA IP with Invalid MTA Community String
+		 */
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 1: DESCRIPTION: Perform SNMP get on the MTA IP with Invalid MTA Community String ");
+		LOGGER.info(
+			"STEP 1: ACTION: Execute SNMP get on the MIB(sysDescr.0) for the MTA IP with Invalid MTA Community string.");
+		LOGGER.info("STEP 1: EXPECTED: The device should return timeout response");
+		LOGGER.info("**********************************************************************************");
+
+		// Execute SNMP get operation for the MIB sysDescr.0 (1.3.6.1.2.1.1.1.0)
+		snmpGetResponse = BroadBandSnmpUtils.snmpGetOnEmtaForInvalidCommunityString(tapEnv, device,
+			BroadBandSnmpMib.ECM_SYS_DESCR.getOid(), BroadBandSnmpMib.ECM_SYS_DESCR.getTableIndex(),
+			mtaAddress);
+		LOGGER.info("SNMP command output for sysDescr.0 (1.3.6.1.2.1.1.1.0) : " + snmpGetResponse);
+
+		if (null != snmpGetResponse) {
+		    // Verify the response from the SNMP get is a Timeout response
+		    status = (snmpGetResponse.trim()).contains(BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+			    || (snmpGetResponse.trim()).isEmpty();
+		    if (!status) {
+			errorMessage = "Seems like the device is responding for invalid Community String on the SNMP get on MIB sysDescr.0 (1.3.6.1.2.1.1.1.0) . ACTUAL : Response: "
+				+ snmpGetResponse + errorMessage;
+			LOGGER.error(errorMessage);
+		    }
+		} else {
+		    status = false;
+		    errorMessage = "The device has returned some Junk value for the MIB sysDescr.0 (1.3.6.1.2.1.1.1.0)";
+		    LOGGER.error(errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage,
+			false);
+
+		status = false;
+		stepNumber = "s2";
+
+		/**
+		 * Step 2 : Execute SNMP set operation for the MIB(1.3.6.1.2.1.2.2.1.7.9.0) with integer 2 and verify
+		 * that the device gives timeout response
+		 */
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 2: DESCRIPTION: Perform SNMP set on the MTA IP with Invalid MTA Community String");
+		LOGGER.info(
+			"STEP 2: ACTION: Execute SNMP set on the MIB(1.3.6.1.2.1.2.2.1.7.9.0) with interger 2 and Invalid MTA community string. ");
+		LOGGER.info("STEP 2: EXPECTED: The device should return timeout response");
+		LOGGER.info("**********************************************************************************");
+
+		// Execute SNMP get operation for the MIB MIB(1.3.6.1.2.1.2.2.1.7.9.0)
+
+		snmpGetResponse = BroadBandSnmpUtils.snmpSetOnEmtaForInvalidCommunityString(tapEnv, device,
+			BroadBandSnmpMib.EMTA_TELEPHONE_LINE_RESET_NEGATIVE_SCENARIO.getOid(), SnmpDataType.INTEGER,
+			"2", BroadBandSnmpMib.EMTA_TELEPHONE_LINE_RESET_NEGATIVE_SCENARIO.getTableIndex(), mtaAddress);
+		LOGGER.info("SNMP command output for MIB(1.3.6.1.2.1.2.2.1.7.9.0) : " + snmpGetResponse);
+
+		if (null != snmpGetResponse) {
+		    // Verify the response from the SNMP set is a Timeout response
+		    status = (snmpGetResponse.trim()).contains(BroadBandTestConstants.SNMP_TIME_OUT_RESPONSE)
+			    || (snmpGetResponse.trim()).isEmpty();
+		    if (!status) {
+			errorMessage = "Seems like the device is responding for the invalid Community String on the SNMP set on MIB(1.3.6.1.2.1.2.2.1.7.9.0) . ACTUAL : Response:  "
+				+ snmpGetResponse + errorMessage;
+			LOGGER.error(errorMessage);
+		    }
+		} else {
+		    status = false;
+		    errorMessage = "The device has returned some Junk value for the  MIB(1.3.6.1.2.1.2.2.1.7.9.0)";
+		    LOGGER.error(errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage,
+			false);
+	    } else {
+		errorMessage = "Skipping the tests as this device is not MTA provisioned.Marking the tests as not applicable ";
+		LOGGER.error(errorMessage);
+		for (int i = 1; i <= 2; i++) {
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, "s".concat(String.valueOf(i)),
+			    ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+		}
+	    }
+
+	} catch (Exception exception) {
+	    status = false;
+	    errorMessage = "Unable to validate the SNMP get and set with Invalid Community string for MTA"
+		    + exception.getMessage();
+	    LOGGER.error(errorMessage);
+	}
+
+    }
+
+    /**
+     * Verify setting the AAA server Primary & Secondary IP addresses (IPv4) for 2.4 5GHz
+     * <ol>
+     * 
+     * <li>Verify setting the AAA server Primary IP address (IPv4 ) for 2.4GHz.</li>
+     * <li>Verify setting the AAA server Secondary IP address (IPv4 ) for 2.4GHz.</li>
+     * <li>Verify setting the AAA server Primary IP address (IPv4 ) for 5GHz.</li>
+     * <li>Verify setting the AAA server Secondary IP address (IPv4 ) for 5GHz.</li>
+     * <li>POST-CONDITION 1: Verify all the AAA server Primary and Secondary Addresses for 2.4GHz are set back to
+     * default.</li>
+     * <li>POST-CONDITION 2: Verify all the AAA server Primary and Secondary Addresses for 5GHz are set back to default.
+     * </li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author prashant.mishra
+     * @refactor anandam
+     * 
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-SNMP-1010", testDecription = "Verify setting the AAA server Primary & Secondary IP addresses (IPv4) for 2.4 & 5GHz")
+    public void testToverifyConfiguringAaaAddressesforBothSsids(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SNMP-110";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	BroadBandResultObject snmpExecutionStatus = null;
+	// Variable Declaration Ends
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1010");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify setting the AAA server Primary & Secondary IP addresses (IPv4) for 2.4 & 5GHz");
+
+	LOGGER.info("TEST STEPS : ");
+
+	LOGGER.info("1. Verify setting the AAA server Primary IP address (IPv4 ) for 2.4GHz.");
+	LOGGER.info("2. Verify setting the AAA server Secondary IP address (IPv4 ) for 2.4GHz.");
+	LOGGER.info("3. Verify setting the AAA server Primary IP address (IPv4 ) for 5GHz.");
+	LOGGER.info("4. Verify setting the AAA server Secondary IP address (IPv4 ) for 5GHz.");
+	LOGGER.info(
+		"POST-CONDITION 1: Verify all the AAA server Primary and Secondary Addresses for 2.4GHz are set back to default.");
+	LOGGER.info(
+		"POST-CONDITION 2: Verify all the AAA server Primary and Secondary Addresses for 5GHz are set back to default.");
+	LOGGER.info("#######################################################################################");
+	try {
+
+	    stepNum = "S1";
+	    errorMessage = "Unable to configure the AAA server Primary IP address (IPv4 ) for 2.4GHz.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify setting the AAA server Primary IP address (IPv4 ) for 2.4GHz.");
+	    LOGGER.info("STEP 1: ACTION : Execute the webpa Set command with "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_RADIUSSERVERIPADDR + " and set the value.");
+	    LOGGER.info("STEP 1: EXPECTED : AAA server Primary IP address (IPv4 )should be set.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : AAA server Primary IP address (IPv4 ) for 2.4GHz is configured successfully.");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S2";
+	    errorMessage = "Unable to configure the AAA server Secondary IP address (IPv4 ) for 2.4GHz.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify setting the AAA server Secondary IP address (IPv4 ) for 2.4GHz.");
+	    LOGGER.info("STEP 2: ACTION : Execute the webpa Set command with "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_SECONDARY_RADIUSSERVERIPADDR
+		    + " and set the value.");
+	    LOGGER.info("STEP 2: EXPECTED : AAA server Secondary IP address (IPv4 )should be set.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_SECONDARY_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+	    if (status) {
+		LOGGER.info(
+			"STEP 2: ACTUAL : AAA server Secondary IP address (IPv4 ) for 2.4GHz is configured successfully.");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S3";
+	    errorMessage = "Unable to configure the AAA server Primary IP address (IPv4 ) for 5GHz.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Verify setting the AAA server Primary IP address (IPv4 ) for 5GHz.");
+	    LOGGER.info("STEP 3: ACTION : Execute the webpa Set command with "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_RADIUSSERVERIPADDR + " and set the value.");
+	    LOGGER.info("STEP 3: EXPECTED : AAA server Primary IP address (IPv4 )should be set.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+	    if (status) {
+		LOGGER.info(
+			"STEP 3: ACTUAL : AAA server Primary IP address (IPv4 ) for 5GHz is configured successfully.");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S4";
+	    errorMessage = "Unable to configure the AAA server Secondary IP address (IPv4 ) for 5GHz.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify setting the AAA server Secondary IP address (IPv4 ) for 5GHz.");
+	    LOGGER.info("STEP 4: ACTION : Execute the webpa Set command with "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_SECONDARY_RADIUSSERVERIPADDR
+		    + " and set the value");
+	    LOGGER.info("STEP 4: EXPECTED : AAA server Secondary IP address (IPv4 )should be set");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_SECONDARY_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : AAA server Secondary IP address (IPv4 ) for 5GHz is configured successfully.");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = errorMessage + exception.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+
+	    boolean executionStatusprimary = false;
+	    boolean executionStatusSecondary = false;
+	    status = false;
+	    errorMessage = "Unable to revert the value of AAA server Primary and Secondary Addresses for 2.4GHz to default.";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : DESCRIPTION : Verify all the AAA server Primary and Secondary Addresses for 2.4GHz are set back to default.");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : ACTION : Execute the SNMP Set command with OID: .1.3.6.1.4.1.17270.50.2.2.3.2.1.2.10005 & .1.3.6.1.4.1.17270.50.2.2.3.2.1.6.10005 and set the value to '0.0.0.0'");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : EXPECTED : AAA server Primary and Secondary Addresses for 2.4GHz should be set back to default value.");
+	    LOGGER.info("#######################################################################################");
+	    executionStatusprimary = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_NULL_IP);
+	    executionStatusSecondary = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_SECONDARY_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_NULL_IP);
+	    status = executionStatusprimary && executionStatusSecondary;
+	    errorMessage = " Failed to revert 2.4 GHz Radius server IP  to null";
+
+	    if (status) {
+		LOGGER.info(
+			"POST-CONDITION 1 : ACTUAL : AAA server Primary and Secondary Addresses for 2.4GHz are reverted to default successfully.");
+	    } else {
+		LOGGER.error("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+	    }
+	    status = false;
+	    errorMessage = "Unable to revert the value of AAA server Primary and Secondary Addresses for 5GHz to default.";
+	    executionStatusprimary = false;
+	    executionStatusSecondary = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "POST-CONDITION 2 : DESCRIPTION : Verify all the AAA server Primary and Secondary Addresses for 5GHz are set back to default.");
+	    LOGGER.info(
+		    "POST-CONDITION 2 : ACTION : Execute the SNMP Set command with OID: .1.3.6.1.4.1.17270.50.2.2.3.2.1.2.10105 & .1.3.6.1.4.1.17270.50.2.2.3.2.1.6.10105 and set the value to \"0.0.0.0\"");
+	    LOGGER.info(
+		    "POST-CONDITION 2 : EXPECTED : AAA server Primary and Secondary Addresses for 5GHz should be set back to default value.");
+	    LOGGER.info("#######################################################################################");
+	    executionStatusprimary = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_NULL_IP);
+	    executionStatusSecondary = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_SECONDARY_RADIUSSERVERIPADDR,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_NULL_IP);
+
+	    status = executionStatusprimary && executionStatusSecondary;
+	    errorMessage = " Failed to revert 5 GHz Radius server IP  to null";
+	    if (status) {
+		LOGGER.info(
+			"POST-CONDITION 2 : ACTUAL : AAA server Primary and Secondary Addresses for 5GHz are reverted to default successfully.");
+	    } else {
+		LOGGER.error("POST-CONDITION 2 : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SNMP-1010");
+
+    }
+    
+    /**
+     * Method to Upgrade device via HTTP Server Protocol
+     * 
+     * Verify Device Upgrade via SNMP IPv6 HTTP protocol.
+     * <ol>
+     * <li>Verify getting the latest image file name.</li>
+     * <li>Verify SNMP MIB docsDevSwServerTransportProtocol is set to HTTP.</li>
+     * <li>Verify SNMP MIB docsDevSwServerAddressType is set to IPv6 address type.</li>
+     * <li>Verify SNMP MIB docsDevSwServerAddress is set to HTTP CDL server address in Hex format</li>
+     * <li>Verify SNMP MIB docsDevSwFilename is set to latest firmware filename.</li>
+     * <li>Verify SNMP MIB docsDevSwAdminStatus is set for starting the download.</li>
+     * <li>Verify SNMP code download is in progress.</li>
+     * <li>Verify SNMP code download completed successfully.</li>
+     * <li>Verify CDL has happened successfully and new image is upgraded.</li>
+     * <li>POST CONDITION 1: Verify device firmaware is revert back.</li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Prashant Mishra
+     * @Refactor Athira
+     * 
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, enabled = true, alwaysRun = true, groups = {
+	    BroadBandTestGroup.SNMP_OPERATIONS })
+    @TestDetails(testUID = "TC-RDKB-CDL-5003")
+    public void testToverifyDeviceUpgradeOrDowngradeViaHttpPrtocol(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-CDL-503";
+	String stepNum = "";
+	String errorMessage = "";
+	String currentImageName = "";
+	String latestImageNameToUpgrade = "";
+	String snmpSetResponse = "";
+	String snmpGetResonse = "";
+	String snmpSetAdminStatus = "";
+	boolean status = false;
+	boolean hasLatestBuildChanged = false;
+	// Variable Declaration ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CDL-5003");
+	LOGGER.info("TEST DESCRIPTION: Verify Device Upgrade via SNMP IPv6 HTTP protocol.");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify getting the latest image file name.");
+	LOGGER.info("2. Verify SNMP MIB docsDevSwServerTransportProtocol is set to HTTP.");
+	LOGGER.info("3. Verify SNMP MIB docsDevSwServerAddressType is set to IPv6 address type.");
+	LOGGER.info("4. Verify SNMP MIB docsDevSwServerAddress is set to HTTP CDL server address in Hex format");
+	LOGGER.info("5. Verify SNMP MIB docsDevSwFilename is set to latest firmware filename.");
+	LOGGER.info("6. Verify SNMP MIB docsDevSwAdminStatus is set for starting the download.");
+	LOGGER.info("7. Verify SNMP code download is in progress.");
+	LOGGER.info("8. Verify SNMP code download completed successfully.");
+	LOGGER.info("9. Verify CDL has happened successfully and new image is upgraded.");
+	LOGGER.info("POST CONDITION 1. Verify device firmaware is revert back.");
+
+	LOGGER.info("#######################################################################################");
+	try {
+	    stepNum = "S1";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify getting the latest and current image name.");
+	    LOGGER.info("STEP 1: ACTION : Get latest and current image name.");
+	    LOGGER.info("STEP 1: EXPECTED : Both latest and current Image name should not be null.");
+	    LOGGER.info("**********************************************************************************");
+	    currentImageName = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT IMAGE OF THE DEVICE: " + currentImageName);
+
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestImageNameToUpgrade);
+	    if (CommonMethods.isNull(latestImageNameToUpgrade)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestImageNameToUpgrade=BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,  BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestImageNameToUpgrade);
+	    }
+
+	    LOGGER.info("LATEST IMAGE TO UPGRADE: " + latestImageNameToUpgrade);
+	    status = CommonMethods.isNotNull(currentImageName) && CommonMethods.isNotNull(latestImageNameToUpgrade)
+		    && !latestImageNameToUpgrade.equals(currentImageName);
+	    errorMessage = latestImageNameToUpgrade.equals(currentImageName)
+		    ? "Device is already having latest Image file."
+		    : "Unable to get latest and current image name.";
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Latest and current Image name obtained successfully.");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    stepNum = "S2";
+	    errorMessage = "snmpset on docsDevSwServerTransportProtocol(1.3.6.1.2.1.69.1.3.8.0) failed.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify SNMP MIB docsDevSwServerTransportProtocol is set to HTTP.");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.8.0 and value to be set as  2.");
+	    LOGGER.info("STEP 2: EXPECTED : SNMP MIB  docsDevSwServerTransportProtocol should be set to HTTP(2).");
+	    LOGGER.info("**********************************************************************************");
+	    snmpSetResponse = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_TWO);
+	    LOGGER.info("STEP 2: BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid() is "
+		    + BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid()
+		    + "BroadBandTestConstants.STRING_VALUE_TWO is " + BroadBandTestConstants.STRING_VALUE_TWO);
+	    LOGGER.info("SNMPSET RESPONSE FOR docsDevSwServerTransportProtocol: " + snmpSetResponse);
+	    if (snmpSetResponse.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
+		snmpGetResonse = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
+			BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid());
+		LOGGER.info("Step 2: BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid() is"
+			+ BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid());
+		LOGGER.info("SNMPGET RESPONSE FOR docsDevSwServerTransportProtocol: " + snmpGetResonse);
+		status = snmpGetResonse.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : SNMP MIB  docsDevSwServerTransportProtocol is set to HTTP(2).");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S3";
+	    errorMessage = "snmpset on docsDevSwServerAddressType(1.3.6.1.2.1.69.1.3.6.0) failed.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Verify SNMP MIB docsDevSwServerAddressType is set to IPv6 address type.");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.6.0 and value to be set as  2.");
+	    LOGGER.info(
+		    "STEP 3: EXPECTED : SNMP MIB  docsDevSwServerAddressType should be set to IPv6 address type(2).");
+	    LOGGER.info("**********************************************************************************");
+	    snmpSetResponse = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
+		    BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_TWO);
+	    LOGGER.info("STEP 3: BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid() is "
+		    + BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid()
+		    + "BroadBandTestConstants.STRING_VALUE_TWO is " + BroadBandTestConstants.STRING_VALUE_TWO);
+	    LOGGER.info("SNMP RESPONSE FOR docsDevSwServerAddressType: " + snmpSetResponse);
+	    if (snmpSetResponse.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
+		LOGGER.info("STEP 3: BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid() is "
+			+ BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid());
+		snmpGetResonse = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
+			BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid());
+		LOGGER.info("SNMP RESPONSE FOR docsDevSwServerAddressType: " + snmpGetResonse);
+		status = snmpGetResonse.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : SNMP MIB  docsDevSwServerAddressType is set to IPv6 address type(2).");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    stepNum = "S4";
+	    errorMessage = "snmpset on docsDevSwServerAddress(1.3.6.1.2.1.69.1.3.7.0) with server address protocol failed.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Verify SNMP MIB docsDevSwServerAddress is set to HTTP CDL server address in Hex format");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.7.0 and value to be set as  server address.");
+	    LOGGER.info(
+		    "STEP 4: EXPECTED : SNMP MIB  docsDevSwServerAddressType should be set to HTTP CDL server address in Hex format.");
+	    LOGGER.info("**********************************************************************************");
+	    status = FirmwareDownloadUtils.setServerAddressForSnmpCodeDownload(tapEnv, device);
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : SNMP MIB  docsDevSwServerAddressType is set to HTTP CDL server address in Hex format.");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S5";
+	    errorMessage = "snmpset on docsDevSwFilename(1.3.6.1.2.1.69.1.3.2.0) with latest image version failed.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify SNMP MIB docsDevSwFilename is set to latest firmware filename.");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.2.0 and value to be set as Image file name obtained in step 1.");
+	    LOGGER.info("STEP 5: EXPECTED : SNMP MIB  docsDevSwFilename should be set to latest firmware.");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("Step 5: BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid() is"
+		    + BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid()
+		    + "latestImageNameToUpgrade + BroadBandCdlConstants.BIN_EXTENSION" + latestImageNameToUpgrade
+		    + BroadBandCdlConstants.BIN_EXTENSION);
+	    snmpSetResponse = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
+		    BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid(), SnmpDataType.STRING,
+		    latestImageNameToUpgrade + BroadBandCdlConstants.BIN_EXTENSION);
+	    LOGGER.info("SNMPSET RESPONSE FOR docsDevSwFilename: " + snmpSetResponse);
+	    if (CommonMethods.patternMatcher(snmpSetResponse.toLowerCase(), latestImageNameToUpgrade.toLowerCase())) {
+		LOGGER.info("STEP 5: BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid() is "
+			+ BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid());
+		snmpGetResonse = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
+			BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid());
+		LOGGER.info("SNMPGET RESPONSE FOR docsDevSwFilename: " + snmpGetResonse);
+		status = CommonMethods.patternMatcher(snmpGetResonse.toLowerCase(),
+			latestImageNameToUpgrade.toLowerCase());
+	    }
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : SNMP MIB  docsDevSwFilename is set to latest firmware.");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    stepNum = "S6";
+	    errorMessage = "snmpset on docsDevSwAdminStatus(1.3.6.1.2.1.69.1.3.3.0) as 1 failed.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify SNMP MIB docsDevSwAdminStatus is set for starting the download.");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.3.0 and value to be set as  1.");
+	    LOGGER.info("STEP 6: EXPECTED : SNMP MIB  docsDevSwAdminStatus should be set to 1.");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid() is "
+		    + BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid());
+	    snmpSetAdminStatus = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
+		    BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+	    LOGGER.info("SNMPSET RESPONSE FOR snmpSetAdminStatus: " + snmpSetAdminStatus);
+	    if (snmpSetAdminStatus.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_1)) {
+		LOGGER.info("STEP 6: BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid() is "
+			+ BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid());
+		snmpGetResonse = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
+			BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid());
+		LOGGER.info("SNMPGET RESPONSE FOR snmpGetResonse: " + snmpGetResonse);
+		status = snmpGetResonse.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_1);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : SNMP MIB  docsDevSwAdminStatus is set to 1 successfully.");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    stepNum = "S7";
+	    errorMessage = "SNMP code download has not started.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify SNMP code download is in progress.");
+	    LOGGER.info("STEP 7: ACTION : Execute SNMP GET command with  oid as 1.3.6.1.2.1.69.1.3.4.0.");
+	    LOGGER.info("STEP 7: EXPECTED : SNMP should return the Integer value 1.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCodeDownloadUtils.isUgradeStatusInProgressUsingSnmpCommand(tapEnv, device);
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : SNMP code download via HTTP server started successfully.");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    stepNum = "S8";
+	    errorMessage = "SNMP code download has not completed successfully.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Verify SNMP code download completed successfully.");
+	    LOGGER.info("STEP 8: ACTION : Execute SNMP GET command with  oid as 1.3.6.1.2.1.69.1.3.4.0.");
+	    LOGGER.info("STEP 8: EXPECTED : SNMP should return the Integer value 3.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCodeDownloadUtils.verifySnmpCodeDownlaodCompletionStatus(tapEnv, device);
+	    hasLatestBuildChanged = status;
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : SNMP code download completed successfully.");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S9";
+	    errorMessage = "Image file name obtained in step 1 and image file name of device should be same.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify CDL has happened successfully and new image is upgraded.");
+	    LOGGER.info("STEP 9: ACTION : Execute SNMP GET command with  oid as 1.3.6.1.2.1.69.1.3.5");
+	    LOGGER.info("STEP 9: EXPECTED : SNMP should return the image file name of the device.");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("Waiting for 1 minute to verify upgraded image name after successful download.");
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    status = BroadBandCodeDownloadUtils.isImageUpgradedInDevice(tapEnv, device, latestImageNameToUpgrade);
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : Image upgraded successfully in device.");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    if (hasLatestBuildChanged) {
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		LOGGER.info("POST-CONDITION STEPS");
+		LOGGER.info("ImageName to revert :"+ currentImageName);
+		if (BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true)) {
+		    BroadBandPostConditionUtils.executePostConditionToTriggerCdl(device, tapEnv, hasLatestBuildChanged,
+			    BroadBandTestConstants.BOOLEAN_VALUE_FALSE, BroadBandTestConstants.CONSTANT_0,
+			    currentImageName);
+		}
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
     }
 
 }
