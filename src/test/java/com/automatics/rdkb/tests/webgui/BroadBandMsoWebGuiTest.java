@@ -32,6 +32,7 @@ import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.constants.BroadBandCdlConstants;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants.BAND_STEERING_PARAM;
@@ -41,15 +42,19 @@ import com.automatics.rdkb.constants.BroadBandWebPaConstants.RdkBBandSteeringPar
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
+import com.automatics.rdkb.enums.BroadBandManagementPowerControlEnum;
 import com.automatics.rdkb.utils.BroadBandBandSteeringUtils;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandMeshUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.cdl.BroadBandCodeDownloadUtils;
+import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandMgmtFramePwrControlUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.webui.BroadBandWebUiBaseTest;
 import com.automatics.snmp.SnmpDataType;
@@ -1707,4 +1712,789 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 
     }
     
+    /**
+     * Test Case # 1: Verify Management Frame Power Controls for 2.4 GHz & 5 GHz Radios using WebPA.
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>S1) Verify retrieving the management frame power level for 2.4 GHz Private WiFi Access Point (1).</li>
+     * <li>S2) Verify setting the management frame power level for 2.4 GHz Private WiFi Access Point (1) with valid
+     * value.</li>
+     * <li>S3) Verify the logging for setting the value for the 2.4 GHz Private WiFi Access Point's Management Frame (1)
+     * </li>
+     * <li>S4) Verify setting the management frame power level for 2.4 GHz Private WiFi Access Point (1) with invalid
+     * value 5.</li>
+     * <li>S5) Verify retrieving the management frame power level for 2.4 GHz Private WiFi Access Point (1) returns 0
+     * </li>
+     * <li>S6) Verify setting the management frame power level for 2.4 GHz Private WiFi Access Point (1) with invalid
+     * value -25</li>
+     * <li>S7) Verify retrieving the management frame power control for 2.4 GHz Private WiFi Access Point (1) returns
+     * -20</li>
+     * <li>S8) Verify retrieving the management frame power level for 5 GHz Private WiFi Access Point (2).</li>
+     * <li>S9) Verify setting the management frame power control for 5 GHz Private WiFi Access Point (2) with valid
+     * value.</li>
+     * <li>S10) Verify the logging for setting the value for the 5 GHz Private WiFi Access Point's management frame (2)
+     * </li>
+     * <li>S11) Verify setting the management frame power level for 5 GHz Private WiFi Access Point (2) with invalid
+     * value 5.</li>
+     * <li>S12) Verify retrieving the management frame power level for 5 GHz Private WiFi Access Point (2) returns 0
+     * </li>
+     * <li>S13) Verify setting the management frame power level for 5 GHz Private WiFi Access Point (1) with invalid
+     * value -25</li>
+     * <li>S14) Verify retrieving the management frame power level for 5 GHz Private WiFi Access Point (1) returns -20
+     * </li>
+     * <li>S15) Verify setting the power values for all the 2.4 GHz WiFi Access Point's Management Frames</li>
+     * <li>S16) Verify retrieving the power values for all the 2.4 GHz WiFi Access Point's Management Frames</li>
+     * <li>S17) Verify setting the power values for all the 5 GHz WiFi Access Point's Management Frames</li>
+     * <li>S18) Verify retrieving the power values for all the 5 GHz WiFi Access Point's Management Frames</li>
+     * <li>S19) Verify the 2.4 GHz WiFi Access Point's Management Frames power values are persisted after reboot.</li>
+     * <li>S20) Verify the 5 GHz WiFi Access Point's Management Frames power values are persisted after reboot.</li>
+     * <li>S21) Verify the 2.4 GHz WiFi Access Point's Management Frames power values are persisted after image upgrade.
+     * </li>
+     * <li>S22) Verify the 5 GHz WiFi Access Point's Management Frames power values are persisted after image upgrade.
+     * </li>
+     * <li>S23) Verify the 2.4 GHz WiFi Access Point's Management Frames power values are set to 0 on performing Factory
+     * Reset.</li>
+     * <li>S24) Verify the 5 GHz WiFi Access Point's Management Frames power values are set to 0 on performing Factory
+     * Reset.</li>
+     * </ol>
+     *
+     * @author BALAJI V
+     * @refactor Alan_Bivera
+     * 
+     * @param device
+     *            {@link Dut}
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.WIFI })
+    @TestDetails(testUID = "TC-RDKB-WIFI-5051")
+    public void testMgmtFramePwrControlWebPa(Dut device) {
+	String testCaseId = "TC-RDKB-WIFI-551";
+	boolean result = false;
+	boolean hasBuildChanged = false;
+	boolean hasFactoryReset = false;
+	String step = null;
+	String errorMessage = null;
+	String currentFirmwareVersion = null;
+	try {
+	    int stepNumber = 1;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-5051");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Verify Management Frame Power Controls for 2.4 GHz & 5 GHz Radios using WebPA.");
+
+	    /**
+	     * S1) Verify retrieving the management frame power level for 2.4 GHz Private WiFi Access Point (1).
+	     */
+	    step = "S" + stepNumber;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE IN RANGE -20 - 0.");
+	    String parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    String response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv, parameterName);
+	    errorMessage = "UNABLE TO VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT: ACTUAL VALUE = "
+		    + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandMgmtFramePwrControlUtils.verifyPowerLevelIsWithinRange(response);
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result ? "VERIFIED THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT: " + response
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S2) Verify setting the management frame power level for 2.4 GHz Private WiFi Access Point (1) with valid
+	     * value.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    String expectedValue = "-10";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT (VALID VALUE).");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET SUCCESSFULLY.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO SET THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    result = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv, parameterName,
+		    BroadBandTestConstants.CONSTANT_1, expectedValue);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S3) Verify the logging for setting the value for the 2.4 GHz Private WiFi Access Point's Management Frame
+	     * (1)
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY LOGGING FOR SETTING MANAGEMENT FRAME POWER CONTROL - 2.4GHz WIFI ACCESS POINT.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : LOG MESSAGE MUST BE PRESENT WITH THE VALUE SET.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO VERIFY THE LOG MESSAGE FOR SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    response = BroadBandCommonUtils.searchArmOrAtomLogFile(tapEnv, device,
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandTraceConstants.LOG_MESSAGE_MGMT_FRAME_POWER_CONTROL, expectedValue),
+		    BroadBandTestConstants.LOCATION_WIFI_LOG);
+	    result = CommonMethods.isNotNull(response);
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED LOGGING OF SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT - "
+				    + response
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S4) Verify setting the management frame power level for 2.4 GHz Private WiFi Access Point (1) with
+	     * invalid value 5.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "5";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT (INVALID VALUE 5).");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET SUCCESSFULLY.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO SET THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    result = BroadBandWiFiUtils.setWebPaParams(device, parameterName, expectedValue,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S5) Verify retrieving the management frame power level for 2.4 GHz Private WiFi Access Point (1) returns
+	     * 0
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "0";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT SET TO 0.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET TO 0.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv, parameterName);
+	    errorMessage = "UNABLE TO VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT: EXPECTED VALUE = "
+		    + expectedValue + ", ACTUAL VALUE = " + response;
+	    result = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(expectedValue);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT SET TO 0."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S6) Verify setting the management frame power level for 2.4 GHz Private WiFi Access Point (1) with
+	     * invalid value -25.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "-25";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT (INVALID VALUE -25).");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET SUCCESSFULLY.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO SET THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    result = BroadBandWiFiUtils.setWebPaParams(device, parameterName, expectedValue,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S7) Verify retrieving the management frame power level for 2.4 GHz Private WiFi Access Point (1) returns
+	     * 0
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "-20";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT SET TO -20.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET TO -20.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_1.getWebPaParamMgmtPower();
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv, parameterName);
+	    errorMessage = "UNABLE TO VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT: EXPECTED VALUE = "
+		    + expectedValue + ", ACTUAL VALUE = " + response;
+	    result = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(expectedValue);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT SET TO -20."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S8) Verify retrieving the management frame power level for 5GHz Private WiFi Access Point (2).
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE IN RANGE 0 - -20.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv, parameterName);
+	    errorMessage = "UNABLE TO VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT: ACTUAL VALUE = "
+		    + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandMgmtFramePwrControlUtils.verifyPowerLevelIsWithinRange(response);
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result ? "VERIFIED THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE ACCESS POINT: " + response
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S9) Verify setting the management frame power level for 5 GHz Private WiFi Access Point (2) with valid
+	     * value.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "-15";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT (VALID VALUE).");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET SUCCESSFULLY.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO SET THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    result = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv, parameterName,
+		    BroadBandTestConstants.CONSTANT_1, expectedValue);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE ACCESS POINT."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S10) Verify the logging for setting the value for the 5 GHz Private WiFi Access Point's Management Frame
+	     * (2)
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY LOGGING FOR SETTING MANAGEMENT FRAME POWER CONTROL - 5GHz WIFI ACCESS POINT.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : LOG MESSAGE MUST BE PRESENT WITH THE VALUE SET.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO VERIFY THE LOG MESSAGE FOR SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    response = BroadBandCommonUtils.searchArmOrAtomLogFile(tapEnv, device,
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandTraceConstants.LOG_MESSAGE_MGMT_FRAME_POWER_CONTROL, expectedValue),
+		    BroadBandTestConstants.LOCATION_WIFI_LOG);
+	    result = CommonMethods.isNotNull(response);
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED LOGGING OF SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE ACCESS POINT - "
+				    + response
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S11) Verify setting the management frame power level for 5 GHz Private WiFi Access Point (2) with invalid
+	     * value 5.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "5";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT (INVALID VALUE 5).");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET SUCCESSFULLY.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO SET THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    result = BroadBandWiFiUtils.setWebPaParams(device, parameterName, expectedValue,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE ACCESS POINT."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S12) Verify retrieving the management frame power level for 5 GHz Private WiFi Access Point (2) returns 0
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "0";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT SET TO 0.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET TO 0.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv, parameterName);
+	    errorMessage = "UNABLE TO VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT: EXPECTED VALUE = "
+		    + expectedValue + ", ACTUAL VALUE = " + response;
+	    result = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(expectedValue);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz PRIVATE ACCESS POINT SET TO 0"
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S13) Verify setting the management frame power level for 5 GHz Private WiFi Access Point (2) with invalid
+	     * value -25.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "-25";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT (INVALID VALUE -25).");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET SUCCESSFULLY.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    errorMessage = "UNABLE TO SET THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT TO: "
+		    + expectedValue;
+	    result = BroadBandWiFiUtils.setWebPaParams(device, parameterName, expectedValue,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED SETTING THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE ACCESS POINT."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S14) Verify retrieving the management frame power level for 5 GHz Private WiFi Access Point (2) returns 0
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = "-20";
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT SET TO -20.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE SET TO -20.");
+	    parameterName = BroadBandManagementPowerControlEnum.MGMT_PWR_CTRL_WIFI_AP_9.getWebPaParamMgmtPower();
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv, parameterName);
+	    errorMessage = "UNABLE TO VERIFY THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE WIFI ACCESS POINT: EXPECTED VALUE = "
+		    + expectedValue + ", ACTUAL VALUE = " + response;
+	    result = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(expectedValue);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz PRIVATE ACCESS POINT SET TO -20."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S15) Verify setting the power values for all the 2.4 GHz WiFi Access Point's Management Frames
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE POWER LEVELS FOR 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE SET SUCCESSFULLY.");
+	    List<BroadBandManagementPowerControlEnum> wifiAccessPoints = BroadBandMgmtFramePwrControlUtils
+		    .getWifiAccessPointsBasedOnRadio(false);
+	    BroadBandResultObject resultObj = BroadBandMgmtFramePwrControlUtils.setMgmtFramePowerLevelsWebPa(tapEnv,
+		    device, wifiAccessPoints, false);
+	    result = resultObj.isStatus();
+	    errorMessage = resultObj.getErrorMessage();
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result ? "SET THE MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz WIFI ACCESS POINTS." : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S16) Verify retrieving the power values for all the 2.4 GHz WiFi Access Point's Management Frames
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY RETRIEVING THE POWER LEVELS FOR 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE SAME AS THE VALUES SET IN PREVIOUS STEP.");
+	    resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+		    false);
+	    result = resultObj.isStatus();
+	    errorMessage = resultObj.getErrorMessage();
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz WIFI ACCESS POINTS."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S17) Verify setting the power values for all the 5 GHz WiFi Access Point's Management Frames
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY SETTING THE POWER LEVELS FOR 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE SET SUCCESSFULLY.");
+	    wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(true);
+	    resultObj = BroadBandMgmtFramePwrControlUtils.setMgmtFramePowerLevelsWebPa(tapEnv, device, wifiAccessPoints,
+		    false);
+	    result = resultObj.isStatus();
+	    errorMessage = resultObj.getErrorMessage();
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result ? "SET THE MANAGEMENT FRAME POWER LEVEL FOR 5GHz WIFI ACCESS POINTS." : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S18) Verify retrieving the power values for all the 5 GHz WiFi Access Point's Management Frames
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY RETRIEVING THE POWER LEVELS FOR 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE SAME AS THE VALUES SET IN PREVIOUS STEP.");
+	    resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+		    false);
+	    result = resultObj.isStatus();
+	    errorMessage = resultObj.getErrorMessage();
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTUAL : "
+			    + (result
+				    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 5GHz WIFI ACCESS POINTS."
+				    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+
+	    /**
+	     * S19) Verify the 2.4 GHz WiFi Access Point's Management Frames power values are persisted after reboot.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSISTED AFTER REBOOT.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE PERSISTED AFTER REBOOT.");
+	    boolean isRebooted = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+	    errorMessage = "UNABLE TO REBOOT THE DEVICE.";
+	    if (isRebooted) {
+		isRebooted = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+		errorMessage = "UNABLE TO VERIFY WEBPA PROCESS IS UP & RUNNING.";
+	    }
+	    if (isRebooted) {
+		wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(false);
+		resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+			false);
+		result = resultObj.isStatus();
+		errorMessage = "UNABLE TO VERIFY THE 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSIST ON REBOOT: "
+			+ resultObj.getErrorMessage();
+		tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_TESTED, errorMessage,
+			false);
+	    }
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 2.4GGHz WIFI ACCESS POINTS PERSIST ON REBOOT."
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * S20) Verify the 5 GHz WiFi Access Point's Management Frames power values are persisted after reboot.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSISTED ON REBOOT.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE PERSISTED ON REBOOT.");
+	    errorMessage = "UNABLE TO REBOOT THE DEVICE.";
+	    if (isRebooted) {
+		wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(true);
+		resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+			false);
+		result = resultObj.isStatus();
+		errorMessage = "UNABLE TO VERIFY THE 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSIST ON REBOOT: "
+			+ resultObj.getErrorMessage();
+		tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_TESTED, errorMessage,
+			false);
+	    }
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 5GHz WIFI ACCESS POINTS PERSIST ON REBOOT."
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * S21) Verify the 2.4 GHz WiFi Access Point's Management Frames power values are persisted after image
+	     * upgrade.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSISTED ON IMAGE UPGRADE.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE PERSISTED ON IMAGE UPGRADE.");
+	    currentFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("CURRENT FIRMWARE VERSION: " + currentFirmwareVersion);
+	    errorMessage = "UNABLE TO TRIGGER THE IMAGE UPGRADE ON THE DEVICE.";
+	    try {
+		hasBuildChanged = FirmwareDownloadUtils.getLatestAvailableImageAndTriggerCdl(tapEnv, device,
+			currentFirmwareVersion);
+		// In case the HTTP TR-181 CDL Fails, then trigger CDL using TFTP Docsis SNMP Command.
+		if (!hasBuildChanged) {
+		    LOGGER.error("HTTP TR-181 CDL FAILED; HENCE GOING TO TRIGGER CDL WITH TFTP DOCSIS SNMP COMMANDS.");
+		    hasBuildChanged = FirmwareDownloadUtils
+				    .triggerAndWaitForTftpCodeDownloadUsingDocsisSnmpCommand(tapEnv,
+					    device, tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false) + BroadBandCdlConstants.BIN_EXTENSION,
+					    false);
+		    
+		}
+	    } catch (TestException testException) {
+		// Log & Suppress the Exception
+		LOGGER.error(testException.getMessage());
+	    }
+
+	    if (hasBuildChanged) {
+		wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(false);
+		resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+			false);
+		result = resultObj.isStatus();
+		errorMessage = "UNABLE TO VERIFY THE 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSIST ON IMAGE UPGRADE: "
+			+ resultObj.getErrorMessage();
+		tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_TESTED, errorMessage,
+			false);
+	    }
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz WIFI ACCESS POINTS PERSIST ON IMAGE UPGRADE."
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * S22) Verify the 5 GHz WiFi Access Point's Management Frames power values are persisted after image
+	     * upgrade.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSISTED ON IMAGE UPGRADE.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE PERSISTED ON IMAGE UPGRADE.");
+	    errorMessage = "UNABLE TO PERFORM IMAGE UPGRADE ON THE DEVICE.";
+	    if (hasBuildChanged) {
+		wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(true);
+		resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+			false);
+		result = resultObj.isStatus();
+		errorMessage = "UNABLE TO VERIFY THE 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS PERSIST ON IMAGE UPGRADE: "
+			+ resultObj.getErrorMessage();
+		tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_TESTED, errorMessage,
+			false);
+	    }
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 5GHz WIFI ACCESS POINTS PERSIST ON IMAGE UPGRADE."
+			    : errorMessage));
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * S23) Verify the 2.4 GHz WiFi Access Point's Management Frames power values are set to 0 on performing
+	     * Factory Reset.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS RESET TO 0 ON FACTORY RESET.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE RESET TO 0.");
+	    errorMessage = "MARKING THIS STEP AS NOT TESTED AS FACTORY RESET COULD NOT BE PERFORMED ON THE DEVICE.";
+	    hasFactoryReset = BroadBandCommonUtils.performFactoryResetSnmp(tapEnv, device);
+	    if (!hasFactoryReset) {
+		hasFactoryReset = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
+	    }
+	    if (hasFactoryReset) {
+		errorMessage = "WEBPA PROCESS IS NOT COMING UP. HENCE BLOCKING THE EXECUTION.";
+		result = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+		LOGGER.info("WEBPA PROCESS IS UP & RUNNING: " + result);
+	    }
+	    if (result) {
+		wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(false);
+		resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+			true);
+		result = resultObj.isStatus();
+		errorMessage = "UNABLE TO VERIFY THE 2.4GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS RESET TO 0 ON FACTORY RESET: "
+			+ resultObj.getErrorMessage();
+		tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_TESTED, errorMessage,
+			false);
+	    }
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 2.4GHz WIFI ACCESS POINTS RESET TO 0 ON FACTORY RESET."
+			    : errorMessage));
+
+	    /**
+	     * S24) Verify the 5 GHz WiFi Access Point's Management Frames power values are set to 0 on performing
+	     * Factory Reset.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": VERIFY 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS RESET TO 0 ON FACTORY RESET.");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUES MUST BE RESET TO 0.");
+	    errorMessage = "MARKING THIS STEP AS NOT TESTED AS FACTORY RESET COULD NOT BE PERFORMED ON THE DEVICE.";
+	    if (hasFactoryReset) {
+		wifiAccessPoints = BroadBandMgmtFramePwrControlUtils.getWifiAccessPointsBasedOnRadio(false);
+		resultObj = BroadBandMgmtFramePwrControlUtils.verifyMgmtPowerLevels(tapEnv, device, wifiAccessPoints,
+			true);
+		result = resultObj.isStatus();
+		errorMessage = "UNABLE TO VERIFY THE 5GHz WIFI ACCESS POINT MANAGEMENT FRAMES POWER LEVELS RESET TO 0 ON FACTORY RESET: "
+			+ resultObj.getErrorMessage();
+		tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_TESTED, errorMessage,
+			false);
+	    }
+	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+		    + (result
+			    ? "VERIFIED THE VALUES OF MANAGEMENT FRAME POWER LEVEL FOR 5GHz WIFI ACCESS POINTS RESET TO 0 ON FACTORY RESET."
+			    : errorMessage));
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("EXCEPTION OCCURRED WHILE VALIDATING THE MANAGEMENT FRAME POWER CONTROL USING WEBPA: "
+		    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, result, errorMessage, true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    int postConditionStepNum = 0;
+
+	    result = false;
+	    String imageAfterTriggering = "";
+	    errorMessage = "Device is not accessible even after waiting for 10 mins.";
+	    String successMessage = "";
+	    postConditionStepNum++;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("POST-CONDITION " + postConditionStepNum
+		    + ": DESCRIPTION : Verify reverting device to original image.");
+	    LOGGER.info("POST-CONDITION " + postConditionStepNum
+		    + ": ACTION : Flash the original build on the device using HTTP/ TR-181.");
+	    LOGGER.info("POST-CONDITION " + postConditionStepNum
+		    + ": EXPECTED : Device should be upgraded to original image.");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+	    	if (CommonMethods.isSTBAccessible(device)){
+	    	errorMessage = "Unable to get current firmware version.";
+		    imageAfterTriggering = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+		    if (CommonMethods.isNotNull(imageAfterTriggering)
+			    && CommonMethods.isNotNull(currentFirmwareVersion)) {
+			if (!imageAfterTriggering.equals(currentFirmwareVersion)) {
+				result = BroadBandCodeDownloadUtils.triggerPreviousCodeDownload(device, tapEnv,
+					currentFirmwareVersion);
+			} else {
+			    successMessage = "Device Build hasn't changed so need to revert the device image.";
+			    result = true;
+			}
+		    }
+		}
+	    } catch (Exception e) {
+		errorMessage = "Exception occured during reverting the device back to original image." + errorMessage
+			+ e.getMessage();
+	    }
+	    if (result) {
+		LOGGER.info("POST-CONDITION " + postConditionStepNum + ": ACTUAL : " + successMessage);
+	    } else {
+		LOGGER.error("POST-CONDITION " + postConditionStepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    if (hasBuildChanged) {
+		result = false;
+		errorMessage = "Unable to perform device reactivation.";
+		postConditionStepNum++;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"POST-CONDITION " + postConditionStepNum + ": DESCRIPTION : Verify reactivating the device.");
+		LOGGER.info(
+			"POST-CONDITION " + postConditionStepNum + ": ACTION : Reactivate device using SNMP or Webpa.");
+		LOGGER.info("POST-CONDITION " + postConditionStepNum
+			+ ": EXPECTED : Device reactivation should be successful.");
+		LOGGER.info("**********************************************************************************");
+		try {
+		    result = BroadBandWiFiUtils.reactivateDeviceUsingWebpaOrSnmp(tapEnv, device);
+		} catch (Exception e) {
+		    errorMessage = "Exception occured during reactivating the device." + errorMessage + e.getMessage();
+		}
+		if (result) {
+		    LOGGER.info("POST-CONDITION " + postConditionStepNum
+			    + ": ACTUAL : Device reactivation performed succesfully.");
+		} else {
+		    LOGGER.error("POST-CONDITION " + postConditionStepNum + ": ACTUAL : " + errorMessage);
+		}
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("COMPLETED TEST CASE: TC-RDKB-WIFI-5051");
+    }
 }

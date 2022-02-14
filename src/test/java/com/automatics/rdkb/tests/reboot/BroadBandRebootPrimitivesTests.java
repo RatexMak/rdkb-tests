@@ -311,17 +311,15 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 	LOGGER.info(
 		"Step 2 : Verify device supports a reboot command with all device components and default delay and Reboot reason as WebPA-reboot");
 	LOGGER.info(
-		"Step 3 : Verify device supports a reboot command with all device components and default delay and Reboot reason as xFi-reboot.");
+		"Step 3 : Verify device supports a reboot command with all device components and default delay and Reboot reason as CSR-reboot.");
 	LOGGER.info(
-		"Step 4 : Verify device supports a reboot command with all device components and default delay and Reboot reason as CSR-reboot.");
+		"Step 4 : Verify device supports a reboot command with all device components and default delay and Reboot reason as unknown");
 	LOGGER.info(
-		"Step 5 : Verify device supports a reboot command with all device components and default delay and Reboot reason as unknown");
+		"Step 5 : Verify device supports a reboot command with all device components and 10 seconds delay and default reboot reason");
 	LOGGER.info(
-		"Step 6 : Verify device supports a reboot command with all device components and 10 seconds delay and default reboot reason");
+		"Step 6 : Verify device supports a reboot command with device component as Wifi and default reboot reason");
 	LOGGER.info(
-		"Step 7 : Verify device supports a reboot command with device component as Wifi and default reboot reason");
-	LOGGER.info(
-		"Step 8 : Verify device supports a reboot command with device component as Router and 10 seconds delay and default reboot reason.");
+		"Step 7 : Verify device supports a reboot command with device component as Router and 10 seconds delay and default reboot reason.");
 	LOGGER.info("**********************************************************************************");
 	try {
 	    /**
@@ -344,17 +342,6 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 
 	    /**
 	     * STEP 3 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH ALL DEVICE COMPONENTS AND DEFAULT DELAY AND REBOOT
-	     * REASON AS XFI-REBOOT
-	     */
-	    stepNumber++;
-	    webPAValueToVerify = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.DEVICE,
-		    BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.SOURCE,
-		    BroadBandTestConstants.XFI_REBOOT_REASON);
-	    executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
-		    BroadBandTestConstants.XFI_REBOOT_REASON, false);
-
-	    /**
-	     * STEP 4 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH ALL DEVICE COMPONENTS AND DEFAULT DELAY AND REBOOT
 	     * REASON AS CSR-REBOOT
 	     */
 	    stepNumber++;
@@ -365,7 +352,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 		    BroadBandTestConstants.CSR_REBOOT_REASON, false);
 
 	    /**
-	     * STEP 5 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH ALL DEVICE COMPONENTS AND DEFAULT DELAY AND REBOOT
+	     * STEP 4 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH ALL DEVICE COMPONENTS AND DEFAULT DELAY AND REBOOT
 	     * REASON AS UNKNOWN
 	     */
 	    stepNumber++;
@@ -376,7 +363,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 		    BroadBandTestConstants.UNKNOWN_REBOOT_REASON, false);
 
 	    /**
-	     * STEP 6 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH ALL DEVICE COMPONENTS AND 10 SECONDS DELAY AND
+	     * STEP 5 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH ALL DEVICE COMPONENTS AND 10 SECONDS DELAY AND
 	     * DEFAULT REBOOT REASON
 	     */
 	    stepNumber++;
@@ -386,7 +373,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 		    BroadBandTelemetryConstants.LAST_REBOOT_REASON_FOR_WEBPA_REBOOT, false);
 
 	    /**
-	     * STEP 7 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH DEVICE COMPONENT AS WIFI AND DEFAULT REBOOT REASON
+	     * STEP 6 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH DEVICE COMPONENT AS WIFI AND DEFAULT REBOOT REASON
 	     */
 	    stepNumber++;
 	    executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber,
@@ -394,7 +381,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 		    true);
 
 	    /**
-	     * STEP 8 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH DEVICE COMPONENT AS ROUTER AND DEFAULT REBOOT
+	     * STEP 7 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND WITH DEVICE COMPONENT AS ROUTER AND DEFAULT REBOOT
 	     * REASON
 	     */
 	    stepNumber++;
