@@ -41,6 +41,7 @@ import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
+import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -206,7 +207,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
     /**
      * Verify all wifi parameters for 2.4 and 5Ghz and update the step status
      * 
-     * @param settop
+     * @param device
      *            device under test
      * @param testId
      *            testid under current execution
@@ -219,18 +220,17 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	String stepNumber = null;
 	boolean status = false;
 	String errorMessage = null;
-	boolean isPacisFibreOrDSLDevice = false;
-	BroadBandResultObject broadBandResultObject = new BroadBandResultObject();
+	boolean isFibreOrDSLDevice = false;
 
 	if (DeviceModeHandler.isFibreDevice(device) || DeviceModeHandler.isDSLDevice(device)) {
-	    isPacisFibreOrDSLDevice = true;
-	    LOGGER.info("Is Fibre Device or DSL Device: " + isPacisFibreOrDSLDevice);
+	    isFibreOrDSLDevice = true;
+	    LOGGER.info("Is Fibre Device or DSL Device: " + isFibreOrDSLDevice);
 	}
 	// Get All the webpa params for wifi settings 2.4GHZ
 	Map<String, String> wifiParameterMap = BroadBandRestoreWifiUtils.getAllWifiParametersForRadioUsingWebpa(device,
 		tapEnv, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
 
-	stepNumber = stepNumbers[1];
+	stepNumber = stepNumbers[0];
 	status = false;
 	errorMessage = "The default security mode and encryption  are not WPA2-Personal and AES";
 	LOGGER.info("**********************************************************************************");
@@ -266,7 +266,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[2];
+	stepNumber = stepNumbers[1];
 	status = false;
 	errorMessage = "Network enabled status for 2.4GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -277,8 +277,18 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	try {
 	    if (isSnmpNeeded) {
-		status = BroadBandRestoreWifiUtils.verifySNMPValuesForWifiParameters(tapEnv, device, "1",
-			BroadBandSnmpMib.ECM_WIFI_2_4_SSID_STATUS);
+	    	String response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device, BroadBandSnmpMib.ECM_WIFI_2_4_SSID_STATUS.getOid());
+	    	LOGGER.info("RESPONSE OF SNMPGET IS :"+response);
+	    	
+	    	if (CommonMethods.isNotNull(response)){
+	    	    if (response.equals(BroadBandTestConstants.STRING_VALUE_ONE)) {
+	    		status = true;
+	    	    } else {
+	    		LOGGER.error("Value obtained from SNMP does not match the expected value.EXPECTED: " + BroadBandTestConstants.STRING_VALUE_ONE
+	    			+ " ACTUAL :" + response);
+	    	    }
+	    	}else
+	    	    	status = false;
 	    } else {
 		status = BroadBandCommonUtils.verifyRdkbWifiParameters(wifiParameterMap,
 			RdkBWifiParameters.SSID_STATUS_2GHZ_PRIVATE_WIFI);
@@ -296,7 +306,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[3];
+	stepNumber = stepNumbers[2];
 	status = false;
 	errorMessage = "Default channel selection mode  for 2.4GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -322,7 +332,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[4];
+	stepNumber = stepNumbers[3];
 	status = false;
 	errorMessage = "Default channel bandwidth  for 2.4GHz is not matching with expected ";
 	LOGGER.info("**********************************************************************************");
@@ -333,7 +343,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	try {
 	    status = BroadBandCommonUtils.verifyRdkbWifiParameters(wifiParameterMap,
-		    (isPacisFibreOrDSLDevice ? RdkBWifiParameters.OPERATING_CHANNEL_BANDWIDTH_2GHZ_FOR_FIBRE_DEVICES
+		    (isFibreOrDSLDevice ? RdkBWifiParameters.OPERATING_CHANNEL_BANDWIDTH_2GHZ_FOR_FIBRE_DEVICES
 			    : RdkBWifiParameters.OPERATING_CHANNEL_BANDWIDTH_2GHZ));
 
 	} catch (Exception e) {
@@ -350,7 +360,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[5];
+	stepNumber = stepNumbers[4];
 	status = false;
 	errorMessage = "Default network name enabled status for 2.4GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -377,7 +387,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[6];
+	stepNumber = stepNumbers[5];
 	status = false;
 	errorMessage = "Default guard interval  for 2.4GHz is not Auto";
 	LOGGER.info("**********************************************************************************");
@@ -401,7 +411,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[7];
+	stepNumber = stepNumbers[6];
 	status = false;
 	errorMessage = "Default network active status for 2.4GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -426,16 +436,16 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[8];
+	stepNumber = stepNumbers[7];
 	status = false;
 	errorMessage = "Default operating standard for 2.4GHz is not g,n";
 	LOGGER.info("**********************************************************************************");
 	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION:Verify the WiFi supported protocols for 2.4Ghz band  ");
 	LOGGER.info("STEP " + stepNumber + " : ACTION     :Execute Device.WiFi.Radio.10000.OperatingStandards");
 	LOGGER.info("STEP " + stepNumber
-		+ " : EXPECTED   :The supported protocols should be 'g,n' or 'b,g,n' for DSL Device");
+		+ " : EXPECTED   :The supported protocols should be 'g,n' or 'b,g,n' for DSL Device ");
 	LOGGER.info("**********************************************************************************");
-	try {
+		try {
 	    String operatingStandards = BroadbandPropertyFileHandler.getRDKBWifiParametersBasedOnModel(device,
 		    BroadBandPropertyKeyConstants.PROP_KEY_DEVICE_OPERATING_STANDARDS_2GHZ);
 	    if (CommonMethods.isNotNull(operatingStandards)) {
@@ -453,14 +463,14 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 
 	if (status) {
 	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : Default operating standard for 2.4GHz is g,n or b,g,n "
-		    + "for FIBRE.");
+		    + "for DSL Device as Expected.");
 	} else {
 	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	}
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[9];
+	stepNumber = stepNumbers[8];
 	status = false;
 	errorMessage = "Default radio status for 2.4GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -488,7 +498,8 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	wifiParameterMap = BroadBandRestoreWifiUtils.getAllWifiParametersForRadioUsingWebpa(device, tapEnv,
 		WiFiFrequencyBand.WIFI_BAND_5_GHZ);
 
-	stepNumber = stepNumbers[11];
+
+	stepNumber = stepNumbers[9];
 	status = false;
 	errorMessage = "The default security mode and encryption  are not WPA2-Personal and AES";
 	LOGGER.info("**********************************************************************************");
@@ -524,7 +535,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[12];
+	stepNumber = stepNumbers[10];
 	status = false;
 	errorMessage = "Network enabled status for 5GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -533,10 +544,21 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 		+ " : ACTION     : Execute Device.WiFi.SSID.10101.Status or .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10101");
 	LOGGER.info("STEP " + stepNumber + " : EXPECTED   : The status should be  \"Up\"");
 	LOGGER.info("**********************************************************************************");
+
 	try {
 	    if (isSnmpNeeded) {
-		status = BroadBandRestoreWifiUtils.verifySNMPValuesForWifiParameters(tapEnv, device, "1",
-			BroadBandSnmpMib.ECM_WIFI_5_SSID_STATUS);
+	    	String response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device, BroadBandSnmpMib.ECM_WIFI_5_SSID_STATUS.getOid());
+	    	LOGGER.info("RESPONSE OF SNMPGET IS :"+response);
+	    	
+	    	if (CommonMethods.isNotNull(response)){
+	    	    if (response.equals(BroadBandTestConstants.STRING_VALUE_ONE)) {
+	    		status = true;
+	    	    } else {
+	    		LOGGER.error("Value obtained from SNMP does not match the expected value.EXPECTED: " + BroadBandTestConstants.STRING_VALUE_ONE
+	    			+ " ACTUAL :" + response);
+	    	    }
+	    	}else
+	    	    	status = false;
 	    } else {
 		status = BroadBandCommonUtils.verifyRdkbWifiParameters(wifiParameterMap,
 			RdkBWifiParameters.SSID_STATUS_5GHZ_PRIVATE_WIFI);
@@ -554,7 +576,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[13];
+	stepNumber = stepNumbers[11];
 	status = false;
 	errorMessage = "Default channel selection mode  for 5GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -585,7 +607,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 		    "This test step is not applicable for DSL devices", false);
 	}
 
-	stepNumber = stepNumbers[14];
+	stepNumber = stepNumbers[12];
 	status = false;
 	errorMessage = "Default channel bandwidth  for 5GHz is not 80MHZ";
 	LOGGER.info("**********************************************************************************");
@@ -593,6 +615,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("STEP " + stepNumber + " : ACTION     :Execute Device.WiFi.Radio.10100.OperatingChannelBandwidth");
 	LOGGER.info("STEP " + stepNumber + " : EXPECTED   :The value should be 80MHz");
 	LOGGER.info("**********************************************************************************");
+	
 	try {
 	    String operatingStandards = BroadbandPropertyFileHandler.getRDKBWifiParametersBasedOnModel(device,
 		    BroadBandPropertyKeyConstants.PROP_KEY_DEVICE_OPERATING_CHANNEL_BANDWIDTH_5GHZ);
@@ -616,7 +639,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[15];
+	stepNumber = stepNumbers[13];
 	status = false;
 	errorMessage = "Default network name enabled status for 5GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -643,7 +666,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[16];
+	stepNumber = stepNumbers[14];
 	status = false;
 	errorMessage = "Default guard interval  for 5GHz is not Auto";
 	LOGGER.info("**********************************************************************************");
@@ -667,7 +690,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[17];
+	stepNumber = stepNumbers[15];
 	status = false;
 	errorMessage = "Default network active status for 5GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -692,7 +715,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[18];
+	stepNumber = stepNumbers[16];
 	status = false;
 	errorMessage = "Default operating standard for 5GHz is not a,n,ac";
 	LOGGER.info("**********************************************************************************");
@@ -701,6 +724,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("STEP " + stepNumber + " : EXPECTED   :The default operating standard be 'a,n,ac' ");
 	LOGGER.info("**********************************************************************************");
 	try {
+	    
 	    String operatingStandards = BroadbandPropertyFileHandler.getRDKBWifiParametersBasedOnModel(device,
 		    BroadBandPropertyKeyConstants.PROP_KEY_DEVICE_OPERATING_STANDARDS_5GHZ);
 	    if (CommonMethods.isNotNull(operatingStandards)) {
@@ -724,7 +748,7 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
 
-	stepNumber = stepNumbers[19];
+	stepNumber = stepNumbers[17];
 	status = false;
 	errorMessage = "Default radio status for 5GHz is not true";
 	LOGGER.info("**********************************************************************************");
@@ -748,4 +772,155 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	tapEnv.updateExecutionStatus(device, testId, "s" + stepNumber, status, errorMessage, false);
     }
+    
+    /**
+     * Test to Verify WiFi settings like SSID ,Network Security mode,Channel Selection Mode,Channel bandwidth,Network
+     * name enabled status,Guard interval ,Network active status,Supported Protocols,Radio Status and Radio Channel can
+     * be restored to default settings using SNMP command for doing WIFI settings reset.. 
+     * 
+     * <li>Precondition:Set all WIFI parametrs to a non default value using webpa</li>
+     * <li>STEP 1:Restore WiFi Settings using snmp</li> 
+     * <li>STEP 2:Verify Wifi network security mode for 2.4 GHz band</li>
+     * <li>STEP 3: Verify Wifi network enabled status for 2.4 GHz Wifi band</li>
+     * <li>STEP 4:Verify Wifi network channel selection mode for 2.4 GHz Wifi band.</li>
+     * <li>STEP 5:Verify Wifi network channel bandwidth for 2.4 GHz Wifi band</li>
+     * <li>STEP 6: Verify Wifi Broadcast network Name enabled status for 2.4 GHz Wifi band</li>
+     * <li>STEP 7: Verify Guard interval for 2.4 GHz Wifi network</li>;
+     * <li>STEP 8: Verify WiFi network active status for 2.4 GHz in Connection Status page</li>
+     * <li>STEP 9: Verify the WiFi supported protocols for 2.4Ghz band</li>
+     * <li>STEP 10: Verify the Radio status for 2.4GHZ band using WebPA</li>
+     * <li>STEP 11: Verify Wifi network security mode for 5 GHz band</li>
+     * <li>STEP 12: Verify Wifi network enabled status for 5 GHz Wifi band</li>
+     * <li>STEP 13: Verify Wifi network channel selection mode for 5 GHz Wifi band</li>
+     * <li>STEP 14:Verify Wifi network channel bandwidth for 5GHz Wifi band</li>
+     * <li>STEP 15: Verify Wifi Broadcast network Name enabled status for 5 GHz Wifi band</li>
+     * <li>STEP 16: Verify Guard interval for 5 GHz Wifi network</li>
+     * <li>STEP 17: Verify WiFi network active status for 5GHz in Connection Status page</li>
+     * <li>STEP 18: Verify the WiFi supported protocols for 5 Ghz band</li>
+     * <li>STEP 19: Verify the Radio status for 5GHZ band using WebPA</li>
+     * 
+     * @param device
+     *            {@link Dut}
+     * @author anandam.s
+     * @refactor yamini.s
+     */
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+    	    BroadBandTestGroup.WEBPA, BroadBandTestGroup.WIFI })
+        @TestDetails(testUID = "TC-RDKB-WIFI-RESTORE-1002")
+    public void testVerifyWifiDefaultSettingsAfterWiFiResetUsingSnmp(Dut device) {
+	// String to store the test case status
+	boolean status = false;
+	// Test case id
+	String testId = "TC-RDKB-WIFI-RESTORE-102";
+	// Test step number
+	String testStepNumber = "s1";
+	// String to store the error message
+	String errorMessage = null;
+
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: " + testId);
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Verify WiFi settings can be restored to default settings using snmp command for setting reset");
+	    
+	    LOGGER.info("Precondition:Set the below parametrs to a non  default value using webpa");
+	    LOGGER.info("1. SSID name");
+	    LOGGER.info("2. Network Security mode ");
+	    LOGGER.info("3. Network Enabled status");
+	    LOGGER.info("4. Channel Selection Mode ");
+	    LOGGER.info("5. Channel bandwidth");
+	    LOGGER.info("6. Netwok name enabled sttaus ");
+	    LOGGER.info("7. Guard interval");
+	    LOGGER.info("8. Network active status");
+	    LOGGER.info("9.Supported Protocols");
+	    LOGGER.info("10.Radio Status");
+	    LOGGER.info("11.Radio Channels");
+	    LOGGER.info("STEP 1:Restore WiFi Settings using snmp ");
+	    LOGGER.info("STEP 2:Verify Wifi network security mode for 2.4 GHz band ");
+	    LOGGER.info("STEP 3: Verify Wifi network enabled status for 2.4 GHz Wifi band");
+	    LOGGER.info("STEP 4:Verify Wifi network channel selection mode for 2.4 GHz Wifi band.");
+	    LOGGER.info("STEP 5:Verify Wifi network channel bandwidth for 2.4 GHz Wifi band");
+	    LOGGER.info("STEP 6: Verify Wifi Broadcast network Name enabled status for 2.4 GHz Wifi band ");
+	    LOGGER.info("STEP 7: Verify Guard interval for 2.4 GHz Wifi network ");
+	    LOGGER.info("STEP 8: Verify WiFi network active status for 2.4 GHz in Connection Status page");
+	    LOGGER.info("STEP 9: Verify the WiFi supported protocols for 2.4Ghz band ");
+	    LOGGER.info("STEP 10: Verify the Radio status for 2.4GHZ band using WebPA");
+	    LOGGER.info("STEP 11: Verify Wifi network security mode for 5 GHz band");
+	    LOGGER.info("STEP 12: Verify Wifi network enabled status for 5 GHz Wifi band");
+	    LOGGER.info("STEP 13: Verify Wifi network channel selection mode for 5 GHz Wifi band");
+	    LOGGER.info("STEP 14:Verify Wifi network channel bandwidth for 5GHz Wifi band");
+	    LOGGER.info("STEP 15: Verify Wifi Broadcast network Name enabled status for 5 GHz Wifi band");
+	    LOGGER.info("STEP 16: Verify Guard interval for 5 GHz Wifi network");
+	    LOGGER.info("STEP 17: Verify WiFi network active status for 5GHz in Connection Status page");
+	    LOGGER.info("STEP 18: Verify the WiFi supported protocols for 5 Ghz band");
+	    LOGGER.info("STEP 19: Verify the Radio status for 5GHZ band using WebPA");
+	    LOGGER.info("#######################################################################################");
+
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("Precondition:Set the below parametrs to a non  default value using webpa");
+	    LOGGER.info("1. SSID name");
+	    LOGGER.info("2. Network Security mode ");
+	    LOGGER.info("3. Network Enabled status");
+	    LOGGER.info("4. Channel Selection Mode ");
+	    LOGGER.info("5. Channel bandwidth");
+	    LOGGER.info("6. Netwok name enabled sttaus ");
+	    LOGGER.info("7. Guard interval");
+	    LOGGER.info("8. Network active status");
+	    LOGGER.info("9.Supported Protocols");
+	    LOGGER.info("10.Radio Status");
+	    LOGGER.info("11.Radio Channels");
+	    LOGGER.info("EXPECTED: All the test parameters must be set to non default values");
+	    LOGGER.info("#####################################################################################");
+	    try {
+		status = BroadBandRestoreWifiUtils.setNonDefaultValuesForAllWifiParameters(device, tapEnv);
+	    } catch (Exception e) {
+		errorMessage = e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("PRE-CONDITION : ACTUAL : PRE CONDITION EXECUTED SUCCESSFULLY");
+	    } else {
+		LOGGER.error("PRE-CONDITION : ACTUAL : " + errorMessage);
+		throw new TestException(RDKBTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	    }
+	    LOGGER.info("################### ENDING PRE-CONFIGURATIONS ###################");
+
+	    LOGGER.info("Waiting for 2 minutes for changes to get reflected");
+	    tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+
+	    testStepNumber = "s1";
+	    status = false;
+	    errorMessage = "Restore WIFI settings using snmp failed";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Restore WiFi Settings using SNMP ");
+	    LOGGER.info(
+		    "STEP 1: ACTION      : Set the SNMP snmpset -v2c -c udp6:[ecmip] .1.3.6.1.4.1.17270.50.2.1.1.1002.0 i 3 ");
+	    LOGGER.info("STEP 1: EXPECTED    : SNMP set must be success");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandRestoreWifiUtils.restoreDefaultWifiSettings(device, tapEnv, WIFI_RESTORE_METHOD.SNMP);
+	    if (status) {
+		LOGGER.info("STEP 1:ACTUAL : Wi-Fi Settings restored successfully");
+	    } else {
+		LOGGER.error("STEP 1:ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+	    LOGGER.info("Waiting for 6 minutes  for changes to get affected");
+	    tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTE_IN_MILLIS * 2);
+
+	    /** Steps 2 to 19 */
+	    verifyAllWifiParameters(device, testId, new String[] { "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9",
+		    "s10", "s11", "s12", "s13", "s14", "s15", "s16", "s17", "s18", "s19" }, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception occured during execution !!!!" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, testStepNumber, status, errorMessage,
+		    true);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-RESTORE-1002");
+    }
+
+    
 }

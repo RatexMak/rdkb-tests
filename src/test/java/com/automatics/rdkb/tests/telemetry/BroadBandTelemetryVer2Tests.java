@@ -30,6 +30,7 @@ import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants;
@@ -40,6 +41,7 @@ import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.cdl.BroadBandCodeDownloadUtils;
+import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.telemetry.BroadBandTelemetry2Utils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.tap.AutomaticsTapApi;
@@ -668,7 +670,7 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
      * @param device
      *            {@link Dut}
      * @param tapEnv
-     *            EcatsTapApi instance
+     *            AutomaticsTapApi instance
      * @param testCaseId
      *            Test case id
      * @param stepNumber
@@ -1261,5 +1263,184 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 	    LOGGER.info("################### ENDING POST-CONFIGURATIONS ###################");
 	}
     }
+    
+    /**
+	 * Verify telemetry 2 configurations persist over a device upgrade
+	 * <ol>
+	 * <li>Pre-condition : Validate if the T2 settings are already present else set
+	 * the settings and reboot the device</li>
+	 * <li>Verify if the 'telemetry2_0' process is up after enabling telemetry
+	 * 2.0</li>
+	 * <li>Verify if the log file /rdklogs/logs/telemetry_2.txt.0 is present in Arm
+	 * console</li>
+	 * <li>Verify if 'dcmscript.log' indicates T2 is enabled</li>
+	 * <li>Verify if T2 markers are getting uploaded to splunk</li>
+	 * <li>Verify if T2 logs are present in splunk</li>
+	 * <li>Validate if the splunk logs mandatory parameters</li>
+	 * <li>Verify from the splunk that telemetry upload is successful and in
+	 * appropriate format indicating that it is from T2 component</li>
+	 * <li>Upgrade the device to a release build</li>
+	 * <li>Verify if the 'telemetry2_0' process is up after enabling telemetry
+	 * 2.0</li>
+	 * <li>Verify if the log file /rdklogs/logs/telemetry_2.txt.0 is present in Arm
+	 * console</li>
+	 * <li>Verify if 'dcmscript.log' indicates T2 is enabled</li>
+	 * <li>Verify if T2 markers are getting uploaded to splunk</li>
+	 * <li>Verify if T2 logs are present in splunk</li>
+	 * <li>Validate if the splunk logs mandatory parameters</li>
+	 * <li>Verify from the splunk that telemetry upload is successful and in
+	 * appropriate format indicating that it is from T2 component</li>
+	 * <li>Post-condition : Revert the image back to the initial image
+	 * </ol>
+	 * 
+	 * @param device {@link Instanceof Dut}
+	 *
+	 * @author Sathurya Ravi
+	 * @refactor yamini.s
+	 */
+
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+	@TestDetails(testUID = "TC-RDKB-TELEMETRY-VER2-1003")
+	public void testToVerifyTelemetryVersion2OnImageUpgrade(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-TELEMETRY-VER2-103";
+		String errorMessage = null;
+		int stepNumber = 1;
+		boolean status = false;
+		String initialFirmwareVersion = null;
+		boolean hasLatestBuildChanged = false;
+		boolean telemetryVerOneFlag = false;
+		String latestImage = null;
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-TELEMETRY-VER2-1003");
+		LOGGER.info("TEST DESCRIPTION: Verify telemetry 2 configurations persist over a device upgrade");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info(
+				"Pre-condition : Validate if the T2 settings are already present else set the settings and reboot the device ");
+		LOGGER.info("Verify if the 'telemetry2_0' process is up after enabling telemetry 2.0");
+		LOGGER.info("Verify if the log file /rdklogs/logs/telemetry_2.txt.0 is present in Arm console");
+		LOGGER.info("Verify if 'dcmscript.log' indicates T2 is enabled");
+		LOGGER.info("Verify if T2 markers are getting uploaded to splunk");
+		LOGGER.info("Verify if T2 logs are present in splunk");
+		LOGGER.info("Validate if the splunk logs mandatory parameters");
+		LOGGER.info(
+				"Verify from the splunk that telemetry upload is successful and in appropriate format indicating that it is from T2 component");
+		LOGGER.info("Upgrade the device to a release build");
+		LOGGER.info("Verify if the 'telemetry2_0' process is up after enabling telemetry 2.0");
+		LOGGER.info("Verify if the log file /rdklogs/logs/telemetry_2.txt.0 is present in Arm console");
+		LOGGER.info("Verify if 'dcmscript.log' indicates T2 is enabled");
+		LOGGER.info("Verify if T2 markers are getting uploaded to splunk");
+		LOGGER.info("Verify if T2 logs are present in splunk");
+		LOGGER.info("Validate if the splunk logs mandatory parameters");
+		LOGGER.info(
+				"Verify from the splunk that telemetry upload is successful and in appropriate format indicating that it is from T2 component");
+		LOGGER.info("Post-condition : Revert the image back to the initial image ");
+		LOGGER.info("#######################################################################################");
+
+		try {
+
+			if (!isTelemetryVerTwoProcessUp) {
+				{
+					throw new TestException(RDKBTestConstants.PRE_CONDITION_ERROR
+							+ "PRE_CONDITION_FAILED :Telemetry 2 process is not running on the gateway "
+							+ device.getHostMacAddress());
+				}
+			}
+
+			/**
+			 * Steps 1 to 7
+			 */
+			executeCommonStepsForTelemetry2(device, stepNumber, testCaseId, tapEnv);
+
+			stepNumber = 8;
+			stepNum = "S" + stepNumber;
+			status = false;
+			errorMessage = "Unable to check device status";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : VERIFY TRIGGERED CDL SUCCESSFUL WITH LATEST FIRMWARE VERSION");
+			LOGGER.info(
+					"STEP " + stepNumber + ": ACTION : TRIGGER THE CDL WITH LATEST FIRMWARE VERSION USING TR-181/SNMP");
+			LOGGER.info("STEP " + stepNumber + ": EXPECTED : CDL MUST SUCCESSFUL WITH LATEST FIRMWARE VERSION.");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "UNABLE TO TRIGGER THE IMAGE UPGRADE ON THE DEVICE WITH LATEST FIRMWARE VERSION.";
+			initialFirmwareVersion = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+			if (CommonMethods.isNotNull(initialFirmwareVersion)) {
+				errorMessage = "Failed to get latest image from rdkportal for device model: " + device.getModel();
+
+				latestImage = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+				LOGGER.info("LATEST FIRMWARE VERSION: " + latestImage);
+				if (CommonMethods.isNull(latestImage)) {
+					LOGGER.info(
+							" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+					latestImage = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+							BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+					LOGGER.info("Latest Firmware version from property file: " + latestImage);
+				}
+
+				if (CommonMethods.isNotNull(latestImage) && initialFirmwareVersion.equalsIgnoreCase(latestImage)) {
+
+					latestImage = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+					LOGGER.info("LATEST FIRMWARE VERSION: " + latestImage);
+					if (CommonMethods.isNull(latestImage)) {
+						LOGGER.info(
+								" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+						latestImage = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+								BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+						LOGGER.info("Latest Firmware version from property file: " + latestImage);
+					}
+				}
+				if (CommonMethods.isNotNull(latestImage)) {
+					errorMessage = "Unable to trigger CDL for latest build - " + latestImage;
+					status = FirmwareDownloadUtils.performXconfHttpImageUpgrade(tapEnv, device, latestImage);
+				}
+			}
+			LOGGER.info("FLASHED THE LATEST BUILD ON THE DEVICE: " + status);
+
+			if (status) {
+				LOGGER.info("STEP " + stepNumber + ": ACTUAL :Successfully upgraded to latest version");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			/**
+			 * Steps 9 to 13
+			 */
+			executeCommonStepsForTelemetry2(device, ++stepNumber, testCaseId, tapEnv);
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("#######################################################################################");
+			LOGGER.info(
+					"POST-CONDITION 1 : DESCRIPTION : VERIFY TRIGGERED CDL SUCCESSFUL WITH EARLIER FIRMWARE VERSION");
+			LOGGER.info("POST-CONDITION 1 : ACTION : TRIGGER THE CDL WITH EARLIER FIRMWARE VERSION USING TR-181/SNMP");
+			LOGGER.info("POST-CONDITION 1 : EXPECTED : CDL MUST SUCCESSFUL WITH EARLIER FIRMWARE VERSION");
+			LOGGER.info("#######################################################################################");
+
+			status = BroadBandCodeDownloadUtils.triggerPreviousCodeDownload(device, tapEnv, initialFirmwareVersion);
+			if (status) {
+				LOGGER.info("POST-CONDITION: Build has been reverted back to original build successfully");
+			} else {
+				LOGGER.error("POST-CONDITION: Build has not been changed to previous build");
+			}
+			LOGGER.info("################### ENDING POST-CONFIGURATIONS ###################");
+
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-VER2-1003");
+	}
 
 }

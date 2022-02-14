@@ -44,6 +44,7 @@ import com.automatics.rdkb.constants.BroadBandSnmpConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.RDKBTestConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
@@ -1284,6 +1285,174 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	}
 
     }
+    
+	/**
+	 * Test to validate that the static IPv4 address can be retrieved using
+	 * rdkbRgDeviceConfigStaticIp (.1.3.6.1.4.1.17270.50.2.1.4.6.0)
+	 * 
+	 * Step 1 : Get the Static WAN IP of the device using SNMP get
+	 * 
+	 * Step 2: Validate the IP returned in the above response is in line with the
+	 * device logs
+	 * 
+	 * Step 3: Validate the IP returned in the above response is in line with the
+	 * TR-181 parameters
+	 * 
+	 * @param device The device to be used.
+	 * 
+	 * @author Sathurya Ravi
+	 * @refactor anandam
+	 */
+
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+			BroadBandTestGroup.SNMP_OPERATIONS })
+	@TestDetails(testUID = "TC-RDKB-SNMP-1024")
+	public void testValidateStaticIPv4Address(Dut device) {
+
+		String testCaseId = "TC-RDKB-SNMP-124";
+		String stepNumber = "s1";
+		boolean status = false;
+		String errorMessage = "";
+		String response = "";
+		String staticIpAddress = "";
+
+		try {
+
+			status = false;
+			stepNumber = "s1";
+			/**
+			 * Step 1 : Get the Static WAN IP of the device using SNMP get
+			 */
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION: Get the Static WAN IP of the device using SNMP get ");
+			LOGGER.info(
+					"STEP 1: ACTION: Excecute SNMP get on the MIB  rdkbRgDeviceConfigStaticIp (.1.3.6.1.4.1.17270.50.2.1.4.6.0)");
+			LOGGER.info("STEP 1: EXPECTED: The SNMP get response should return the static WAN IP of the device");
+			LOGGER.info("**********************************************************************************");
+
+			// Execute SNMP get operation for the MIB dkbRgDeviceConfigStaticIp
+			// (.1.3.6.1.4.1.17270.50.2.1.4.6.0)
+			response = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+					BroadBandSnmpMib.ECM_STATIC_WAN_IPV4.getOid(),
+					BroadBandSnmpMib.ECM_STATIC_WAN_IPV4.getTableIndex());
+			LOGGER.info("SNMP command output for dkbRgDeviceConfigStaticIp (.1.3.6.1.4.1.17270.50.2.1.4.6.0) : "
+					+ response);
+
+			if (CommonMethods.isNotNull(response)) {
+				// Validate whether the IP address returned is valid.
+				status = CommonMethods.isIpv4Address(response);
+				errorMessage = "The IP address returned is not in a proper format. Actual: " + response;
+				staticIpAddress = response;
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + ": ACTUAL: The IP address returned is :" + staticIpAddress);
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+				}
+
+			} else {
+				errorMessage = "The device has returned inappropriate value for the dkbRgDeviceConfigStaticIp (.1.3.6.1.4.1.17270.50.2.1.4.6.0). Actual: "
+						+ response;
+				LOGGER.error(errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, false);
+
+			status = false;
+			stepNumber = "s2";
+
+			/**
+			 * Step 2 : Validate the IP returned in the above response is in line with the
+			 * device logs
+			 */
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION: Validate the IP returned in the above response is in line with the device logs ");
+			LOGGER.info(
+					"STEP 2: ACTION: Parse through the output of the command cat /etc/ripd.conf by SSHing to the device and get the static WAN IP.");
+			LOGGER.info(
+					"STEP 2: EXPECTED: The parsed Static IP value and the value from the SNMP response should be the same");
+			LOGGER.info("**********************************************************************************");
+
+			// Execute the command cat /etc/ripd.conf by SSHing to the device and get the
+			// static WAN IP address
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_GET_STATIC_WAN_IP)
+					.trim();
+			if (CommonMethods.isIpv4Address(response)) {
+				// Validate whether the IP address from the logs and from SNMP
+				// are the same
+				status = response.equals(staticIpAddress);
+
+				errorMessage = "The static WAN IPv4 address from the device logs and SNMP are different. Actual: "
+						+ response;
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTUAL: The static WAN IPv4 address from the device logs and SNMP are Same");
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+				}
+
+			} else {
+				errorMessage = "The static WAN IPv4 address from the device logs is invalid. Actual: " + response;
+				LOGGER.error(errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			status = false;
+			stepNumber = "s3";
+
+			/**
+			 * Step 3 : Validate the IP returned in the above response is in line with the
+			 * TR-181 parameters
+			 */
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 3: DESCRIPTION: Validate the IP returned in the above response is in line with the TR-181 parameters ");
+			LOGGER.info(
+					"STEP 3: ACTION: Parse through the output of the command dmcli eRT getv Device.X_CISCO_COM_TrueStaticIP.IPAddress and get the value of the static WAN IP.");
+			LOGGER.info(
+					"STEP 3: EXPECTED: The parsed Static IP value and the value from the SNMP response should be the same");
+			LOGGER.info("**********************************************************************************");
+
+			// Execute the command dmcli eRT getv
+			// Device.X_CISCO_COM_TrueStaticIP.IPAddress by SSHing to the device
+			// and
+			// get the static WAN IP address
+
+			response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_STATIC_WAN_IP);
+			if (CommonMethods.isIpv4Address(response)) {
+
+				// Validate whether the IP address from the dmcli command and
+				// from SNMP are the same
+				status = response.equals(staticIpAddress);
+				errorMessage = "The static WAN IPv4 address from the dmcli command and SNMP are different. Actual: "
+						+ response;
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTUAL: The static WAN IPv4 address from from the dmcli command is valid ");
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+				}
+			} else {
+				status = false;
+				errorMessage = "The static WAN IPv4 address from the dmcli command is invalid. Actual: " + response;
+				LOGGER.error(errorMessage);
+			}
+
+		} catch (Exception exception) {
+			status = false;
+			errorMessage = "Unable to validate that static IPv4 address can be retrieved using  rdkbRgDeviceConfigStaticIp (.1.3.6.1.4.1.17270.50.2.1.4.6.0)"
+					+ exception.getMessage();
+			LOGGER.error(errorMessage);
+		} finally {
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+		}
+	}
+    
 
     /**
      * Verify Ethernet Related SNMP
@@ -1314,7 +1483,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 
 	testCaseId = "TC-RDK-SNMP-126";
 	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-XB-SNMP-1026");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1026");
 	LOGGER.info("TEST DESCRIPTION: Verify Ethernet Related SNMP");
 	LOGGER.info("TEST STEPS : ");
 	LOGGER.info("1. Verify ethernet port link speed using SNMP MIB.");
@@ -4596,5 +4765,567 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	    }
 	}
     }
+    
+	/**
+	 * Test to verify resetting the device through SNMP v3 is successful
+	 * 
+	 * <ol>
+	 * <li>PRE-CONDITION 1 : Disable codebig first enable using webpa</li>
+	 * <li>STEP 1 : Enable SNMPv3 support using RFC</li>
+	 * <li>STEP 2 : Verify SNMPv3 support parameter is enabled in dcmrfc.log
+	 * file</li>
+	 * <li>STEP 3 : Verify SNMPv3 support is enabled using webpa</li>
+	 * <li>STEP 4: Execute SNMP v3 SET command on
+	 * OID(1.3.6.1.4.1.17270.50.2.1.1.1.0) with set value as 4 to Reset the
+	 * device</li>
+	 * <li>STEP 5: Verify the device comes up after the reset operation is
+	 * complete</li>
+	 * <li>STEP 6 : Backup SecConsole log and PAMlog to nvram</li>
+	 * <li>STEP 7: Execute SNMP v3 SET command on
+	 * OID(1.3.6.1.4.1.17270.50.2.1.1.1002.0) with set value as 2 to Factory reset
+	 * the device</li>
+	 * <li>STEP 8: Verify the device comes up after the Factory reset operation is
+	 * complete</li>
+	 * <li>STEP 9 : Validate for after reboot Device led logs in SecConsole.txt.0
+	 * and PAMlog.txt.0</li>
+	 * <li>STEP 10 : Validate before reboot Device led logs in Backup
+	 * SecConsole.txt.0 and PAMlog.txt.0 In nvram</li>
+	 * </ol>
+	 * @author Sathya Kishore
+	 * @refactor Athira
+	 * 
+	 * @param device The device to be used.
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+			BroadBandTestGroup.SNMP_OPERATIONS })
+	@TestDetails(testUID = "TC-RDKB-SNMP-1014")
+	public void snmpV3TestToResetTheDevice(Dut device) {
+		String testCaseId = "TC-RDKB-SNMP-114";
+		String stepNumber = "s1";
+		boolean status = false; // stores the test status
+		String errorMessage = null; // stores the error message
+		String response = null;
+		int stepNum = 1;
+		boolean isFactoryReset = false;
+		Map<String, String> backupMap = null;
+		try {
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STARTING TEST CASE : TC-RDKB-SNMP-1014");
+			LOGGER.info(
+					"TEST DESCRIPTION: Test to Verify resetting and Factory resetting the device through SNMP v3 is successful");
+			LOGGER.info("PRE-CONDITION 1 : Disable codebig first enable using webpa");
+			LOGGER.info("STEP 1 : Enable SNMPv3 support using RFC");
+			LOGGER.info("STEP 2 : Verify SNMPv3 support parameter is enabled in dcmrfc.log file");
+			LOGGER.info("STEP 3 : Verify SNMPv3 support is enabled using webpa");
+			LOGGER.info(
+					"STEP 4: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1.0) with set value as 4 to Reset the device");
+			LOGGER.info("STEP 5: Verify the device comes up after the reset operation is complete");
+			LOGGER.info("STEP 6 : Backup SecConsole log and PAMlog to nvram");
+			LOGGER.info(
+					"STEP 7: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1002.0) with set value as 2 to Factory reset the device");
+			LOGGER.info("STEP 8: Verify the device comes up after the Factory reset operation is complete");
+			LOGGER.info("STEP 9 : Validate for after reboot Device led logs in SecConsole.txt.0 and PAMlog.txt.0");
+			LOGGER.info(
+					"STEP 10 : Validate before reboot Device led logs in Backup SecConsole.txt.0 and PAMlog.txt.0 In nvram");
+			LOGGER.info("POST-CONDITION 1: Reactivate the Device");
+			LOGGER.info("POST-CONDITION 2: Delete Temporary Files in given path");
+			LOGGER.info("POST-CONDITION 3: VERIFY THE XFINITYWIFI STATUS IS ENABLED");
+			LOGGER.info("#######################################################################################");
 
+			String snmpOutput = null; // stores SNMP output
+			boolean isSNMPv3Enabled = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SNMPV3_SUPPORT, BroadBandTestConstants.TRUE,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			LOGGER.info("################################# STARTING PRE-CONFIGURATIONS #############################");
+			BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv,
+					BroadBandTestConstants.CONSTANT_1);
+			LOGGER.info("############################# COMPLETED PRE-CONFIGURATIONS #############################");
+
+			if (!isSNMPv3Enabled) {
+				stepNumber = "S" + stepNum;
+				status = false;
+				LOGGER.info("******************************************************************************");
+				LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Enable SNMPv3 support using RFC");
+				LOGGER.info("STEP " + stepNum + ": ACTION: 1. update RFC server url 2. post payload data 3. reboot");
+				LOGGER.info("STEP " + stepNum + ": EXPECTED: Device rebooted after posting rfc profile successfully");
+				LOGGER.info("******************************************************************************");
+				errorMessage = "Failed to enable SNMPv3 support using RFC";
+				status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+						BroadBandTestConstants.SNMPV3, true);
+				status = true;
+				if (status) {
+					LOGGER.info("STEP " + stepNum
+							+ ": ACTUAL: Successfully posted the payload data to enable SNMPv3 support & rebooted the device to get the latest RFC configuration ");
+				} else {
+					LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+				stepNum++;
+				stepNumber = "S" + stepNum;
+				status = false;
+				LOGGER.info("******************************************************************************");
+				LOGGER.info("STEP " + stepNum
+						+ ": DESCRIPTION: Verify SNMPv3 support parameter is enabled in dcmrfc.log file");
+				LOGGER.info("STEP " + stepNum
+						+ ": ACTION: Execute command: grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support value=true\" /rdklogs/logs/dcmrfc.log");
+				LOGGER.info("STEP " + stepNum
+						+ ": EXPECTED: log message of SNMPv3 support value = true in dcmrfc.log file should present");
+				LOGGER.info("******************************************************************************");
+				errorMessage = "Failed to get log message of SNMPv3 support value = true in dcmrfc.log file";
+
+				try {
+					response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+							BroadBandTraceConstants.LOG_MESSAGE_SNMPV3_SUPPORT,
+							BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+							BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+
+					status = CommonMethods.isNotNull(response)
+							&& CommonUtils.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.TRUE);
+				} catch (Exception e) {
+					LOGGER.error(
+							"Exception occured while verifying log message of SNMPv3 support value = true in dcmrfc.log file"
+									+ e.getMessage());
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNum + ": ACTUAL: Successfully enabled the SNMPv3 support using RFC");
+				} else {
+					LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+				stepNum++;
+				stepNumber = "S" + stepNum;
+				status = false;
+				LOGGER.info("******************************************************************************");
+				LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Verify SNMPv3 support is enabled using webpa ");
+				LOGGER.info("STEP " + stepNum
+						+ ": ACTION: Execute webpa command to get value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support");
+				LOGGER.info("STEP " + stepNum + ": EXPECTED: Webpa get request is success and parameter value is true");
+				LOGGER.info("******************************************************************************");
+				errorMessage = "Failed to get the response for webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V3Support";
+
+				try {
+					((Device) device).setErouterIpAddress(CommonUtils.getDeviceIpAddressFromBhc(device,
+							RDKBTestConstants.DEVICE_IP_ADDRESS_TYPE_ESTB));
+					response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_SNMPV3_SUPPORT);
+					status = CommonMethods.isNotNull(response)
+							&& response.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+				} catch (Exception e) {
+					LOGGER.error("Exception occured while verifying SNMPv3 value using webpa" + e.getMessage());
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNum
+							+ ": ACTUAL: Successfully verified the SNMPv3 support is enabled using webpa operation");
+				} else {
+					LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			} else {
+				errorMessage = "Snmpv3 is by default enabled. So step 1-3 is not applicable as SNMPv3 is already enabled in the device ";
+				int stepNo = 1;
+				while (stepNo <= 3) {
+					stepNumber = "s" + stepNo;
+					errorMessage += ",Marked as Not Applicable";
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+					stepNo++;
+				}
+
+			}
+
+			/**
+			 * Step 4 : Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1.0)
+			 * with set value as 4 to Reset the device
+			 * 
+			 */
+
+			stepNum = BroadBandTestConstants.CONSTANT_4;
+			stepNumber = "S" + stepNum;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNum
+					+ "DESCRIPTION: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1.0) with set value as 4 to Reset the device");
+			LOGGER.info("STEP " + stepNum
+					+ "ACTION: Execute SNMP v3 SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1.0) with set value as 4 to Reset the device");
+			LOGGER.info("STEP " + stepNum
+					+ "EXPECTED: On executing this command, SNMP should return the Integer value 4 and Reset should be successful and devivce should come up");
+			LOGGER.info("**********************************************************************************");
+			System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+			snmpOutput = BroadBandSnmpUtils.retrieveSnmpV3SetOutputWithDefaultIndexOnRdkDevices_V3(device, tapEnv,
+					BroadBandSnmpMib.ESTB_REBOOT_DEVICE.getOid(), SnmpDataType.INTEGER,
+					BroadBandTestConstants.STRING_VALUE_4);
+			status = CommonMethods.isNotNull(snmpOutput) && snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_4);
+			errorMessage = "Unable to reset the device using the SNMP v3 Command";
+			if (status) {
+				status = BroadBandCommonUtils.verifySTBRebootAndStbAccessible(device, tapEnv);
+				errorMessage = "Device reset does not happen after successful SNMP v3 Command Execution";
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNum + ": ACTUAL: Resetting the device using SNMP v3 command is successful");
+			} else {
+				LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+			/** Step 5 : Backup Secconsole,Pamlog logs to given path */
+			backupMap = helperMethodToBackupFiles(device, tapEnv, testCaseId, BroadBandTestConstants.CONSTANT_5);
+
+			/**
+			 * Step 6 : Execute SNMP v3 SET command on
+			 * OID(1.3.6.1.4.1.17270.50.2.1.1.1002.0) with set value as 2 to Factory reset
+			 * the device
+			 * 
+			 */
+			stepNum = BroadBandTestConstants.CONSTANT_6;
+			stepNumber = "S" + stepNum;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNum
+					+ "DESCRIPTION: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1002.0) with set value as 2 to Factory reset the device");
+			LOGGER.info("STEP " + stepNum
+					+ "ACTION: Execute SNMP v3  SET command on OID(1.3.6.1.4.1.17270.50.2.1.1.1002.0) with set value as 2 to Factory reset the device");
+			LOGGER.info("STEP " + stepNum
+					+ "EXPECTED: On executing this command, SNMP should return the Integer value 2 and Factory Reset should be successful and device should come up");
+			LOGGER.info("**********************************************************************************");
+			System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
+
+			snmpOutput = BroadBandSnmpUtils.retrieveSnmpV3SetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+					BroadBandSnmpMib.ESTB_FACTORY_RESET_DEVICE.getOid(), SnmpDataType.INTEGER,
+					BroadBandTestConstants.STRING_VALUE_ONE);
+			LOGGER.info("snmpOutput after FR the device " + snmpOutput);
+
+			status = CommonMethods.isNotNull(snmpOutput) && snmpOutput.equals(BroadBandTestConstants.STRING_VALUE_ONE);
+			errorMessage = "Unable to factory reset the device using the SNMP v3 Command";
+			if (status) {
+				// After successful Factory reset, device should not be accessible, to ensure
+				// device started rebooting
+
+				status = BroadBandCommonUtils.verifySTBRebootAndStbAccessible(device, tapEnv);
+
+				errorMessage = "Device Factory reset does not happen after successful SNMP v3 Command Execution";
+
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNum
+						+ ": ACTUAL: Factory Resetting the device using SNMP v3 command is successful");
+				isFactoryReset = status;
+			} else {
+				LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+			/** Step 7 and Step 8 To validate LED Logs before and after FR */
+
+			helperMethodToValidateLedLogs(device, tapEnv, backupMap, testCaseId, BroadBandTestConstants.CONSTANT_7);
+
+		} catch (Exception testException) {
+			errorMessage = "Exception occurred while trying to validate resetting the device using SNMP v3: "
+					+ testException.getMessage();
+			LOGGER.error(errorMessage);
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+		} finally {
+			System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V2.toString());
+			BroadBandSnmpUtils.checkSnmpIsUp(tapEnv, device);
+			if (isFactoryReset) {
+				LOGGER.info("### POST-CONDITION ### BEGIN BROAD BAND DEVICE REACTIVATION.");
+				BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
+				LOGGER.info("### POST-CONDITION ### END BROAD BAND DEVICE REACTIVATION.");
+			}
+			if (backupMap != null) {
+				BroadBandPostConditionUtils.executePostCondtDeleteTemporaryFilesInGateway(device, tapEnv, 2, backupMap);
+			}
+
+			/**
+			 * POST-CONDITION 2 : ENABLE THE PUBLIC WIFI
+			 */
+
+			BroadBandPostConditionUtils.executePostConditionToEnableOrDisablePublicWifiBasedOnStbProperty(device,
+					tapEnv, BroadBandTestConstants.CONSTANT_2);
+
+		}
+	}
+	
+	/**
+	 * Helper Method to validate Led logs before and after FR
+	 * 
+	 * @param device     Dut instance
+	 * @param tapEnv     AutomaticsTapApi instance
+	 * @param backupMap  Map<String, String> backUpMap
+	 * @param testCaseId String testCaseId
+	 * @param stepNum    String stepNum
+	 * @refactor Athira
+	 */
+	public static void helperMethodToValidateLedLogs(Dut device, AutomaticsTapApi tapEnv, Map<String, String> backupMap,
+			String testCaseId, int stepNum) {
+		String stepNumber = "S" + stepNum;
+		String errorMessage = "Unable to validate device led logs";
+		boolean status = false;
+
+		String pamSearchLog = null;
+		String pamSearchLogBeforeFR = null;
+		String pamSearchLogAfterBoot = null;
+		String pamSearchLogAR = null;
+		Boolean isSpecificDeviceledlogs = null;
+		isSpecificDeviceledlogs = BroadbandPropertyFileHandler.isSpecificDeviceledlogsAvailable(device);
+
+		String consoleLog = BroadBandCommandConstants.LOG_FILE_SEC_CONSOLE
+				.replace(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING);
+		String pamLog = BroadBandCommandConstants.CMD_TO_GET_CONFIG_DOWNLOAD_DETAILS
+				.replace(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING);
+		String currentPartnerIdName = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
+		LOGGER.info("Current Partner ID of the device Retrieved via WEBPA is :" + currentPartnerIdName);
+
+		try {
+			pamSearchLog = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+					BroadBandTestConstants.PROP_KEY_PAMSEARCHLOG);
+		} catch (Exception e) {
+			pamSearchLog = BroadBandTraceConstants.LOG_MESSAGE_WHITE_BLINK_AFTER_BOOT_PAMLOG;
+			LOGGER.info("pamSearchLog taking as" + BroadBandTraceConstants.LOG_MESSAGE_WHITE_BLINK_AFTER_BOOT_PAMLOG
+					+ " as no device specific value found");
+		}
+
+		Boolean isDeviceledlogs = null;
+		isDeviceledlogs = BroadbandPropertyFileHandler.isDeviceledlogsAvailable(device);
+
+		if (isDeviceledlogs) {
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : Validate for after reboot Device led logs in SecConsole.txt.0 and PAMlog.txt.0");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : check : SecConsole.txt.0 -> \"Alert! RDK Event will be processed once Device is online; Received WHITE Blink\" ,\"Changing Led to White\" ,PAMlog ->Front LED Transition: WHITE LED will blink, Reason: CaptivePortal_MODE");
+			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Successfully validated Led device logs");
+			LOGGER.info("**********************************************************************************");
+			if (CommonMethods.isNotNull(currentPartnerIdName)
+					&& BroadBandCommonUtils.verifySpecificPartnerAvailability(currentPartnerIdName)) {
+				errorMessage = "THIS STEP IS NOT APPLICABLE FOR SPECIFIC PARTNER Mentioned in Porperty file";
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber + ": THIS STEP IS NOT APPLICABLE FOR SPECIFIC PARTNER Mentioned in Porperty file");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			} else {
+				try {
+
+					if (isSpecificDeviceledlogs) {
+
+						status = BroadBandCommonUtils.doesFileExistWithinGivenTimeFrameInArm(tapEnv, device,
+								BroadBandCommandConstants.CMD_TO_GET_CONFIG_DOWNLOAD_DETAILS,
+								BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS)
+								&& CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+										pamSearchLog, BroadBandCommandConstants.CMD_TO_GET_CONFIG_DOWNLOAD_DETAILS,
+										BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+										BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+					} else {
+
+						try {
+
+							pamSearchLogAR = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(
+								device, BroadBandTestConstants.PROP_KEY_PAMSEARCHALERT);
+							} catch (Exception e) {
+								pamSearchLogAR = BroadBandTraceConstants.LOG_MESSAGE_WHITE_BLINK_AFTER_BOOT_SECCONSOLE;
+							LOGGER.info(
+								"pamSearchLog taking as" + BroadBandTraceConstants.LOG_MESSAGE_WHITE_BLINK_AFTER_BOOT_SECCONSOLE + " as no device specific value found");
+							}
+
+						status = BroadBandCommonUtils.doesFileExistWithinGivenTimeFrameInArm(tapEnv, device,
+								BroadBandCommandConstants.LOG_FILE_SEC_CONSOLE,
+								BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS)
+								&& CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, pamSearchLogAR,
+										BroadBandCommandConstants.LOG_FILE_SEC_CONSOLE,
+										BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+										BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS))
+								&& CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+										BroadBandTraceConstants.LOG_MESSAGE_LED_CHANGE_WHITE_AFTER_BOOT_SECCONSOLE,
+										BroadBandCommandConstants.LOG_FILE_SEC_CONSOLE,
+										BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+										BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS))
+								&& BroadBandCommonUtils.doesFileExistWithinGivenTimeFrameInArm(tapEnv, device,
+										BroadBandCommandConstants.CMD_TO_GET_CONFIG_DOWNLOAD_DETAILS,
+										BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+										BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS)
+								&& CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+										pamSearchLog, BroadBandCommandConstants.CMD_TO_GET_CONFIG_DOWNLOAD_DETAILS,
+										BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+										BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+
+					}
+				} catch (Exception e) {
+					LOGGER.info("Exception caught while validating logs " + e.getMessage());
+				}
+				if (status) {
+					status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device)
+							&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+				}
+				if (status) {
+
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTUAL : Successfully verified log messages in SecConsole.txt.0 and PAMlog.txt.0 after device boots");
+				} else {
+					LOGGER.info("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
+
+				LOGGER.info("******************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			}
+
+			stepNum++;
+			stepNumber = "S" + stepNum;
+			errorMessage = "Unable to validate device led logs";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : Validate before reboot Device led logs in Backup SecConsole.txt.0 and PAMlog.txt.0 In nvram");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : check : BackupSecConsole.txt.0 -> \"Front LED Transition: Changing Led to Green\" ,\"Front LED Transition :  Mode -----> Blink\" ,BackupPAMlog.txt.0 ->\"Front LED Transition: GREEN LED will blink, Reason: Factory Reset\" ");
+			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Successfully validated Led device logs");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (isSpecificDeviceledlogs) {
+
+					try {
+						pamSearchLog = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+								BroadBandTestConstants.PROP_KEY_PAMLOG);
+					} catch (Exception e) {
+						pamSearchLog = BroadBandTraceConstants.LOG_MESSAGE_LED_CHANGE_GREEN_BEFORE_FR_PAMLOG;
+						LOGGER.info("pamSearchLog taking as"
+								+ BroadBandTraceConstants.LOG_MESSAGE_LED_CHANGE_GREEN_BEFORE_FR_PAMLOG
+								+ " as no device specific value found");
+					}
+
+					status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+							pamSearchLog, backupMap.get(pamLog), BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+							BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+				} else {
+
+					try {
+						pamSearchLog = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+								BroadBandTestConstants.PROP_KEY_PAMLOG_FR);
+						pamSearchLogBeforeFR = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(
+								device, BroadBandTestConstants.PROP_KEY_PAMLOG_BFR);
+
+						pamSearchLogAfterBoot = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(
+								device, BroadBandTestConstants.PROP_KEY_PAMLOG_POSTREBOOT);
+					} catch (Exception e) {
+						pamSearchLog = BroadBandTraceConstants.LOG_MESSAGE_LED_CHANGE_GREEN_BEFORE_FR_SECCONSOLE;
+
+						pamSearchLogBeforeFR = BroadBandTraceConstants.LOG_MESSAGE_LED_MODE_BLINK_BEFORE_FR_SECCONSOLE;
+
+						pamSearchLogAfterBoot = BroadBandTraceConstants.LOG_MESSAGE_LED_CHANGE_GREEN_BEFORE_FR_PAMLOG;
+
+						LOGGER.info("No device specific logs found");
+					}
+
+					status = CommonMethods
+							.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, pamSearchLog,
+									backupMap.get(consoleLog), BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+									BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS))
+							&& CommonMethods.isNotNull(
+									CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, pamSearchLogBeforeFR,
+											backupMap.get(consoleLog), BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+											BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS))
+							&& CommonMethods.isNotNull(
+									CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, pamSearchLogAfterBoot,
+											backupMap.get(pamLog), BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+											BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+				}
+			} catch (Exception e) {
+				LOGGER.info("Exception caught while validating logs " + e.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTUAL : Successfully verified log messages in SecConsole.txt.0 and PAMlog.txt.0 before device goes offline");
+			} else {
+				LOGGER.info("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("******************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+		} else {
+			errorMessage = "APPLICABLE ONLY FOR specific Devices";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : APPLICABLE ONLY FOR specific Devices");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+			stepNum++;
+			stepNumber = "S" + stepNum;
+			errorMessage = "APPLICABLE ONLY FOR specific Devices";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : APPLICABLE ONLY FOR specific Devices");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+
+	}
+	/**
+	 * Helper method to backup seconsole and pamlog files in given path
+	 * 
+	 * @param Dut        device instance
+	 * @param tapEnv     AutomaticsTapApi instance
+	 * @param testCaseId String testCaseId
+	 * @param stepNum    String stepNum
+	 * @return Map<String, String> backUpMap
+	 * @refactor Athira
+	 */
+	public static Map<String, String> helperMethodToBackupFiles(Dut device, AutomaticsTapApi tapEnv, String testCaseId,
+			int stepNum) {
+		String stepNumber = "S" + stepNum;
+		String errorMessage = "Unable to backup console log and pam log to nvram";
+		boolean status = false;
+		Map<String, String> backupMap = null;
+		List<String> mustHaveLogFileList = new ArrayList<String>();
+		String consoleLog = BroadBandCommandConstants.LOG_FILE_SEC_CONSOLE
+				.replace(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING);
+		String pamLog = BroadBandCommandConstants.CMD_TO_GET_CONFIG_DOWNLOAD_DETAILS
+				.replace(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING);
+		Boolean isDeviceledlogs = null;
+		isDeviceledlogs = BroadbandPropertyFileHandler.isDeviceledlogsAvailable(device);
+
+		if (isDeviceledlogs)
+		{
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Backup SecConsole log and PAMlog to nvram");
+		LOGGER.info("STEP " + stepNumber
+				+ ": ACTION : Execute : tail -f /rdklogs/logs/SecConsole.txt.0 >> /nvram/BackupSecConsole.txt.0 ,Execute : tail -f /rdklogs/logs/Console.txt >> /nvram/PAMlog.txt.0");
+		LOGGER.info("STEP " + stepNumber + ": EXPECTED : Successfully backed up files to nvram");
+		LOGGER.info("**********************************************************************************");
+		try {
+			mustHaveLogFileList.add(consoleLog);
+			mustHaveLogFileList.add(pamLog);
+			backupMap = BroadBandCommonUtils.verifyRdkLogAlbltyAndTailLogToGivenPathAndConsole(device, tapEnv,
+					mustHaveLogFileList,
+					CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.SYMBOL_PLUS,
+							BroadBandTestConstants.STRING_VALUE_ONE),
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.ARM, CommonMethods.NVRAM_PATH);
+			status = backupMap != null && !backupMap.isEmpty();
+		} catch (Exception e) {
+			LOGGER.error("Exception caught while backing up log files" + e.getMessage());
+		}
+		if (status) {
+			LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfully backed up SecConsole log and PAMlog to nvram");
+		} else {
+			LOGGER.info("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+		}
+		 else 
+		 { errorMessage = "APPLICABLE ONLY FOR Specific Devices"; 
+		 LOGGER.info("**********************************************************************************"); 
+		 LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : APPLICABLE ONLY for specific Devices");
+		 tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber,
+		 ExecutionStatus.NOT_APPLICABLE, errorMessage, false); }
+		
+		return backupMap;
+	}
 }

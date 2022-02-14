@@ -3514,8 +3514,8 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
      *
      * @author Joseph Maduram
      * @refactor Govardhan
-     * @param settop
-     *            {@link Settop}
+     * @param device
+     *            {@link Dut}
      */
 
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, groups = {

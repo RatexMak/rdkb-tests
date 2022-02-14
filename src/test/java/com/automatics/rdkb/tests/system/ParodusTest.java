@@ -25,16 +25,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.httpclient.HttpStatus;
 import org.codehaus.jettison.json.JSONException;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.AutomaticsConstants;
+import com.automatics.constants.CrashConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.enums.ProcessRestartOption;
+import com.automatics.enums.StbProcess;
 import com.automatics.exceptions.TestException;
+import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
@@ -42,13 +46,17 @@ import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants;
+import com.automatics.rdkb.constants.TR69ParamConstants;												
 import com.automatics.rdkb.reboot.BootTime.BootTimePatterns;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;										   
 import com.automatics.rdkb.utils.ParodusUtils;
+import com.automatics.rdkb.utils.selfheal.BroadBandSelfHealUtils;												 
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
@@ -1978,6 +1986,709 @@ public class ParodusTest extends AutomaticsTestBase {
 		    false);
 	}
     }
+	    
+    /**
+    *
+    * Test Case # 1: Verify Enable Parodus in log messages
+    * <p>
+    * STEPS:
+    * </p>
+    * <ol>
+    * <li>PRE-CONDITION 1: Perform reboot operation</li>
+    * <li>PRE-CONDITION 2: Add Temporary File In Nvram</li>
+    * <li>STEP 1: Verify the parodus is enabled in device</li>
+    * <li>STEP 2: Verify server is connected over SSL in PARODUS log file</li>
+    * <li>STEP 3: Verify init for parodus success in client webpa log file</li>
+    * <li>STEP 4: Verify webpa boot time is logged to WEBPAlog.txt.0 file</li>
+    * <li>STEP 5: Verify webpa Get request is working</li>
+    * <li>STEP 6: Verify webpa Set request is working</li>
+    * <li>STEP 7: Verify harvester is sending reports to parodus</li>
+    * <li>STEP 8: Verify Lmlite is sending reports to parodus</li>
+    * <li>STEP 9: Verify serial number through dmcli command and /tmp/parodusCmd.cmd</li>
+    * <li>STEP 10: Verify manufacturer through dmcli command and /tmp/parodusCmd.cmd</li>
+    * <li>STEP 11: Verify last reboot reason through dmcli command and /tmp/parodusCmd.cmd</li>
+    * <li>STEP 12: Check /tmp/parodusCmd.cmd contains the correct boot-time</li>
+    * <li>STEP 13: Check /tmp/parodusCmd.cmd contains --boot-time-retry-wait value</li>
+    * <li>STEP 14: Verify Parodus is up and running</li>
+    * <li>STEP 15: Verify WebPA request is success</li>
+    * <li>STEP 16: Kill parodus log and wait for the selfheal to restart parodus</li>
+    * <li>STEP 17: Check boot time value in /tmp/parodusCmd.cmd from step 1</li>
+    * <li>POST-CONDITION 1: Check if Parodus process is UP and running</li>
+    * <li>POST-CONDITION 2: Verify WebPA request is success</li>
+    * <li>POST-CONDITION 3: Delete Temporary File from NVRAM</li>
+    * <li>POST CONDITION 4. Verify radio status reverted to It's previous value</li>
+    * </ol>
+    *
+    * @author Sumathi Gunasekaran 
+    * @author Praveenkumar Paneerselvam
+    * @Refactor Athira
+	 * 
+    * @param device
+    *            {@link Dut}
+    */
+    
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+    	    BroadBandTestGroup.SYSTEM })
+        @TestDetails(testUID = "TC-RDKB-PARODUS-ENBL-1003")
+        public void testVerifyEnableParodus(Dut device) {
+    	
+    	// variable to store errorMessage
+    	String errorMessage = null;
+    	// variable to store testcaseID
+    	String testCaseId = "TC-RDKB-PARODUS-ENBL-003";
+    	// variable to store teststepNumber
+    	String testStepNumber = "s1";
+    	// variable to store status
+    	boolean status = false;
+    	
+    	boolean isBusinessClass = false;
+    	boolean isDSL = false;
+    	boolean isWiFiDsiabled = false;
+    	
+    	LOGGER.info("#######################################################################################");
+    	LOGGER.info("STARTING TEST CASE: TC-RDKB-PARODUS-ENBL-1003");
+    	LOGGER.info("TEST DESCRIPTION: Verify Boot time of Parodus");
+    	LOGGER.info("TEST STEPS : ");
+    	LOGGER.info("PRE CONDITION 1. reboot the device");
+    	LOGGER.info("PRE CONDITION 2. Add Temporary File In Nvram");
+    	LOGGER.info("1. Verify webpa boot time is logged to BootTime.log");
+    	LOGGER.info("2. Verify the parodus is enabled in device");
+    	LOGGER.info("3. Verify server is connected over SSL in PARODUS log file");
+    	LOGGER.info("4. Verify init for parodus success in client webpa log file");
+    	LOGGER.info("5. Verify webpa Get request is working");
+    	LOGGER.info("6. Verify webpa Set request is working");
+    	LOGGER.info("7. Verify harvester is sending reports to parodus");
+    	LOGGER.info("8. Verify Lmlite is sending reports to parodus");
+    	LOGGER.info("9. Verify serial number through dmcli command and /tmp/parodusCmd.cmd");
+    	LOGGER.info("10. Verify manufacturer through dmcli command and /tmp/parodusCmd.cmd");
+    	LOGGER.info("11. Verify last reboot reason through dmcli command and /tmp/parodusCmd.cmd");
+    	LOGGER.info("12. Check /tmp/parodusCmd.cmd contains the correct boot-time");
+    	LOGGER.info("13. Check /tmp/parodusCmd.cmd contains --boot-time-retry-wait value");
+    	LOGGER.info("14. Verify Parodus is up and running");
+    	LOGGER.info("15. Verify WebPA request is success");
+    	LOGGER.info("16. Kill parodus log and wait for the selfheal to restart parodus");
+    	LOGGER.info("17. Check boot time value in /tmp/parodusCmd.cmd from step 1");
+    	LOGGER.info("POST CONDITION 1. Check if Parodus process is UP and running");
+    	LOGGER.info("POST CONDITION 2. Verify WebPA request is success");
+    	LOGGER.info("POST CONDITION 3. Delete Temporary File from NVRAM");
+    	LOGGER.info("POST CONDITION 4. Verify radio status reverted to It's previous value");
+    	LOGGER.info("#######################################################################################");
+    	
+    	try {
+    		isBusinessClass = DeviceModeHandler.isBusinessClassDevice(device);
+     	    isDSL = DeviceModeHandler.isDSLDevice(device);
+    	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+    	    LOGGER.info("PRE-CONDITION STEPS");
+    	    
+    	    /**
+    	     * PRE-CONDITION 1 : Going to reboot the device
+    	     */
+    	    LOGGER.info("##########################################################################");
+    	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : Going to reboot the device.");
+    	    LOGGER.info("PRE-CONDITION 1 : ACTION : Execute command: reboot");
+    	    LOGGER.info("PRE-CONDITION 1 : EXPECTED: Device should come up after reboot");
+    	    LOGGER.info("##########################################################################");
+    	    errorMessage = "Unable to perform device reboot";
+    	    status = BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+    	    if (status) {
+    		LOGGER.info("PRE-CONDITION 1 : ACTUAL : Device reboot successful");
+    	    } else {
+    		LOGGER.error("PRE-CONDITION 1 : ACTUAL : " + errorMessage);
+    		throw new TestException(
+    			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1 FAILED : " + errorMessage);
+    	    }
+    	    
+    	    /**
+    	     * PRE-CONDITION 2 : Add Temporary File In Nvram
+    	     */
+    	    LOGGER.info("##########################################################################");
+    	    LOGGER.info("PRE-CONDITION 2 : DESCRIPTION : Add Temporary File In Nvram");
+    	    LOGGER.info("PRE-CONDITION 2 : ACTION : EXECUTE COMMAND rm <filename>");
+    	    LOGGER.info("PRE-CONDITION 2 : EXPECTED : File Should be added Successfully");
+    	    LOGGER.info("##########################################################################");
+    	    errorMessage = "Failed to add temporary file in nvram";
+    	    int totalNoOfFiles = 0;
+    	   
+    	    ArrayList<String> mustHaveLogFileList = new ArrayList<String>();
+
+    	    if (!isBusinessClass) {
+    		mustHaveLogFileList.add(BroadBandTestConstants.FILE_NAME_HARVESTER);
+    	    }
+    	    mustHaveLogFileList.add(BroadBandTestConstants.FILE_NAME_LM);
+    	    mustHaveLogFileList.add(BroadBandTestConstants.RDKLOGS_LOGS_WEBPA_TXT_0
+    		    .replaceAll(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING));
+    	    mustHaveLogFileList.add(BroadBandTestConstants.STRING_PARODUS_LOG);
+    	    totalNoOfFiles = mustHaveLogFileList.size();
+    	    Map<String, String> mapForLogFileWithPath = BroadBandCommonUtils
+    		    .verifyLogAlbltyAndTailLogToNvramInGivenConsole(device, tapEnv, mustHaveLogFileList,
+    			    CommonMethods.concatStringUsingStringBuffer(
+    				    String.valueOf(BroadBandTestConstants.SYMBOL_PLUS),
+    				    String.valueOf(BroadBandTestConstants.CONSTANT_1)),
+    			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+    			    BroadBandTestConstants.TWENTYFIVE_MINUTES_IN_MILLS, BroadBandTestConstants.ARM);
+    	    status = (totalNoOfFiles == mapForLogFileWithPath.size());
+    	    if (status) {
+    		LOGGER.info("PRE-CONDITION 2 : ACTUAL : File added in nvram Successfully");
+    	    } else {
+    		LOGGER.error("PRE-CONDITION 2 : ACTUAL : " + errorMessage);
+    		throw new TestException(
+    			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 2 FAILED : " + errorMessage);
+    	    }
+    	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+    	    
+    	    /**
+    	     * STEP 1: Verify webpa boot time is logged to WEBPAlog.txt.0 file
+    	     */
+    	    testStepNumber = "s1";
+    	    status = false;
+    	    errorMessage = CommonUtils.concatStringUsingStringBuffer("Unable to verify webpa boot time:",
+    		    BroadBandTraceConstants.WEBPA_READY_UPTIME, "in log file",
+    		    BroadBandCommandConstants.LOG_FILE_WEBPA);
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 1 : DESCRIPTION:  Verify  webpa boot time is logged to BootTime.log file");
+    	    LOGGER.info(
+    		    "STEP 1 : ACTION:  Execute command:grep -i boot_to_WEBPA_READY_uptime /rdklogs/logs/BootTime.log");
+    	    LOGGER.info("STEP 1 : EXPECTED : Log message should be present in BootTime.log");
+    	    LOGGER.info("**********************************************************************************");
+    	    /*
+    	     * Observed a possibiliy that there might be a delay in log getting updated in
+    	     * "/rdklogs/logs/WEBPAlog.txt.0" log file. So retry for 3 minutes with a 30 seconds interval
+    	     */
+    	    errorMessage = "Failed to get the log message WEBPA_READY in BootTime.log";
+    	    String response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+    		    BroadBandTraceConstants.LOG_MESSAGE_WEBPA_READY, BroadBandCommandConstants.FILE_BOOT_TIME_LOG,
+    		    BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+    	    status = CommonMethods.isNotNull(response);
+    	    if (status) {
+    		LOGGER.info("STEP 1 : ACTUAL : Successfully verified webpa boot time from BootTime.log file");
+    	    } else {
+    		LOGGER.error("STEP 1 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    
+    	    /**
+    	     * STEP 2: Verify the parodus is enabled in device
+    	     */
+    	    testStepNumber = "s2";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 2 : DESCRIPTION:  Verify the parodus is enabled in device");
+    	    LOGGER.info("STEP 2 : ACTION:  Execute command:ps | grep -i parodus");
+    	    LOGGER.info("STEP 2 : EXPECTED : Log message should be present in Parodus");
+    	    LOGGER.info("**********************************************************************************");
+    	    errorMessage = "Unable to get the status of Parodus using command:"
+    		    + BroadBandTestConstants.COMMAND_TO_GET_PARODUS_PROCESS;
+    	    status = CommonMethods.isNotNull(
+    		    tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_GET_PARODUS_PROCESS));
+    	    if (status) {
+    		LOGGER.info("STEP 2: ACTUAL : Successfully verified the status of parodus as enabled");
+    	    } else {
+    		LOGGER.error("STEP 2 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 3: Verify server is connected over SSL in PARODUS log file
+    	     */
+    	    testStepNumber = "s3";
+    	    status = false;
+    	    errorMessage = CommonUtils.concatStringUsingStringBuffer(
+    		    "Unable to verify server connection from log file:", BroadBandCommandConstants.LOG_FILE_PARODUS,
+    		    "with log message", BroadBandTraceConstants.LOG_MESSAGE_SERVER_CONNECTION);
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 3 : DESCRIPTION:  Verify server is connected over SSL in PARODUS log file");
+    	    LOGGER.info(
+    		    "STEP 3 : ACTION:  Execute command:ps | grep -i Connected to server over SSL /rdklogs/logs/PARODUSlog.txt.0");
+    	    LOGGER.info("STEP 3 : EXPECTED : Log message should be present in PARODUSlog.txt");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = CommonUtils.isNotEmptyOrNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+    		    BroadBandTraceConstants.LOG_MESSAGE_SERVER_CONNECTION,
+    		    mapForLogFileWithPath.get(BroadBandTestConstants.STRING_PARODUS_LOG),
+    		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+    	    if (status) {
+    		LOGGER.info("STEP 3 : ACTUAL : Server Connection is verified successfully from parodus log file");
+    	    } else {
+    		LOGGER.error("STEP 3 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    
+    	    /**
+    	     * STEP 4: Verify init for parodus success in client webpa log file
+    	     */
+    	    testStepNumber = "s4";
+    	    status = false;
+    	    errorMessage = "Unable to verify init for parodus success:"
+    		    + BroadBandTestConstants.RDKLOGS_LOGS_WEBPA_TXT_0;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 4 : DESCRIPTION:  Verify init for parodus success in client webpa log file");
+    	    LOGGER.info(
+    		    "STEP 4 : ACTION:  Execute command:ps | grep -i Init for parodus Success /rdklogs/logs/WEBPAlog.txt.0");
+    	    LOGGER.info("STEP 4 : EXPECTED : Log message should be present in WEBPAlog.txt.0");
+    	    LOGGER.info("**********************************************************************************");
+    	    /*
+    	     * That there might be a delay in log getting updated in /rdklogs/logs/WEBPAlog.txt.0" log file. 
+    	     * So retry for 3 minutes with a 30 seconds interval
+    	     */
+    	    status = CommonUtils.isNotEmptyOrNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+    		    BroadBandTraceConstants.LOG_MESSAGE_HARVESTER_INTEGRATION,
+    		    mapForLogFileWithPath.get(BroadBandTestConstants.RDKLOGS_LOGS_WEBPA_TXT_0
+    			    .replaceAll(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING)),
+    		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+    	    if (status) {
+    		LOGGER.info("STEP 4 : ACTUAL : Init for parodus success is verified successfully from webpa log file");
+    	    } else {
+    		LOGGER.error("STEP 4 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    
+
+    	    /**
+    	     * STEP 5: verify webpa Get request is working
+    	     */
+    	    testStepNumber = "s5";
+    	    status = false;
+    	    errorMessage = "Failed to get the webpa request for parameter:"
+    		    + BroadBandWebPaConstants.WEBPA_PARAM_WEBPA_VERSION;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 5 : DESCRIPTION:  verify webpa Get request is working");
+    	    LOGGER.info(
+    		    "STEP 5 : ACTION:  Execute command:dmcli eRT getv Device.Device.X_RDKCENTRAL-COM_Webpa.Version");
+    	    LOGGER.info("STEP 5 : EXPECTED : The webpa command should Execute successfully");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = CommonUtils.isNotEmptyOrNull(
+    		    tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WEBPA_VERSION));
+    	    if (status) {
+    		LOGGER.info("STEP 5 : ACTUAL : Successfully verified get request through webpa command");
+    	    } else {
+    		LOGGER.error("STEP 5 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 6: Verify webpa Set request is working
+    	     */
+    	    testStepNumber = "s6";
+    	    status = false;
+    	    errorMessage = CommonUtils.concatStringUsingStringBuffer("Failed to Set value for WebPa parameter:",
+    		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, "with Value:",
+    		    BroadBandTestConstants.FALSE);
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 6 : DESCRIPTION:  Verify webpa Set request is working");
+    	    LOGGER.info("STEP 6 : ACTION:  Execute command:dmcli eRT setv Device.Device.WiFi.Radio.10000.Enable");
+    	    LOGGER.info("STEP 6 : EXPECTED : The webpa command should Execute successfully");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+    		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, BroadBandTestConstants.CONSTANT_3,
+    		    BroadBandTestConstants.FALSE);
+    	    if (status) {
+    		isWiFiDsiabled = true;
+    		LOGGER.info("STEP 6 : ACTUAL : Successfully verified set request through webpa command");
+    	    } else {
+    		LOGGER.error("STEP 6 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 7: verify harvester is sending reports to parodus
+    	     */
+    	    testStepNumber = "s7";
+    	    status = false;
+    	    errorMessage = "Unable to verify reports sending to parodus from log file:"
+    		    + BroadBandCommandConstants.FILE_HARVESTER_LOG;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 7 : DESCRIPTION: verify harvester is sending reports to parodus");
+    	    LOGGER.info(
+    		    "STEP 7 : ACTION:  Execute command:grep -i Init for parodus Success /rdklogs/logs/HarvesterLog.txt.0");
+    	    LOGGER.info("STEP 7 : EXPECTED : Log message should be present in Harvesterlog.txt.0");
+    	    LOGGER.info("**********************************************************************************");
+    	    if (isBusinessClass) {
+    		LOGGER.info("**********************************************************************************");
+    		LOGGER.info("STEP 7 is not applicable for Bussiness class device.");
+    		LOGGER.info("**********************************************************************************");
+    		LOGGER.error("Bussiness class device doesn't have harvester");
+    		tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+    			"Bussiness class device doesn't have harvester", false);
+    	    } else {
+    		status = CommonUtils.isNotEmptyOrNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+    			BroadBandTraceConstants.LOG_MESSAGE_HARVESTER_INTEGRATION,
+    			mapForLogFileWithPath.get(BroadBandTestConstants.FILE_NAME_HARVESTER)));
+    		if (status) {
+    		    LOGGER.info(
+    			    "STEP 7 : ACTUAL : Successfully verified reports sending to parodus from harvester log file");
+    		} else {
+    		    LOGGER.error("STEP 7 : ACTUAL : " + errorMessage);
+    		}
+    		LOGGER.info("**********************************************************************************");
+    		tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    }
+    	    
+
+    	    /**
+    	     * STEP 8: verify Lmlite is sending reports to parodus
+    	     */
+    	    testStepNumber = "s8";
+    	    status = false;
+    	    errorMessage = "Unable to verify reports sending to parodus from log file:"
+    		    + BroadBandCommandConstants.LOG_FILE_LMLITE;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 8 : DESCRIPTION: verify Lmlite is sending reports to parodus");
+    	    LOGGER.info(
+    		    "STEP 8 : ACTION:  Execute command:grep -i Init for parodus Success /rdklogs/logs/Lmlite.txt.0");
+    	    LOGGER.info("STEP 8 : EXPECTED : Log message should be present in Lmlite.txt.0");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = CommonUtils.isNotEmptyOrNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+    		    BroadBandTraceConstants.LOG_MESSAGE_HARVESTER_INTEGRATION,
+    		    mapForLogFileWithPath.get(BroadBandTestConstants.FILE_NAME_LM)));
+    	    if (status) {
+    		LOGGER.info("STEP 8 : ACTUAL : Successfully verified reports sending to parodus from Lmlite log file");
+    	    } else {
+    		LOGGER.error("STEP 8 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 9: verify serial number through dmcli command and tmp/parodusCmd.cmd
+    	     */
+    	    testStepNumber = "s9";
+    	    status = false;
+    	    errorMessage = CommonUtils.concatStringUsingStringBuffer("Failed to verify: ",
+    		    TR69ParamConstants.TR69_PARAM_SERIAL_NUMBER, "through dmcli and parodusCmd.cmd");
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 9 : DESCRIPTION:  verify serial number through dmcli command and  /tmp/parodusCmd.cmd");
+    	    LOGGER.info("STEP 9 : ACTION:  Execute command:dmcli eRT getv Device.DeviceInfo.SerialNumber");
+    	    LOGGER.info(
+    		    "STEP 9 : EXPECTED : Dmcli command output and grep command should have the same serial number");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = ParodusUtils.verifyParodusAndDmcliCommandResponse(tapEnv, device,
+    		    TR69ParamConstants.TR69_PARAM_SERIAL_NUMBER);
+    	    if (status) {
+    		LOGGER.info(
+    			"STEP 9 : ACTUAL : Successfully verified Device.DeviceInfo.SerialNumber and grep command has same serial number");
+    	    } else {
+    		LOGGER.error("STEP 9 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 10:verify manufacturer through dmcli command and /tmp/parodusCmd.cmd
+    	     */
+    	    testStepNumber = "s10";
+    	    status = false;
+    	    errorMessage = CommonUtils.concatStringUsingStringBuffer("Failed to verify: ",
+    		    BroadBandWebPaConstants.WEBPA_DEVICE_MANUFACTURER_NAME, "through dmcli and parodusCmd.cmd");
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 10 : DESCRIPTION:  verify manufacturer through dmcli command and /tmp/parodusCmd.cmd");
+    	    LOGGER.info("STEP 10 : ACTION:  Execute command:dmcli eRT getv Device.DeviceInfo.Manufacturer");
+    	    LOGGER.info("STEP 10 : EXPECTED : Dmcli command output and grep command should have the same manufacturer");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = ParodusUtils.verifyParodusAndDmcliCommandResponse(tapEnv, device,
+    		    BroadBandWebPaConstants.WEBPA_DEVICE_MANUFACTURER_NAME);
+    	    if (status) {
+    		LOGGER.info(
+    			"STEP 10 : ACTUAL : Successfully verified Device.DeviceInfo.Manufacturer and grep command has same serial number");
+    	    } else {
+    		LOGGER.error("STEP 10 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 11:verify last reboot reason through dmcli command and /tmp/parodusCmd.cmd
+    	     */
+    	    testStepNumber = "s11";
+    	    status = false;
+    	    errorMessage = CommonUtils.concatStringUsingStringBuffer("Failed to verify: ",
+    		    BroadBandWebPaConstants.WEBPA_COMMAND_LAST_REBOOT_REASON, "through dmcli and parodusCmd.cmd");
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info(
+    		    "STEP 11 : DESCRIPTION:  verify last reboot reason through dmcli command and /tmp/parodusCmd.cmd");
+    	    LOGGER.info(
+    		    "STEP 11 : ACTION:  Execute command:dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason");
+    	    LOGGER.info(
+    		    "STEP 11 : EXPECTED : Dmcli command output and grep command should have the same reboot reason");
+
+    	    LOGGER.info("**********************************************************************************");
+    	    status = ParodusUtils.verifyParodusAndDmcliCommandResponse(tapEnv, device,
+    		    BroadBandWebPaConstants.WEBPA_COMMAND_LAST_REBOOT_REASON);
+    	    if (status) {
+    		LOGGER.info(
+    			"STEP 11 : ACTUAL : Successfully verified DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason and grep command has same serial number");
+    	    } else {
+    		LOGGER.error("STEP 11 : ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    
+
+    	    /**
+    	     * STEP 12: Check /tmp/parodusCmd.cmd contains the correct boot-time
+    	     */
+    	    LOGGER.info("**********************************************************************************");
+    	    testStepNumber = "s12";
+    	    errorMessage = "Verification of boot time failed. Boot time not in range or invalid.";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 12: DESCRIPTION : Check /tmp/parodusCmd.cmd contains the correct boot-time");
+    	    LOGGER.info("STEP 12: ACTION :  Execute command /tmp/parodusCmd.cmd and "
+    		    + "1. Device start time should before than boot time. Device start time = current time - uptime in sec (Device.DeviceInfo.UpTime)"
+    		    + " 2.Boot time should be with-in the range 0 - 4294967295");
+    	    LOGGER.info(
+    		    "STEP 12: EXPECTED : Boot time should be with in range 0 - 4294967295 and boot time should be greater than device start up time");
+    	    LOGGER.info("**********************************************************************************");
+    	    String bootTime = null;
+    	    if (isDSL) {
+    		errorMessage = "Boot time validation is not applicable for DSL devices";
+    		LOGGER.error("STEP 12: ACTUAL : " + "Boot time validation is not applicable for DSL devices");
+    		LOGGER.info("**********************************************************************************");
+    		tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+    			errorMessage, false);
+    	    } else {
+    		bootTime = ParodusUtils.getParodusBootTime(tapEnv, device);
+    		LOGGER.info("Boot time value is - " + bootTime);
+    		errorMessage = "Failed to get Boot time value from /tmp/parodusCmd.cmd";
+    		if (CommonMethods.isNotNull(bootTime)) {
+    		    BroadBandResultObject result = ParodusUtils.verifyParodusBootTimeIsValid(tapEnv, device, bootTime);
+    		    status = result.isStatus();
+    		    errorMessage = result.getErrorMessage();
+    		}
+    		if (status) {
+    		    LOGGER.info("STEP 12: ACTUAL : Boot time value in the /tmp/parodusCmd.cmd is present.");
+    		} else {
+    		    LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+    		}
+    		LOGGER.info("**********************************************************************************");
+    		tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, true);
+    	    }
+    	    /**
+    	     * STEP 13: Check /tmp/parodusCmd.cmd contains --boot-time-retry-wait value
+    	     */
+    	    testStepNumber = "s13";
+    	    errorMessage = "--boot-time-retry-wait  is not present";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 13: DESCRIPTION : Check /tmp/parodusCmd.cmd contains --boot-time-retry-wait value");
+    	    LOGGER.info(
+    		    "STEP 13: ACTION : 1. Execute command /tmp/parodusCmd.cmd and verify boot time retry wait value is present");
+    	    LOGGER.info("STEP 13: EXPECTED : --boot-time-retry-wait should be present");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = ParodusUtils.verifyParodusBootRetryCountIsPresent(tapEnv, device);
+    	    if (status) {
+    		LOGGER.info("STEP 13: ACTUAL : -boot-time-retry-wait value is present in /tmp/parodusCmd.cmd");
+    	    } else {
+    		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+    	    }
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    LOGGER.info("**********************************************************************************");
+    		
+    	    /**
+    	     * STEP 14: Verify Parodus is up and running
+    	     */
+    	    testStepNumber = "s14";
+    	    errorMessage = "Failed to get processor id for parodus. Parodus process is not up.";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 14: DESCRIPTION : Verify Parodus is up and running");
+    	    LOGGER.info("STEP 14: ACTION : Execute command pidof parodus");
+    	    LOGGER.info("STEP 14: EXPECTED : pidof parodus should be returned");
+    	    LOGGER.info("**********************************************************************************");
+    	    String processId = CommonUtils.getPidOfProcess(device, tapEnv, StbProcess.PARODUS.getProcessName());
+    	    status = CommonMethods.isNotNull(processId);
+    	    if (status) {
+    		LOGGER.info("STEP 14: ACTUAL :Valid Process Id is obtained, process Id is - " + processId);
+    	    } else {
+    		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 15: Verify WebPA request is success
+    	     */
+    	    testStepNumber = "s15";
+    	    errorMessage = "Failed to execute WebPA request.";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 15: DESCRIPTION : Verify WebPA request is success");
+    	    LOGGER.info("STEP 15: ACTION : Execute WebPA get request for the parameter Device.DeviceInfo.UpTime");
+    	    LOGGER.info("STEP 15: EXPECTED : WebPA request should be success and value should be returned");
+    	    LOGGER.info("**********************************************************************************");
+    	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_UPTIME);
+    	    status = CommonMethods.isNotNull(response);
+    	    if (status) {
+    		LOGGER.info("STEP 15: ACTUAL : WebPA request is success and value returned is " + response);
+    	    } else {
+    		LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+
+    	    /**
+    	     * STEP 16: Kill parodus log and wait for the selfheal to restart parodus
+    	     */
+    	    testStepNumber = "s16";
+    	    errorMessage = "Failed to restart Parodus processor with in 15 min";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 16: DESCRIPTION : Kill parodus log and wait for the selfheal to restart parodus");
+    	    LOGGER.info(
+    		    "STEP 16: ACTION : Execute below commands : 1. Kill -11 <parodus pid>2. Wait 15 min for Self Heal to start the parodus processor"
+    			    + "3. Verify with command pidof parodus  ");
+    	    LOGGER.info("STEP 16: EXPECTED : Parodus should get restarted successfully with in 15 min.");
+    	    LOGGER.info("**********************************************************************************");
+    	    status = BroadBandSelfHealUtils.initiateProcessCrashAndVerifyProcessRestartedStatus(device, tapEnv,
+    		    StbProcess.PARODUS);
+    	    if (status) {
+    		LOGGER.info("STEP 16: ACTUAL : Parodus successfully restarted by selfheal");
+    	    } else {
+    		LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("**********************************************************************************");
+    	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, true);
+
+    	    /**
+    	     * STEP 17: Check boot time value in /tmp/parodusCmd.cmd from step 13
+    	     */
+    	    testStepNumber = "s17";
+    	    errorMessage = "Boot time got changed.";
+    	    status = false;
+    	    LOGGER.info("**********************************************************************************");
+    	    LOGGER.info("STEP 17: DESCRIPTION : Check boot time value in /tmp/parodusCmd.cmd from step 13");
+    	    LOGGER.info(
+    		    "STEP 17: ACTION : Execute command /tmp/parodusCmd.cmd and verify the boot time value from step 13");
+    	    LOGGER.info("STEP 17: EXPECTED : Both boot time should be the same");
+    	    LOGGER.info("**********************************************************************************");
+    	    if (isDSL) {
+    		errorMessage = "Boot time validation is not applicable for DSL devices";
+    		LOGGER.error("STEP 17: ACTUAL : " + "Boot time validation is not applicable for DSL devices");
+    		LOGGER.info("**********************************************************************************");
+    		tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+    			errorMessage, false);
+    	    } else {
+    		bootTime = ParodusUtils.getParodusBootTime(tapEnv, device);
+    		LOGGER.info("Boot time value is - " + bootTime);
+    		errorMessage = "Failed to get Boot time value from /tmp/parodusCmd.cmd";
+    		if (CommonMethods.isNotNull(bootTime)) {
+    		    BroadBandResultObject result = ParodusUtils.verifyParodusBootTimeIsValid(tapEnv, device, bootTime);
+    		    status = result.isStatus();
+    		    errorMessage = result.getErrorMessage();
+    		}
+    		if (status) {
+    		    LOGGER.info("STEP 17: ACTUAL : Boot time value is present in /tmp/parodusCmd.cmd");
+    		} else {
+    		    LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+    		}
+    		LOGGER.info("**********************************************************************************");
+    		tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, status, errorMessage, false);
+    	    }
+    	} catch (Exception e) {
+    	    status = false;
+    	    errorMessage = errorMessage + e.getMessage();
+    	    LOGGER.error(errorMessage);
+    	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, testStepNumber, status,
+    		    errorMessage, true);
+    	} finally {
+    	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+    	    LOGGER.info("POST-CONDITION STEPS");
+    	    /**
+    	     * POST-CONDITION 1: Check if Parodus process is UP and running
+    	     */
+    	    status = false;
+    	    LOGGER.info("##########################################################################");
+    	    LOGGER.info("POST-CONDITION 1: DESCRIPTION : Check if Parodus process is UP and running");
+    	    LOGGER.info("POST-CONDITION 1: ACTION : Execute command pidof parodus");
+    	    LOGGER.info(
+    		    "POST-CONDITION 1: EXPECTED : Parodus process should be UP and running, If Parodus processor is not running restart the device and verify");
+    	    LOGGER.info("##########################################################################");
+    	    errorMessage = "Unable to verify the Parodus process UP and running";
+    	    String processId = CommonUtils.getPidOfProcess(device, tapEnv, StbProcess.PARODUS.getProcessName());
+    	    status = CommonMethods.isNotNull(processId);
+    	    if (!status) {
+    		if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
+    		    processId = CommonUtils.getPidOfProcess(device, tapEnv, StbProcess.PARODUS.getProcessName());
+    		    status = CommonMethods.isNotNull(processId);
+    		}
+    	    }
+    	    if (status) {
+    		LOGGER.info("POST-CONDITION 1: ACTUAL : Successfully verified Parodus process is UP and running");
+    	    } else {
+    		LOGGER.error("POST-CONDITION 1: ACTUAL : " + errorMessage);
+    	    }
+    	    /**
+    	     * POST-CONDITION 2: Verify WebPA request is success
+    	     */
+    	    status = false;
+    	    LOGGER.info("##########################################################################");
+    	    LOGGER.info("POST-CONDITION 2: DESCRIPTION : Verify WebPA request is success");
+    	    LOGGER.info(
+    		    "POST-CONDITION 2: ACTION : Execute WebPA get request for the parameter Device.DeviceInfo.UpTime");
+    	    LOGGER.info("POST-CONDITION 2: EXPECTED : WebPA request should be success and value should be returned");
+    	    LOGGER.info("##########################################################################");
+    	    errorMessage = "Failed to verify WebPA request";
+    	    status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+    	    if (status) {
+    		LOGGER.info("POST-CONDITION 2: ACTUAL : Successfully verified Parodus process is UP and running");
+    	    } else {
+    		LOGGER.error("POST-CONDITION 2: ACTUAL : " + errorMessage);
+    	    }
+    	    /**
+    	     * POST-CONDITION 3: Delete Temporary File from NVRAM
+    	     */
+    	    status = false;
+    	    LOGGER.info("##########################################################################");
+    	    LOGGER.info("POST-CONDITION 3: DESCRIPTION : Delete Temporary File from NVRAM");
+    	    LOGGER.info("POST-CONDITION 3: ACTION : Execute Command rm <filename>");
+    	    LOGGER.info("POST-CONDITION 3: EXPECTED : File Should be removed Successfully");
+    	    LOGGER.info("##########################################################################");
+    	    errorMessage = "Failed to delete temporary file from NVRAM";
+    	    List<String> logFileList = new ArrayList<>();
+    	    logFileList.add(BroadBandTestConstants.FILE_NAME_HARVESTER);
+    	    logFileList.add(BroadBandTestConstants.FILE_NAME_LM);
+    	    logFileList.add(BroadBandTestConstants.RDKLOGS_LOGS_WEBPA_TXT_0
+    		    .replaceAll(BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING));
+    	    logFileList.add(BroadBandTestConstants.STRING_PARODUS_LOG);
+    	    status = BroadBandCommonUtils.deleteTemporaryFilesInNvram(device, tapEnv, logFileList);
+    	    if (status) {
+    		LOGGER.info("POST-CONDITION 3: ACTUAL : Successfully deleted the Temporary File from NVRAM");
+    	    } else {
+    		LOGGER.error("POST-CONDITION 3: ACTUAL : " + errorMessage);
+    	    }
+    	    LOGGER.info("Status of Disabled ? : " + isWiFiDsiabled);
+    	    if (isWiFiDsiabled) {
+    		/**
+    		 * POST-CONDITION 4: Verify radio status reverted to It's previous value
+    		 */
+    		status = false;
+    		LOGGER.info("##########################################################################");
+    		LOGGER.info("POST-CONDITION 4: DESCRIPTION :Verify radio status reverted to It's previous value");
+    		LOGGER.info(
+    			"POST-CONDITION 4: ACTION : Execute command:dmcli eRT setv Device.Device.WiFi.Radio.10000.Enable");
+    		LOGGER.info("POST-CONDITION 4: EXPECTED : The webpa command should Execute successfully");
+    		LOGGER.info("##########################################################################");
+    		errorMessage = "Failed to revert the radio status to it's previous value";
+    		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+    			BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, BroadBandTestConstants.CONSTANT_3,
+    			BroadBandTestConstants.TRUE);
+    		if (status) {
+    		    LOGGER.info(
+    			    "POST-CONDITION 4: ACTUAL : Successfully reverted the radio status to It's previous value");
+    		} else {
+    		    LOGGER.error("POST-CONDITION 4: ACTUAL : " + errorMessage);
+    		}
+
+    		LOGGER.info("POST CONDITION 4. Verify radio status reverted to It's previous value");
+    	    }
+    	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+    	}
+    }
+
 
     /**
      * Helper method to search text in webpa log file either in ARM or ATOM console
@@ -2855,6 +3566,992 @@ public class ParodusTest extends AutomaticsTestBase {
 		    errorMessage, true);
 	}
    }
+   
+   /**
+    * Verify parodus reconnect with jitter algorithm
+    * <ol>
+    * <li>Copy and update /nvram/webpa_cfg.json to simulate parodus reconnect</li>
+    * <li>Clear PARODUSlog and restart parodus process</li>
+    * <li>Verify parodus restarted with updated server ip</li>
+    * <li>Verify backoffRetryTime values within min-max ranges</li>
+    * <li>Replace webpa_cfg.json file and restart parodus process</li>
+    * <li>Verify parodus restarted and reconnected successfully</li>
+    * </ol>
+    * 
+    * @author Ashwin sankara
+    * @refactor Govardhan
+    */
+   @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+   @TestDetails(testUID = "TC-RDKB-PARODUS-1010")
+   public void testVerifyParodusReconnectJitter(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-PARODUS-010";
+	String stepNum = "s1";
+	String errorMessage = null;
+	String response = null;
+	boolean status = false;
+	BroadBandResultObject result = new BroadBandResultObject();
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-PARODUS-1010");
+	LOGGER.info("TEST DESCRIPTION: Verify parodus reconnect with jitter algorithm");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Copy and update /nvram/webpa_cfg.json to simulate parodus reconnect");
+	LOGGER.info("2. Clear PARODUSlog and restart parodus process");
+	LOGGER.info("3. Verify parodus restarted with updated server ip");
+	LOGGER.info("4. Verify backoffRetryTime values within min-max ranges");
+	LOGGER.info("5. Replace webpa_cfg.json file and restart parodus process");
+	LOGGER.info("6. Verify parodus restarted and reconnected successfully");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    // Getting INCORRECT_WEBPA_URL from props
+	    String INCORRECT_WEBPA_URL = BroadbandPropertyFileHandler.getIncorrectWebparURL();
+
+	    stepNum = "s1";
+	    errorMessage = "Failed to download wbpa_cfg.json from autovault service";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Copy and update /nvram/webpa_cfg.json to simulate parodus reconnect");
+	    LOGGER.info(
+		    "STEP 1: ACTION : 1. Download file from autovault to /tmp/wbpa_cfg.json\n2. Execute commands:\ncp /nvram/webpa_cfg.json /nvram/webpa_cfg.json_bkp\ncp /tmp/wbpacfg.json /nvram/webpa_cfg.json\ngrep "+BroadbandPropertyFileHandler.getAutoVaultDownloadURL()+" /nvram/webpa_cfg.json");
+	    LOGGER.info("STEP 1: EXPECTED : Updated parameters in webpa_cfg.json to simulate parodus reconnect");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonUtils.downloadFileUsingAutoVault(device, tapEnv,
+		    BroadBandCommandConstants.FILE_PATH_AUTOVAULT_WBPA_CFG_JSON,
+		    BroadBandCommandConstants.DIRECTORY_TMP)) {
+		errorMessage = "Failed to find incorrect webpa url in /nvram/webpa_cfg.json after copying";
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_COPY,
+				BroadBandCommandConstants.FILE_WEBPA_CFG, BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+				BroadBandCommandConstants.WEBPA_CFG_JSON_BKP_FILE));
+		tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+			BroadBandCommandConstants.CMD_COPY, BroadBandCommandConstants.FILE_PATH_TMP_WBPA_CFG_JSON,
+			BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.FILE_WEBPA_CFG));
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			INCORRECT_WEBPA_URL, BroadBandCommandConstants.FILE_WEBPA_CFG));
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Updated parameters in webpa_cfg.json to simulate parodus reconnect");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Failed to clear PARODUSlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Clear PARODUSlog and restart parodus process");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute commands:\n1. echo > /rdklogs/logs/PARODUSlog.txt.0\n2. killall parodus3. pidof parodus");
+	    LOGGER.info("STEP 2: EXPECTED : Parodus process is killed after clearing log file");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOG_FILE_PARODUS)) {
+		errorMessage = "Failed to restart parodus process";
+		status = BroadBandSystemUtils.killAndVerifyProcessRestarted(device, tapEnv,
+			BroadBandTestConstants.PARODUS_PROCESS_NAME);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Parodus process is killed after clearing log file");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "Unable to find updated webpa url in PARODUSlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Verify parodus restarted with updated server ip");
+	    LOGGER.info("STEP 3: ACTION : Execute command:grep \"+" + INCORRECT_WEBPA_URL
+		    + "+\" /rdklogs/logs/PARODUSlog.txt.0");
+	    LOGGER.info("STEP 3: EXPECTED : Parodus process restarted with updated server url");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device, INCORRECT_WEBPA_URL,
+		    BroadBandCommandConstants.LOG_FILE_PARODUS, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Parodus process restarted with updated server url");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Failed to get backoffRetryTime log messages in PARODUSlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify backoffRetryTime values within min-max ranges");
+	    LOGGER.info(
+		    "STEP 4: ACTION : 1. Execute command:grep backoffRetryTime /rdklogs/logs/PARODUSlog.txt.0 2. Check backoffRetryTime values between 3 and max values logged respectively");
+	    LOGGER.info("STEP 4: EXPECTED : Values of backoffRetryTime are within min-max ranges");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_BACK_OFF_RETRY_TIME,
+		    BroadBandCommandConstants.LOG_FILE_PARODUS);
+	    if (CommonMethods.isNotNull(response)) {
+		result = ParodusUtils.verifyParodusReconnectJitter(response);
+		errorMessage = result.getErrorMessage();
+		status = result.isStatus();
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : Values of backoffRetryTime are within min-max ranges");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "Failed to clear PARODUSlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Replace webpa_cfg.json file and restart parodus process");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute commands:1. cp /nvram/webpa_cfg.json_bkp /nvram/webpa_cfg.json 2. echo > /rdklogs/logs/PARODUSlog.txt.0 3. killall parodus 4. pidof parodus");
+	    LOGGER.info("STEP 5: EXPECTED : Parodus process is restarted after replacing webpa_cfg.json file");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOG_FILE_PARODUS)) {
+		errorMessage = "Failed to restart parodus process";
+		CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device, BroadBandCommandConstants.FILE_WEBPA_CFG);
+		tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+			BroadBandCommandConstants.CMD_COPY, BroadBandCommandConstants.WEBPA_CFG_JSON_BKP_FILE,
+			BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.FILE_WEBPA_CFG));
+		status = BroadBandSystemUtils.killAndVerifyProcessRestarted(device, tapEnv,
+			BroadBandTestConstants.PARODUS_PROCESS_NAME);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Parodus process is restarted after replacing webpa_cfg.json file");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Unable to find parodus connected log message after restart";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify parodus restarted and reconnected successfully");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute command:grep \"Connected to server over SSL\" /rdklogs/logs/PARODUSlog.txt.0");
+	    LOGGER.info("STEP 6: EXPECTED : Parodus reconnected successfully after restart");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_CONNECTED_TO_SERVER_OVER_SSL,
+		    BroadBandCommandConstants.LOG_FILE_PARODUS, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Parodus reconnected successfully after restart");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info(
+		    "POST-CONDITION : DESCRIPTION : Remove /nvram/webpa_cfg.json_bkp and verify webpa is up on the device");
+	    LOGGER.info(
+		    "POST-CONDITION : ACTION : 1. Execute command: rm -rf /nvram/webpa_cfg.json_bkp\n2. Poll and verify webpa command to get device serial number");
+	    LOGGER.info("POST-CONDITION : EXPECTED : Post condition executed successfully");
+
+	    status = false;
+	    errorMessage = "Failed to remove file: /nvram/webpa_cfg.json_bkp";
+	    if (CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
+		    BroadBandCommandConstants.WEBPA_CFG_JSON_BKP_FILE)) {
+		errorMessage = "Failed to verify webpa working on the device";
+		status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+	    }
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-PARODUS-1010");
+   }
 
 
+   /**
+    * Testcase to verify parodus drop process privileges
+    * <ol>
+    * <li>Verify nonroot support feature parameter is enabled by deafult</li>
+    * <li>Check parodus process run as non-root</li>
+    * <li>Check webpa process is running as root</li>
+    * <li>Kill parodus process in the device</li>
+    * <li>Verify minidump is created for killed parodus process</li>
+    * <li>Verify parodus is recreated with non-root after selfheal</li>
+    * <li>Verify webpa set is working</li>
+    * <li>Verify webpa get is working</li>
+    * <li>Disable nonroot support feature using RFC</li>
+    * <li>Verify nonroot support feature parameter is disabled using RFC</li>
+    * <li>Check parodus process run as root</li>
+    * <li>Check webpa process is running as root</li>
+    * <li>Kill parodus process in the device</li>
+    * <li>Verify minidump is created for killed parodus process</li>
+    * <li>Verify parodus process is recreated after selfheal</li>
+    * <li>Verify webpa set is working</li>
+    * <li>Verify webpa get is working</li>
+    * <li>Enable nonroot support feature using RFC</li>
+    * <li>Verify nonroot support feature parameter is enabled using RFC</li>
+    * <li>Check parodus process run as non-root</li>
+    * <li>Check webpa process is running as root</li>
+    * <li>Verify parodus is running as unprivilege mode in CapDebug.txt</li>
+    * <li>Verify unprivilege user name is non-root in CapDebug.txt</li>
+    * </ol>
+    * 
+    * @author Betel Costrow
+    * @refactor Govardhan
+    */
+   @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+   @TestDetails(testUID = "TC-RDKB-PARODUS-1011")
+   public void testTovVerifyNonRootSupport(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-PARODUS-011";
+	String stepNum = "s1";
+	String errorMessage = "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable not enabled by default";
+	boolean status = false;
+	String response = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-PARODUS-1011");
+	LOGGER.info("TEST DESCRIPTION: Testcase to verify parodus drop process privileges");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify nonroot support feature parameter is enabled by deafult ");
+	LOGGER.info("2. Check parodus process run as non-root");
+	LOGGER.info("3. Check webpa process is running as root");
+	LOGGER.info("4. Kill parodus process in the device");
+	LOGGER.info("5. Verify minidump is created for killed parodus process ");
+	LOGGER.info("6. Verify parodus is recreated with non-root after selfheal");
+	LOGGER.info("7. Verify webpa set is working ");
+	LOGGER.info("8. Verify webpa get is working ");
+	LOGGER.info("9. Disable nonroot support feature using RFC");
+	LOGGER.info("10. Verify nonroot support feature parameter is disabled using RFC ");
+	LOGGER.info("11. Check parodus process run as root");
+	LOGGER.info("12. Check webpa process is running as root");
+	LOGGER.info("13. Kill parodus process in the device");
+	LOGGER.info("14. Verify minidump is created for killed parodus process ");
+	LOGGER.info("15. Verify parodus process is recreated after selfheal");
+	LOGGER.info("16. Verify webpa set is working ");
+	LOGGER.info("17. Verify webpa get is working ");
+	LOGGER.info("18. Enable nonroot support feature using RFC");
+	LOGGER.info("19. Verify nonroot support feature parameter is enabled using RFC ");
+	LOGGER.info("20. Check parodus process run as non-root");
+	LOGGER.info("21. Check webpa process is running as root");
+	LOGGER.info("22. Verify parodus is running as unprivilege mode in CapDebug.txt  ");
+	LOGGER.info("23. Verify unprivilege user name is non-root in CapDebug.txt  ");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify nonroot support feature parameter is enabled by deafult ");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable");
+	    LOGGER.info("STEP 1: EXPECTED : Nonroot support feature should be enabled ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_NONROOT_SUPPORT, BroadBandTestConstants.TRUE);
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Sucessfully verified non-root support feature is enabled by default");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Parodus process not running as non-root";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Check parodus process run as non-root");
+	    LOGGER.info("STEP 2: ACTION : Execute:ps | grep -nri -E \"parodus\" | grep bin");
+	    LOGGER.info("STEP 2: EXPECTED : Response should have non-root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+		    .replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_PARODUS));
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.STRING_NON_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfuly verified parodus process is running as non-root");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "webpa process not running as root ";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Check webpa process is running as root");
+	    LOGGER.info("STEP 3: ACTION : Execute:ps | grep -nri -E \"webpa\" | grep bin");
+	    LOGGER.info("STEP 3: EXPECTED : Response should have root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+		response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    } else {
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    }
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.STRING_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Successfuly verified webpa process is running as root");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Parodus process is not killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Kill parodus process in the device");
+	    LOGGER.info("STEP 4: ACTION : Execute:1.get parodus process using pidof parodus2.kill -1 <pidof parodus>");
+	    LOGGER.info("STEP 4: EXPECTED : Parodus process should be killed");
+	    LOGGER.info("**********************************************************************************");
+
+	    CommonUtils.clearLogFile(tapEnv, device, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
+	    status = BroadBandCommonUtils.killAndCheckProcess(device, tapEnv,
+		    BroadBandTestConstants.PROCESS_NAME_PARODUS);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : Successfully verified parodus process id recreated by selfheal after killed");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "minidump is not created after parodus process killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify minidump is created for killed parodus process ");
+	    LOGGER.info("STEP 5: ACTION : Execute:grep -I \"Response code: 200\" /rdklogs/logs/core_log.txt");
+	    LOGGER.info("STEP 5: EXPECTED : Response should have 200 success message ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RESPONSE_200, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Verified minidump is created for killed parodus process");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Parodus process is not recreated after selfheal";
+	    status = false;
+	    long startTimeStamp = System.currentTimeMillis();
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify parodus is recreated with non-root after selfheal");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute:ps | grep -nri -E \"parodus\" | grep binwait for 7 to 20min to get new process id");
+	    LOGGER.info("STEP 6: EXPECTED : Response should have non-root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    do {
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_PARODUS));
+		status = CommonMethods.isNotNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_NON_ROOT);
+	    } while (!status
+		    && (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Successfuly verified parodus process is running as non-root");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+	    
+	    String WEBPA_URL = BroadbandPropertyFileHandler.getWebpaServerURL();
+
+	    stepNum = "s7";
+	    errorMessage = "Webpa set process is not working";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify webpa set is working ");
+	    LOGGER.info(
+		    "STEP 7: ACTION : Execute:curl -H <SAT_TOKEN> -X PATCH "+WEBPA_URL+"<ECM_MAC_ADDRESS> /config -d \"{\"parameters\":[{\"dataType\":1,\"name\":\"Device.WiFi.SSID.10001.SSID\",\"value\":\"2_4Wifi\"}]}\"");
+	    LOGGER.info("STEP 7: EXPECTED : Should get 200 success msg for webpa set process");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.PRIVATEWIFI_NAME_FOR_2GHZ_BAND,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : Successfully verified webpa set is working");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    errorMessage = "Webpa get process is not working";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Verify webpa get is working ");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Execute:curl -X GET "+WEBPA_URL+":<ecm_mac>/config?names=Device.WiFi.SSID.10001.SSID -H \"AuThorization:Bearer <sat token>\"");
+	    LOGGER.info("STEP 8: EXPECTED : Should get 200 success msg for webpa get process");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
+		    BroadBandTestConstants.PRIVATEWIFI_NAME_FOR_2GHZ_BAND);
+
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Successfully verified webpa get is working");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "Nonroot support feature is not disabled using RFC";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Disable nonroot support feature using RFC");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Using any rest client post the below content to RFC mock server: https://<url>/featureControl/updateSettings"
+			    + "{\"estbMacAddress\":\"<MAC_ADDRESS>\",\"features\":[{\"name\":\"nonroot_support\",\"effectiveImmediate\":true,\"enable\":true,"
+			    + "\"configData\":{\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable\":\"false\"}}]}and perform an reboot");
+	    LOGGER.info("STEP 9: EXPECTED : Nonroot support feature should be disabled using RFC");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTestConstants.CONFIGURABLE_NONROOT_SUPPORT, false);
+
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : Succesfully disabled non-root support feature using RFC");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s10";
+	    errorMessage = "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable not disabled using RFC";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Verify nonroot support feature parameter is disabled using RFC ");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Execute:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable");
+	    LOGGER.info("STEP 10: EXPECTED : Nonroot support feature parameter should respond false");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_NONROOT_SUPPORT, BroadBandTestConstants.FALSE);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 10: ACTUAL : Sucessfully verified non-root support feature is disbaled using webpa/dmcli");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s11";
+	    errorMessage = "Parodus process not running as root";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Check parodus process run as root");
+	    LOGGER.info("STEP 11: ACTION : Execute:ps | grep -nri -E \"parodus\" | grep bin");
+	    LOGGER.info("STEP 11: EXPECTED : Response should have root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+		    .replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_PARODUS));
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.STRING_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 11: ACTUAL : Successfuly verified parodus process is running as root");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s12";
+	    errorMessage = "webpa process not running as root ";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 12: DESCRIPTION : Check webpa process is running as root");
+	    LOGGER.info("STEP 12: ACTION : Execute:ps | grep -nri -E \"webpa\" | grep bin");
+	    LOGGER.info("STEP 12: EXPECTED : Response should have root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+		response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    } else {
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    }
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.STRING_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 12: ACTUAL : Successfuly verified webpa process is running as root");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s13";
+	    errorMessage = "Parodus process is not killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION : Kill parodus process in the device");
+	    LOGGER.info("STEP 13: ACTION : Execute:1.get parodus process using pidof parodus2.kill -1 <pidof parodus>");
+	    LOGGER.info("STEP 13: EXPECTED : Parodus process should be killed");
+	    LOGGER.info("**********************************************************************************");
+
+	    CommonUtils.clearLogFile(tapEnv, device, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
+	    status = BroadBandCommonUtils.killAndCheckProcess(device, tapEnv,
+		    BroadBandTestConstants.PROCESS_NAME_PARODUS);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 13: ACTUAL : Successfully verified parodus process id recreated by selfheal after killed");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s14";
+	    errorMessage = "minidump is not created after parodus process killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 14: DESCRIPTION : Verify minidump is created for killed parodus process ");
+	    LOGGER.info("STEP 14: ACTION : Execute:grep -I \"Response code: 200\" /rdklogs/logs/core_log.txt");
+	    LOGGER.info("STEP 14: EXPECTED : Response should have 200 success message ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RESPONSE_200, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 14: ACTUAL : Verified minidump is created for killed parodus process");
+	    } else {
+		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s15";
+	    errorMessage = "Parodus process is not recreated";
+	    status = false;
+	    startTimeStamp = System.currentTimeMillis();
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 15: DESCRIPTION : Verify parodus process is recreated after selfheal");
+	    LOGGER.info(
+		    "STEP 15: ACTION : Execute:ps | grep -nri -E \"parodus\" | grep binwait for 7 to 20min to get new process id");
+	    LOGGER.info("STEP 15: EXPECTED : Response should have root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    do {
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_PARODUS));
+		status = CommonMethods.isNotNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_ROOT);
+	    } while (!status
+		    && (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 15: ACTUAL : Successfuly verified parodus process is running as root");
+	    } else {
+		LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s16";
+	    errorMessage = "Webpa set process is not working";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 16: DESCRIPTION : Verify webpa set is working ");
+	    LOGGER.info(
+		    "STEP 16: ACTION : Execute:curl -H <SAT_TOKEN> -X PATCH "+WEBPA_URL+":<ECM_MAC_ADDRESS> /config -d \"{\"parameters\":[{\"dataType\":1,\"name\":\"Device.WiFi.SSID.10001.SSID\",\"value\":\"2_4Wifi\"}]}\"");
+	    LOGGER.info("STEP 16: EXPECTED : Should get 200 success msg for webpa set process");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.SSID_FOR_2GHZ_PRIVATE_WIFI,
+		    BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP 16: ACTUAL : Successfully verified webpa set is working");
+	    } else {
+		LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s17";
+	    errorMessage = "Webpa get process is not working";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 17: DESCRIPTION : Verify webpa get is working ");
+	    LOGGER.info(
+		    "STEP 17: ACTION : Execute:curl -X GET "+WEBPA_URL+":<ecm_mac>/config?names=Device.WiFi.SSID.10001.SSID -H \"AuThorization:Bearer <sat token>\"");
+	    LOGGER.info("STEP 17: EXPECTED : Should get 200 success msg for webpa get process");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
+		    BroadBandTestConstants.SSID_FOR_2GHZ_PRIVATE_WIFI);
+
+	    if (status) {
+		LOGGER.info("STEP 17: ACTUAL : Successfully verified webpa get is working");
+	    } else {
+		LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s18";
+	    errorMessage = "Nonroot support feature is not enabled using RFC";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 18: DESCRIPTION : Enable nonroot support feature using RFC");
+	    LOGGER.info(
+		    "STEP 18: ACTION : Using any rest client post the below content to RFC mock server: https://<url>/featureControl/updateSettings{\"estbMacAddress\":\"<MAC_ADDRESS>\",\"features\":[{\"name\":\"nonroot_support\",\"effectiveImmediate\":true,\"enable\":true,\"configData\":{\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable\":\"true\"}}]}and perform an reboot");
+	    LOGGER.info("STEP 18: EXPECTED : Nonroot support feature should be enabled using RFC");
+	    LOGGER.info("**********************************************************************************");
+	    
+	    Boolean isSingleRebootDevice = null;
+	    
+	    isSingleRebootDevice = BroadbandPropertyFileHandler.isSingleRebootRFCFeatureDevice(device);
+
+	    if (isSingleRebootDevice) {
+		status = BroadBandRfcFeatureControlUtils.rfcFeatureWithSingleRebootRetrievewNow(tapEnv, device,
+			BroadBandTestConstants.CONFIGURABLE_NONROOT_SUPPORT, true);
+	    } else {
+		status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+			BroadBandTestConstants.CONFIGURABLE_NONROOT_SUPPORT, true);
+	    }
+	    
+
+	    if (status) {
+		LOGGER.info("STEP 18: ACTUAL : Succesfully Enabled non-root support feature using RFC");
+	    } else {
+		LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s19";
+	    errorMessage = "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable not enabled using RFC";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 19: DESCRIPTION : Verify nonroot support feature parameter is enabled using RFC ");
+	    LOGGER.info(
+		    "STEP 19: ACTION : Execute:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Enable");
+	    LOGGER.info("STEP 19: EXPECTED : Nonroot support feature parameter should respond true");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_NONROOT_SUPPORT, BroadBandTestConstants.TRUE);
+
+	    if (status) {
+		LOGGER.info("STEP 19: ACTUAL : Sucessfully verified non-root support feature is enabled by RFC");
+	    } else {
+		LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s20";
+	    errorMessage = "Parodus process not running as non-root";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 20: DESCRIPTION : Check parodus process run as non-root");
+	    LOGGER.info("STEP 20: ACTION : Execute:ps | grep -nri -E \"parodus\" | grep bin");
+	    LOGGER.info("STEP 20: EXPECTED : Response should have non-root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+		    .replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_PARODUS));
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.STRING_NON_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 20: ACTUAL : Successfuly verified parodus process is running as non-root");
+	    } else {
+		LOGGER.error("STEP 20: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s21";
+	    errorMessage = "webpa process not running as root ";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 21: DESCRIPTION : Check webpa process is running as root");
+	    LOGGER.info("STEP 21: ACTION : Execute:ps | grep -nri -E \"webpa\" | grep bin");
+	    LOGGER.info("STEP 21: EXPECTED : Response should have root along with parodus process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+		response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    } else {
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+			.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_WEBPA));
+	    }
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.STRING_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 21: ACTUAL : Successfuly verified webpa process is running as root");
+	    } else {
+		LOGGER.error("STEP 21: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s22";
+	    errorMessage = "/rdklogs/logs/CapDebug.txt is empty";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 22: DESCRIPTION : Verify parodus is running as unprivilege mode in CapDebug.txt  ");
+	    LOGGER.info(
+		    "STEP 22: ACTION : Execute:grep -I \"Dropping root privilege of parodus: runs as unprivilege mode\"  /rdklogs/logs/CapDebug.txt");
+	    LOGGER.info("STEP 22: EXPECTED : Response should have uprivilege mode");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = CommonUtils.searchLogFiles(tapEnv, device, BroadBandTraceConstants.LOG_MESSAGE_UNPRIVILEGE,
+		    BroadBandCommandConstants.CMD_TO_GET_CAPDEBUG, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "parodus is not running in unprivilege mode";
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTraceConstants.LOG_MESSAGE_UNPRIVILEGE_MODE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 22: ACTUAL : Successfully verified parodus running as unprivilage mode");
+	    } else {
+		LOGGER.error("STEP 22: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s23";
+	    errorMessage = "/rdklogs/logs/CapDebug.txt is empty";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 23: DESCRIPTION : Verify unprivilege user name is non-root in CapDebug.txt  ");
+	    LOGGER.info(
+		    "STEP 23: ACTION : Execute:grep -I \"unprivilege user name: non-root\"  /rdklogs/logs/CapDebug.txt");
+	    LOGGER.info("STEP 23: EXPECTED : Response should have non-root for user name");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "unprivilege user name is not having non-root process";
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTraceConstants.LOG_MESSAGE_UNPRIVILEGE_MODE_NON_ROOT);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 23: ACTUAL : Successfully verified unprivilege mode running as non-root");
+	    } else {
+		LOGGER.error("STEP 23: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    status = false;
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("POST-CONDITION : DESCRIPTION : delete RFC feature");
+	    LOGGER.info(
+		    "POST-CONDITION : ACTION : 1)Send following HTTP DELETE request using POSTMAN/rest client:: https://<url>/featureControl/clear?estbMacAddress=<mac>&featureName=nonroot_support2) reboot the device twice");
+	    LOGGER.info("POST-CONDITION : EXPECTED : RFC feature should be removed successfully");
+
+	    status = (HttpStatus.SC_OK == BroadBandRfcFeatureControlUtils.clearSettingsInProxyXconfDcmServerForRDKB(device, tapEnv, false,
+		    BroadBandTestConstants.CONFIGURABLE_NONROOT_SUPPORT));
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-PARODUS-1011");
+   }
 }

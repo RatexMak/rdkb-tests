@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
@@ -34,6 +35,7 @@ import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.tap.AutomaticsTapApi;
@@ -41,6 +43,434 @@ import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
 
 public class BroadBandFirewallTest extends AutomaticsTestBase {
+	
+	
+	/**
+	 * Test to verify WAN - LAN traffic is blocked when Firewall is configured to
+	 * Custom Security
+	 * 
+	 * <ol>
+	 * <li>STEP 1: Verify the Ping connection to the gateway from WAN is
+	 * successful</li>
+	 * <li>STEP 2: Verify whether the firewall setting is configured to 'Custom
+	 * Security' for IPv4 traffic</li>
+	 * <li>STEP 3: Verify whether the Custom Security is configured to 'Block ICMP'
+	 * for IPv4 traffic</li>
+	 * <li>STEP 4: Verify the Ping connection to the gateway from WAN should fail
+	 * when ICMP requests are blocked under Firewall settings</li>
+	 * <li>STEP 5: Verify the Ping connection to the gateway IPv6 Address from WAN
+	 * is successful</li>
+	 * <li>STEP 6: Verify whether the firewall setting is configured to 'Custom
+	 * Security' for IPv6 traffic</li>
+	 * <li>STEP 7: Verify whether the Custom Security is configured to 'Block ICMP'
+	 * for IPv6 traffic</li>
+	 * <li>STEP 8: Verify the Ping connection to the gateway IPv6 Address from WAN
+	 * should fail when ICMP requests are blocked under Firewall settings</li>
+	 * <li>POST-CONDITION 1: Verify whether the 'Block ICMP' for IPv4 traffic can be
+	 * disabled</li>
+	 * <li>POST-CONDITION 2: Verify whether the firewall setting is configured to
+	 * 'Minimum Security' for IPv4 traffic</li>
+	 * <li>POST-CONDITION 3: Verify whether the 'Block ICMP' for IPv6 traffic can be
+	 * disabled</li>
+	 * <li>POST-CONDITION 4: Verify whether the firewall setting is configured to
+	 * 'Typical Security' for IPv6 traffic</li>
+	 * </ol>
+	 * 
+	 * @param device
+	 * 
+	 * @author Sathya Kishore
+	 * @refactor Athira
+	 */
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-FIREWALL-1000")
+	public void testToVerifyWantoLantrafficInCustomFirewall(Dut device) {
+
+		String testId = "TC-RDKB-FIREWALL-100";
+		int stepNumber = 1;
+		String testStepNumber = "S" + stepNumber;
+		String errorMessage = null;
+		boolean status = false;
+		BroadBandResultObject result = new BroadBandResultObject();
+		String wanIpv4 = null;
+
+		try {
+
+			LOGGER.info("#################### STARTING TEST CASE: TC-RDKB-FIREWALL-1000 #####################");
+			LOGGER.info(
+					"TEST DESCRIPTION: Verify WAN - LAN traffic is blocked when Firewall is configured to Custom Security");
+
+			LOGGER.info("TEST STEPS : ");
+			LOGGER.info("1: Verify the firewall setting is configured to 'Custom Security' for IPv4 traffic");
+			LOGGER.info("2: Verify the Ping connection to the gateway from WAN is successful");
+			LOGGER.info("3: Verify the Custom Security is configured to 'Block ICMP' for IPv4 traffic");
+			LOGGER.info(
+					"4: Verify the Ping connection to the gateway from WAN should fail when ICMP requests are blocked under Firewall settings");
+			LOGGER.info("5: Verify the firewall setting is configured to 'Custom Security' for IPv6 traffic");
+			LOGGER.info("6: Verify the Ping connection to the gateway IPv6 Address from WAN is successful");
+			LOGGER.info("7: Verify the Custom Security is configured to 'Block ICMP' for IPv6 traffic");
+			LOGGER.info(
+					"8: Verify the Ping connection to the gateway IPv6 Address from WAN should fail when ICMP requests are blocked under Firewall settings");
+			LOGGER.info("POST-CONDITION 1: Verify the 'Block ICMP' for IPv4 traffic can be disabled");
+			LOGGER.info(
+					"POST-CONDITION 2: Verify the firewall setting is configured to 'Minimum Security' for IPv4 traffic");
+			LOGGER.info("POST-CONDITION 3: Verify the 'Block ICMP' for IPv6 traffic can be disabled");
+			LOGGER.info(
+					"POST-CONDITION 4: Verify the firewall setting is configured to 'Typical Security' for IPv6 traffic");
+			LOGGER.info("#####################################################################################");
+
+			/**
+			 * Step 1: Verify the firewall setting is configured to 'Custom Security' for
+			 * IPv4 traffic
+			 */
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the firewall setting is configured to 'Custom Security' for IPv4 traffic");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'Custom', Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6 ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Firewall Setting for IPv4 traffic should be set to Custom Security");
+			LOGGER.info("************************************************************************************");
+			
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_LEVEL, WebPaDataTypes.STRING.getValue(),
+					BroadBandTestConstants.FIREWALL_CUSTOM_SECURITY);
+			errorMessage = "Firewall Setting for IPv4 traffic cannot be set to Custom Security";
+			if (status) {
+				LOGGER.info(testStepNumber
+						+ " ACTUAL: Firewall Setting for IPv4 traffic is successfully set to Custom Security");
+				// wait for 30 seconds to apply settings
+				tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			} else {
+				LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 2: Verify the Ping connection to the gateway from WAN is successful
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Ping connection to the gateway IPv4 Address from WAN is successful before blocking ICMP IPv4 Traffic");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 <WAN IPv4> ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Ping request to the gateway from WAN should be successful");
+			LOGGER.info("************************************************************************************");
+
+		 
+			if (DeviceModeHandler.isDSLDevice(device)) {
+				LOGGER.info("SKIPPING THIS STEP SINCE MAPT LINE IS PRESENT");
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						"NOT APPLICABLE SINCE MAP-T LINE PRESENT", false);
+
+			} else {
+				wanIpv4 = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV4);
+				LOGGER.info("WAN IPv4 ADDRESS OF THE DEVICE: " + wanIpv4);
+				errorMessage = "Unable to retrieve WAN IPv4 Address of the gateway using WebPA/dmcli. ACTUAL RESPONSE: "
+						+ wanIpv4;
+				if (CommonMethods.isNotNull(wanIpv4) && CommonMethods.isIpv4Address(wanIpv4)) {
+					result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv4);
+					status = result.isStatus();
+					errorMessage = result.getErrorMessage();
+				}
+				if (status) {
+					LOGGER.info(testStepNumber
+							+ " ACTUAL: Ping request to the gateway IPv4 Address from WAN is successful");
+				} else {
+					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}
+			/**
+			 * Step 3: Verify the Custom Secuirty is configured to 'Block ICMP' for IPv4
+			 * traffic
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Custom Secuirty is configured to 'Block ICMP' for IPv4 traffic");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'true', Device.Firewall.X_RDKCENTRAL-COM_Security.V4.IPFloodDetect ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Firewall Setting for IPv4 traffic should be set to 'Block ICMP' under Custom Security");
+			LOGGER.info("************************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_BLOCK_ICMP_FOR_IPV4_TRAFFIC_UNDER_CUSTOM_FIREWALL,
+					WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+			errorMessage = "Firewall Setting for IPv4 traffic cannot be set to 'Block ICMP' under Custom Security";
+			if (status) {
+				LOGGER.info(testStepNumber
+						+ " ACTUAL: Firewall Setting for IPv4 traffic is successfully set to 'Block ICMP' under Custom Security");
+				// wait for 30 seconds to apply settings
+				tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			} else {
+				LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 4: Verify the Ping connection to the gateway from WAN should fail when
+			 * ICMP requests are blocked under Firewall settings
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Ping connection to the gateway IPv4 Address from WAN should fail when ICMP requests are blocked under Firewall settings");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 <WAN IPv4> ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Ping request to the gateway from WAN should fail");
+			LOGGER.info("************************************************************************************");
+			
+		  
+			if (DeviceModeHandler.isDSLDevice(device)) {
+				LOGGER.info("SKIPPING THIS STEP SINCE MAPT LINE IS PRESENT");
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						"NOT APPLICABLE SINCE MAP-T LINE PRESENT", false);
+
+			} else {
+				result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv4);
+				errorMessage = result.isStatus()
+						? "Ping to gateway IPv4 Address from WAN is successful even after blocking ICMP Traffic"
+						: result.getErrorMessage();
+				status = !result.isStatus()
+						&& CommonUtils.patternSearchFromTargetString(errorMessage, "Ping from WAN got failed");
+				if (status) {
+					LOGGER.info(testStepNumber
+							+ " ACTUAL: Ping to the gateway IPv4 Address from WAN failed as expected after blocking ICMP Traffic");
+				} else {
+					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}
+
+			/**
+			 * Step 5: Verify the firewall setting is configured to 'Custom Security' for
+			 * IPv6 traffic
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the firewall setting is configured to 'Custom Security' for IPv6 traffic");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'Custom', Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6 ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Firewall Setting for IPv6 traffic should be set to Custom Security");
+			LOGGER.info("************************************************************************************");
+			
+			if (!(DeviceModeHandler.isFibreDevice(device) || DeviceModeHandler.isDSLDevice(device))) {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_LEVEL_IPV6, WebPaDataTypes.STRING.getValue(),
+						BroadBandTestConstants.FIREWALL_CUSTOM_SECURITY);
+				errorMessage = "Firewall Setting for IPv6 traffic cannot be set to Custom Security";
+				if (status) {
+					LOGGER.info(testStepNumber
+							+ " ACTUAL: Firewall Setting for IPv6 traffic is successfully set to Custom Security");
+					// wait for 30 seconds to apply settings
+					tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				} else {
+					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+				/**
+				 * Step 6: Verify the Ping connection to the gateway IPv6 Address from WAN is
+				 * successful
+				 */
+				stepNumber++;
+				testStepNumber = "S" + stepNumber;
+				status = false;
+				
+				LOGGER.info("************************************************************************************");
+				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Ping connection to the gateway IPv6 Address from WAN is successful before blocking ICMP IPv6 Traffic");
+				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 -W 5 <WAN IPv6> ");
+				LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Ping request to the gateway from WAN should be successful");
+				LOGGER.info("************************************************************************************");
+
+				String wanIpv6 = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+
+				LOGGER.info("Wan Ipv6 Address is = " + wanIpv6);
+
+
+				LOGGER.info("WAN IPv6 ADDRESS OF THE DEVICE: " + wanIpv6);
+				errorMessage = "Unable to retrieve WAN IPv6 Address of the gateway. ACTUAL RESPONSE: " + wanIpv6;
+				if (CommonMethods.isNotNull(wanIpv6) && CommonMethods.isIpv6Address(wanIpv6)) {
+					result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv6);
+					status = result.isStatus();
+					errorMessage = result.getErrorMessage();
+				}
+				if (status) {
+					LOGGER.info(testStepNumber
+							+ " ACTUAL: Ping request to the gateway IPv6 Address from WAN is successful");
+				} else {
+					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+				/**
+				 * Step 7: Verify the Custom Secuirty is configured to 'Block ICMP' for IPv6
+				 * traffic
+				 */
+				stepNumber++;
+				testStepNumber = "S" + stepNumber;
+				status = false;
+				LOGGER.info("************************************************************************************");
+				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Custom Secuirty is configured to 'Block ICMP' for IPv6 traffic");
+				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'true', Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequestsV6 ");
+				LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Firewall Setting for IPv6 traffic should be set to 'Block ICMP' under Custom Security");
+				LOGGER.info("************************************************************************************");
+
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_BLOCK_ICMP_FOR_IPV6_TRAFFIC_UNDER_CUSTOM_FIREWALL,
+						WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+				errorMessage = "Firewall Setting for IPv6 traffic cannot be set to 'Block ICMP' under Custom Security";
+				if (status) {
+					LOGGER.info(testStepNumber
+							+ " ACTUAL: Firewall Setting for IPv6 traffic is successfully set to 'Block ICMP' under Custom Security");
+					// wait for 30 seconds to apply settings
+					tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				} else {
+					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+				/**
+				 * Step 8: Verify the Ping connection to the gateway IPv6 Address from WAN
+				 * should fail when ICMP requests are blocked under Firewall settings
+				 */
+				stepNumber++;
+				testStepNumber = "S" + stepNumber;
+				status = false;
+				LOGGER.info("************************************************************************************");
+				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Ping connection to the gateway IPv6 Address from WAN should fail when ICMP requests are blocked under Firewall settings");
+				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 -W 5 <WAN IPv6> ");
+				LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Ping request to the gateway IPv6 Address from WAN should fail");
+				LOGGER.info("************************************************************************************");
+
+				result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv6);
+				errorMessage = result.isStatus()
+						? "Ping to gateway IPv6 Address from WAN is successful even after blocking ICMP Traffic"
+						: result.getErrorMessage();
+				status = !result.isStatus()
+						&& CommonUtils.patternSearchFromTargetString(errorMessage, "Ping from WAN got failed");
+				if (status) {
+					LOGGER.info(testStepNumber
+							+ " ACTUAL: Ping to the gateway IPv6 Address from WAN failed as expected after blocking ICMP Traffic");
+				} else {
+					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			} else {
+
+				while (stepNumber <= 8) {
+					testStepNumber = "S" + stepNumber;
+					LOGGER.info(
+							"STEP " + stepNumber + ": TEST STEP NOT APPLICABLE FOR DEVICE MODEL :" + device.getName());
+					errorMessage = BroadBandTestConstants.OPERATING_STANDARDS_N + "Not supported for "
+							+ device.getModel();
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+					stepNumber++;
+				}
+
+			}
+
+		} catch (Exception testException) {
+			errorMessage = testException.getMessage();
+			LOGGER.error("EXCEPTION OCCURRED WHILE VERIFYING WAN - LAN TRAFFIC IS BLOCKED IN CUSTOM FIREWALL : "
+					+ errorMessage);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} finally {
+			LOGGER.info("########################### STARTING POST-CONFIGURATIONS ###########################");
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify whether the 'Block ICMP' for IPv4 traffic can be disabled");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'false', Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequests ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : 'Block ICMP' under Custom Security should be disabled for IPv4 Traffic");
+			LOGGER.info("************************************************************************************");
+
+			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_BLOCK_ICMP_FOR_IPV4_TRAFFIC_UNDER_CUSTOM_FIREWALL,
+					WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE)) {
+				LOGGER.info(
+						"POST-CONDITION-1 PASSED: 'Block ICMP' under Custom Security is disabled successfully for IPv4 Traffic");
+			} else {
+				LOGGER.error(
+						"POST-CONDITION-1 FAILED: 'Block ICMP' under Custom Security cannot be disabled for IPv4 Traffic");
+			}
+			LOGGER.info("#####################################################################################");
+			
+			LOGGER.info("************************************************************************************");
+			LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify whether the firewall setting is configured to 'Minimum Security' for IPv4 traffic");
+			LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'Low', Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6 ");
+			LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Firewall Setting for IPv4 traffic should be set to 'Minimum Security'");
+			LOGGER.info("************************************************************************************");
+			
+			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_LEVEL, WebPaDataTypes.STRING.getValue(),
+					BroadBandTestConstants.FIREWALL_IPV4_MINIMUM_SECURITY)) {
+				LOGGER.info(
+						"POST-CONDITION-2 PASSED: Firewall Setting for IPv4 traffic is set successfully to 'Minimum Security'");
+			} else {
+				LOGGER.error(
+						"POST-CONDITION-2 FAILED: Firewall Setting for IPv4 traffic cannot be set to 'Minimum Security'");
+			}
+			LOGGER.info("#####################################################################################");
+
+			if (!(DeviceModeHandler.isFibreDevice(device))) {
+				
+				LOGGER.info("************************************************************************************");
+				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify whether the 'Block ICMP' for IPv6 traffic can be disabled");
+				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'false', Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequestsV6 ");
+				LOGGER.info("STEP "+ stepNumber + ": EXPECTED : 'Block ICMP' under Custom Security should be disabled for IPv6 Traffic");
+				LOGGER.info("************************************************************************************");
+				
+				if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_BLOCK_ICMP_FOR_IPV6_TRAFFIC_UNDER_CUSTOM_FIREWALL,
+						WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE)) {
+					LOGGER.info(
+							"POST-CONDITION-3 PASSED: 'Block ICMP' under Custom Security is disabled successfully for IPv6 Traffic");
+				} else {
+					LOGGER.error(
+							"POST-CONDITION-3 FAILED: 'Block ICMP' under Custom Security cannot be disabled for IPv6 Traffic");
+				}
+				LOGGER.info("#####################################################################################");
+				LOGGER.info("************************************************************************************");
+				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify whether the firewall setting is configured to 'Typical Security' for IPv6 traffic");
+				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute set command for the following webpa params to set value to 'Default', Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6 ");
+				LOGGER.info("STEP "+ stepNumber + ": EXPECTED :  Firewall Setting for IPv6 traffic should be set to 'Typical Security'");
+				LOGGER.info("************************************************************************************");
+				
+				LOGGER.info(
+						"POST-CONDITION 4: DESCRIPTION: Verify whether the firewall setting is configured to 'Typical Security' for IPv6 traffic");
+				LOGGER.info(
+						"POST-CONDITION 4: EXPECTED: Firewall Setting for IPv6 traffic should be set to 'Typical Security'");
+				if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_LEVEL_IPV6, WebPaDataTypes.STRING.getValue(),
+						BroadBandTestConstants.FIREWALL_IPV6_TYPICAL_SECURITY)) {
+					LOGGER.info(
+							"POST-CONDITION-4 PASSED: Firewall Setting for IPv6 traffic is set successfully to 'Typical Security'");
+				} else {
+					LOGGER.error(
+							"POST-CONDITION-4 FAILED: Firewall Setting for IPv6 traffic cannot be set to 'Typical Security'");
+				}
+			} else {
+				LOGGER.info("POST-CONDITION 3 AND 4 IS NOT APPLICABLE FOR DEVICE MODEL :" + device.getName());
+			}
+			LOGGER.info("########################### COMPLETED POST-CONFIGURATIONS ###########################");
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-SECURITY_FIREWALL-1000");
+	}
 
     /**
      * Verify security firewall paramaters are adding rules in iptables after enabled
@@ -1048,7 +1478,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		// Variable Declaration Ends
 		
 		LOGGER.info("#######################################################################################");
-		LOGGER.info("STARTING TEST CASE: TC-XB-FIREWALL-1005");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-FIREWALL-1005");
 		LOGGER.info("TEST DESCRIPTION: Verify Echo Reply or Response with different firewall settings");
 
 		LOGGER.info("TEST STEPS : ");

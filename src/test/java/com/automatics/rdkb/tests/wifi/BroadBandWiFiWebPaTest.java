@@ -1473,7 +1473,7 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
 
 	    LOGGER.info("#######################################################################################");
-	    LOGGER.info("STARTING TEST CASE: TC-XB-WIFI-WEBPA-1030");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-WEBPA-1030");
 	    LOGGER.info(
 		    "TEST DESCRIPTION: Verification of 2.4Ghz Private wifi been broadcasted by using this parameter 'Device.WiFi.AccessPoint.10001.SSIDAdvertisementEnabled' using WebPA.");
 	    LOGGER.info("#######################################################################################");

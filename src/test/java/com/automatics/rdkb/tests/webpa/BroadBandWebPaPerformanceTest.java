@@ -372,7 +372,7 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
  		LOGGER.info("##########################################################################");
  		LOGGER.info("Average Response Time for webPA request with Five Get parameters : " + averageTime + "msec");
  		LOGGER.info("##########################################################################");
-		LOGGER.info("#################### ENDING TEST CASE: TC-XB-WEBPA-PERF-1001 ####################");
+		LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-WEBPA-PERF-1001 ####################");
 	}
 
 	/**
@@ -541,7 +541,7 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
 		LOGGER.info("##########################################################################");
 		LOGGER.info("Average Response Time for Ten Get parameters: " + averageTime + "msec");
 		LOGGER.info("##########################################################################");
-		LOGGER.info("#################### ENDING TEST CASE: TC-XB-WEBPA-PERF-1002 ####################");
+		LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-WEBPA-PERF-1002 ####################");
 	}
 
 	/**
@@ -1431,7 +1431,7 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
      * <li>Step 1 :Verify parallel Webpa requests for multiple component webpa parameters</li>
      * </ol>
      * 
-     * @author Ashwin sankara
+     * @author asanka200
      * @Refactor Alan_Bivera
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
