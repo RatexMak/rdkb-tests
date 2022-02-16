@@ -1568,12 +1568,10 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
      * <p>
      * <li>STEP 1 :Enable diagnostic mode using webpa params</li>
      * <li>STEP 2 :verify logupload frequency using webpa params</li>
-     * <li>STEP 3 :verify logupload frequency from webpa params</li>
-     * <li>STEP 4 :Configure log upload frequency using webpa params</li>
-     * <li>STEP 5 :verify logupload frequency using webpa params</li>
-     * <li>STEP 6 :verify logupload frequency from webpa params</li>
-     * <li>STEP 7 :Disable diagnostic mode using webpa params</li>
-     * <li>STEP 8 :verify default value logupload frequency using webpa params</li>
+     * <li>STEP 3 :Configure log upload frequency using webpa params</li>
+     * <li>STEP 4 :verify logupload frequency using webpa params</li>
+     * <li>STEP 5 :Disable diagnostic mode using webpa params</li>
+     * <li>STEP 6 :verify default value logupload frequency using webpa params</li>
      * </p>
      * </ol>
      * 
@@ -1618,23 +1616,17 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 2: Verify Logupload frequency value webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \" ");
 	    LOGGER.info("EXPECTED: Response should contains valid integer value for Logupload frequency");
-	    LOGGER.info("STEP 3: Check the cron scheduling on ATOM side whether it is having LogUploadFrequency value");
 	    LOGGER.info(
-		    "EXPECTED: Response should contains Logupload frequency value and it should be same as step 2 response ");
-	    LOGGER.info(
-		    "STEP 4:Configure log upload frequency as 60 using webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \"");
+	   		"STEP 3:Configure log upload frequency as 60 using webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \"");
 	    LOGGER.info("EXPECTED: Log upload frequency value must be 60 ");
 	    LOGGER.info(
-		    "STEP 5: Verify log upload frequency value using webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \" ");
-	    LOGGER.info("EXPECTED: Log upload frequency value must be 60 ");
+		    "STEP 4: Verify log upload frequency value using webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \" ");
+	    LOGGER.info("EXPECTED: Log upload frequency value must be 60 ");   
 	    LOGGER.info(
-		    "STEP 6: Check the cron scheduling on ATOM side whether it is having updated LogUploadFrequency value");
-	    LOGGER.info("EXPECTED: Response should contains Logupload frequency as 60 ");
-	    LOGGER.info(
-		    "STEP 7: Disable diagnostic mode using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagnosticMode\" and verify disabled status ");
+		    "STEP 5: Disable diagnostic mode using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagnosticMode\" and verify disabled status ");
 	    LOGGER.info("EXPECTED: Diagnostic mode must be disabled via webpa param ");
 	    LOGGER.info(
-		    "STEP 8: Verify log upload frequency value using webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \"");
+		    "STEP 6: Verify log upload frequency value using webpa param  \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency \"");
 	    LOGGER.info("EXPECTED: Log upload frequency value must be 1440 ");
 
 	    LOGGER.info(
@@ -1703,57 +1695,16 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-	    // test step commented at present due to file not found in device
-	    // testStepNumber = "s3";
-	    // status = false;
-	    //
-	    // LOGGER.info(
-	    // "************************************************************************************************");
-	    // LOGGER.info("STEP 3: Check the cron scheduling on ATOM side whether it is
-	    // having LogUploadFrequency
-	    // value");
-	    // LOGGER.info("STEP 3: ACTION: Execute command cat /tmp/cron/root and verify
-	    // log upload frequency");
-	    // LOGGER.info(
-	    // "STEP 3: EXPECTED: Response should contains Logupload frequency value and it
-	    // should be same as step 2
-	    // response
-	    // ");
-	    // LOGGER.info(
-	    // "************************************************************************************************");
-	    //
-	    // try {
-	    // errorMessage = "Failed to check the cron scheduling on ATOM side having
-	    // LogUploadFrequency value";
-	    // status = BroadBandSelfHealUtils.verifyLogUploadFrequencyOnAtomConsole(device,
-	    // tapEnv,
-	    // logUploadFrequency);
-	    // } catch (Exception exception) {
-	    // errorMessage = "Exception occurred during execution : " +
-	    // exception.getMessage();
-	    // LOGGER.error(errorMessage);
-	    // }
-	    //
-	    //
-	    // if (status) {
-	    // LOGGER.info("STEP 3: ACTUAL : SSUCCESSFULLY VERIFIED LOG UPLOAD FREQUENCY
-	    // FROM ATOM CONSOLE !!!");
-	    // } else {
-	    // LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-	    // }
-	    // tapEnv.updateExecutionStatus(device, testId, testStepNumber, status,
-	    // errorMessage, false);
-
-	    testStepNumber = "s4";
+	    testStepNumber = "s3";
 	    status = false;
 
 	    LOGGER.info(
 		    "************************************************************************************************");
 	    LOGGER.info(
-		    "STEP 4:Configure log upload frequency as 60 using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\"");
+		    "STEP 3:Configure log upload frequency as 60 using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\"");
 	    LOGGER.info(
-		    "STEP 4: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" and set log upload frequency as 60");
-	    LOGGER.info("STEP 4: EXPECTED: Log upload frequency value must be 60 ");
+		    "STEP 3: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" and set log upload frequency as 60");
+	    LOGGER.info("STEP 3: EXPECTED: Log upload frequency value must be 60 ");
 	    LOGGER.info(
 		    "************************************************************************************************");
 
@@ -1769,23 +1720,23 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 
 	    if (status) {
 		LOGGER.info(
-			"STEP 4: ACTUAL : SUCCESSFULLY CONFIGURED LOG UPLOAD FREQUENCY USING WEBPA PARAM Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency!!!");
+			"STEP 3: ACTUAL : SUCCESSFULLY CONFIGURED LOG UPLOAD FREQUENCY USING WEBPA PARAM Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency!!!");
 	    } else {
-		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
 	    }
 
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-	    testStepNumber = "s5";
+	    testStepNumber = "s4";
 	    status = false;
 
 	    LOGGER.info(
 		    "************************************************************************************************");
 	    LOGGER.info(
-		    "STEP 5: Verify log upload frequency value using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" ");
+		    "STEP 4: Verify log upload frequency value using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" ");
 	    LOGGER.info(
-		    "STEP 5: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" and verify log upload frequency");
-	    LOGGER.info("STEP 5: EXPECTED: Log upload frequency value must be 60 ");
+		    "STEP 4: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" and verify log upload frequency");
+	    LOGGER.info("STEP 4: EXPECTED: Log upload frequency value must be 60 ");
 	    LOGGER.info(
 		    "************************************************************************************************");
 	    try {
@@ -1805,63 +1756,22 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 
 	    if (status) {
 		LOGGER.info(
-			"STEP 5: ACTUAL : SUCCESSFULLY VERIFIED CONFIGURED LOG UPLOAD FREQUENCY USING webpa params !!!");
+			"STEP 4: ACTUAL : SUCCESSFULLY VERIFIED CONFIGURED LOG UPLOAD FREQUENCY USING webpa params !!!");
 	    } else {
-		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
 	    }
 
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-	    // test step commented at present due to file not found in device
-	    // testStepNumber = "s6";
-	    // status = false;
-	    // LOGGER.info(
-	    // "************************************************************************************************");
-	    // LOGGER.info(
-	    // "STEP 6: Check the cron scheduling on ATOM side whether it is having updated
-	    // LogUploadFrequency value");
-	    // LOGGER.info("STEP 6: ACTION: Execute command cat /tmp/cron/root and verify
-	    // log upload frequency");
-	    // LOGGER.info(
-	    // "STEP 6: EXPECTED: Response should contains Logupload frequency value and it
-	    // should be same as step 2
-	    // response
-	    // ");
-	    // LOGGER.info(
-	    // "************************************************************************************************");
-	    //
-	    // try {
-	    // errorMessage = "Failed to check the cron scheduling on ATOM side having
-	    // LogUploadFrequency value";
-	    // status = BroadBandSelfHealUtils.verifyLogUploadFrequencyOnAtomConsole(device,
-	    // tapEnv,
-	    // BroadBandTestConstants.STRING_VALUE_60);
-	    // } catch (Exception exception) {
-	    // errorMessage = "Exception occurred during execution : " +
-	    // exception.getMessage();
-	    // LOGGER.error(errorMessage);
-	    // }
-	    //
-
-	    // if (status) {
-	    // LOGGER.info("STEP 6: ACTUAL : SUCCESSFULLY VERIFIED UPDATED VALUE FOR LOG
-	    // UPLOAD FREQUENCY FROM ATOM
-	    // CONSOLE !!!");
-	    // } else {
-	    // LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-	    // }
-	    // tapEnv.updateExecutionStatus(device, testId, testStepNumber, status,
-	    // errorMessage, false);
-
-	    testStepNumber = "s7";
+	     testStepNumber = "s5";
 	    status = false;
 	    LOGGER.info(
 		    "************************************************************************************************");
 	    LOGGER.info(
-		    "STEP 7: Disable diagnostic mode using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagnosticMode\" ");
+		    "STEP 5: Disable diagnostic mode using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagnosticMode\" ");
 	    LOGGER.info(
-		    "STEP 7: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagnosticMode\" and verify diagnostic mode status");
-	    LOGGER.info("STEP 7: EXPECTED: Diagnostic mode must be disabled via webpa params ");
+		    "STEP 5: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagnosticMode\" and verify diagnostic mode status");
+	    LOGGER.info("STEP 5: EXPECTED: Diagnostic mode must be disabled via webpa params ");
 	    LOGGER.info(
 		    "************************************************************************************************");
 
@@ -1876,22 +1786,22 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 	    }
 
 	    if (status) {
-		LOGGER.info("STEP 7: ACTUAL : SUCCESSFULLY DISABLED DIAGNOSTIC MODE USING WEBPA PARAMS !!!");
+		LOGGER.info("STEP 5: ACTUAL : SUCCESSFULLY DISABLED DIAGNOSTIC MODE USING WEBPA PARAMS !!!");
 	    } else {
-		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
 	    }
 
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-	    testStepNumber = "s8";
+	    testStepNumber = "s6";
 	    status = false;
 	    LOGGER.info(
 		    "************************************************************************************************");
 	    LOGGER.info(
-		    "STEP 8: Verify log upload frequency value using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\"");
+		    "STEP 6: Verify log upload frequency value using webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\"");
 	    LOGGER.info(
-		    "STEP 8: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" and verify log upload frequency");
-	    LOGGER.info("STEP 8: EXPECTED: Log upload frequency value must be retained and value should be 60 ");
+		    "STEP 6: ACTION: Execute webpa param \"Device.SelfHeal.X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency\" and verify log upload frequency");
+	    LOGGER.info("STEP 6: EXPECTED: Log upload frequency value must be retained and value should be 60 ");
 	    LOGGER.info(
 		    "************************************************************************************************");
 	    try {
@@ -1911,9 +1821,9 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 	    }
 
 	    if (status) {
-		LOGGER.info("STEP 8: ACTUAL : SUCCESSFULLY RETAINED VALUE FOR LOG UPLOAD FREQUENCY USING SNMP MIB !!!");
+		LOGGER.info("STEP 6: ACTUAL : SUCCESSFULLY RETAINED VALUE FOR LOG UPLOAD FREQUENCY USING SNMP MIB !!!");
 	    } else {
-		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
 	    }
 
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);

@@ -20,7 +20,7 @@ package com.automatics.rdkb.tests.cdl;
 
 import java.util.Map;
 
-import org.apache.commons.httpclient.HttpStatus;
+import org.apache.http.HttpStatus;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
