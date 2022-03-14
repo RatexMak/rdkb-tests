@@ -739,9 +739,9 @@ public class BroadBandWareHouseResetTest extends AutomaticsTestBase {
 			BroadBandTestConstants.CONSTANT_2);
 
 		/**
-		 * POST-CONDITION 3 : ENABLE THE XIFNITY WIFI
+		 * POST-CONDITION 3 : ENABLE THE PUBLIC WIFI
 		 */
-		BroadBandPostConditionUtils.executePostConditionToEnableXfinityWifi(device, tapEnv,
+		BroadBandPostConditionUtils.executePostConditionToEnablePublicWifi(device, tapEnv,
 			BroadBandTestConstants.CONSTANT_3);
 
 		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");

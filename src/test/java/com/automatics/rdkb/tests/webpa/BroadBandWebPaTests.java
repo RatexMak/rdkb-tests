@@ -4052,7 +4052,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 4: DESCRIPTION : Verify setting WifiClient.MacAddress value via Webpa.");
 	    LOGGER.info(
-		    "STEP 4: ACTION : Execute the Webpa Set Command for parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress and set value as '449160dc0ae8'.");
+		    "STEP 4: ACTION : Execute the Webpa Set Command for parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
 	    LOGGER.info("STEP 4: EXPECTED : Device WifiClient.MacAddress Value should be set successfully via Webpa.");
 	    LOGGER.info("**********************************************************************************");
 	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
@@ -4183,7 +4183,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 10: DESCRIPTION : Verify setting WifiClient.MacAddress value via Webpa.");
 	    LOGGER.info(
-		    "STEP 10: ACTION : Execute the Webpa Set Command for parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress and set value as '449160dc0ae8'.");
+		    "STEP 10: ACTION : Execute the Webpa Set Command for parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
 	    LOGGER.info("STEP 10: EXPECTED : Device WifiClient.MacAddress Value should be set successfully via Webpa.");
 	    LOGGER.info("**********************************************************************************");
 	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
@@ -4265,4 +4265,929 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-WEBPA-1018");
     }
 
+    /**
+     * Verify firmware download event notifications with Manageable notification feature enabled
+     * <ol>
+     * <li>Verify ManageableNotification feature is enabled by default</li>
+     * <li>Trigger CDL upgrade device to latest stable build using mock XCONF</li>
+     * <li>Verify Firmware download started notification in xconf.txt.0</li>
+     * <li>Verify firmware download started notification in PAMlog</li>
+     * <li>Verify firmware download started notification in PARODUSlog</li>
+     * <li>Verify value of FirmwareDownloadStartedNotification parameter is updated</li>
+     * <li>Verify Firmware download completed notification in xconf.txt.0</li>
+     * <li>Verify firmware download completed notification in PAMlog</li>
+     * <li>Verify firmware download completed notification in PARODUSlog</li>
+     * <li>Verify value of FirmwareDownloadCompletedNotification parameter is updated</li>
+     * <li>Verify reboot pending notification with reboot reason software upgrade in PAMlog</li>
+     * <li>Verify reboot pending notification in PARODUSlog after download complete</li>
+     * <li>Wait for device to reboot and verify it comes up with new image</li>
+     * <li>Verify value of DeviceManageableNotification parameter is 0 before device is fully manageable. If not, verify
+     * device manageable notfication is present in PARODUSlog</li>
+     * <li>Verify WebPA process is up after reboot</li>
+     * <li>Verify value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification is
+     * reset to zero after reboot</li>
+     * <li>Verify value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification
+     * is reset to false after reboot</li>
+     * <li>Verify device fully manageable notification is present in PAMlog</li>
+     * <li>Verify device fully manageable notification is present in PARODUSlog</li>
+     * </ol>
+     * 
+     * @author Ashwin sankara
+     * @author ArunKumar Jayachandran
+     * @Refactor Alan_Bivera
+     * 
+     * @param device
+     * 
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-WEBPA-1011")
+    public void testVerifyFirmwareDownloadEventNotificationEnabled(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-WEBPA-111";
+	String stepNum = "s1";
+	String response = null;
+	String errorMessage = null;
+	String currentImage = null;
+	String latestImage = null;
+	int stepCounter = BroadBandTestConstants.CONSTANT_0;
+	long startTime = BroadBandTestConstants.CONSTANT_0;
+	boolean status = false;
+	boolean isCdlDataPosted = false;
+	int postConStepNumber = BroadBandTestConstants.CONSTANT_0;
+	String cdlStartTime = null;
+	String currentCdlBuild = null;
+	String latestCdlBuild = null;
+	String priorityValue = null;
+	boolean featureAvailableBuild = false;
+	int preConStepNumber = 1;
+	// Variable Declation Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBPA-1011");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify firmware download event notifications  with Manageable notification feature enabled");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify ManageableNotification feature is enabled by default");
+	LOGGER.info("2. Trigger CDL upgrade device to latest stable build using mock XCONF");
+	LOGGER.info("3. Verify Firmware download started notification in xconf.txt.0");
+	LOGGER.info("4. Verify firmware download started notification in PAMlog");
+	LOGGER.info("5. Verify firmware download started notification in PARODUSlog");
+	LOGGER.info("6. Verify value of FirmwareDownloadStartedNotification parameter is updated");
+	LOGGER.info("7. Verify Firmware download completed notification in xconf.txt.0");
+	LOGGER.info("8. Verify firmware download completed notification in PAMlog");
+	LOGGER.info("9. Verify firmware download completed notification in PARODUSlog");
+	LOGGER.info("10. Verify value of FirmwareDownloadCompletedNotification parameter is updated");
+	LOGGER.info("11. Verify reboot pending notification with reboot reason software upgrade in PAMlog");
+	LOGGER.info("12. Verify reboot pending notification in PARODUSlog after download complete");
+	LOGGER.info("13. Wait for device to reboot and verify it comes up with new image");
+	LOGGER.info(
+		"14. Verify value of DeviceManageableNotification parameter is 0 before device is fully manageable. "
+			+ "If not, verify device manageable notfication is present in PARODUSlog");
+	LOGGER.info("15. Verify WebPA process is up after reboot");
+	LOGGER.info(
+		"16. Verify value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification"
+			+ " is reset to zero after reboot");
+	LOGGER.info(
+		"17. Verify value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification"
+			+ " is reset to false after reboot");
+	LOGGER.info("18. Verify device fully manageable notification is present in PAMlog");
+	LOGGER.info("19. Verify device fully manageable notification is present in PARODUSlog");
+	LOGGER.info("20. Verify value of DeviceManageableNotification has been set after device is fully manageable");
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : Pre-Condition method to disable code big first.
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToDisableCodeBigFirst(device, tapEnv, preConStepNumber);
+
+	    /**
+	     * PRE-CONDITION 2 : Pre-Condition to disable periodic firmware upgrade.
+	     */
+	    preConStepNumber++;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("PRE-CONDITION  " + preConStepNumber
+		    + ": DESCRIPTION : Disable periodic firmware upgrade using WebPA");
+	    LOGGER.info("PRE-CONDITION  " + preConStepNumber
+		    + ": ACTION : Execute Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PeriodicFWCheck.Enable parameter using WebPA/Dmcli");
+	    LOGGER.info("PRE-CONDITION " + preConStepNumber
+		    + ": EXPECTED : WebPA should return success message with value false");
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Failed to disable Periodic firmware check";
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE);
+	    status = CommonMethods.isNotNull(response) && Boolean.parseBoolean(response);
+	    try {
+		status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE, BroadBandTestConstants.FALSE);
+	    } catch (TestException exception) {
+		status = false;
+		LOGGER.error(errorMessage + " : " + exception.getMessage());
+	    }
+	    if (!status) {
+		status = false;
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+			BroadBandTestConstants.FALSE);
+	    }
+	    if (status) {
+		LOGGER.info("PRE-CONDITION " + preConStepNumber
+			+ " : ACTUAL : SUCCESSFULLY DISABLED PERIODIC FIRMWARE CHECK PARAMETER");
+	    } else {
+		LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
+		throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION : "
+			+ preConStepNumber + " FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.ManageableNotification.Enable";
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify ManageableNotification feature is enabled by default");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute webpa or dmcli command to get value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.ManageableNotification.Enable");
+	    LOGGER.info("STEP 1: EXPECTED : Value of ManageableNotification parameter is true by default");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_MANAGEABLE_NOTIFICATION_ENABLE);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.ManageableNotification.Enable is not true by default";
+		status = response.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+	    }
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Value of ManageableNotification parameter is true by default");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Unable to get latest image for current box model";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Trigger CDL upgrade device to latest build using mock XCONF");
+	    LOGGER.info("STEP 2: ACTION : Configure mock server with latest stable image for estb mac of the device"
+		    + " and trigger Device.X_COMCAST-COM_Xcalibur.Client.xconfCheckNow as true");
+	    LOGGER.info("STEP 2: EXPECTED : Successfully triggered image download to latest build");
+	    LOGGER.info("**********************************************************************************");
+
+	    currentImage = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    latestImage = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+	    LOGGER.info("LATEST FIRMWARE VERSION: " + latestImage);
+	    if (CommonMethods.isNull(latestImage)) {
+		LOGGER.info(
+			" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+		latestImage = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+		LOGGER.info("Latest Firmware version from property file: " + latestImage);
+	    }
+
+	    if (CommonMethods.isNotNull(latestImage)) {
+
+		BroadBandXconfCdlUtils.configureRdkbDeviceForXconfCdl(tapEnv, device, latestImage, true,
+			BroadBandTestConstants.FIRMWARE_DOWNLOAD_PROTOCOL_HTTP);
+		errorMessage = "Unable to trigger CDL latest build - " + latestImage;
+		isCdlDataPosted = true;
+		startTime = BroadBandCommonUtils.getEpochTimeInSecond(tapEnv, device);
+		if (!DeviceModeHandler.isDSLDevice(device)) {
+		    LOGGER.info("Triggering CDL using TR181");
+		    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_TRIGGERING_XCONF_CDL,
+			    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+
+		} else {
+		    FirmwareDownloadUtils.triggerCdlUsingShellScriptForDSL(tapEnv, device);
+		    status = true;
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfully triggered image download to latest stable build");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "Unable to find ### httpdownload started ### log message in xconf.txt.0";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Verify Firmware download started notification in xconf.txt.0");
+	    LOGGER.info("STEP 3: ACTION : Execute grep commands to search for 'httpdownload started' and"
+		    + " 'FirmwareDownloadStartedNotification' in /rdklogs/logs/xconf.txt.0");
+	    LOGGER.info(
+		    "STEP 3: EXPECTED : Firmware download started notification log message is present in xconf.txt.0");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    FirmwareDownloadUtils.getCdlDownloadStartedLog(device),
+		    BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS))) {
+		errorMessage = "Unable to find FirmwareDownloadStartedNotification log message in "
+			+ BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0;
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_FIRMWARE_DOWNLOAD_STARTED_NOTIFICATION,
+			BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0));
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 3: ACTUAL : Firmware download started notification log message is present in xconf.txt.0");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Unable to find firmware-download-started log message in PAMlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify firmware download started notification in PAMlog");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute command: grep -i \"firmware-download-started\" /rdklogs/logs/PAMlog.txt.0 and verify priority, current_fw_ver, download_fw_ver fields, start time fields and verify the priority value is forced");
+	    LOGGER.info(
+		    "STEP 4: EXPECTED : Firmware download started notification log message is present in PAMlog and all the fields should be present in the log");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_FIRMWARE_DOWNLOAD_STARTED,
+		    BroadBandTestConstants.COMMAND_NTP_LOG_FILE);
+	    featureAvailableBuild = BroadBandCommonUtils.verifyFeatureAvailabilityInBuild(tapEnv, device,
+		    tapEnv.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_JAIL_UI_FEATURE));
+	    if (featureAvailableBuild) {
+		if (CommonMethods.isNotNull(response)) {
+		    String jsonStr = CommonMethods.patternFinder(response,
+			    BroadBandTestConstants.PATTERN_GET_XCONF_PAYLOAD);
+		    if (CommonMethods.isNotNull(jsonStr)) {
+			JSONObject objectName = new JSONObject(jsonStr);
+			if (objectName.has(BroadBandTestConstants.STATUS)
+				&& objectName.has(BroadBandTestConstants.PRIORITY)
+				&& objectName.has(BroadBandTestConstants.START_TIME)
+				&& objectName.has(BroadBandTestConstants.CURRENT_FW_VER)
+				&& objectName.has(BroadBandTestConstants.DOWNLOAD_FW_VER)) {
+			    cdlStartTime = objectName.getString(BroadBandTestConstants.START_TIME).toString();
+			    currentCdlBuild = objectName.getString(BroadBandTestConstants.CURRENT_FW_VER).toString();
+			    latestCdlBuild = objectName.getString(BroadBandTestConstants.DOWNLOAD_FW_VER).toString();
+			    priorityValue = objectName.getString(BroadBandTestConstants.PRIORITY).toString();
+			    if (CommonMethods.isNotNull(priorityValue) && CommonMethods.isNotNull(cdlStartTime)
+				    && CommonMethods.isNotNull(latestCdlBuild)
+				    && CommonMethods.isNotNull(currentCdlBuild)) {
+				status = objectName.get(BroadBandTestConstants.STATUS).toString()
+					.equalsIgnoreCase(BroadBandTestConstants.FW_DWN_STARTED)
+					&& priorityValue
+						.equalsIgnoreCase(BroadBandTestConstants.FW_DWN_PRIORITY_FORCED);
+			    }
+
+			}
+		    }
+		}
+	    } else {
+		status = CommonMethods.isNotNull(response);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : Firmware download started notification log message is present in PAMlog");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "Unable to find firmware-download-started log message in PARODUSlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify firmware download started notification in PARODUSlog");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute command:grep -i \"firmware-download-started\" /rdklogs/logs/PARODUSlog.txt.0");
+	    LOGGER.info(
+		    "STEP 5: EXPECTED : Firmware download started notification log message is present in PARODUSlog");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_FIRMWARE_DOWNLOAD_STARTED,
+		    BroadBandCommandConstants.LOG_FILE_PARODUS));
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 5: ACTUAL : Firmware download started notification log message is present in PARODUSlog");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 6: DESCRIPTION : Verify value of FirmwareDownloadStartedNotification parameter is updated");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute webpa or dmcli command to get value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification and check the response values are same as step 4 field values");
+	    LOGGER.info(
+		    "STEP 6: EXPECTED : Value of parameter is updated with start time, priority, current fw version, download fw version");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FIRMWARE_DOWNLOAD_STARTED_NOTIFICATION);
+
+	    if (CommonMethods.isNotNull(response)) {
+		if (featureAvailableBuild) {
+		    errorMessage = "Value of parameter is not matched with log message in PAM log file";
+		    status = CommonUtils.isGivenStringAvailableInCommandOutput(response, priorityValue)
+			    && CommonUtils.isGivenStringAvailableInCommandOutput(response, latestCdlBuild)
+			    && CommonUtils.isGivenStringAvailableInCommandOutput(response, currentCdlBuild)
+			    && CommonUtils.isGivenStringAvailableInCommandOutput(response, cdlStartTime);
+		} else {
+		    errorMessage = "Value of parameter is less than firmware download start time";
+		    status = Long.parseLong(response) > startTime;
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Successfully verified all the parameters in PAM log file");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    errorMessage = "Unable to find ### httpdownload completed ### log message in xconf.txt.0";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify Firmware download completed notification in xconf.txt.0");
+	    LOGGER.info("STEP 7: ACTION : Execute commands: grep \"httpdownload completed\" /rdklogs/logs/xconf.txt.0"
+		    + " , grep \"FirmwareDownloadCompletedNotification\" /rdklogs/logs/xconf.txt.0");
+	    LOGGER.info(
+		    "STEP 7: EXPECTED : Firmware download completed notification log message is present in xconf.txt.0");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (!DeviceModeHandler.isDSLDevice(device)) {
+		if (CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			FirmwareDownloadUtils.getCdlDownloadCompletedLog(device),
+			BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0, BroadBandTestConstants.SIX_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS))) {
+		    errorMessage = "Unable to find FirmwareDownloadCompletedNotification log message in "
+			    + BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0;
+		    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_FIRMWARE_DOWNLOAD_COMPLETED_NOTIFICATION,
+			    BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0,
+			    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+		}
+	    } else {
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_HTTP_DOWNLOAD_COMPLETED,
+			BroadBandTestConstants.RDKLOGS_LOGS_XCONF_TXT_0, BroadBandTestConstants.SIX_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 7: ACTUAL : Firmware download completed notification log message is present in xconf.txt.0");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+	    if (!DeviceModeHandler.isDSLDevice(device)) {
+
+		stepNum = "s8";
+		errorMessage = "Unable to find firmware-download-completed log message in PAMlog";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 8: DESCRIPTION : Verify firmware download completed notification in PAMlog");
+		LOGGER.info(
+			"STEP 8: ACTION : Execute command:grep -i \"firmware-download-completed\" /rdklogs/logs/PAMlog.txt.0");
+		LOGGER.info(
+			"STEP 8: EXPECTED : Firmware download completed notification log message is present in PAMlog");
+		LOGGER.info("**********************************************************************************");
+
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_FIRMWARE_DOWNLOAD_COMPLETED,
+			BroadBandTestConstants.COMMAND_NTP_LOG_FILE));
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 8: ACTUAL : Firmware download completed notification log message is present in PAMlog");
+		} else {
+		    LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		LOGGER.info("**********************************************************************************");
+
+		stepNum = "s9";
+		errorMessage = "Unable to find firmware-download-completed log message in PARODUSlog";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 9: DESCRIPTION : Verify firmware download completed notification in PARODUSlog");
+		LOGGER.info(
+			"STEP 9: ACTION : Execute command:grep -i \"firmware-download-completed\" /rdklogs/logs/PARODUSlog.txt.0");
+		LOGGER.info(
+			"STEP 9: EXPECTED : Firmware download completed notification log message is present in PARODUSlog");
+		LOGGER.info("**********************************************************************************");
+
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_FIRMWARE_DOWNLOAD_COMPLETED,
+			BroadBandCommandConstants.LOG_FILE_PARODUS));
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 9: ACTUAL : Firmware download completed notification log message is present in PARODUSlog");
+		} else {
+		    LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		LOGGER.info("**********************************************************************************");
+
+		stepNum = "s10";
+		errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 10: DESCRIPTION : Verify value of FirmwareDownloadCompletedNotification parameter is updated");
+		LOGGER.info("STEP 10: ACTION : Execute webpa or dmcli command to get value of"
+			+ " Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification");
+		LOGGER.info(
+			"STEP 10: EXPECTED : Value of parameter is updated to true after firmware download completed");
+		LOGGER.info("**********************************************************************************");
+
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAMETER_FIRMWARE_DOWNLOAD_COMPLETED_NOTIFICATION);
+		if (CommonMethods.isNotNull(response)) {
+		    errorMessage = "Value of parameter is not true after firmware download completed";
+		    status = response.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+		}
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 10: ACTUAL : Value of parameter is updated to true after firmware download completed");
+		} else {
+		    LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		LOGGER.info("**********************************************************************************");
+
+		stepNum = "s11";
+		errorMessage = "Unable to find reboot pending notification log message in PAMlog";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 11: DESCRIPTION : Verify reboot pending notification with reboot reason software upgrade in PAMlog");
+		LOGGER.info("STEP 11: ACTION : Execute command:grep -i \"reboot-pending\" /rdklogs/logs/PAMlog.txt.0");
+		LOGGER.info(
+			"STEP 11: EXPECTED : Reboot pending notification is present in PAMlog with reason software upgrade");
+		LOGGER.info("**********************************************************************************");
+
+		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_REBOOT_PENDING_NOTIFICATION,
+			BroadBandTestConstants.COMMAND_NTP_LOG_FILE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		if (CommonMethods.isNull(response)) {
+		    response = tapEnv.searchAndGetTraceLineWithMatchingString(device,
+			    BroadBandTraceConstants.LOG_MESSAGE_REBOOT_PENDING_NOTIFICATION,
+			    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS);
+		}
+
+		status = CommonMethods.isNotNull(response) && (CommonMethods.patternMatcher(response,
+			BroadBandTestConstants.UNKNOWN_REBOOT_REASON)
+			|| CommonMethods.patternMatcher(response, BroadBandTestConstants.REBOOT_REASON_REBOOT_CMD)
+			|| CommonMethods.patternMatcher(response,
+				BroadBandCdlConstants.EXPECTED_LAST_REBOOT_REASON_STATUS_DIFD_CDL_VIA_WEBPA_REBOOT)
+			|| CommonMethods.patternMatcher(response,
+				BroadBandCdlConstants.EXPECTED_LAST_REBOOT_REASON_STATUS_AFTER_CDL)
+			|| CommonMethods.patternMatcher(response, BroadBandTestConstants.REBOOT_REASON_FACTORY_RESET)
+			|| CommonMethods.patternMatcher(response, BroadBandTestConstants.REBOOT_REASON_RFC_REBOOT));
+		if (!status && CommonMethods.waitForEstbIpAcquisition(tapEnv, device)) {
+
+		    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_REBOOT_PENDING_NOTIFICATION,
+			    BroadBandCommandConstants.FILE_PATH_NVRAM_PAM_TAIL);
+		    status = CommonMethods.isNotNull(response);
+		}
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 11: ACTUAL : Reboot pending notification is present in PAMlog with reason software upgrade");
+		} else {
+		    LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		LOGGER.info("**********************************************************************************");
+
+		stepNum = "s12";
+		errorMessage = "Unable to find reboot pending log message in PARODUSlog";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 12: DESCRIPTION : Verify reboot pending notification in PARODUSlog after download complete");
+		LOGGER.info(
+			"STEP 12: ACTION : Execute command:grep -i \"reboot-pending\" /rdklogs/logs/PARODUSlog.txt.0");
+		LOGGER.info("STEP 12: EXPECTED : Reboot pending notification is present in PARODUSlog");
+		LOGGER.info("**********************************************************************************");
+
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_REBOOT_PENDING_NOTIFICATION,
+			BroadBandCommandConstants.LOG_FILE_PARODUS));
+		if (!status) {
+		    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_REBOOT_PENDING_NOTIFICATION,
+			    BroadBandCommandConstants.FILE_PATH_NVRAM_PARODUS_TAIL);
+		    status = CommonMethods.isNotNull(response);
+		}
+		
+		if (status) {
+		    LOGGER.info("STEP 12: ACTUAL : Reboot pending notification is present in PARODUSlog");
+		} else {
+		    LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		LOGGER.info("**********************************************************************************");
+	    } else {
+		stepCounter = 8;
+		while (stepCounter <= 12) {
+		    stepNum = "s" + stepCounter;
+		    errorMessage = "This Step " + stepNum + " is not Applicable for DSL device";
+		    LOGGER.error("STEP " + stepCounter + ": ACTUAL : " + errorMessage);
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			    errorMessage, false);
+		    LOGGER.info("**********************************************************************************");
+		    stepCounter++;
+		}
+	    }
+	    stepNum = "s13";
+	    errorMessage = "Device did not go for reboot after code download complete and reboot immediately - true";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION : Wait for device to reboot and verify it comes up with new image");
+	    LOGGER.info("STEP 13: ACTION : Execute commands: echo test_connection , cat /version.txt");
+	    LOGGER.info("STEP 13: EXPECTED : Device came up successfully after reboot with new image");
+	    LOGGER.info("**********************************************************************************");
+	    if (DeviceModeHandler.isDSLDevice(device)) {
+		errorMessage = "Device not accessible after reboot for software upgrade";
+		CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+		LOGGER.info("Waiting 1 minute");
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		errorMessage = "Image did not change after reboot for software upgrade";
+		FirmwareDownloadUtils.verifyCurrentImageNameBothInArmAndAtomConsole(tapEnv, device, latestImage);
+		status = true;
+	    } else {
+		if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.CONSTANT_8)) {
+		    errorMessage = "Device not accessible after reboot for software upgrade";
+		    if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device)) {
+			errorMessage = "Image did not change after reboot for software upgrade";
+			status = CodeDownloadUtils.verifyImageVersionFromVersionText(tapEnv, device, latestImage);
+		    }
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL : Device came up successfully after reboot with new image");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s14";
+	    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 14: DESCRIPTION : Verify value of DeviceManageableNotification parameter is 0 before device is fully manageable."
+			    + " If not, verify device manageable notfication is present in PARODUSlog");
+	    LOGGER.info("STEP 14: ACTION : Execute webpa or dmcli command to get value of "
+		    + "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification, "
+		    + "If not 0, Execute command:grep -i \"fully-manageable\" /rdklogs/logs/PARODUSlog.txt.0");
+	    LOGGER.info(
+		    "STEP 14: EXPECTED : Value of parameter is zero after reboot or non-zero after it is fully-manageable");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_DEVICE_MANAGEABLE_NOTIFICATION);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Value of parameter is non-zero when device fully manageable notification is not sent";
+		if (!response.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO)) {
+		    status = CommonMethods
+			    .isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+				    BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+				    BroadBandCommandConstants.LOG_FILE_PARODUS))
+			    || CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+				    BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+				    BroadBandCommandConstants.FILE_PATH_NVRAM_PARODUS_TAIL));
+		}
+	    }
+	    startTime = System.currentTimeMillis();
+	    do {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAMETER_DEVICE_MANAGEABLE_NOTIFICATION);
+		if (CommonMethods.isNotNull(response)) {
+		    errorMessage = "Value of parameter is non-zero when device fully manageable notification is not sent";
+		    status = response.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+		}
+	    } while (System.currentTimeMillis() - startTime < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS && !status
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    // Checking if device is fully manageable when parameter has non zero value
+	    if (!status) {
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+			BroadBandTestConstants.COMMAND_NTP_LOG_FILE));
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 14: ACTUAL : Value of parameter is zero after reboot or non-zero after it is fully-manageable");
+	    } else {
+		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s15";
+	    errorMessage = "Failed to verify webpa command working after reboot";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 15: DESCRIPTION : Verify WebPA process is up after reboot");
+	    LOGGER.info("STEP 15: ACTION : Execute webpa command to get serial number");
+	    LOGGER.info("STEP 15: EXPECTED : WebPA commands working after reboot");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+
+	    if (status) {
+		LOGGER.info("STEP 15: ACTUAL : WebPA commands working after reboot");
+	    } else {
+		LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s16";
+	    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 16: DESCRIPTION : Verify value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification"
+			    + " is reset to zero after reboot");
+	    LOGGER.info("STEP 16: ACTION : Execute webpa or dmcli command to get value of "
+		    + "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadStartedNotification");
+	    LOGGER.info("STEP 16: EXPECTED : Value of parameter is zero after reboot");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FIRMWARE_DOWNLOAD_STARTED_NOTIFICATION);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Value of parameter is non-zero after reboot";
+		status = response.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 16: ACTUAL : Value of parameter is zero after reboot");
+	    } else {
+		LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s17";
+	    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 17: DESCRIPTION : Verify value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification"
+			    + " is reset to false after reboot");
+	    LOGGER.info("STEP 17: ACTION : Execute webpa or dmcli command to get value of "
+		    + "Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.FirmwareDownloadCompletedNotification");
+	    LOGGER.info("STEP 17: EXPECTED : Value of parameter is false after reboot");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FIRMWARE_DOWNLOAD_COMPLETED_NOTIFICATION);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Value of parameter is not false after reboot";
+		status = response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 17: ACTUAL : Value of parameter is false after reboot");
+	    } else {
+		LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s18";
+	    errorMessage = "Unable to find device fully-manageable notification log message present in PAMlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 18: DESCRIPTION : Verify device fully manageable notification is present in PAMlog");
+	    LOGGER.info("STEP 18: ACTION : Execute command:grep -i \"fully-manageable\" /rdklogs/logs/PAMlog.txt.0");
+	    LOGGER.info("STEP 18: EXPECTED : Fully manageable notification is present after reboot in PAMlog");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods
+		    .isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+			    BroadBandTestConstants.COMMAND_NTP_LOG_FILE))
+		    || CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+			    BroadBandCommandConstants.FILE_PATH_NVRAM_PAM_TAIL));
+
+	    if (status) {
+		LOGGER.info("STEP 18: ACTUAL : Fully manageable notification is present after reboot in PAMlog");
+	    } else {
+		LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s19";
+	    errorMessage = "Unable to find device fully-manageable notification log message present in PARODUSlog";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 19: DESCRIPTION : Verify device fully manageable notification is present in PARODUSlog");
+	    LOGGER.info(
+		    "STEP 19: ACTION : Execute command:grep -i \"fully-manageable\" /rdklogs/logs/PARODUSlog.txt.0");
+	    LOGGER.info("STEP 19: EXPECTED : Fully manageable notification is present after reboot in PARODUSlog");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods
+		    .isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+			    BroadBandCommandConstants.LOG_FILE_PARODUS))
+		    || CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_FULLY_MANAGEABLE_NOTIFICATION,
+			    BroadBandCommandConstants.FILE_PATH_NVRAM_PARODUS_TAIL));
+	    ;
+
+	    if (status) {
+		LOGGER.info("STEP 19: ACTUAL : Fully manageable notification is present after reboot in PARODUSlog");
+	    } else {
+		LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s20";
+	    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 20: DESCRIPTION : Verify value of DeviceManageableNotification has been set after device is fully manageable");
+	    LOGGER.info(
+		    "STEP 20: ACTION : Execute webpa or dmcli command to get value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification");
+	    LOGGER.info("STEP 20: EXPECTED : Value of DeviceManageableNotification parameter updated successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (!DeviceModeHandler.isDSLDevice(device)) {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_BOOTTIME);
+		if (CommonMethods.isNotNull(response)) {
+		    startTime = Long.parseLong(response);
+		    errorMessage = "Failed to obtain value of Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.DeviceManageableNotification";
+		    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAMETER_DEVICE_MANAGEABLE_NOTIFICATION);
+		    if (CommonMethods.isNotNull(response)) {
+			errorMessage = "Value of DeviceManageableNotification is not updated to value greater than boot time after device is fully manageable";
+			status = Long.parseLong(response) > startTime;
+		    }
+		}
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 20: ACTUAL : Value of DeviceManageableNotification parameter updated successfully");
+		} else {
+		    LOGGER.error("STEP 20: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    } else {
+		errorMessage = "This Step " + stepNum + " is not Applicable for DSL device";
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+	    }
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+
+	    /**
+	     * POST CONDITION 1 : CLEAR THE CDL INFORMATION IN XCONF SERVER
+	     */
+	    if (isCdlDataPosted) {
+		postConStepNumber++;
+		BroadBandPostConditionUtils.executePostConditionToClearCdlInfoInXconf(device, tapEnv,
+			postConStepNumber);
+	    }
+
+	    String imageName = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+
+	    if (CommonMethods.isNotNull(currentImage) && CommonMethods.isNotNull(imageName)
+		    && !(currentImage.equalsIgnoreCase(imageName))) {
+		status = false;
+		errorMessage = "Unable to revert image back to original build";
+		LOGGER.info("#######################################################################################");
+		LOGGER.info(
+			"POST-CONDITION 2 : DESCRIPTION : 1. Reset value of ManageableNotificationEnable to true 2. Revert image to original build if required");
+		LOGGER.info("POST-CONDITION 2 : ACTION : Execute webpa or dmcli command to set value of "
+			+ "ManageableNotificationEnable parameter to true, Revert image if required");
+		LOGGER.info("POST-CONDITION 2 : EXPECTED : Post condition completed successfully");
+		LOGGER.info("#######################################################################################");
+		if (FirmwareDownloadUtils.triggerCdlUsingTr181OrTftp(tapEnv, device, currentImage)) {
+		    errorMessage = "Failed to reset value of Manageable notification enable parameter to true";
+		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAMETER_MANAGEABLE_NOTIFICATION_ENABLE,
+			    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+			    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		}
+
+		if (status) {
+		    LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+		} else {
+		    LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+		}
+		LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WEBPA-1011");
+    }
+    
 }

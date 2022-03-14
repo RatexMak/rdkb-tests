@@ -370,8 +370,6 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 	String errorMessage = null;
 	int stepNumber = 1;
 	boolean status = false;
-	String response = null;
-	boolean telemetryVerOneFlag = false;
 	// Variable Declaration Ends
 
 	LOGGER.info("#######################################################################################");
@@ -805,7 +803,6 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 	String errorMessage = null;
 	int stepNumber = 1;
 	boolean status = false;
-	boolean telemetryVerOneFlag = false;
 	// Variable Declaration Ends
 
 	try {
@@ -1308,8 +1305,6 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 		int stepNumber = 1;
 		boolean status = false;
 		String initialFirmwareVersion = null;
-		boolean hasLatestBuildChanged = false;
-		boolean telemetryVerOneFlag = false;
 		String latestImage = null;
 		// Variable Declaration Ends
 

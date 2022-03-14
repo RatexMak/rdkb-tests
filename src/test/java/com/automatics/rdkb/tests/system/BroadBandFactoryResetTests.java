@@ -29,17 +29,23 @@ import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
+import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.TestCategory;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandSnmpConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
+import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants;
+import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.interfaces.FactoryResetSettings;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandRestoreWifiUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.LoggerUtils;
 import com.automatics.rdkb.utils.factoryreset.BroadBandFactoryResetUtils;
 import com.automatics.rdkb.utils.factoryreset.BroadBandFactoryResetUtils.AdvancedFeatureServices;
 import com.automatics.rdkb.utils.factoryreset.BroadBandFactoryResetUtils.CodeBig;
@@ -63,7 +69,7 @@ import com.automatics.utils.CommonMethods;
 
 public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 	
-	
+    private Map<String, String> defaultValuesForSSID = null;
     /**
     *
     * Test Case # 1: Perform Factory Reset Using WebPA.
@@ -149,6 +155,705 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 	// Test case id declaration
 	String testCaseId = "TC-RDKB-FACTORYRBT-003";
 	testToVerifyFactoryReset(device, testCaseId, TestCategory.SNMP);
+   }
+   
+   /**
+    * Test to verify Default SSID and Password after Factory Resetting Router through WebPA
+    * 
+    * <ol>
+    * <li>Pre-Condition 1: Verify whether WebPA is up and running in the Device.</li>
+    * <li>Pre-Condition 2: Verify getting default SSID values for 2.4GHz & 5GHz via WebPa.</li>
+    * <li>Verify performing Factory Reset via WebPa and wait for device to come up.</li>
+    * <li>Verify whether WebPA is up and running in the device after successful Factory Reset.</li>
+    * <li>Verify last reboot reason.</li>
+    * <li>Verify the default value of 2.4GHz SSID.</li>
+    * <li>Verify default value of 2.4GHz SSID password.</li>
+    * <li>Verify the default value of 5GHz SSID.</li>
+    * <li>Verify default value of 5GHz SSID password.</li>
+    * <li>Post-Condition 1: Perform device recativation.</li>
+    * </ol>
+    * 
+    * @param device
+    *            {@link Dut}
+    * 
+    * @author Revanth Kumar Vella
+    * @refactor Athira
+    */
+   @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+   @TestDetails(testUID = "TC-RDKB-FACTORYRBT-1006")
+   public void testToVerifyDefaultSSIDAfterFactoryResettingRouter(Dut device) {
+	// Variable declaration starts
+	String testCaseId = "TC-RDKB-FACTORYRBT-106";
+	String stepNum = null;
+	String errorMessage = null;
+	String response = null;
+	boolean status = false;
+	boolean isFactoryResetDone = false;
+	boolean isMeshEnabled = false;
+	boolean isMeshEnableInDb = false;
+	boolean isMeshEnableInLog = false;
+	boolean isBandSteeringEnabled = false;
+	BroadBandResultObject broadBandResultObject = new BroadBandResultObject();
+	// Variable declaration ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-FACTORYRBT-1006");
+	LOGGER.info("TEST DESCRIPTION: Verify Default SSID and Password after Factory Resetting Router through WebPA");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("Pre-Conditon 1: Verify whether WebPA is up and running in the Device.");
+	LOGGER.info("Pre-Conditon 2: Verify getting default SSID values for 2.4GHz & 5GHz via WebPa.");
+	LOGGER.info("1. Verify performing Factory Reset via WebPa and wait for device to come up.");
+	LOGGER.info("2. Verify whether WebPA is up and running in the device after successful Factory Reset.");
+	LOGGER.info("3.1. Verify Mesh status is enabled in db using syscfg");
+	LOGGER.info("3.2. Verify Default value of Mesh after Factory Reset via webpa/dmcli");
+	LOGGER.info("4. Verify Default value of BS after Factory Reset via webpa/dmcli");
+	LOGGER.info("5. Verify last reboot reason.");
+	LOGGER.info("6. Verify the default value of 2.4GHz SSID.");
+	LOGGER.info("7. Verify default value of 2.4GHz SSID password.");
+	LOGGER.info("8. Verify the default value of 5GHz SSID.");
+	LOGGER.info("9. Verify default value of 5GHz SSID password.");
+	LOGGER.info("Post-Conditon 1:  Perform device recativation.");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+
+	    errorMessage = "Webpa is not up and Running.";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : Verify whether WebPA is up and running in the Device.");
+	    LOGGER.info(
+		    "PRE-CONDITION 1 : ACTION : Verify Successful webpa Get response ,in case of failure rechecking for 8 minutes.");
+	    LOGGER.info("PRE-CONDITION 1 : EXPECTED : WebPA should be up and running in the Device.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1 : ACTUAL : Webpa process is up and running successfully.");
+	    } else {
+		LOGGER.error("PRE-CONDITION 1 : ACTUAL : Webpa process is not  up and running so precondition failed");
+		throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	    }
+	    // DSL device has no specific pattern for default SSID unlike other broadband devices.
+	    // So Getting the default SSID before factory reset and verify its the same after factory reset
+	    if (DeviceModeHandler.isDSLDevice(device)) {
+		errorMessage = "Unable to get default values for SSID(2.4GHz & 5GHz).";
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"PRE-CONDITION 2 : DESCRIPTION : Verify getting default SSID values for 2.4GHz & 5GHz via WebPa.");
+		LOGGER.info(
+			"PRE-CONDITION 2 : ACTION : Execute WebPa Get command for following params: Device.WiFi.SSID.10001.X_COMCAST-COM_DefaultSSID & Device.WiFi.SSID.10101.X_COMCAST-COM_DefaultSSID");
+		LOGGER.info(
+			"PRE-CONDITION 2 : EXPECTED : WebPa Get command should execute successfully and return default values.");
+		LOGGER.info("**********************************************************************************");
+		populateDefaultValuesForSSID(device, tapEnv);
+		if (status) {
+		    LOGGER.info("PRE-CONDITION 2 : ACTUAL : Successfully got default values for both the SSIDs.");
+		} else {
+		    LOGGER.error("PRE-CONDITION 2 : ACTUAL : Pre condition failed");
+		    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+	    } else {
+		LOGGER.info("Pre-Condition 2 is only applicable for DSL devices.");
+	    }
+
+	    stepNum = "S1";
+	    errorMessage = "Unable to perform Factory Reset on the device.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Verify performing Factory Reset via WebPa and wait for device to come up.");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute WebPa Set command for following param: Device.X_CISCO_COM_DeviceControl.FactoryReset and set value as 'Router' and wait for device to come up.");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : Factory reset should be successful and device should go for reboot and also should come up later.");
+	    LOGGER.info("**********************************************************************************");
+	    isFactoryResetDone = status = BroadBandFactoryResetUtils.methodToPerformFactoryResetObjectAndDeviceToComeUp(
+		    tapEnv, device, BroadBandTestConstants.STRING_ROUTER);
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL: Factory Reset performed successfully, Device went for reboot and comes up after that.");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S2";
+	    errorMessage = "WebPa is not coming up after successful Factory Reset even after waiting for 8 minutes.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION : Verify whether WebPA is up and running in the device after successful Factory Reset.");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Verify Successful webpa Get response ,in case of failure rechecking for 8 minutes.");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : WebPA should be up and running in the Device after successful Factory Reset.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL: Successfully verified webpa is up and running");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s3.1";
+	    errorMessage = "MESH enabled value obtained in log file is not appearing similar to obtained in syscfg db";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3.1: DESCRIPTION : Verify Mesh status in bootup WEBPAlog file & syscfg db");
+	    LOGGER.info("STEP 3.1: ACTION : Execute in log file MeshAgentLog.txt.0 and syscfg show| grep -i mesh");
+	    LOGGER.info("STEP 3.1: EXPECTED : Value of Mesh should be same across ");
+	    LOGGER.info("**********************************************************************************");
+	    // mesh value in boot up webpa logs
+	    String isMeshEnableInLogFile = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
+		    tapEnv, BroadBandTestConstants.MESHWIFI_ENABLED_LOG, BroadBandTestConstants.LOG_FILE_MESHAGENT,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+	    if (CommonMethods.isNotNull(isMeshEnableInLogFile)) {
+		isMeshEnableInLog = true;
+	    } else {
+		isMeshEnableInLog = false;
+	    }
+
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_MESH_VALUE_SYSCFG_DB);
+	    isMeshEnableInDb = CommonMethods.isNotNull(response) && CommonMethods.isGivenStringAvailableInCommandOutput(
+		    response, BroadBandTestConstants.MESH_SYSCFG_DB_OP + BroadBandTestConstants.TRUE);
+
+	    status = isMeshEnableInLog == isMeshEnableInDb;
+
+	    if (status) {
+		LOGGER.info("STEP 3.1: ACTUAL : MESH is " + isMeshEnableInLog
+			+ " in bootup webpa logs (via xpc) & reflecting same value in syscfg db");
+	    } else {
+		LOGGER.error("STEP 3.1: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("****************************************************************");
+
+	    // 3.2
+	    /** Step 3.2 : Verify Default value of Mesh after Factory Reset via webpa/dmcli */
+	    stepNum = "s3.2";
+	    status = false;
+	    errorMessage = "Failed to validate Mesh default value after Factory Reset";
+	    LOGGER.info("**************************************************************************");
+	    LOGGER.info("STEP 3.2 : DESCRIPTION  : Verify Default value of Mesh after Factory Reset via webpa/dmcli");
+	    LOGGER.info(
+		    "STEP 3.2 : ACTION : Execute dmcli cmd Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable");
+	    LOGGER.info(
+		    "STEP 3.2 : EXPECTED: Default value of Mesh after FR should be True for Atom based devices with wifi extender, fibre devices and a specific arm based device");
+	    LOGGER.info("**************************************************************************");
+	    String meshWebpaValue = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_RDKCENTRAL_MESH_ENABLE);
+	    if (CommonMethods.isNotNull(meshWebpaValue)
+		    && meshWebpaValue.equalsIgnoreCase(BroadBandTestConstants.TRUE)) {
+		isMeshEnabled = true;
+	    }
+
+	    if ((isMeshEnabled == isMeshEnableInLog) || (isMeshEnabled == isMeshEnableInDb)) {
+		status = true;
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 3.2: ACTUAL: Successfully verified default value of MESH is same as in Logs & syscfg db after Factory Reset");
+	    } else {
+		LOGGER.info("STEP 3.2: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("****************************************************************");
+
+	    /** Step 4 : Verify Default value of BS after Factory Reset via webpa/dmcli */
+	    stepNum = "s4";
+	    status = false;
+	    errorMessage = "Failed to validate BS default value after Factory Reset";
+	    LOGGER.info("**************************************************************************");
+	    LOGGER.info("STEP 4 : DESCRIPTION  : Verify Default value of BS after Factory Reset via webpa/dmcli");
+	    LOGGER.info("STEP 4 : ACTION : Execute dmcli cmd Device.WiFi.X_RDKCENTRAL-COM_BandSteering.Enable");
+	    LOGGER.info("STEP 4 : EXPECTED: Default value of BS after FR should be False");
+	    LOGGER.info("**************************************************************************");
+	    if (isMeshEnabled) {
+		isBandSteeringEnabled = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_BAND_STEERING_ENABLE, BroadBandTestConstants.FALSE);
+	    } else {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_BAND_STEERING_ENABLE);
+		LOGGER.info("Since Mesh is not enabled, default value of BS can be true/false");
+		isBandSteeringEnabled = true;
+	    }
+	    if (isBandSteeringEnabled) {
+		LOGGER.info(
+			"STEP 4: ACTUAL: Successfully verified default value of BS if MESH is Enabled (Band Steering should be disabled)");
+	    } else {
+		LOGGER.info("STEP 4: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, isBandSteeringEnabled, errorMessage, false);
+	    LOGGER.info("****************************************************************");
+
+	    stepNum = "S5";
+	    errorMessage = "Unable to verify last reboot reason.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify last reboot reason.");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute the WebPa Get command for following param: Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason.");
+	    LOGGER.info("STEP 5: EXPECTED : Last reboot reason should be 'factory-reset'.");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_COMMAND_LAST_REBOOT_REASON);
+	    status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+		    BroadBandTestConstants.REBOOT_REASON_FACTORY_RESET, response);
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL: Last reboot reason is verified successfully as 'factory-reset'.");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S6";
+	    errorMessage = "Unable to verify default 2.4GHz SSID value.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify the default value of 2.4GHz SSID.");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute the WebPa Get command for following param: Device.WiFi.SSID.10001.X_COMCAST-COM_DefaultSSID");
+	    LOGGER.info(
+		    "STEP 6: EXPECTED : WebPa Get comamnd should execute successfully and should return default 2.4GHz SSID value.");
+	    LOGGER.info("**********************************************************************************");
+	    if (DeviceModeHandler.isDSLDevice(device)) {
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ);
+		status = verifySSIDStatus(BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ, response);
+	    } else {
+		broadBandResultObject = BroadBandRestoreWifiUtils.verifyDefaultSsidForAllPartners(device, tapEnv,
+			WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+		status = broadBandResultObject.isStatus();
+		errorMessage = broadBandResultObject.getErrorMessage();
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL: Default 2.4GHz SSID value verified successfully.");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S7";
+	    errorMessage = "Unable to verify default 2.4GHz SSID password value.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify default value of 2.4GHz SSID password.");
+	    LOGGER.info(
+		    "STEP 7: ACTION : Execute the WebPa Get command for following param: Device.WiFi.AccessPoint.10001.Security.X_COMCAST-COM_DefaultKeyPassphrase");
+	    LOGGER.info(
+		    "STEP 7: EXPECTED : WebPa Get comamnd should execute successfully and should return default 2.4GHz password value.");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_2_4);
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL: Default 2.4GHz SSID password value verified successfully.");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S8";
+	    errorMessage = "Unable to verify default 5GHz SSID value.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Verify the default value of 5GHz SSID.");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Execute the WebPa Get command for following param: Device.WiFi.SSID.10101.X_COMCAST-COM_DefaultSSID");
+	    LOGGER.info(
+		    "STEP 8: EXPECTED : WebPa Get comamnd should execute successfully and should return default 5GHz SSID value.");
+	    LOGGER.info("**********************************************************************************");
+	    if (DeviceModeHandler.isDSLDevice(device)) {
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ);
+		status = verifySSIDStatus(BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ, response);
+	    } else {
+		broadBandResultObject = BroadBandRestoreWifiUtils.verifyDefaultSsidForAllPartners(device, tapEnv,
+			WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+		status = broadBandResultObject.isStatus();
+		errorMessage = broadBandResultObject.getErrorMessage();
+	    }
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL: Default 5GHz SSID value verified successfully.");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S9";
+	    errorMessage = "Unable to verify default 5GHz SSID password value.";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify default value of 5GHz SSID password.");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Execute the WebPa Get command for following param: Device.WiFi.AccessPoint.10101.Security.X_COMCAST-COM_DefaultKeyPassphrase");
+	    LOGGER.info(
+		    "STEP 9: EXPECTED : WebPa Get comamnd should execute successfully and should return default 5GHz password value.");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_5);
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL: Default 5GHz SSID password value verified successfully.");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = errorMessage + exception.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    if (isFactoryResetDone) {
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		LOGGER.info("POST-CONDITION STEPS");
+
+		LOGGER.info("############################################################################");
+		LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Perform device recativation.");
+		LOGGER.info(
+			"POST-CONDITION 1 : ACTION : Execute the device recativation sequence using webpa commands.");
+		LOGGER.info("POST-CONDITION 1 : EXPECTED : Reactivation should be successfully performed.");
+		LOGGER.info("############################################################################");
+		try {
+		    BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
+		    status = true;
+		} catch (Exception exception) {
+		    errorMessage = "Exception occured while reactivating the device." + exception.getMessage();
+		}
+		if (status) {
+		    LOGGER.info("POST-CONDITION 1 : ACTUAL : Device Reactivated successfully.");
+		} else {
+		    LOGGER.error("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+		}
+
+		LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-FACTORYRBT-1006");
+   }
+
+   /**
+    * Verify Default SSID and Password after Factory Resetting Wifi through WebPA object
+    * <ol>
+    * <li>Factory reset with value Wifi.</li>
+    * <li>Verify whether device becomes factory reset and verify whether device becomes accessible.</li>
+    * <li>Verify Default SSID after Factory Resetting Wifi through WebPA object for 2.4Ghz</li>
+    * <li>Verify Default Password after Factory Resetting Wifi through WebPA object for 2.4Ghz</li>
+    * <li>Verify Default SSID after Factory Resetting Wifi through WebPA object for 5Ghz</li>
+    * <li>Verify Default Password after Factory Resetting Wifi through WebPA object for 5Ghz</li>
+    * 
+    * @param device
+    *            {@link Dut}
+    * @author Revanth Kumar Vella
+    * @refactor Athira
+    *           </ol>
+    */
+   @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+   @TestDetails(testUID = "TC-RDKB-FACTORYRBT-1007")
+   public void FactoryResettingWiFi(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	// long value to store start time of polling period
+	long startTime = BroadBandTestConstants.CONSTANT_0;
+	// Variable Declation Ends
+
+	testCaseId = "TC-RDKB-FACTORYRBT-107";
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-FACTORYRBT-1007");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify Default SSID and Password after Factory Resetting Wifi through WebPA object ");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Factory reset  with value Wifi. ");
+	LOGGER.info("2. Verify whether device becomes factory reset and verify whether device becomes accessible.");
+	LOGGER.info("3. Verify Default SSID after Factory Resetting Wifi through WebPA object for 2.4Ghz");
+	LOGGER.info("4. Verify Default Password after Factory Resetting Wifi through WebPA object for 2.4Ghz");
+	LOGGER.info("5. Verify Default SSID after Factory Resetting Wifi through WebPA object for 5Ghz");
+	LOGGER.info("6. Verify Default Password after Factory Resetting Wifi through WebPA object for 5Ghz");
+
+	LOGGER.info("#######################################################################################");
+	try {
+
+	    LOGGER.info("**********************************************************************************");
+
+	    // DSL device has no specific pattern for default SSID unlike other broadband devices.
+	    // So Get the default SSID before factory reset and verify its the same after factory reset
+	    /**
+	     * PRECONDITION 1 :Get Default SSID value for 2.4Ghz and 5 Ghz using WebPA parameter
+	     */
+	    LOGGER.info("*****************************************************************************************");
+	    LOGGER.info(
+		    "PRE-CONDITION 1 DESCRIPTION:  GET DEFAULT SSID VALUE FOR 2.4GHZ AND 5 GHZ USING WEBPA PARAMETER ");
+	    LOGGER.info("PRE-CONDITION 2 ACTION : EXECUTE Device.WiFi.SSID.10001.X_COMCAST-COM_DefaultSSID and "
+		    + "Device.WiFi.SSID.10101.X_COMCAST-COM_DefaultSSID TO GET DEFAULT SSID VALUE ");
+	    LOGGER.info(
+		    "PRE-CONDITION 1 EXPTECTED: WEBPA REQUEST SHOULD RETURN DEFAULT SSID VALUE WITH SUCCESS MESSAGE ");
+	    LOGGER.info("***********************************************************************************");
+	    if (DeviceModeHandler.isDSLDevice(device)) {
+		populateDefaultValuesForSSID(device, tapEnv);
+	    }
+
+	    stepNum = "s1";
+	    errorMessage = "Failed to factory reset the device with value WiFi.";
+	    status = false;
+	    String timeStamp = null;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Factory reset  with value Wifi. ");
+	    LOGGER.info("STEP 1: ACTION : Set webpa Device.X_CISCO_COM_DeviceControl.FactoryReset with value Wifi.");
+	    LOGGER.info("STEP 1: EXPECTED : Factory reset should be successful.");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		timeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
+		status = BroadBandFactoryResetUtils.performFactoryResetWebPaForWifi(tapEnv, device, "Wifi");
+		if (status) {
+		    LOGGER.info("STEP 1: ACTUAL : FACTORY RESET IS SUCCESS WITH VALUE WIFI.");
+		} else {
+		    LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+		}
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    } catch (TestException exception) {
+		errorMessage = "Exception occured while Factory Reset with value Wifi : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "The string \"FactoryReset:CosaDmlDcSetFactoryReset Restoring WiFi to factory defaults\" is not  present in PAMlog.txt.0. ";
+	    status = false;
+	    String response = null;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION : Verify whether device becomes factory reset and verify whether device becomes accessible.");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Check Wifilog file and wait for a maximum of five minutes for the device to come up after factory reset.");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : The string \"FactoryReset:CosaDmlDcSetFactoryReset Restoring WiFi to factory defaults\" should present in PAMlog.txt.0 file. And device should accessible");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		startTime = System.currentTimeMillis();
+		do {
+		    response = LoggerUtils.getLatestLogMessageBasedOnTimeStamp(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_FACTORY_RESET_WIFI,
+			    BroadBandTestConstants.COMMAND_NTP_LOG_FILE, timeStamp, false);
+		    status = CommonMethods.isNotNull(response);
+		} while (System.currentTimeMillis() - startTime < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS && !status
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+		if (status) {
+		    LOGGER.info("STEP 2: ACTUAL : DEVICE IS UP AFTER FACTORY RESET.");
+		} else {
+		    LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+		}
+	    } catch (TestException exception) {
+		errorMessage = "Exception occured while wait till the device becomes accessible : "
+			+ exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "Default SSID is not obtained as expected from Webpa "
+		    + BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ;
+	    status = false;
+	    String defaultSSID = null;
+	    BroadBandResultObject broadBandResultObject = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Verify Default SSID after Factory Resetting Wifi through WebPA object for 2.4Ghz");
+	    LOGGER.info("STEP 3: ACTION : Execute webpa Device.WiFi.SSID.10001.X_COMCAST-COM_DefaultSSID ");
+	    LOGGER.info("STEP 3: EXPECTED : Expected device's default SSID for 2.4Ghz should be displayed");
+	    LOGGER.info("**********************************************************************************");
+
+	    try {
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ);
+		if (DeviceModeHandler.isDSLDevice(device)) {
+		    status = verifySSIDStatus(BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ, response);
+		} else {
+		    broadBandResultObject = BroadBandRestoreWifiUtils.verifyDefaultSsidForAllPartners(device, tapEnv,
+			    WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+		    status = broadBandResultObject.isStatus();
+		    errorMessage = broadBandResultObject.getErrorMessage();
+		}
+	    } catch (TestException e) {
+		status = false;
+		errorMessage += e.getMessage();
+		LOGGER.error("Error Occured While Validating Default SSID :" + errorMessage);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : VERIFIED THE DEFAULT SSID FOR 2.4 GHZ AS " + response);
+	    } else {
+		errorMessage = errorMessage + " Received Webpa  response is : " + response;
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Failed to get default password using "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_2_4;
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Verify Default Password after Factory Resetting Wifi through WebPA object for 2.4Ghz.");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute webpa Device.WiFi.AccessPoint.10001.Security.X_COMCAST-COM_DefaultKeyPassphrase. ");
+	    LOGGER.info("STEP 4: EXPECTED : Expected device's default Password for 2.4Ghz should be displayed.");
+	    LOGGER.info("**********************************************************************************");
+
+	    try {
+		response = tapEnv.executeWebPaCommand(device,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_2_4);
+		status = CommonMethods.isNotNull(response);
+	    } catch (TestException e) {
+		status = false;
+		errorMessage += e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : VERIFIED THE DEFAULT PASSWORD FOR 2.4 GHZ AS " + response);
+	    } else {
+		errorMessage = errorMessage + " Received Webpa  response is : " + response;
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "Default SSID is not obtained as expected from Webpa "
+		    + BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ;
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 5: DESCRIPTION : Verify default SSID after Factory Resetting Wifi through WebPA object for 5Ghz.");
+	    LOGGER.info("STEP 5: ACTION : Execute webpa Device.WiFi.SSID.10101.X_COMCAST-COM_DefaultSSID. ");
+	    LOGGER.info("STEP 5: EXPECTED : Expected device's default SSID for 5Ghz should be displayed.");
+	    LOGGER.info("**********************************************************************************");
+
+	    try {
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ);
+		if (DeviceModeHandler.isDSLDevice(device)) {
+		    status = verifySSIDStatus(BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ, response);
+		} else {
+		    broadBandResultObject = BroadBandRestoreWifiUtils.verifyDefaultSsidForAllPartners(device, tapEnv,
+			    WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+		    status = broadBandResultObject.isStatus();
+		    errorMessage = broadBandResultObject.getErrorMessage();
+		}
+
+	    } catch (TestException e) {
+		status = false;
+		errorMessage += e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : VERIFIED THE DEFAULT SSID FOR 5 GHZ AS " + response);
+	    } else {
+		errorMessage = errorMessage + " Received Webpa  response is : " + response;
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Failed to get default password using "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_5;
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 6: DESCRIPTION : Verify Default Password after Factory Resetting Wifi through WebPA object for 5Ghz.");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute webpa Device.WiFi.AccessPoint.10101.Security.X_COMCAST-COM_DefaultKeyPassphrase. ");
+	    LOGGER.info("STEP 6: EXPECTED : Expected Device's default Password for 5Ghz should be displayed.");
+	    LOGGER.info("**********************************************************************************");
+
+	    try {
+		response = tapEnv.executeWebPaCommand(device,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_5);
+		status = CommonMethods.isNotNull(response);
+	    } catch (TestException e) {
+		status = false;
+		errorMessage += e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : VERIFIED THE DEFAULT PASSWORD FOR 5 GHZ AS " + response);
+	    } else {
+		errorMessage = errorMessage + " Received Webpa  response is : " + response;
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	    ;
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("POST-CONDITION : DESCRIPTION : Perform device recativation");
+	    LOGGER.info("POST-CONDITION : ACTION : Execute the device recativation sequence using webpa commands");
+	    LOGGER.info("POST-CONDITION : EXPECTED : reactivation  should be successfully performed ");
+	    try {
+		BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
+		status = true;
+	    } catch (Exception exception) {
+		errorMessage = "EXCEPTION OCCURED WHILE REACTIVATE THE DEVICE " + exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info(
+			"POST-CONDITION : ACTUAL : POST CONDITION EXECUTED SUCCESSFULLY. REACTIVATED THE DEVICEAFTER FACTORY RESET.");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-FACTORYRBT-1007");
    }
 	
 	
@@ -1709,5 +2414,47 @@ for (FactoryResetSettings factoryResetSetting : factoryResetSettings) {
 LOGGER.info(message.toString());
 LOGGER.debug("Exit from Method : validateSettingsOnDevice()");
 return message.toString();
+}
+
+/**
+ * Method to populate default Values of SSID for DSL device before factory reset
+ * 
+ * @param device
+ *            Dut instance
+ * @param tapEnv
+ *            AutomaticsTapApi instance
+ * @refactor Athira
+ */
+public void populateDefaultValuesForSSID(Dut device, AutomaticsTapApi tapEnv) {
+String response_2GHz = null;
+String response_5GHz = null;
+
+response_2GHz = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ);
+response_5GHz = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ);
+
+defaultValuesForSSID = new HashMap<String, String>();
+defaultValuesForSSID.put(BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ, response_2GHz);
+defaultValuesForSSID.put(BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ, response_5GHz);
+}
+
+/**
+ * Method for returning wifi SSID matching status after factory reset
+ * 
+ * @param ssId
+ *            SSID to be checked
+ * @param response
+ *            response for webPA
+ * @return wifi SSID matching status after factory reset
+ * @refactor Athira
+ */
+private boolean verifySSIDStatus(String ssId, String response) {
+boolean status = false;
+if (null != defaultValuesForSSID) {
+    String response_GHz = defaultValuesForSSID.get(ssId);
+    if (CommonMethods.isNotNull(response_GHz) && CommonMethods.isNotNull(response)) {
+	status = response.equalsIgnoreCase(response_GHz);
+    }
+}
+return status;
 }
 }

@@ -65,8 +65,8 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
      * @author anandam.s
      * @refactor Govardhan
      * 
-     * @param settop
-     *            The settop to be used.
+     * @param device
+     *            The Dut to be used.
      * @throws Exception
      */
     @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
@@ -88,7 +88,7 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 	boolean isXconfCdlSuccess = false;
 	boolean captivePortalMode = false;
 	boolean isBusinessGateway = DeviceModeHandler.isBusinessClassDevice(device);
-	boolean rfcEffectOnXfinityWifi = true;
+	boolean rfcEffectOnPublicWifi = true;
 	boolean isDownloadCompleted = false;
 	boolean status = false;
 	Map<String, WiFiSsidConfigStatus> deviceSsidStatus = null;
@@ -135,15 +135,15 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 	    // Remove rfc overrides
 	    tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_REMOVED_RFC_OVERRIDE);
 
-	    // Check the RFC configurations from Xfinity WiFi status
+	    // Check the RFC configurations from Public WiFi status
 	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_RFC_VALUE_CONFIG_FILE);
 
 	    if (CommonMethods.isNotNull(response)) {
 		response = CommonMethods.patternFinder(response,
 			BroadBandTestConstants.PATTERN_GET_XFINITY_WIFI_STATUS_FROM_RFC_CONFIG);
 		if (CommonMethods.isNotNull(response)) {
-		    rfcEffectOnXfinityWifi = Boolean.parseBoolean(response.trim());
-		    LOGGER.info("Xfinity WiFi status in RFC configuration : " + rfcEffectOnXfinityWifi);
+			rfcEffectOnPublicWifi = Boolean.parseBoolean(response.trim());
+		    LOGGER.info("Public WiFi status in RFC configuration : " + rfcEffectOnPublicWifi);
 		}
 	    }
 
@@ -1070,47 +1070,47 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 		    "********************************************************************************************************");
 
 	    step = "s20";
-	    errorMessage = "Xfinity wifi is not enabled after device upgrade";
+	    errorMessage = "Public wifi is not enabled after device upgrade";
 	    status = false;
 	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 20: DESCRIPTION :  Verify Xfinity WiFi enabled status using TR-181 parameters ");
+	    LOGGER.info("STEP 20: DESCRIPTION :  Verify Public WiFi enabled status using TR-181 parameters ");
 	    LOGGER.info("STEP 20: ACTION :   Execute webpa "
 		    + BroadBandWebPaConstants.WEBPA_PARAM_ENABLING_PUBLIC_WIFI);
-	    LOGGER.info("STEP 20: EXPECTED :  Xfinity WiFi enabled status must be true");
+	    LOGGER.info("STEP 20: EXPECTED :  Public WiFi enabled status must be true");
 	    LOGGER.info("**********************************************************************************");
 
 	    if (!isBusinessGateway) {
 		try {
-		    String xfinityWifi = webpaParamsAfterQT
+		    String publicWifi = webpaParamsAfterQT
 			    .get(BroadBandWebPaConstants.WEBPA_PARAM_ENABLING_PUBLIC_WIFI);
 
-		    if (CommonMethods.isNotNull(xfinityWifi)) {
-			status = rfcEffectOnXfinityWifi ? xfinityWifi.equalsIgnoreCase(RDKBTestConstants.TRUE)
-				: xfinityWifi.equalsIgnoreCase(RDKBTestConstants.FALSE);
+		    if (CommonMethods.isNotNull(publicWifi)) {
+			status = rfcEffectOnPublicWifi ? publicWifi.equalsIgnoreCase(RDKBTestConstants.TRUE)
+				: publicWifi.equalsIgnoreCase(RDKBTestConstants.FALSE);
 		    }
 
 		    if (status) {
-			if (rfcEffectOnXfinityWifi) {
+			if (rfcEffectOnPublicWifi) {
 			    LOGGER.info(
-				    " STEP 20 : ACTUAL : Successfully verified device is enabled xfinity wifi using tr-181 parameter after firmware upgrade !!!");
+				    " STEP 20 : ACTUAL : Successfully verified device is enabled Public wifi using tr-181 parameter after firmware upgrade !!!");
 			} else {
 			    LOGGER.info(
-				    " STEP 20 : ACTUAL : Xfinity wifi is set to disabled in RFC. Hence verified that Xfinity wifi is disabled after firmware upgrade !!!");
+				    " STEP 20 : ACTUAL : Public wifi is set to disabled in RFC. Hence verified that Public wifi is disabled after firmware upgrade !!!");
 			}
 
 		    } else {
-			errorMessage = "Xfinity wifi  is not in expected state  after firmware upgrade. Xfinity wifi set in RFC :   "
-				+ rfcEffectOnXfinityWifi + "  Xfinity wifi afer firmware upgrade " + xfinityWifi;
+			errorMessage = "Public wifi  is not in expected state  after firmware upgrade. Public wifi set in RFC :   "
+				+ rfcEffectOnPublicWifi + "  Public wifi afer firmware upgrade " + publicWifi;
 			LOGGER.error(" STEP 20: ACTUAL : " + errorMessage);
 		    }
 		} catch (Exception exception) {
 		    LOGGER.error(
-			    "exception occurred while checking Xfinity Wifi SSID status : " + exception.getMessage());
+			    "exception occurred while checking Public Wifi SSID status : " + exception.getMessage());
 		}
 		tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
 	    } else {
 		tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-			"Xfinity wifi is not applicable for BWG devices", false);
+			"Public wifi is not applicable for Bussineess class devices", false);
 	    }
 
 	    LOGGER.info(

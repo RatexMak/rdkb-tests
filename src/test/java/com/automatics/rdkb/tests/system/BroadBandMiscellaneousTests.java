@@ -23,11 +23,13 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
@@ -656,5 +658,527 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase{
 		    false);
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-CPUPROC-1000");
+    }
+    
+    /**
+     * Device SHALL have the ability to retrieve the fan diagnostics via WebPA
+     * <li>PRE-CONDITION-1 Get the number of fans installed in the device using TR-181 FanNumberOfEntries</li>
+     * <li>PRE-CONDITION-2 Set the value of Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to TRUE using webpa</li>
+     * <li>1. Verify the default value of Device.Thermal.Fan.{i}.Status using webpa</li>
+     * <li>2. Verify the default value of Device.Thermal.Fan.{i}.Speed using webpa</li>
+     * <li>3. Verify the default value of Device.Thermal.Fan.{i}.RotorLock using webpa</li>
+     * <li>4. Verify the default value of Device.Thermal.Fan.{i}.MaxOverride using webpa</li>
+     * <li>5. Set the value of Device.Thermal.Fan.{i}.MaxOverride to TRUE using webpa</li>
+     * <li>6. Verify the value of Device.Thermal.Fan.{i}.MaxOverride using webpa</li>
+     * <li>7. Reboot the device</li>
+     * <li>8. Verify Device.Thermal.Fan.{i}.Status is not persisted after reboot</li>
+     * <li>9. Verify Device.Thermal.Fan.{i}.Speed is not persisted after reboot</li>
+     * <li>10. Verify Device.Thermal.Fan.{i}.RotorLock is not persisted after reboot</li>
+     * <li>11. Verify the value of Device.Thermal.Fan.{i}.MaxOverride once the device comes online after reboot</li>
+     * <li>POST-CONDITION-1 Set the value of Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to False using webpa</li>
+     * 
+     * @author Dipankar Nalui & Betel Costrow
+     * @refactor Said Hisham
+     *           </ol>
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-THERMAL_FAN-1000")
+    public void testToVerifyFanParameters(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-THERMAL_FAN-100";
+	String stepNum = null;
+	String errorMessage = null;
+	String response = null;
+	boolean status = false;
+	String fanSpeed = null;
+	String noOfFanAvailable = null;
+
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-THERMAL_FAN-1000");
+	LOGGER.info("TEST DESCRIPTION: Device SHALL have the ability to retrieve the fan diagnostics via WebPA");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION-1 Get the number of fans installed in the device using TR-181 FanNumberOfEntries");
+	LOGGER.info(
+		"PRE-CONDITION-2 Set the value of Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to TRUE using webpa");
+	LOGGER.info("1. Verify the default value of Device.Thermal.Fan.{i}.Status using webpa");
+	LOGGER.info("2. Verify the default value of Device.Thermal.Fan.{i}.Speed using webpa");
+	LOGGER.info("3. Verify the default value of Device.Thermal.Fan.{i}.RotorLock using webpa");
+	LOGGER.info("4. Verify the default value of Device.Thermal.Fan.{i}.MaxOverride using webpa");
+	LOGGER.info("5. Set the value of Device.Thermal.Fan.{i}.MaxOverride to TRUE using webpa");
+	LOGGER.info("6. Verify the value of Device.Thermal.Fan.{i}.MaxOverride using webpa");
+	LOGGER.info("7. Reboot the device");
+	LOGGER.info("8. Verify Device.Thermal.Fan.{i}.Status is not persisted after reboot ");
+	LOGGER.info("9. Verify Device.Thermal.Fan.{i}.Speed is not persisted after reboot ");
+	LOGGER.info("10. Verify Device.Thermal.Fan.{i}.RotorLock is not persisted after reboot");
+	LOGGER.info(
+		"11. Verify the value of Device.Thermal.Fan.{i}.MaxOverride once the device comes online after reboot ");
+	LOGGER.info(
+		"POST-CONDITION-1 Set the value of Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to False using webpa");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "PRE-CONDITION-1 : DESCRIPTION : Get the number of fans installed in the device using TR-181 FanNumberOfEntries");
+	    LOGGER.info("PRE-CONDITION-1 : ACTION : Execute webpa get command: Device.Thermal.FanNumberOfEntries");
+	    LOGGER.info(
+		    "PRE-CONDITION-1 : EXPECTED : Device.Thermal.FanNumberOfEntries should provide 1 or 2 according to specific devices");
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Unable to get no of fan is installed using Device.Thermal.FanNumberOfEntries";
+	    noOfFanAvailable = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_NO_ENTRIES);
+	    status = CommonMethods.isNotNull(noOfFanAvailable)
+		    && !noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION-1 : ACTUAL : Successfully got the number of fans available in device.");
+	    } else {
+		LOGGER.error("PRE-CONDITION-1 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1: FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "PRE-CONDITION-2 : DESCRIPTION : Set the value of Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to TRUE using webpa");
+	    LOGGER.info(
+		    "PRE-CONDITION-2 : ACTION : Execute the following command:curl -H \\\"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>device/mac:<MAC>/config -d \\\"{\\\"parameters\\\":[{\\\"dataType\\\":3,\\\"name\\\":\\\"Device.Thermal.Fan.{i}.MaxOverride\\\",\\\"value\\\":\\\"True\\\"}]}\\\"\");\r\n"
+			    + "");
+	    LOGGER.info(
+		    "PRE-CONDITION-2 : EXPECTED : Device.Thermal.Fan.{i}.MaxOverride value should be set successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to True is not successful";
+	    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1),
+		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2),
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    }
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    LOGGER.info("Waiting for 30 seconds to Fan configurations get updated.");
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION-2 : ACTUAL : Device.Thermal.Fan.{i}.MaxOverride value is set successfully");
+	    } else {
+		LOGGER.error("PRE-CONDITION-2 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1: FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("################### ENDING PRE-CONFIGURATIONS ###################");
+
+	    stepNum = "s1";
+	    errorMessage = "Device.Thermal.Fan.Status value is not retrieved as TRUE";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify the value of Device.Thermal.Fan.{i}.Status using webpa");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA URL>/device/mac:<ECM_MAC>/config?names=Device.Thermal.Fan.{i}.Status");
+	    LOGGER.info("STEP 1: EXPECTED : Device.Thermal.Fan.{i}.Status value should be retrieved as TRUE");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_STATUS
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1),
+		    BroadBandTestConstants.TRUE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_STATUS.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2),
+			BroadBandTestConstants.TRUE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Device.Thermal.Fan.{i}.Status value is retrieved as TRUE");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Device.Thermal.Fan.{i}.Speed value  is not  retrieved as an unsigned integer type.";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify the value of Device.Thermal.Fan.{i}.Speed using webpa");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k "
+			    + "<WEBPA URL>/device/mac:<ECM_MAC>/config?names=Device.Thermal.Fan.{i}.Speed");
+	    LOGGER.info("STEP 2: EXPECTED : Device.Thermal.Fan.{i}.Speed value should be retrieved");
+	    LOGGER.info("**********************************************************************************");
+
+	    fanSpeed = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_SPEED
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(fanSpeed)
+		    && !fanSpeed.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		fanSpeed = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_SPEED.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(fanSpeed)
+			&& !fanSpeed.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Device.Thermal.Fan.{i}.Speed value is retrieved");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "Device.Thermal.Fan.{i}.RotorLock value  is not  retrieved as FALSE";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Verify the default value of Device.Thermal.Fan.{i}.RotorLock using webpa");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k "
+			    + "<WEBPA URL>/v2/device/mac:<ECM_MAC>/config?names=Device.Thermal.Fan.{i}.RotorLock");
+	    LOGGER.info("STEP 3: EXPECTED : Device.Thermal.Fan.{i}.RotorLock value should be retrieved as FALSE");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_ROTORLOCK
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_ROTORLOCK.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Device.Thermal.Fan.{i}.RotorLock value is retrieved as FALSE");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Device.Thermal.Fan.{i}.MaxOverride value  is not retrieved as FALSE";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Verify the default value of Device.Thermal.Fan.{i}.MaxOverride using webpa");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k "
+			    + "<WEBPA URL>/device/mac:<ECM_MAC>/config?names=Device.Thermal.Fan.{i}.MaxOverride");
+	    LOGGER.info("STEP 4: EXPECTED : Device.Thermal.Fan.{i}.MaxOverride value should be retrieved as FALSE");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : Device.Thermal.Fan.{i}.MaxOverride value  is retrieved as FALSE");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "Device.Thermal.Fan.{i}.MaxOverride value is not set successfully";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 5: DESCRIPTION : Set the value of Device.Thermal.Fan.{i}.MaxOverride to TRUE using webpa");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH "
+			    + "<WEBPA URL>/device/mac:<ECM_MAC>/config -d \"{\"parameters\":[{\"dataType\":3,\"name\":\"Device.Thermal.Fan.{i}.MaxOverride\",\"value\":\"True\"}]}\"");
+	    LOGGER.info("STEP 5: EXPECTED : Device.Thermal.Fan.{i}.MaxOverride value should be set successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1),
+		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2),
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Device.Thermal.Fan.{i}.MaxOverride value is set successfully");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Device.Thermal.Fan.{i}.MaxOverride value  is not  retrieved as FALSE";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify the value of Device.Thermal.Fan.{i}.MaxOverride using webpa");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k "
+			    + "<WEBPA URL>/device/mac:<ECM_MAC>/config?names=Device.Thermal.Fan.{i}.MaxOverride");
+	    LOGGER.info("STEP 6: EXPECTED : Device.Thermal.Fan.{i}.MaxOverride value should be retrieved as FALSE");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Device.Thermal.Fan.{i}.MaxOverride value  is retrieved as FALSE");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    errorMessage = "Failed to reboot and access the device";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Reboot the device");
+	    LOGGER.info("STEP 7: ACTION : Execute the following command: /sbin/reboot");
+	    LOGGER.info("STEP 7: EXPECTED : Successfully rebooted the device.");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : Device rebooted successfully");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    errorMessage = "Device.Thermal.Fan.{i}.Status value is not retrieved as False";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Verify Device.Thermal.Fan.{i}.Status is not persisted after reboot");
+	    LOGGER.info("STEP 8: ACTION : Execute webpa get command: Device.Thermal.Fan.{i}.Status");
+	    LOGGER.info("STEP 8: EXPECTED : Device.Thermal.Fan.{i}.Status value should be retrieved as False");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_STATUS
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1),
+		    BroadBandTestConstants.FALSE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_STATUS.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2),
+			BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Device.Thermal.Fan.{i}.Status value  is not persisted after reboot");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "Device.Thermal.Fan.{i}.Speed value is not retrieved as 0";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify Device.Thermal.Fan.{i}.Speed is not persisted after reboot");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Execute webpa get command: Execute webpa get command: Device.Thermal.Fan.{i}.Speed");
+	    LOGGER.info("STEP 9: EXPECTED : Device.Thermal.Fan.{i}.Speed value should be retrieved as 0");
+	    LOGGER.info("**********************************************************************************");
+
+	    fanSpeed = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_SPEED
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(fanSpeed) && fanSpeed.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		fanSpeed = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_SPEED.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(fanSpeed)
+			&& fanSpeed.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : Device.Thermal.Fan.{i}.Speed value is not persisted after reboot");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s10";
+	    errorMessage = "Device.Thermal.Fan.{i}.RotorLock value is not retrieved as FALSE/Not_Applicable";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Verify Device.Thermal.Fan.{i}.RotorLock is not persisted after reboot");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Execute webpa get command: Execute webpa get command: Device.Thermal.Fan.{i}.RotorLock");
+	    LOGGER.info(
+		    "STEP 10: EXPECTED : Device.Thermal.Fan.{i}.RotorLock value should be retrieved as FALSE/Not_Applicable");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_ROTORLOCK
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE)
+		    || response.equalsIgnoreCase(BroadBandTestConstants.STRING_FAN_NOT_APPLICABLE_ROTOR);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_ROTORLOCK.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE)
+			|| response.equalsIgnoreCase(BroadBandTestConstants.STRING_FAN_NOT_APPLICABLE_ROTOR);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL : Device.Thermal.Fan.{i}.RotorLock value is not persisted after reboot");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s11";
+	    errorMessage = "Device.Thermal.Fan.MaxOverride Value  is not  retrieved as FALSE";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 11: DESCRIPTION : Verify the value of Device.Thermal.Fan.{i}.MaxOverride once the device comes online after reboot ");
+	    LOGGER.info(
+		    "STEP 11: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k "
+			    + "<WEBPA URL>/device/mac:<ECM_MAC>/config?names=Device.Thermal.Fan.{i}.MaxOverride");
+	    LOGGER.info("STEP 11: EXPECTED : Device.Thermal.Fan.{i}.MaxOverride Value should be retrieved as FALSE");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2));
+		status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 11: ACTUAL : Device.Thermal.Fan.{i}.MaxOverride value  is retrieved as FALSE");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    status = false;
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "POST-CONDITION-1: DESCRIPTION :Set the value of Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride to False using webpa");
+	    LOGGER.info("POST-CONDITION-1: ACTION : Execute webpa set command : Device.Thermal.Fan.{i}.MaxOverride");
+	    LOGGER.info(
+		    "POST-CONDITION -1: EXPECTED : Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride value should be set successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1),
+		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
+	    if (status && noOfFanAvailable.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_2)) {
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_THERMAL_FAN_MAXOVERRIDE.replace(
+				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_2),
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
+	    }
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION -1: Device.Thermal.Fan.{i}.MaxOverride value is set to FALSE successfully");
+	    } else {
+		LOGGER.error(
+			"POST-CONDITION -1: Device.DeviceInfo.Thermal.Fan.{i}.MaxOverride value is not set successfully");
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-THERMAL_FAN-1000");
     }
 }

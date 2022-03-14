@@ -167,7 +167,7 @@ public class BroadBandDocsisTest extends AutomaticsTestBase {
 	    /**
 	     * POST-CONDITION 1 : ENABLE THE XIFNITY WIFI
 	     */
-	    BroadBandPostConditionUtils.executePostConditionToEnableXfinityWifi(device, tapEnv,
+	    BroadBandPostConditionUtils.executePostConditionToEnablePublicWifi(device, tapEnv,
 		    BroadBandTestConstants.CONSTANT_1);
 
 	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
