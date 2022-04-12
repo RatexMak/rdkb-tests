@@ -36,7 +36,6 @@ import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
-import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
@@ -45,6 +44,7 @@ import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientU
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
+import com.automatics.rdkb.utils.BroadBandCommonUtils;
 
 /***
  * Class to hold the test cases related to the network connectivity tests in connected client devices
@@ -165,6 +165,7 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-NW-CHECK-1001");
     }
     
+
 	/**
 	 * Verify DNS Address persist to the Wi-Fi & Ethernet client after reboot and
 	 * ethernet client gets IP within acceptable time of 5 mins
@@ -415,8 +416,9 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 					false);
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-IPV4-CHECK-5001");
-	}  
-	
+
+	}
+    
     /**
      * Test Steps to validate primary , seconday DNS IP from UI, webpa & Connected client
      * 

@@ -39,6 +39,7 @@ import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -49,18 +50,23 @@ import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.enums.BroadBandWhixEnumConstants.WEBPA_AP_INDEXES;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.BroadBandBandSteeringUtils;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.telemetry.BroadBandTelemetry2Utils;
+import com.automatics.rdkb.utils.telemetry.BroadBandTelemetryUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWifiWhixUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils.WifiOperatingStandard;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
+import com.automatics.webpa.WebPaParameter;
 import com.automatics.webpa.WebPaServerResponse;
 
 public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
@@ -512,7 +518,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 					+ " : EXPTECTED : Device should return the  Private 2.4 GHz SSID enabled status as \"Up\"");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "Private 2.4 GHZ SSID status is not UP ";
-			// verify 5ghz radio status
+			// verify 2.4 ghz radio status
 			Map<String, String> radioSatusForAllBands = BroadBandConnectedClientUtils.getAllRadioStatus(tapEnv, device);
 			String radioStatus = radioSatusForAllBands
 					.get(BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_STATUS_FOR_2_4GHZ_PRIVATE_SSID);
@@ -4004,7 +4010,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 	}
 
 	/**
-	 * Verify the IP range in 5GHZ WiFi connected client when DHCP Server
+	 * Test case is created as part of RDKB Coverage AUTOMATION based on the Test
+	 * Case : Verify the IP range in 5GHZ WiFi connected client when DHCP Server
 	 * Disabled.
 	 * <ol>
 	 * <li>PRE-CONDITION : Get the DHCP Minimum and Maximum IP Range Configured for
@@ -4847,11 +4854,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		String testStepNumber = "s1";
 		// Variable to store execution status
 		boolean status = false;
-		// Variable to store command response
-		String response = null;
 		// Variable to store error Message
 		String errorMessage = null;
-		List<Dut> connectedClientSettops = null;
 		// Dut instance to store 2 ghz client device
 		Dut clientConnectedWith2Ghz = null;
 		// Dut instance to store 5 ghz client device
@@ -5463,390 +5467,3404 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		}
 
 	}
+
+	/**
+	 * Test case is created to check the ability to change mode from g-n to n-only
+	 * mode on the 2.4 GHz radio
+	 * 
+	 * <p>
+	 * STEPS:
+	 * </p>
+	 * <ol>
+	 * <li>Step 1: Check the operating mode for 2.4GHz Wi-Fi from RDKB device</li>
+	 * <li>Step 2: Check the mode of operation in 2.4 Ghz client</li>
+	 * <li>Step 3: Change the mode of operation in 2.4GHz client from 802.11 g/n to
+	 * 802.11 n and verify the status</li>
+	 * <li>Step 4: Check 2.4 Ghz client is connected and IPV4 address obtained</li>
+	 * <li>Step 5: Check the mode of operation in 2.4 Ghz client</li>
+	 * <li>Step 6: Verify the mode of operation in 2.4 Ghz client</li>
+	 * </ol>
+	 * 
+	 * @author anandam.s
+	 * @refactor Alan_Bivera
+	 * 
+	 * @param device {@link Dut}
+	 */
+	@Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+			BroadBandTestGroup.WEBPA, BroadBandTestGroup.WIFI })
+	@TestDetails(testUID = "TC-RDKB-WIFI-WEBPA-3002")
+	public void testVerifyChangeOperatingModeFor2GHz(Dut device) {
+
+		// string variable to store test case id
+		String testCaseId = "TC-RDKB-WIFI-WEBPA-302";
+		// Boolean variable to store the status of each step
+		boolean status = false;
+		// String variable to store the errorMessage in each step
+		String errorMessage = null;
+		// String variable to store the step number
+		String step = "s1";
+		// String variable to store the command to be executed in command
+		Dut connectedClientDevice = null;
+		// variable to store the ostype of connected client
+		String clientOsType = null;
+		BroadBandResultObject resultObject = null;
+		// Variable to store default operating Standard
+		String operatingStandard = null;
+
+		try {
+			LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-WEBPA-3002");
+			LOGGER.info("**************************************************************");
+			LOGGER.info(
+					"TEST DESCRIPTION: Verify the ability to change mode from g-n to n-only mode on the 2.4 GHz radio");
+			LOGGER.info("*************************************************************************");
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: Verify default operating mode from gateway device for 2.4 GHz wifi network");
+			LOGGER.info("STEP 2: Verify 2.4 Ghz client is connected and IPV4 address obtained");
+			LOGGER.info("STEP 3: Verify default operating mode from client device for 2.4 GHz wifi network");
+			LOGGER.info("STEP 4: Change the operating mode to (n or g/n) mode");
+			LOGGER.info("STEP 5: Verify 2.4 Ghz client is connected and IPV4 address obtained");
+			LOGGER.info("STEP 6: Verify the mode of operation in 2.4 Ghz client ");
+			LOGGER.info("**********************************************************************************");
+
+			/*
+			 * Step1 : Verify the operating mode for 2.4GHz WiFi from RDKB device
+			 */
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 1: DESCRIPTION : Verify default operating mode from gateway device for 2.4 GHz wifi network.");
+			LOGGER.info("STEP 1: ACTION : Execute Webpa Parameter-Device.WiFi.Radio.10000.OperatingStandards");
+			LOGGER.info(
+					"STEP 1: EXPECTED : Operating mode should be 802.11g/n; 802.11b/g/n for DSL device; 802.11g/n/ax for others.");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "default value obtained for operating standard in 2.4Ghz band is NOT \'g/n\' in RDKB device or not b/g/n for DSL or not g/n/ax for others";
+
+			if (DeviceModeHandler.isDSLDevice(device)) {
+				operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode();
+
+			} else {
+				operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N_AX.getOperatingmode();
+			}
+
+			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+					operatingStandard);
+			if (status) {
+				LOGGER.info(
+						"STEP 1: ACTUAL : The operating mode for 2.4GHz network in RDKB device is g/n or b/g/n for DSL device or g/n/ax for others");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+			/**
+			 * Step2 : Check 2.4 GHz client is connected and IPV4 address obtained
+			 */
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION : Verify 2.4 Ghz client is connected and IPV4 address obtained with default operating standard or mode (g,n,ax)");
+			LOGGER.info("STEP 2: ACTION : Execute command to connect 2.4 GHz client");
+			LOGGER.info("STEP 2: EXPECTED :IPV4 address should be obtained and able to access the internet .");
+			LOGGER.info("**********************************************************************************");
+			step = "s2";
+			status = false;
+			List<Dut> settopList = ((Device) device).getConnectedDeviceList();
+			LOGGER.debug("Dut List: " + settopList.size());
+
+			if (null != settopList && !settopList.isEmpty()) {
+				connectedClientDevice = BroadBandConnectedClientUtils
+						.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+				// wait after connecting a client
+				LOGGER.info("waiting for 30 seconds ");
+				tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+				if (connectedClientDevice != null) {
+					clientOsType = ((Device) connectedClientDevice).getOsType();
+					errorMessage = "Client device is NOT connected properly over 2.4Ghz wifi after changing the operating mode in gateway -";
+					// Verify the pattern of IPv4 address in Windows and Linux os
+					try {
+						status = BroadBandConnectedClientUtils
+								.verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(clientOsType,
+										connectedClientDevice, tapEnv)
+								&& checkConnectivityOfDevice(connectedClientDevice);
+					} catch (TestException exception) {
+						errorMessage = errorMessage + exception.getMessage();
+						LOGGER.error(errorMessage);
+					}
+					if (status) {
+						LOGGER.info(
+								"STEP 2: ACTUAL :2.4 Ghz client is connected and IPV4 address obtained with default operating standard or mode (g,n,ax)");
+					} else {
+						LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+
+					/**
+					 * Step3 : Verify the operating mode for 2.4GHz WiFi from client device
+					 */
+
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info(
+							"STEP 3: DESCRIPTION :Verify default operating mode from client device for 2.4 GHz wifi network");
+					LOGGER.info("STEP 3: ACTION : Execute command to get Operating mode");
+					LOGGER.info(
+							"STEP 3: EXPECTED :Operating mode should be 802.11g or 802.11n and 802.11b/g/n for DSL and 802.11g/n/ax for others.");
+					LOGGER.info("**********************************************************************************");
+
+					step = "s3";
+					status = false;
+					List<String> clientOperatingMode = null;
+					errorMessage = "The default value for operating mode in 2.4GHz network for client device is NOT 802.11g or 802.11n and not 802.11g or 802.11n or 802.11ax";
+					try {
+						if (DeviceModeHandler.isDSLDevice(device)) {
+							clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_B_G_N
+									.getClientOperatingMode();
+						} else {
+							clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_G_N_AX
+									.getClientOperatingMode();
+						}
+						status = BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
+								connectedClientDevice, tapEnv, clientOperatingMode);
+					} catch (TestException exception) {
+						errorMessage = exception.getMessage();
+						LOGGER.error(errorMessage);
+					}
+					if (status) {
+						LOGGER.info(
+								"STEP 3: ACTUAL :The operating mode for 2.4GHz network in client device is g/n or b/g/n for DSL or g/n/ax for others ");
+					} else {
+						LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+					/**
+					 * Step4 : Change the mode of operation in 2.4GHz client to 802.11 n
+					 */
+
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info(
+							"STEP 4: DESCRIPTION :Change the operating mode to n-only and g/n mode in gateway using WebPA - Device.WiFi.Radio.10000.OperatingStandards");
+					LOGGER.info("STEP 4: ACTION : Execute command to set Operating mode");
+					LOGGER.info(
+							"STEP 4: EXPECTED :The operating mode should change from g/n to n-only and g/n/ax to g/n");
+					LOGGER.info("**********************************************************************************");
+					step = "s4";
+					status = false;
+					if (!DeviceModeHandler.isDSLDevice(device)) {
+						errorMessage = "Failed to change the operating mode for 2.4GHz network of gateway from g/n to n-only and g/n/ax to g/n mode using WebPA - Device.WiFi.Radio.10000.OperatingStandards";
+
+						if (DeviceModeHandler.isDSLDevice(device)) {
+							operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_N.getOperatingmode();
+
+						} else {
+							operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N.getOperatingmode();
+						}
+						status = BroadBandWiFiUtils.setWebPaParams(device,
+								BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+								operatingStandard, WebPaDataTypes.STRING.getValue());
+						LOGGER.info("Actual: " + (status
+								? "Changed the operating mode for 2.4GHz network from g/n to n using WebPA - Device.WiFi.Radio.10000.OperatingStandards."
+								: errorMessage));
+						tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+						// Wait for client to connect to gateway after changing the operating standard
+						LOGGER.info(
+								"waiting for 90 seconds after changing the operating standard for client to change its operating standard");
+						if (status) {
+							LOGGER.info("STEP 4: ACTUAL :The operating mode for 2.4GHz network is set successfully  ");
+						} else {
+							LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+						}
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.waitTill(BroadBandTestConstants.NINETY_SECOND_IN_MILLIS);
+					} else {
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES, false);
+					}
+
+					/**
+					 * Step 5 : Connect to 2.4 GHz client and verify whether device is connected and
+					 * IPV4 address obtained
+					 */
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info(
+							"STEP 5: DESCRIPTION :Verify 2.4 Ghz client is connected and IPV4 address obtained after changing the operating standard to 'n only and to g/n'");
+					LOGGER.info("STEP 5: ACTION : Execute command to connect 2.4 Ghz client and verify IPV4 address");
+					LOGGER.info("STEP 5: EXPECTED :IPV4 address should be obtained");
+					LOGGER.info("**********************************************************************************");
+					step = "s5";
+					status = false;
+					if (!DeviceModeHandler.isDSLDevice(device)) {
+						errorMessage = "Client device is NOT connected properly over 2.4Ghz wifi after changing the operating mode in gateway -";
+						try {
+							resultObject = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device,
+									tapEnv, connectedClientDevice, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+							if (resultObject.isStatus()) {
+								status = BroadBandConnectedClientUtils
+										.verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(clientOsType,
+												connectedClientDevice, tapEnv)
+										&& checkConnectivityOfDevice(connectedClientDevice);
+							} else {
+								errorMessage = "Failed to Connected client device after change in operating standard with message -"
+										+ resultObject.getErrorMessage();
+								LOGGER.error(errorMessage);
+							}
+						} catch (TestException exception) {
+							errorMessage = errorMessage + exception.getMessage();
+							LOGGER.error(errorMessage);
+						}
+						tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+						// Verify the pattern of IPv4 address in Windows and Linux os
+						try {
+							status = BroadBandConnectedClientUtils
+									.verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(clientOsType,
+											connectedClientDevice, tapEnv)
+									&& checkConnectivityOfDevice(connectedClientDevice);
+						} catch (TestException exception) {
+							errorMessage = errorMessage + exception.getMessage();
+							LOGGER.error(errorMessage);
+						}
+						if (status) {
+							LOGGER.info(
+									"STEP 5: ACTUAL : 2.4 Ghz client is connected in n mode or g/n mode and IPV4 address obtained");
+						} else {
+							LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+						}
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+					} else {
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES, false);
+					}
+
+					/**
+					 * Step6 : Check the mode of operation in 2.4 Ghz client
+					 */
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info("STEP 6: DESCRIPTION :Verify the mode of operation in 2.4 Ghz client");
+					LOGGER.info("STEP 6: ACTION : Execute command to verify 2.4 Ghz mode of operation");
+					LOGGER.info("STEP 6: EXPECTED :The mode of operation should be n-only or g/n");
+					LOGGER.info("**********************************************************************************");
+					step = "s6";
+					status = false;
+					if (!DeviceModeHandler.isDSLDevice(device)) {
+						errorMessage = "The operating mode for 2.4GHz network is not changed from \'g/n\' to \'n-only' mode or from \'g/n/ax\' to \'g/n\' mode in client device";
+						try {
+
+							if (DeviceModeHandler.isDSLDevice(device)) {
+								clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_N
+										.getClientOperatingMode();
+							} else {
+								clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_G_N
+										.getClientOperatingMode();
+							}
+
+							status = BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
+									connectedClientDevice, tapEnv, clientOperatingMode);
+						} catch (TestException exception) {
+							errorMessage = exception.getMessage();
+							LOGGER.error(errorMessage);
+						}
+						if (status) {
+							LOGGER.info(
+									"STEP 6: ACTUAL :The operating mode for 2.4GHz network is n only mode or g/n mode ");
+						} else {
+							LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+						}
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+					} else {
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES, false);
+					}
+
+				} else {
+					errorMessage = "Failed to find device with 2.4GHz Wifi support";
+					LOGGER.error(errorMessage);
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+				}
+			} else {
+				errorMessage = "RDKB device does not have any connected client devices";
+				LOGGER.error(errorMessage);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+			}
+
+		} catch (TestException exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error(
+					"Exception occured while changing the operating mode from g-n to n-only mode for 2.4 GHz network using WebPA - Device.WiFi.Radio.10000.OperatingStandards"
+							+ errorMessage);
+			LOGGER.info("**********************************************************************************");
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, status, errorMessage, true);
+		} finally {
+			// Set the operating mode of 2.4GHz radio to default value 802.11g/n
+			// using WebPA - Device.WiFi.Radio.10000.OperatingStandards
+			if (!DeviceModeHandler.isDSLDevice(device)) {
+				status = BroadBandWiFiUtils.setWebPaParams(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+						operatingStandard, WebPaDataTypes.STRING.getValue());
+				// wait for 1.5 minutes to complete webpa chanages
+				tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+				LOGGER.info("Finally : " + (status
+						? "Changed the operating mode for 2.4GHz network from g/n to n using WebPA - Device.WiFi.Radio.10000.OperatingStandards."
+						: "Operating mode is not changed to default value using WebPA - Device.WiFi.Radio.10000.OperatingStandards"));
+			}
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-WEBPA-3002");
+	}
+
+	/**
+	 * Method to check the connectivity of device over wlan
+	 * 
+	 * @param Dut device
+	 * 
+	 * @return boolean connection status
+	 * @refactor Alan_Bivera
+	 */
+
+	private boolean checkConnectivityOfDevice(Dut device) {
+
+		LOGGER.debug("Entering checkConnectivityOfDevice");
+		String commandResponse = null;
+		String command = ((Device) device).getOsType().equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
+				? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+				: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
+		commandResponse = tapEnv.executeCommandOnOneIPClients(device, command);
+		LOGGER.info("Curl response from device - " + commandResponse);
+
+		if ((CommonMethods.isNotNull(commandResponse) && commandResponse.contains("200 OK"))) {
+			LOGGER.info("Obtained 200 ok message on checking connectivity");
+			LOGGER.debug("Ending heckConnectivityOfDevice");
+			return true;
+		} else {
+			throw new TestException("Device failed connectivity test using curl command");
+		}
+	}
+
+	/**
+	 * Validate CPU & Memory usage for Maximum Tx&Rx rate
+	 * 
+	 * <li>1. Disable vAP stats via WebPa</li>
+	 * <li>2. Collect CPU and memory usage stats for 10 minutes when feature is
+	 * disabled</li>
+	 * <li>3. Enable vAP stats via WebPa</li>
+	 * <li>4. Validate if Telemetry log interval can be configured</li>
+	 * <li>5. Validate if /rdklogs/logs/wifihealth.txt file is present</li>
+	 * <li>6. Customize the private WiFi SSID and password</li>
+	 * <li>7. Connect clients to 2.4 GHz SSID and 5GHz SSID and verify connection
+	 * status</li>
+	 * <li>8. Validate the max TX, RX rate for private wifi clients</li>
+	 * <li>9. Collect CPU and memory usage stats for 10 minutes when feature is
+	 * enabled</li>
+	 * <li>10. Compare the results from Step 2 and Step 9</li>
+	 * 
+	 * @author ArunKumar Jayachandran
+	 * @refactor Athira
+	 */
+
+	@Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+			TestGroup.NEW_FEATURE, BroadBandTestGroup.TELEMETRY })
+	@TestDetails(testUID = "TC-RDKB-WIFI-TELEMETRY-1004")
+	public void testToVerifyCpuUsageForMaxTxRxRate(Dut device) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1004");
+		LOGGER.info("TEST DESCRIPTION: Test to verify CPU usage for Maximum TX_RATE, RX_RATE per client ");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Disable vAP stats via WebPa");
+		LOGGER.info("2. Collect CPU and memory usage stats for 10 minutes when feature is disabled");
+		LOGGER.info("3. Enable vAP stats via WebPa");
+		LOGGER.info("4. Validate if Telemetry log interval can be configured");
+		LOGGER.info("5. Validate if /rdklogs/logs/wifihealth.txt file is present");
+		LOGGER.info("6. Customize the private WiFi SSID and password");
+		LOGGER.info("7. Connect clients to 2.4 GHz SSID and 5GHz SSID and  verify connection status");
+		LOGGER.info("8. Validate the max TX, RX rate for private wifi clients");
+		LOGGER.info("9. Collect CPU and memory usage stats for 10 minutes when feature is enabled");
+		LOGGER.info("10. Compare the results from Step 2 and Step 9");
+		LOGGER.info("#######################################################################################");
+
+		// variable declaration begins
+		// Status of test script verification
+		boolean status = false;
+		// Test case id
+		String testCaseId = "TC-RDKB-WIFI-TELEMETRY-004";
+		// Test step number
+		String stepNumber = "s1";
+		// String to store error message
+		String errorMessage = null;
+		// String to store response
+		String response = null;
+		// String to store CPU usage before enabling feature
+		String beforeEnablingFeature = null;
+		// String to store CPU usage after enabling feature
+		String afterEnablingFeature = null;
+		Dut connectedClient2GHzDut = null; // connected device to be verified
+		Dut connectedClient5GHzDut = null; // connected device to be verified
+		// variable declaration ends
+
+		try {
+
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			LOGGER.info("PRE-CONDITION1 :DESCRIPTION : Validate whether the required type and "
+					+ "No of clients are available to proceed ");
+			LOGGER.info("PRE-CONDITION1 :ACTION : Get the no of client devices and validate the type ");
+			LOGGER.info("PRE-CONDITION1 : EXPECTED : Atleast two windows clients should be available ");
+
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			stepNumber = "s1";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION: Disable the vAPStatsEnable parameter using webpa");
+			LOGGER.info(
+					"STEP 1: ACTION: Execute webpa set command: Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnable as false");
+			LOGGER.info("STEP 1: EXPECTED: Should be disabled for vAPStatsEnable parameter");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the parameter Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnable as false";
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_VAP_STATS_ENABLE, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.FALSE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL: Successfully updated vAPstatsEnable parameter as false using webpa ");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s2";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : Calculate the average CPU and memory utilisation for 10 minutes"
+					+ " with client stats telemetry disabled");
+			LOGGER.info("STEP 2: ACTION : execute the following command every one minute for 10 minutes and"
+					+ " calculate the average");
+			LOGGER.info("STEP 2: EXPECTED : Command execution on the device should be successful");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Calculating the average CPU and Memory utilisation for 10 minutes"
+					+ " with client stats telemetry disabled has failed";
+			response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+					BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			LOGGER.info("STEP 2: Response for CPU and memory utilisation: " + response);
+			status = CommonMethods.isNotNull(response);
+			if (status) {
+				beforeEnablingFeature = response;
+				LOGGER.info("STEP 2: ACTUAL : Calculating the average CPU and Memory utilisation for 10 minutes"
+						+ " with client stats telemetry disabled is successful");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s3";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION: Enable the vAPStatsEnable parameter using webpa");
+			LOGGER.info(
+					"STEP 3: ACTION: Execute webpa set command: Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnable as true");
+			LOGGER.info("STEP 3: EXPECTED: Should be enabled for vAPStatsEnable parameter");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the parameter Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnable as true";
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_VAP_STATS_ENABLE, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.TRUE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL: Successfully updated vAPstatsEnable parameter as true using webpa ");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s4";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION : Validate if Telemetry log interval can be configured ");
+			LOGGER.info("STEP 4: ACTION : Execute WebPa SET command on the object "
+					+ "Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval");
+			LOGGER.info("STEP 4: EXPECTED : The log interval should get modified to 300 seconds successfully");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Attempt to configure wifi telemetry logging interval has failed";
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL, BroadBandTestConstants.CONSTANT_1,
+					BroadBandTestConstants.FIVE_MINUTES_IN_SECONDS)
+					&& BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_STATS_ENABLE,
+							BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Successfully updated the telemetry log interval as 300 using webpa");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s5";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Validate if /rdklogs/logs/wifihealth.txt file is present ");
+			LOGGER.info("STEP 5: ACTION : execute the following command inside the RG console of the gateway,"
+					+ " \"if [ -f /rdklogs/logs/wifihealth.txt ] ; then echo \"true\" ; else echo \"false\" ; fi\"");
+			LOGGER.info("STEP 5: EXPECTED : The file wifihealth.txt parameter should present ");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "The log file wifihealth.txt is not present even after 10 minutes of waitime";
+			status = BroadBandCommonUtils.doesFileExistWithinGivenTimeFrame(tapEnv, device,
+					BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : The log file wifihealth.txt is present on the device");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s6";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Customise the private WiFi SSID and password ");
+			LOGGER.info(
+					"STEP 6: ACTION : Execute WebPa SET command on parameters Device.WiFi.SSID.10001.SSID and Device.WiFi.AccessPoint.10001.Security.X_COMCAST-COM_KeyPassphrase");
+			LOGGER.info("STEP 6: EXPECTED : The SSID and passphrase should get customized successfully");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Attempt to customise the private wifi SSID and password has failed";
+			status = BroadBandWiFiUtils.changePrivateWiFiSsidAndPassphraseFor24And5Ghz(device);
+			if (status) {
+				LOGGER.info(
+						"STEP 6: ACTUAL : Attempt to customise the private wifi SSID and" + " password is successful");
+				LOGGER.info("Waiting for 90 seconds for the changes to take effect");
+				tapEnv.waitTill(BroadBandTestConstants.NINETY_SECOND_IN_MILLIS);
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s7";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Connect clients to 2.4 GHz SSID and 5GHz SSID and "
+					+ " verify connection status ");
+			LOGGER.info("STEP 7: ACTION : Connect to 2.4 and 5 GHz wifi using below commands Linux :nmcli"
+					+ " dev wifi connect <ssid> password <passwd>");
+			LOGGER.info("STEP 7: EXPECTED : The file wifihealth.txt parameter should present within"
+					+ " 10 minutes of uptime");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Attempt to connect clients to 2.4 and 5 Ghz private wifi has failed";
+
+			try {
+				connectedClient2GHzDut = BroadBandConnectedClientUtils
+						.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+			} catch (Exception e) {
+				errorMessage = e.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			status = null != connectedClient2GHzDut;
+			if (status) {
+				LOGGER.info("GOING TO WAIT FOR 2 MINUTES AFTER CONNECTING THE WIFI CLIENT.");
+				tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+				LOGGER.info("Device has been connected with 2.4 GHz private Wi-Fi network");
+
+				try {
+					connectedClient5GHzDut = BroadBandConnectedClientUtils.getOtherWiFiCapableClientDeviceAndConnect(
+							device, tapEnv, connectedClient2GHzDut, BroadBandTestConstants.BAND_5GHZ);
+				} catch (Exception e) {
+					errorMessage = e.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				status = null != connectedClient5GHzDut;
+				if (status) {
+					LOGGER.info("GOING TO WAIT FOR 2 MINUTES AFTER CONNECTING THE WIFI CLIENT.");
+					tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+					LOGGER.info("Device has been connected with 5 GHz private Wi-Fi network");
+				}
+			}
+
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : Attempt to connect clients to 2.4GHz and 5ghZ"
+						+ " Private wifi is successful");
+				LOGGER.info("Waiting for two minutes for the changes to take effect");
+				tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s8";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Validate the client stats telemetry for private wifi clients ");
+			LOGGER.info(
+					"STEP 8: ACTION : execute the command , \"cat /rdklogs/logs/wifihealth.txt | grep -i max | grep -i clients_1 | tail -2\""
+							+ " at RG console and check for telemetry markers. If markers are not seen ,"
+							+ " wait  for 5 more minutes before checking the same. ");
+			LOGGER.info("STEP 8: EXPECTED : Telemetry markers should be available before or at"
+					+ " 5th minute after connecting clients ");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Telemetry markers are not available for client stats ";
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.executeCommandByPolling(device, tapEnv,
+					BroadBandCommandConstants.CMD_MAX_TX_RX_CLIENT_1, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS));
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Telemetry markers are available for Max TxRx rate client");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s9";
+			errorMessage = "Calculating the average CPU and Memory utilisation for 10 minutes "
+					+ "with client stats telemetry enabled has failed";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 9: DESCRIPTION : Calculate the average CPU and memory utilisation for 10 minutes"
+					+ " with client stats telemetry enabled");
+			LOGGER.info("STEP 9: ACTION : execute the following command every one minute for 10 minutes"
+					+ " and calculate the average");
+			LOGGER.info("STEP 9: EXPECTED : Command execution on the device should be successful");
+			LOGGER.info("**********************************************************************************");
+			response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+					BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			LOGGER.info("STEP 9: Response for CPU and memory utilisation: " + response);
+			status = CommonMethods.isNotNull(response);
+			if (status) {
+				afterEnablingFeature = response;
+				LOGGER.info("STEP 9: ACTUAL : Calculating the average CPU and Memory utilisation "
+						+ "for 10 minutes with client stats telemetry enabled is successful");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s10";
+			errorMessage = "There is negative impact on the device when this feature is enabled";
+			status = false;
+			BroadBandResultObject bandResultObject = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Compare the before and after values to validate the existence"
+					+ " of negative impact");
+			LOGGER.info("STEP 10: ACTION : calculate the difference in utilisation and convert to percent"
+					+ " and validate against 10%");
+			LOGGER.info("STEP 10: EXPECTED : The increase in utilisation shouldn't be more than 10%");
+			LOGGER.info("**********************************************************************************");
+			bandResultObject = BroadBandWifiWhixUtils
+					.validateCpuAndMemoryUtilisationForNegativeEffect(beforeEnablingFeature, afterEnablingFeature);
+			if (bandResultObject.isStatus()) {
+				LOGGER.info("STEP 10: ACTUAL : There is no negative impact on the device when "
+						+ "this feature is enabled");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, bandResultObject.isStatus(),
+					bandResultObject.getErrorMessage(), true);
+			// ##################################################################################################//
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+					false);
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1004");
+	}
+	
 	
     /**
-     * Test case is created to check the ability to change mode from g-n to n-only mode on the 2.4 GHz radio
-     * 
-     * <p>
-     * STEPS:
-     * </p>
+     * Verify enhanced Wifi logging in Telemetry for 5ghz private wifi parameters
      * <ol>
-     * <li>Step 1: Check the operating mode for 2.4GHz Wi-Fi from RDKB device</li>
-     * <li>Step 2: Check the mode of operation in 2.4 Ghz client</li>
-     * <li>Step 3: Change the mode of operation in 2.4GHz client from 802.11 g/n to 802.11 n and verify the status</li>
-     * <li>Step 4: Check 2.4 Ghz client is connected and IPV4 address obtained</li>
-     * <li>Step 5: Check the mode of operation in 2.4 Ghz client</li>
+     * <li>Get 5GHz WiFi connected client device</li>
+     * <li>Verify wifihealth.txt file availability in /rdklogs/logs folder and clear the contents</li>
+     * <li>Check the whether wifi statistics are enabled</li>
+     * <li>Verify WiFi log interval is 3600 by default using WebPA command</li>
+     * <li>Change the WiFi log interval to 300sec using WebPA command" and wait for 5 minutes</li>
+     * <li>Run the script sh /usr/ccsp/wifi/aphealth_log.sh</li>
+     * <li>Run the script sh /usr/ccsp/wifi/aphealth_log.sh</li>
+     * <li>Verify the log print for RSSI value for client device connected with 5 GHz wifi band</li>
+     * <li>Verify the log print for bytes of AP RX for client device connected with 5 GHz wifi band</li>
+     * <li>Verify the log print for RX DELTA of current and previous value for client device connected with 5 GHz wifi
+     * band</li>
+     * <li>Verify the log print for RXTXDELTA of 5Ghz client</li>
+     * <li>Change the WiFi log interval to default of 3600sec using WebPA command</li>
      * </ol>
-     * 
-     * @author anandam.s
-     * @refactor Alan_Bivera
      * 
      * @param device
      *            {@link Dut}
+     * @author anandam.s
+     * @refactor Athira
      */
-    @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
-	    BroadBandTestGroup.WEBPA, BroadBandTestGroup.WIFI })
-    @TestDetails(testUID = "TC-RDKB-WIFI-WEBPA-3002")
-    public void testVerifyChangeOperatingModeFor2GHz(Dut device) {
+    @Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-WIFI-TELEMETRY-1005")
+    public void verifyTelemetryMarkersFor5ghzClientsForPrivateWifi(Dut device) {
 
-	// string variable to store test case id
-	String testCaseId = "TC-RDKB-WIFI-WEBPA-302";
-	// Boolean variable to store the status of each step
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-WIFI-TELEMETRY-105";
+	String stepNum = "";
+	String errorMessage = "";
 	boolean status = false;
-	// String variable to store the errorMessage in each step
-	String errorMessage = null;
-	// String variable to store the step number
-	String step = "s1";
-	// String variable to store the command to be executed in command
-	Dut connectedClientDevice = null;
-	// variable to store the ostype of connected client
-	String clientOsType = null;
-	BroadBandResultObject resultObject = null;
-	// Variable to store default operating Standard
-	String operatingStandard = null;
+	// Variable Declation Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1005");
+	LOGGER.info("TEST DESCRIPTION: Verify enhanced Wifi logging in Telemetry for 5ghz  private wifi parameters");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Get 5GHz WiFi connected client device");
+	LOGGER.info("2. Verify wifihealth.txt file availability in /rdklogs/logs folder  and clear the contents");
+	LOGGER.info("3. Check the whether wifi statistics are enabled ");
+	LOGGER.info("4. Verify WiFi log interval is 3600 by default using WebPA command");
+	LOGGER.info("5. Change the WiFi log interval to 300sec using WebPA command\" and wait for 5 minutes ");
+	LOGGER.info("6. Run the script sh /usr/ccsp/wifi/aphealth_log.sh");
+	LOGGER.info("7. Verify the log print for  RSSI value for client device connected with 5 GHz wifi band");
+	LOGGER.info("8. Verify the log print for bytes of AP RX for  client device connected with 5 GHz wifi band");
+	LOGGER.info(
+		"9. Verify the log print for RX DELTA of current and previous value for  client device connected with 2.4 GHz wifi band");
+	LOGGER.info("10. Verify the log print for  RXTXDELTA  of   5Ghz client");
+	LOGGER.info("11. Change the WiFi log interval to default of 3600sec using WebPA command");
+
+	LOGGER.info("#######################################################################################");
 
 	try {
-	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-WEBPA-3002");
-	    LOGGER.info("**************************************************************");
-	    LOGGER.info(
-		    "TEST DESCRIPTION: Verify the ability to change mode from g-n to n-only mode on the 2.4 GHz radio");
-	    LOGGER.info("*************************************************************************");
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 1: Verify default operating mode from gateway device for 2.4 GHz wifi network");
-	    LOGGER.info("STEP 2: Verify 2.4 Ghz client is connected and IPV4 address obtained");
-	    LOGGER.info("STEP 3: Verify default operating mode from client device for 2.4 GHz wifi network");
-	    LOGGER.info("STEP 4: Change the operating mode to (n or g/n) mode");
-	    LOGGER.info("STEP 5: Verify 2.4 Ghz client is connected and IPV4 address obtained");
-	    LOGGER.info("STEP 6: Verify the mode of operation in 2.4 Ghz client ");
-	    LOGGER.info("**********************************************************************************");
-
-	    /*
-	     * Step1 : Verify the operating mode for 2.4GHz WiFi from RDKB device
-	     */
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP 1: DESCRIPTION : Verify default operating mode from gateway device for 2.4 GHz wifi network.");
-	    LOGGER.info("STEP 1: ACTION : Execute Webpa Parameter-Device.WiFi.Radio.10000.OperatingStandards");
-	    LOGGER.info(
-		    "STEP 1: EXPECTED : Operating mode should be 802.11g/n; 802.11b/g/n for DSL device; 802.11g/n/ax for others.");
-	    LOGGER.info("**********************************************************************************");
-	    errorMessage = "default value obtained for operating standard in 2.4Ghz band is NOT \'g/n\' in RDKB device or not b/g/n for DSL or not g/n/ax for others";
-
-	    if (DeviceModeHandler.isDSLDevice(device)) {
-		operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode();
-
-	    } else {
-		operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N_AX.getOperatingmode();
-	    }
-
-	    status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
-		    operatingStandard);
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    BroadBandPreConditionUtils.executePreConditionToFactoryResetAndReacitivateDevice(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1, true);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 3: DESCRIPTION :Check whether 5ghz private wifi is enabled. ");
+	    LOGGER.info("PRE-CONDITION 3: ACTION : Execute get on webpa Device.WiFi.SSID.10101.Enable");
+	    LOGGER.info("PRE-CONDITION 3: EXPECTED :5ghz private wifi  should be in enabled state.  ");
+	    LOGGER.info("#######################################################################################");
+	    String response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.TRUE);
 	    if (status) {
 		LOGGER.info(
-			"STEP 1: ACTUAL : The operating mode for 2.4GHz network in RDKB device is g/n or b/g/n for DSL device or g/n/ax for others");
+			"PRE-CONDITION 3: ACTUAL : Pre condition executed successfully.5ghz private wifi is in enabled state.");
+	    } else {
+		LOGGER.error("PRE-CONDITION 3: ACTUAL : Pre condition failed. Trying to eanble the 5ghz private WIFI");
+
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS,
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+		if (!status) {
+		    errorMessage = "Could not enable 5ghz private wifi.So skipping the tests";
+		    throw new TestException(errorMessage);
+		} else {
+		    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		}
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s1";
+	    errorMessage = "Failed to get a 5ghz connected client device";
+	    status = false;
+	    Dut fiveGhzWifiDut = null;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Get a 5GHz private WiFi connected client device");
+	    LOGGER.info("STEP 1: ACTION : Get 5GHz WiFi connected client device");
+	    LOGGER.info("STEP 1: EXPECTED :  Should get 5GHz WiFi connected device");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		fiveGhzWifiDut = BroadBandConnectedClientUtils
+			.get5GhzWiFiCapableClientDeviceAndConnectToAssociated5GhzSsid(device, tapEnv);
+		status = (fiveGhzWifiDut != null);
+	    } catch (Exception e) {
+		errorMessage = "Exception while trying to connect a client to 5ghz private WIFI";
+		LOGGER.error(errorMessage + " . " + e.getMessage());
+	    }
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Successfully connected a client to 5ghz private wifi");
 	    } else {
 		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
 	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
-	    /**
-	     * Step2 : Check 2.4 GHz client is connected and IPV4 address obtained
-	     */
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP 2: DESCRIPTION : Verify 2.4 Ghz client is connected and IPV4 address obtained with default operating standard or mode (g,n,ax)");
-	    LOGGER.info("STEP 2: ACTION : Execute command to connect 2.4 GHz client");
-	    LOGGER.info("STEP 2: EXPECTED :IPV4 address should be obtained and able to access the internet .");
-	    LOGGER.info("**********************************************************************************");
-	    step = "s2";
-	    status = false;
-	    List<Dut> settopList = ((Device) device).getConnectedDeviceList();
-	    LOGGER.debug("Dut List: " + settopList.size());
+	    /** Step 2 to Step 11 */
+	    executeCommonStepsForTelemetryTestCases(testCaseId, stepNum, device, WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+		    BroadBandTestConstants.STRING_VALUE_TWO, fiveGhzWifiDut);
 
-	    if (null != settopList && !settopList.isEmpty()) {
-		connectedClientDevice = BroadBandConnectedClientUtils
-			.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
-		// wait after connecting a client
-		LOGGER.info("waiting for 30 seconds ");
-		tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-
-		if (connectedClientDevice != null) {
-		    clientOsType = ((Device) connectedClientDevice).getOsType();
-		    errorMessage = "Client device is NOT connected properly over 2.4Ghz wifi after changing the operating mode in gateway -";
-		    // Verify the pattern of IPv4 address in Windows and Linux os
-		    try {
-			status = BroadBandConnectedClientUtils
-				.verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(clientOsType,
-					connectedClientDevice, tapEnv)
-				&& checkConnectivityOfDevice(connectedClientDevice);
-		    } catch (TestException exception) {
-			errorMessage = errorMessage + exception.getMessage();
-			LOGGER.error(errorMessage);
-		    }
-		    if (status) {
-			LOGGER.info(
-				"STEP 2: ACTUAL :2.4 Ghz client is connected and IPV4 address obtained with default operating standard or mode (g,n,ax)");
-		    } else {
-			LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-		    }
-		    LOGGER.info("**********************************************************************************");
-		    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
-
-		    /**
-		     * Step3 : Verify the operating mode for 2.4GHz WiFi from client device
-		     */
-
-		    LOGGER.info("**********************************************************************************");
-		    LOGGER.info(
-			    "STEP 3: DESCRIPTION :Verify default operating mode from client device for 2.4 GHz wifi network");
-		    LOGGER.info("STEP 3: ACTION : Execute command to get Operating mode");
-		    LOGGER.info(
-			    "STEP 3: EXPECTED :Operating mode should be 802.11g or 802.11n and 802.11b/g/n for DSL and 802.11g/n/ax for others.");
-		    LOGGER.info("**********************************************************************************");
-
-		    step = "s3";
-		    status = false;
-		    List<String> clientOperatingMode = null;
-		    errorMessage = "The default value for operating mode in 2.4GHz network for client device is NOT 802.11g or 802.11n and not 802.11g or 802.11n or 802.11ax";
-		    try {
-			if (DeviceModeHandler.isDSLDevice(device)) {
-			    clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_B_G_N
-				    .getClientOperatingMode();
-			} else {
-			    clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_G_N_AX
-				    .getClientOperatingMode();
-			}
-			status = BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
-				connectedClientDevice, tapEnv, clientOperatingMode);
-		    } catch (TestException exception) {
-			errorMessage = exception.getMessage();
-			LOGGER.error(errorMessage);
-		    }
-		    if (status) {
-			LOGGER.info(
-				"STEP 3: ACTUAL :The operating mode for 2.4GHz network in client device is g/n or b/g/n for DSL or g/n/ax for others ");
-		    } else {
-			LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-		    }
-		    LOGGER.info("**********************************************************************************");
-		    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
-
-		    /**
-		     * Step4 : Change the mode of operation in 2.4GHz client to 802.11 n
-		     */
-
-		    LOGGER.info("**********************************************************************************");
-		    LOGGER.info(
-			    "STEP 4: DESCRIPTION :Change the operating mode to n-only and g/n mode in gateway using WebPA - Device.WiFi.Radio.10000.OperatingStandards");
-		    LOGGER.info("STEP 4: ACTION : Execute command to set Operating mode");
-		    LOGGER.info(
-			    "STEP 4: EXPECTED :The operating mode should change from g/n to n-only and g/n/ax to g/n");
-		    LOGGER.info("**********************************************************************************");
-		    step = "s4";
-		    status = false;
-		    if (!DeviceModeHandler.isDSLDevice(device)) {
-			errorMessage = "Failed to change the operating mode for 2.4GHz network of gateway from g/n to n-only and g/n/ax to g/n mode using WebPA - Device.WiFi.Radio.10000.OperatingStandards";
-
-			if (DeviceModeHandler.isDSLDevice(device)) {
-			    operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_N.getOperatingmode();
-
-			} else {
-			    operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N.getOperatingmode();
-			}
-			status = BroadBandWiFiUtils.setWebPaParams(device,
-				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
-				operatingStandard, WebPaDataTypes.STRING.getValue());
-			LOGGER.info("Actual: " + (status
-				? "Changed the operating mode for 2.4GHz network from g/n to n using WebPA - Device.WiFi.Radio.10000.OperatingStandards."
-				: errorMessage));
-			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
-
-			// Wait for client to connect to gateway after changing the operating standard
-			LOGGER.info(
-				"waiting for 90 seconds after changing the operating standard for client to change its operating standard");
-			if (status) {
-			    LOGGER.info("STEP 4: ACTUAL :The operating mode for 2.4GHz network is set successfully  ");
-			} else {
-			    LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info(
-				"**********************************************************************************");
-			tapEnv.waitTill(BroadBandTestConstants.NINETY_SECOND_IN_MILLIS);
-		    } else {
-			LOGGER.info(
-				"**********************************************************************************");
-			tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
-				BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES, false);
-		    }
-
-		    /**
-		     * Step 5 : Connect to 2.4 GHz client and verify whether device is connected and IPV4 address
-		     * obtained
-		     */
-		    LOGGER.info("**********************************************************************************");
-		    LOGGER.info(
-			    "STEP 5: DESCRIPTION :Verify 2.4 Ghz client is connected and IPV4 address obtained after changing the operating standard to 'n only and to g/n'");
-		    LOGGER.info("STEP 5: ACTION : Execute command to connect 2.4 Ghz client and verify IPV4 address");
-		    LOGGER.info("STEP 5: EXPECTED :IPV4 address should be obtained");
-		    LOGGER.info("**********************************************************************************");
-		    step = "s5";
-		    status = false;
-		    if (!DeviceModeHandler.isDSLDevice(device)) {
-			errorMessage = "Client device is NOT connected properly over 2.4Ghz wifi after changing the operating mode in gateway -";
-			try {
-			    resultObject = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device,
-				    tapEnv, connectedClientDevice, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
-			    if (resultObject.isStatus()) {
-				status = BroadBandConnectedClientUtils
-					.verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(clientOsType,
-						connectedClientDevice, tapEnv)
-					&& checkConnectivityOfDevice(connectedClientDevice);
-			    } else {
-				errorMessage = "Failed to Connected client device after change in operating standard with message -"
-					+ resultObject.getErrorMessage();
-				LOGGER.error(errorMessage);
-			    }
-			} catch (TestException exception) {
-			    errorMessage = errorMessage + exception.getMessage();
-			    LOGGER.error(errorMessage);
-			}
-			tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			// Verify the pattern of IPv4 address in Windows and Linux os
-			try {
-			    status = BroadBandConnectedClientUtils
-				    .verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(clientOsType,
-					    connectedClientDevice, tapEnv)
-				    && checkConnectivityOfDevice(connectedClientDevice);
-			} catch (TestException exception) {
-			    errorMessage = errorMessage + exception.getMessage();
-			    LOGGER.error(errorMessage);
-			}
-			if (status) {
-			    LOGGER.info(
-				    "STEP 5: ACTUAL : 2.4 Ghz client is connected in n mode or g/n mode and IPV4 address obtained");
-			} else {
-			    LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info(
-				"**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
-		    } else {
-			LOGGER.info(
-				"**********************************************************************************");
-			tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
-				BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES, false);
-		    }
-
-		    /**
-		     * Step6 : Check the mode of operation in 2.4 Ghz client
-		     */
-		    LOGGER.info("**********************************************************************************");
-		    LOGGER.info("STEP 6: DESCRIPTION :Verify the mode of operation in 2.4 Ghz client");
-		    LOGGER.info("STEP 6: ACTION : Execute command to verify 2.4 Ghz mode of operation");
-		    LOGGER.info("STEP 6: EXPECTED :The mode of operation should be n-only or g/n");
-		    LOGGER.info("**********************************************************************************");
-		    step = "s6";
-		    status = false;
-		    if (!DeviceModeHandler.isDSLDevice(device)) {
-			errorMessage = "The operating mode for 2.4GHz network is not changed from \'g/n\' to \'n-only' mode or from \'g/n/ax\' to \'g/n\' mode in client device";
-			try {
-
-			    if (DeviceModeHandler.isDSLDevice(device)) {
-				clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_N
-					.getClientOperatingMode();
-			    } else {
-				clientOperatingMode = WifiOperatingStandard.OPERATING_STANDARD_G_N
-					.getClientOperatingMode();
-			    }
-
-			    status = BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
-				    connectedClientDevice, tapEnv, clientOperatingMode);
-			} catch (TestException exception) {
-			    errorMessage = exception.getMessage();
-			    LOGGER.error(errorMessage);
-			}
-			if (status) {
-			    LOGGER.info(
-				    "STEP 6: ACTUAL :The operating mode for 2.4GHz network is n only mode or g/n mode ");
-			} else {
-			    LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info(
-				"**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
-		    } else {
-			LOGGER.info(
-				"**********************************************************************************");
-			tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
-				BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES, false);
-		    }
-
-		} else {
-		    errorMessage = "Failed to find device with 2.4GHz Wifi support";
-		    LOGGER.error(errorMessage);
-		    LOGGER.info("**********************************************************************************");
-		    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
-		}
-	    } else {
-		errorMessage = "RDKB device does not have any connected client devices";
-		LOGGER.error(errorMessage);
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
-	    }
-
-	} catch (TestException exception) {
-	    errorMessage = exception.getMessage();
-	    LOGGER.error(
-		    "Exception occured while changing the operating mode from g-n to n-only mode for 2.4 GHz network using WebPA - Device.WiFi.Radio.10000.OperatingStandards"
-			    + errorMessage);
-	    LOGGER.info("**********************************************************************************");
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, status, errorMessage, true);
-	} finally {
-	    // Set the operating mode of 2.4GHz radio to default value 802.11g/n
-	    // using WebPA - Device.WiFi.Radio.10000.OperatingStandards
-	    if (!DeviceModeHandler.isDSLDevice(device)) {
-		status = BroadBandWiFiUtils.setWebPaParams(device,
-			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
-			operatingStandard, WebPaDataTypes.STRING.getValue());
-		// wait for 1.5 minutes to complete webpa chanages
-		tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-		LOGGER.info("Finally : " + (status
-			? "Changed the operating mode for 2.4GHz network from g/n to n using WebPA - Device.WiFi.Radio.10000.OperatingStandards."
-			: "Operating mode is not changed to default value using WebPA - Device.WiFi.Radio.10000.OperatingStandards"));
-	    }
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
 	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1005");
     }
 
     /**
-     * Method to check the connectivity of device over wlan
+     * Test to verify telemetry Logging for Ethernet Connected devices
+     * <ol>
+     * <li>1. Verify ethernet log enabled is false by default using WebPa command</li>
+     * <li>2. Verify Ethernet log interval is 3600 by default using WebPA command</li>
+     * <li>3. Collect CPU and memory usage stats for 10 minutes when feature is disabled</li>
+     * <li>4. Enable ETH log enabled using WebPA command</li>
+     * <li>5. Change the Ethernet log period to 10sec using WebPA command</li>
+     * <li>6. Verify the number of Ethernet devices connected</li>
+     * <li>7. Verify the Ethernet connected device mac from log message</li>
+     * <li>8. Verify the Ethernet connected device phy rate from log message</li>
+     * <li>9. Compare Ehernet mac total count with WebPa command</li>
+     * <li>10. Get the Ethernet client mac address using Webpa operation and compare the value with log message</li>
+     * <li>11. Collect CPU and memory usage stats for 10 minutes when feature is enabled</li>
+     * <li>12. Compare the results from Step 3 and Step 11</li>
+     * </ol>
      * 
-     * @param Dut
-     *            device
+     * @author ArunKumar Jayachandran
+     * @refactor Athira
      * 
-     * @return boolean connection status
-     * @refactor Alan_Bivera
+     * @param device
+     * 
      */
-
-    private boolean checkConnectivityOfDevice(Dut device) {
-
-	LOGGER.debug("Entering checkConnectivityOfDevice");
-	String commandResponse = null;
-	String command = ((Device) device).getOsType().equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-		? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
-		: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
-	commandResponse = tapEnv.executeCommandOnOneIPClients(device, command);
-	LOGGER.info("Curl response from device - " + commandResponse);
-
-	if ((CommonMethods.isNotNull(commandResponse) && commandResponse.contains("200 OK"))) {
-	    LOGGER.info("Obtained 200 ok message on checking connectivity");
-	    LOGGER.debug("Ending heckConnectivityOfDevice");
-	    return true;
-	} else {
-	    throw new TestException("Device failed connectivity test using curl command");
+    @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.SECURITY })
+    @TestDetails(testUID = "TC-RDKB-TELEMETRY-CC-1005")
+    public void testTelemetryMarkersForLanClient(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-TELEMETRY-CC-1005");
+	LOGGER.info("TEST DESCRIPTION: Test to verify telemetry Logging for Ethernet Connected devices");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify ethernet log enabled is false by default using WebPa command");
+	LOGGER.info("2. Verify Ethernet log interval is 3600 by default using WebPA command");
+	LOGGER.info("3. Collect CPU and memory usage stats for 10 minutes when feature is disabled");
+	LOGGER.info("4. Enable ETH log enabled using WebPA command");
+	LOGGER.info("5. Change the Ethernet log period to 10sec using WebPA command");
+	LOGGER.info("6. Verify the number of Ethernet devices connected");
+	LOGGER.info("7. Verify the Ethernet connected device mac from log message");
+	LOGGER.info("8. Verify the Ethernet connected device phy rate from log message");
+	LOGGER.info("9. Compare Ehernet mac total count with WebPa command");
+	LOGGER.info(
+		"10. Get the Ethernet client mac address using Webpa operation and compare the value with log message");
+	LOGGER.info("11. Collect CPU and memory usage stats for 10 minutes when feature is enabled");
+	LOGGER.info("12. Compare the results from Step 3 and Step 11");
+	LOGGER.info("#######################################################################################");
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-TELEMETRY-CC-005";
+	String stepNumber = "s1";
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	Dut lanDut = null;
+	String ethMacTotalCount = null;
+	String beforeEnablingFeature = null;
+	String afterEnablingFeature = null;
+	String ethMac = null;
+	String telemetryLogFile = null;
+	String macInterface = null;
+	// Variable Declaration Ends
+	LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	LOGGER.info("PRE-CONDITION STEPS");
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : Get Ethernet connected device from connected clients");
+	LOGGER.info("PRE-CONDITION 1 : ACTION : Get Ethernet connected device");
+	LOGGER.info("PRE-CONDITION 1 : Should get the Ethernet connected device");
+	LOGGER.info("#######################################################################################");
+	errorMessage = "Failed to get the Ethernet connected client device";
+	lanDut = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+	if (lanDut == null) {
+	    throw new TestException(
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.PRE_CONDITION_ERROR,
+			    BroadBandTestConstants.SINGLE_SPACE_CHARACTER, errorMessage));
 	}
+	LOGGER.info("PRE-CONDITION : ACTUAL: Ethernet connected device is available: " + lanDut);
+	LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	LOGGER.info("#######################################################################################");
+	try {
+	    /**
+	     * Step 1: VERIFY ETHERNET LOG ENABLED IS FALSE BY DEFAULT USING WEBPA COMMAND
+	     */
+	    stepNumber = "s1";
+	    status = false;
+	    telemetryLogFile = BroadBandCommandConstants.FILE_ETH_TELEMETRY_TXT;
+	    if (DeviceModeHandler.isDSLDevice(device)) {
+		telemetryLogFile = BroadBandCommandConstants.FILE_ETH_AGENT_LOG;
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify Ethernet log enabled is false by default using WebPA command");
+	    LOGGER.info(
+		    "STEP 1: ACTION: Execute Command Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogEnabled");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED: The webPA command should execute successfully and return default value as false");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the WebPa Response for webpa parameter: "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_ENABLED;
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_ENABLED, BroadBandTestConstants.FALSE,
+		    BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL: Successfully verified default value of Ethernet log enabled");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 2 : VERIFY ETHERNET LOG INTERVAL IS 3600 BY DEFAULT USING WEBPA COMMAND
+	     */
+	    stepNumber = "s2";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify Ethernet log period is 3600 by default using WebPA command");
+	    LOGGER.info(
+		    "STEP 2: ACTION: Execute Command Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogPeriod");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED: The webPA command should execute successfully and return default value as false");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get Webpa Response for webpa parameter: "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_PERIOD;
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_PERIOD,
+		    String.valueOf(BroadBandTestConstants.INTERGER_CONSTANT_3600),
+		    BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL: Successfully verified default value of Ethernet log period");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 3 : COLLECT CPU AND MEMORY USAGE STATS FOR 10 MINUTES WHEN FEATURE IS DISABLED
+	     */
+	    stepNumber = "s3";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION: Collect CPU and memory usage stats for 10 minutes when feature is disabled");
+	    LOGGER.info(
+		    "STEP 3: ACTION: a) execute the following command inside the RG console of the gateway for every one minute and collect the data for CPU and memory usage, "
+			    + "\"top -n 1 |grep -i Mem |sed  's/^[^0-9]*//;s/[^0-9].*$//'\" and \"top -n 1 |grep CPU: |sed  's/^[^0-9]*//;s/[^0-9].*$//'\"\n b) Calculate the average for the data collected ");
+	    LOGGER.info("STEP 3: EXPECTED: Command execution on the device should be successful");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Unable to collect CPU and memory usage data";
+	    response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    LOGGER.info("STEP 3: Response for CPU and memory utilisation: " + response);
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		beforeEnablingFeature = response;
+		LOGGER.info(
+			"STEP 3: ACTUAL : Calculating the average CPU and Memory utilisation for 10 minutes before enabling logging");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 4 : ENABLE ETH LOG ENABLED USING WEBPA COMMAND
+	     */
+	    stepNumber = "s4";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Enable ETH log enabled using WebPA command");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute WebPa set command for Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogEnabled WebPa parameter");
+	    LOGGER.info("STEP 4: EXPECTED : WebPa set command should be successful");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to set the WebPa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogEnabled as true";
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_ENABLED, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.TRUE, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL: Successfully enabled Ethernet log enabled using WebPa set operation");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 5 : CHANGE THE ETHERNET LOG PERIOD TO 10SEC USING WEBPA COMMAND
+	     */
+	    stepNumber = "s5";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Change the Ethernet log period to 10sec using WebPA command");
+	    LOGGER.info(
+		    "STEP 5: ACTION: Execute WebPa set command for Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogPeriod WebPa parameter");
+	    LOGGER.info("STEP 5: EXPECTED: WebPa set command should be successful");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to set the WebPa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogPeriod as 10";
+	    status = BroadBandWebPaUtils.verifyWebPaValueAfterDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_PERIOD, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_10, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 5: ACTUAL: Successfully updated the Ethernet log period to 10 second using WebPa set operation");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 6 : VERIFY THE NUMBER OF ETHERNET DEVICES CONNECTED
+	     */
+	    stepNumber = "s6";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify the number of Ethernet devices connected");
+	    LOGGER.info("STEP 6: ACTION : Execute command 1. grep -i \"ETH_MAC_1_TOTAL_COUNT:\" " + telemetryLogFile);
+	    LOGGER.info(
+		    "STEP 6: EXPECTED : Successfully verified the total no.of devices connected through ethernet interface");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the total no.of ethernet connected devices";
+	    for (int counter = BroadBandTestConstants.CONSTANT_1; counter < BroadBandTestConstants.CONSTANT_5; counter++) {
+		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_ETH_MAC_TOTAL_COUNT.replace(
+				BroadBandTestConstants.STRING_REPLACE, Integer.toString(counter)),
+			telemetryLogFile, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+			BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		if (CommonMethods.isNotNull(response)) {
+		    ethMacTotalCount = CommonMethods.patternFinder(response,
+			    BroadBandTestConstants.PATTERN_ETH_MAC_TOTAL_COUNT
+				    .replace(BroadBandTestConstants.STRING_REPLACE, Integer.toString(counter)));
+		    status = CommonMethods.isNotNull(ethMacTotalCount)
+			    && Integer.parseInt(ethMacTotalCount) != BroadBandTestConstants.CONSTANT_0;
+		}
+		if (status) {
+		    macInterface = Integer.toString(counter);
+		    break;
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL: Successfully collected the total no.of Ethernet connected client devices");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	    /**
+	     * Step 7 : VERIFY THE ETHERNET CONNECTED DEVICE MAC FROM LOG MESSAGE
+	     */
+	    stepNumber = "s7";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify the Ethernet connected device mac from log message");
+	    LOGGER.info("STEP 7: ACTION : Execute command 1. grep -i \"ETH_MAC_1:\" " + telemetryLogFile);
+	    LOGGER.info("STEP 7: EXPECTED : Successfully verified the device mac connected through ethernet interface");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the ethernet connected device mac address";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_ETH_MAC.replace(BroadBandTestConstants.STRING_REPLACE,
+			    macInterface),
+		    telemetryLogFile, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response)) {
+		ethMac = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_ETH_MAC
+			.replace(BroadBandTestConstants.STRING_REPLACE, macInterface));
+		status = CommonMethods.isNotNull(ethMac);
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 7: ACTUAL: Successfully collected the mac address of Ethernet connected client devices");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 8 : VERIFY THE ETHERNET CONNECTED DEVICE PHY RATE FROM LOG MESSAGE
+	     */
+	    stepNumber = "s8";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Verify the Ethernet connected device phy rate from log message");
+	    LOGGER.info("STEP 8: ACTION : Execute command 1. grep -i \"ETH_PHYRATE_1:\" " + telemetryLogFile);
+	    LOGGER.info("STEP 8: EXPECTED : Successfully verified the device mac connected through ethernet interface");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the ethernet connected device mac address";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_ETH_PHYRATE.replace(BroadBandTestConstants.STRING_REPLACE,
+			    macInterface),
+		    telemetryLogFile, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    status = CommonMethods.patternMatcher(response, BroadBandTestConstants.PATTERN_ETH_PHYRATE
+		    .replace(BroadBandTestConstants.STRING_REPLACE, macInterface));
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL: Successfully collected the phy rate of Ethernet connected client devices: "
+			+ response);
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 9 : COMPARE EHERNET MAC TOTAL COUNT WITH WEBPA COMMAND
+	     */
+	    stepNumber = "s9";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Compare Ehernet mac total count with WebPa command");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Execute command: Execute WebPa get command: Device.Ethernet.Interface.1.X_RDKCENTRAL-COM_AssociatedDeviceNumberOfEntries");
+	    LOGGER.info("STEP 9: EXPECTED : Response should be success and should be same with log message");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the Ethernet mac total count from WebPa parameter";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_ASSOCIATED_CLIENT_NO_OF_ENTRIES
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, macInterface),
+		    ethMacTotalCount, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 9: ACTUAL: Successfully compared the no.of associated number of entries are same as log message");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 10 : GET THE ETHERNET CLIENT MAC ADDRESS USING WEBPA OPERATION AND COMPARE THE VALUE WITH LOG
+	     * MESSAGE
+	     */
+	    stepNumber = "s10";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info(
+		    "STEP 10: DESCRIPTION : Get the Ethernet client mac address using Webpa operation and compare the value with log message");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Execute WebPa get command: Device.Ethernet.Interface.1.X_RDKCENTRAL-COM_AssociatedDevice.1.MACAddress");
+	    LOGGER.info("STEP 10: EXPECTED : Response shoud be successful and should be same with log message");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the Ethernet mac from WebPa parameter";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_CLIENT_MAC_ADDRESS
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, macInterface),
+		    ethMac, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL: Successfully verified Ethernet client mac address from webpa and log");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 11: COLLECT CPU AND MEMORY USAGE STATS FOR 10 MINUTES WHEN FEATURE IS ENABLED
+	     */
+	    stepNumber = "s11";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 11: DESCRIPTION: Collect CPU and memory usage stats for 10 minutes when feature is enabled");
+	    LOGGER.info(
+		    "STEP 11: ACTION: a) execute the following command inside the RG console of the gateway for every one minute and collect the data for CPU and memory usage, "
+			    + "\"top -n 1 |grep -i Mem |sed  's/^[^0-9]*//;s/[^0-9].*$//'\" and \"top -n 1 |grep CPU: |sed  's/^[^0-9]*//;s/[^0-9].*$//'\"\n b) Calculate the average for the data collected ");
+	    LOGGER.info("STEP 11: EXPECTED: Command execution on the device should be successful");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Unable to collect CPU and memory usage data";
+	    response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    LOGGER.info("STEP 11: Response for CPU and memory utilisation: " + response);
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		afterEnablingFeature = response;
+		LOGGER.info(
+			"STEP 11: ACTUAL : Calculating the average CPU and Memory utilisation for 10 minutes after enabling log");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 12 : COMPARE THE RESULTS FROM STEP 3 AND STEP 11
+	     */
+	    stepNumber = "s12";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 12: DESCRIPTION: Compare the results from Step 3 and Step 11");
+	    LOGGER.info("STEP 12: ACTION: Compare the averages calculated for CPU utilisation and memory utilisation");
+	    LOGGER.info(
+		    "STEP 12: EXPECTED: The difference in average should be within 10%, indicating that the feature doesn't have any negative impact on the device");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "The feature causes negative impact on the device";
+	    BroadBandResultObject bandResultObject = null;
+	    bandResultObject = BroadBandWifiWhixUtils
+		    .validateCpuAndMemoryUtilisationForNegativeEffect(beforeEnablingFeature, afterEnablingFeature);
+	    if (bandResultObject.isStatus()) {
+		LOGGER.info("STEP 12: ACTUAL : There is no negative impact on the device when this feature is enabled");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, bandResultObject.isStatus(),
+		    bandResultObject.getErrorMessage(), true);
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Validating telemetry logging for Ethernet connected device:"
+		    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : DESCRIPTION : Disable ETH log enabled and log period to default using WebPA command");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : ACTION : Execute webpa set command: parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogEnabled datatype: bool, Value: false "
+			    + "Parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Logging.xOpsDMEthLogPeriod Datatype: uint, Value: 3600");
+	    LOGGER.info("POST-CONDITION 1 : EXPECTED : Should disabled Ethernet log enabled & period using webpa");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to revert back to default value";
+	    status = BroadBandWebPaUtils.verifyWebPaValueAfterDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_ENABLED, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.FALSE, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS)
+		    && BroadBandWebPaUtils.verifyWebPaValueAfterDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_ETH_LOG_PERIOD, BroadBandTestConstants.CONSTANT_2,
+			    BroadBandTestConstants.STRING_CONSTANT_3600,
+			    BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"POST-CONDITION 1 : ACTUAL : Successfully Disabled ETH log and log period to default using WebPA command");
+	    } else {
+		LOGGER.info("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-CC-1005");
+    }
+    
+    /**
+     * Test to verify telemetry Logging for WiFi Connected devices
+     * <ol>
+     * <li>PRE-CONDITION : Get 2.4GHz WiFi connected device.</li>
+     * <li>1. Copy dcm.properties to /nvram folder and change the DCM_LOG_SERVER_URL</li>
+     * <li>2. Reboot the device and wait for IP acquisition</li>
+     * <li>3. Validate modified url in dcmscript.log file</li>
+     * <li>4. Connecting to 2.4Ghz again after Reboot</li>
+     * <li>5. Verify WiFi log interval is 3600 by default using WebPA command</li>
+     * <li>6. Change the WiFi log interval to 300sec using WebPA command</li>
+     * <li>7. Verify the number of Ethernet devices connected</li>
+     * <li>8. Compare WiFi mac total count with WebPa command</li>
+     * <li>9. Verify the 2.4GHz client device mac address</li>
+     * <li>10. Compare WiFi mac address with WebPa command</li>
+     * <li>11. Verify Telemetry logging for total no.of WiFi connected devices</li>
+     * <li>12. Change the WiFi log interval to default of 3600sec using WebPA command</li>
+     * </ol>
+     * 
+     * @author ArunKumar Jayachandran
+     * @refactor Athira
+     * 
+     * @param device
+     * 
+     */
+    @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.SECURITY })
+    @TestDetails(testUID = "TC-RDKB-TELEMETRY-CC-1006")
+    public void testTelemetryMarkersForWiFiClient(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-TELEMETRY-CC-1006");
+	LOGGER.info("TEST DESCRIPTION: Test to verify telemetry Logging for WiFi Connected devices");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE CONDITION : Get 2.4GHz WiFi connected device.");
+	LOGGER.info("1. Copy dcm.properties to /nvram folder and change the DCM_LOG_SERVER_URL");
+	LOGGER.info("2. Reboot the device and wait for IP acquisition");
+	LOGGER.info("3. Validate modified url in dcmscript.log file");
+	LOGGER.info("4. Connecting to 2.4Ghz again after Reboot");
+	LOGGER.info("5. Verify WiFi log interval is 3600 by default using WebPA command");
+	LOGGER.info("6. Change the WiFi log interval to 300sec using WebPA command");
+	LOGGER.info("7. Verify the number of Ethernet devices connected");
+	LOGGER.info("8. Compare WiFi mac total count with WebPa command");
+	LOGGER.info("9. Verify the 2.4GHz client device mac address");
+	LOGGER.info("10. Compare WiFi mac address with WebPa command");
+	LOGGER.info("11. Verify Telemetry logging for total no.of WiFi connected devices");
+	LOGGER.info("12. Change the WiFi log interval to default of 3600sec using WebPA command");
+	LOGGER.info("#######################################################################################");
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-TELEMETRY-CC-006";
+	String stepNumber = "s1";
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	Dut wifiDut = null;
+	String wifiMacTotalCount = null;
+	String wifiMacAddress = null;
+	long startTime = BroadBandTestConstants.CONSTANT_0;
+	String deviceDateTime = null;
+	boolean isAtomSyncAvailable = false;
+	isAtomSyncAvailable = CommonMethods.isAtomSyncAvailable(device, tapEnv);
+	String searchLogMessage = null;
+	String pattenMatcher = null;
+	BroadBandResultObject broadBandResultObject = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	LOGGER.info("PRE-CONDITION STEPS");
+	LOGGER.info("#############################################################");
+	LOGGER.info("PRE-CONDITION : DESCRIPTION : Get 2.4GHz WiFi connected device");
+	LOGGER.info("PRE-CONDITION : ACTION : Get 2.4GHz WiFi connected client device");
+	LOGGER.info("PRE-CONDITION : EXPECTED : Should get 2.4GHz WiFi connected device");
+	LOGGER.info("#############################################################");
+	wifiDut = BroadBandConnectedClientUtils.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device,
+		tapEnv);
+	if (wifiDut == null) {
+	    errorMessage = "Failed to get the 2.4GHz WiFi connected client device";
+	    throw new TestException(
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.PRE_CONDITION_ERROR,
+			    BroadBandTestConstants.SINGLE_SPACE_CHARACTER, errorMessage));
+	}
+	LOGGER.info("PRE-CONDITION : ACTUAL: 2.4GHz WiFi connected device is available: " + wifiDut);
+	postTelemetryData(device);
+	LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+	try {
+	    // telemetry configuration settings from step 1 to 3
+	    telemetryConfiguration(device, testCaseId);
+
+	    // STEP 4: Connecting to 2.4Ghz again after Reboot
+	    deviceDateTime = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
+	    BroadBandWiFiUtils.executeTestStepToConnectPrivateWiFi(device, testCaseId, wifiDut,
+		    BroadBandTestConstants.BAND_2_4GHZ, BroadBandTestConstants.CONSTANT_4);
+
+	    // STEP 5: Verify WiFi log interval is 3600 by default using WebPA command
+	    stepNumber = "s5";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify WiFi log interval is 3600 by default using WebPA command");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute Command Device.Deviceinfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval");
+	    LOGGER.info(
+		    "STEP 5: EXPECTED : The webPA command should execute successfully and return default value as false");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Null Response is retrieved for webpa parameter: "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL;
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL,
+		    String.valueOf(BroadBandTestConstants.INTERGER_CONSTANT_3600),
+		    BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 5" + " : ACTUAL : Successfully verified default value of WiFi log interval");
+	    } else {
+		LOGGER.error("STEP 5" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    // STEP 6: Change the WiFi log interval to 300sec using WebPA command
+	    stepNumber = "s6";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Change the WiFi log interval to 300sec using WebPA command");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute WebPa set command for Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval WebPa parameter");
+	    LOGGER.info("STEP 6: EXPECTED : WebPa set command should be successful");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to set the WebPa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval as 300";
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL, BroadBandTestConstants.CONSTANT_1,
+		    BroadBandTestConstants.STRING_300, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 6"
+			+ " : ACTUAL : Successfully updated the WiFi log interval to 300second using WebPa set operation");
+	    } else {
+		LOGGER.error("STEP 6" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    // STEP 7: Verify the number of 2.4GHz wifi client devices connected
+	    stepNumber = "s7";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify the number of Wifi Client connected");
+	    LOGGER.info(
+		    "STEP 7: ACTION : Execute command 1. grep -i \"WIFI_MAC_1_TOTAL_COUNT:\" /rdklogs/logs/wifihealth.txt");
+	    LOGGER.info("STEP 7: EXPECTED : Successfully verified the total no.of devices connected");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the total no.of 2.4GHz WiFi connected devices";
+	    startTime = System.currentTimeMillis();
+	    do {
+		searchLogMessage = BroadBandCommonUtils
+			.concatStringUsingStringBuffer(BroadBandTraceConstants.LOG_MESSAGE_WIFI_MAC_1_TOTAL_COUNT);
+		broadBandResultObject = BroadBandCommonUtils.verifyLogsInAtomOrArmWithPatternMatcherWithLogTime(tapEnv,
+			device, searchLogMessage, BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG,
+			BroadBandTestConstants.PATTERN_WIFI_MAC_1_TOTAL_COUNT,
+			CommonMethods.isAtomSyncAvailable(device, tapEnv), deviceDateTime);
+		status = broadBandResultObject.isStatus();
+		errorMessage = broadBandResultObject.getErrorMessage();
+		wifiMacTotalCount = broadBandResultObject.getOutput();
+		if (status) {
+		    status = CommonMethods.isNotNull(wifiMacTotalCount) && BroadBandCommonUtils
+			    .convertStringToInteger(wifiMacTotalCount) != BroadBandTestConstants.CONSTANT_0;
+		}
+	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.SIX_MINUTE_IN_MILLIS && !status
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info(
+			"STEP 7" + " : ACTUAL : Successfully collected the total no.of WiFi connected client devices");
+	    } else {
+		LOGGER.error("STEP 7" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    // STEP 8: Compare WiFi mac total count with WebPa command
+	    stepNumber = "s8";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Compare WiFi mac total count with WebPa command");
+	    LOGGER.info("STEP 8: ACTION : Execute Command Device.WiFi.AccessPoint.1.AssociatedDeviceNumberOfEntries");
+	    LOGGER.info(
+		    "STEP 8: EXPECTED : The webPA command should execute successfully and response should be equal from log");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Null Response is retrieved for webpa parameter: "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_WIFI_NO_OF_ENTRIES;
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WIFI_NO_OF_ENTRIES);
+	    LOGGER.info("STEP 8: WebPA Response from " + BroadBandWebPaConstants.WEBPA_PARAM_WIFI_NO_OF_ENTRIES
+		    + " parameter is: " + response);
+	    if (CommonMethods.isNotNull(response)) {
+		status = response.equalsIgnoreCase(wifiMacTotalCount);
+		errorMessage = "WiFi total mac count is not same in webpa response and log file :" + response;
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 8" + " : ACTUAL : Successfully verified WiFi total mac count from log file and webpa");
+	    } else {
+		LOGGER.error("STEP 8" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    // STEP 9: Verify the 2.4GHz client device mac address
+	    stepNumber = "s9";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify the 2.4GHz client device mac address");
+	    LOGGER.info("STEP 9: ACTION : Execute command 1. grep -i \"WIFI_MAC_1:\" /rdklogs/logs/wifihealth.txt");
+	    LOGGER.info(
+		    "STEP 9: EXPECTED : Successfully verified the total no.of devices connected through ethernet interface");
+	    LOGGER.info("*******************************************************************************");
+	    if (Integer.parseInt(wifiMacTotalCount) != BroadBandTestConstants.CONSTANT_0) {
+		errorMessage = "Failed to get the 2.4GHz WiFi client mac address from /rdklogs/logs/wifihealth.txt";
+		searchLogMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(
+			BroadBandTraceConstants.LOG_MESSAGE_WIFI_MAC, BroadBandTestConstants.STRING_CONSTANT_1,
+			AutomaticsConstants.COLON);
+
+		pattenMatcher = BroadBandCommonUtils.concatStringUsingStringBuffer(searchLogMessage,
+			BroadBandTestConstants.REG_EXPRESSION_TO_GET_MAC_ADDRESS_SEMICOLON);
+
+		broadBandResultObject = BroadBandCommonUtils.verifyLogsInAtomOrArmWithPatternMatcherWithLogTime(tapEnv,
+			device, searchLogMessage, BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG, pattenMatcher,
+			isAtomSyncAvailable, deviceDateTime);
+
+		status = broadBandResultObject.isStatus();
+		errorMessage = broadBandResultObject.getErrorMessage();
+		wifiMacAddress = broadBandResultObject.getOutput();
+		if (status) {
+		    status = CommonMethods.isNotNull(wifiMacAddress);
+		}
+		if (status) {
+		    LOGGER.info(
+			    "STEP 9" + " : ACTUAL : Successfully 2.4GHz WiFi client mac address: " + wifiMacAddress);
+		} else {
+		    LOGGER.error("STEP 9" + " : ACTUAL : " + errorMessage + wifiMacAddress);
+		}
+		LOGGER.info("*******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    } else {
+		errorMessage = "No clients are connected through 2.4GHz WiFi";
+		LOGGER.info("STEP 9: " + errorMessage);
+		LOGGER.info("*******************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+	    }
+
+	    // STEP 10: Compare WiFi mac address with WebPa command
+	    stepNumber = "s10";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Compare WiFi mac address with WebPa command");
+	    LOGGER.info("STEP 10: ACTION : Execute Command Device.WiFi.AccessPoint.1.AssociatedDevice.1.MACAddress");
+	    LOGGER.info(
+		    "STEP 10: EXPECTED : The webPA command should execute successfully and response should be same as previous value from log");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Null Response is retrieved for webpa parameter: "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_WIFI_MAC_ADDRESS;
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WIFI_MAC_ADDRESS);
+	    LOGGER.info("STEP 10: WebPA Response from " + BroadBandWebPaConstants.WEBPA_PARAM_WIFI_MAC_ADDRESS
+		    + " parameter is: " + response);
+	    if (CommonMethods.isNotNull(response)) {
+		status = response.equalsIgnoreCase(wifiMacAddress);
+		errorMessage = "WiFi total mac address is not same in webpa response and log file :" + response;
+	    }
+	    LOGGER.info("STEP 10:"
+		    + (status ? "ACTUAL: Successfully verified WiFi mac address from log file and webpa: " + response
+			    : errorMessage));
+	    if (status) {
+		LOGGER.info("STEP 10" + " : ACTUAL : Successfully verified WiFi mac address from log file and webpa: "
+			+ response);
+	    } else {
+		LOGGER.error("STEP 10" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    // STEP 11: Verify Telemetry logging for total no.of WiFi connected devices
+	    stepNumber = "s11";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Verify Telemetry logging for total no.of WiFi connected devices");
+	    LOGGER.info(
+		    "STEP 11: ACTION : Execute command: 1. grep -i \"WIFI_MAC_1_TOTAL_COUNT\" /rdklogs/logs/dcmscript.log");
+	    LOGGER.info(
+		    "STEP 11: EXPECTED : Response should contain the telemetry log message of WIFI_MAC_1_TOTAL_COUNT under /rdklogs/log/dcmscript.log");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to get the telemetry log message for WIFI_MAC_1_TOTAL_COUNT";
+	    startTime = System.currentTimeMillis();
+	    boolean isTelemetry2Enabled = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_TELEMETRY_2_0_ENABLE, BroadBandTestConstants.TRUE,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+	    if (!isTelemetry2Enabled) {
+		do {
+		    status = BroadBandCommonUtils.verifyConsoleLogByPassingDateFormat(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_WIFI_MAC_1_TOTAL_COUNT_WITHOUT_COLON,
+			    BroadBandTestConstants.DCMSCRIPT_LOG_FILE, deviceDateTime,
+			    BroadBandTestConstants.PATTERN_MATCHER_TIMESTAMP_SPEEDTEST_LOG_MESSAGE,
+			    BroadBandTestConstants.TIMESTAMP_FORMAT_SPEEDTEST_LOG_MESSAGE);
+		} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS
+			&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+	    } else {
+		if (BroadbandPropertyFileHandler.isSplunkEnabled()) {
+		    List<String> verifySplunkLog = new ArrayList<>();
+		    verifySplunkLog.add(BroadBandTelemetryConstants.WIFI_MAC_COUNT_TELEMETRY_MARKER);
+		    do {
+			LOGGER.info("Waiting for device to verify telemetry status");
+
+			response = null;
+
+			response = BroadBandTelemetry2Utils.retrieveTelemetryLogsFromSplunk(device, tapEnv,
+				BroadBandTelemetryConstants.WIFI_MAC_COUNT_TELEMETRY_MARKER);
+			if (CommonMethods.isNotNull(response)) {
+			    LOGGER.info("Respons on step 11 is : " + response);
+			    status = true;
+			}
+
+		    } while (!status
+			    && (System.currentTimeMillis()
+				    - startTime) < BroadBandTestConstants.TWENTY_MINUTES_IN_MILLIS
+			    && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS));
+		}
+
+	    }
+	    
+	    if (!BroadbandPropertyFileHandler.isSplunkEnabled()){
+	    	
+	    	LOGGER.info("Splunk is disabled");
+			LOGGER.info("Skipping the step :");
+			errorMessage = "failed to get the log as Splunk is disabled";
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+				errorMessage, false);
+	    	
+			LOGGER.info("STEP 11" + " : ACTUAL : " + errorMessage);
+		    } 
+	    else 
+	    {
+	    if (status) {
+		LOGGER.info("STEP 11" + " : ACTUAL : Telemetry log message available for Wifi mac 1 total count");
+	    } else{
+		LOGGER.info("STEP 11" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    }
+
+	    // STEP 12: Change the WiFi log interval to default of 3600sec using WebPA command
+	    stepNumber = "s12";
+	    status = false;
+	    LOGGER.info("*******************************************************************************");
+	    LOGGER.info(
+		    "STEP 12: DESCRIPTION : Change the WiFi log interval to default of 3600sec using WebPA command");
+	    LOGGER.info(
+		    "STEP 12: ACTION : Execute WebPa set command for Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval WebPa parameter");
+	    LOGGER.info("STEP 12: EXPECTED : WebPa set command should be successful");
+	    LOGGER.info("*******************************************************************************");
+	    errorMessage = "Failed to set the WebPa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval as 3600";
+	    status = BroadBandWebPaUtils.verifyWebPaValueAfterDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL, BroadBandTestConstants.CONSTANT_1,
+		    BroadBandTestConstants.STRING_CONSTANT_3600, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP 12"
+			+ " : ACTUAL : Successfully updated the WiFi log interval to 3600second using WebPa set operation");
+	    } else {
+		LOGGER.error("STEP 12" + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("*******************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error(
+		    "Exception Occurred while Validating telemetry logging for WiFi connected device:" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    true);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-CC-1006");
+    }	
+	
+	
+	/**
+	 * Verify enhanced Wifi logging in Telemetry for 2.4ghz public wifi parameters
+	 * <ol>
+	 * <li>Enable public wifi on the device</li>
+	 * <li>disable prefer private via webpa</li>
+	 * <li>Connect to Wifi client with 2.4Ghz public wifi SSID</li>
+	 * <li>Verify wifihealth.txt file availability in /rdklogs/logs folder and clear
+	 * the contents</li>
+	 * <li>Check the whether wifi statistics are enabled</li>
+	 * <li>Verify WiFi log interval is 3600 by default using WebPA command</li>
+	 * <li>Change the WiFi log interval to 300sec using WebPA command" and wait for
+	 * 5 minutes</li>
+	 * <li>Run the script sh /usr/ccsp/wifi/aphealth_log.sh</li>
+	 * <li>Verify the log print for RSSI value for client device connected with 2.4
+	 * GHz wifi band</li>
+	 * <li>Verify the log print for bytes of AP RX for client device connected with
+	 * 2.4 GHz wifi band</li>
+	 * <li>Verify the log print for RX DELTA of current and previous value for
+	 * client device connected with 2.4 GHz wifi band</li>
+	 * <li>Change the WiFi log interval to default of 3600sec using WebPA
+	 * command</li>
+	 * <li>enable prefer private via webpa</li>
+	 * </ol>
+	 * 
+	 * @param device {@link Dut}
+	 * @author anandam.s
+	 * @refactor Athira
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-WIFI-TELEMETRY-1008")
+	public void verifyTelemetryMarkersFor2ghzClientsForPublicWifi(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-WIFI-TELEMETRY-108";
+		String stepNum = "";
+		String errorMessage = "";
+		boolean status = false;
+		boolean statusOfEnablingWifi = false;
+		boolean statusOfEnablePreferPrivate = false;
+		// Variable Declation Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1008");
+		LOGGER.info("TEST DESCRIPTION: Verify enhanced Wifi logging in Telemetry for   2.4ghz public  wifi parameters");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Enable public wifi on the device");
+		LOGGER.info("2. disable prefer private via webpa");
+		LOGGER.info("3. Connect to Wifi client with 2.4Ghz public wifi SSID  ");
+		LOGGER.info("4. Verify wifihealth.txt file availability in /rdklogs/logs folder  and clear the contents");
+		LOGGER.info("5. Check the whether wifi statistics are enabled ");
+		LOGGER.info("6. Verify WiFi log interval is 3600 by default using WebPA command");
+		LOGGER.info("7. Change the WiFi log interval to 300sec using WebPA command\" and wait for 5 minutes ");
+		LOGGER.info("8. Run the script sh /usr/ccsp/wifi/aphealth_log.sh");
+		LOGGER.info("9. Verify the log print for  RSSI value for client device connected with 2.4 GHz wifi band");
+		LOGGER.info("10. Verify the log print for bytes of AP RX for  client device connected with 2.4 GHz wifi band");
+		LOGGER.info(
+				"11. Verify the log print for RX DELTA of current and previous value for  client device connected with 2.4 GHz wifi band");
+		LOGGER.info("12. Change the WiFi log interval to default of 3600sec using WebPA command");
+		LOGGER.info("13. enable prefer private via webpa");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			BroadBandPreConditionUtils.executePreConditionToFactoryResetAndReacitivateDevice(device, tapEnv,
+					BroadBandTestConstants.CONSTANT_1, true);
+
+			stepNum = "s1";
+			errorMessage = "Attempt to enable public wifi on device has failed";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Enable public wifi on the device");
+			LOGGER.info("STEP 1: ACTION : Enable public wifi on the device via webpa");
+			LOGGER.info("STEP 1: EXPECTED : public wifi should get enabled successfully");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.settingWebpaparametersForPublicWifi(device, tapEnv,
+					BroadBandTestConstants.DUAL_BAND);
+			statusOfEnablingWifi = status;
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Successfully enabled public wifi using webpa");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s2";
+			errorMessage = "Attempt to disable prefer private has failed";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : disable prefer private via webpa");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute WebPa SET command on the object  Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate");
+			LOGGER.info("STEP 2: EXPECTED : The prefer private should get disabled successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Sucessfully disabled prefer private feature via webpa");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s3";
+			errorMessage = "Failed to get a 2.4ghz public wifi SSID  connected client device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION : Connect to Wifi client with 2.4Ghz public wifi SSID  ");
+			LOGGER.info("STEP 3: ACTION : Connect the Wifi  client with Gateway:netsh wlan connect name=\"<ssid>\"");
+			LOGGER.info("STEP 3: EXPECTED : Connected client should connect to public wifi SSID succesfully");
+			LOGGER.info("**********************************************************************************");
+			Dut clientDut = null;
+			try {
+				clientDut = BroadBandConnectedClientUtils.getWiFiCapableClientDeviceAndConnectToPublicSsid(device,
+						tapEnv, BroadBandConnectedClientTestConstants.SECURITY_MODE_OPEN.toLowerCase(),
+						WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+				status = (null != clientDut);
+			} catch (Exception e) {
+				errorMessage = "Exception while trying to connect a client to 2.4ghz public WIFI";
+				LOGGER.error(errorMessage + " . " + e.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Successfully connected to public wifi 2.4ghz radio");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			/** step 4 to Step 12 */
+			executeCommonStepsForTelemetryTestCases(testCaseId, stepNum, device, WiFiFrequencyBand.WIFI_BAND_2_GHZ,
+					BroadBandTestConstants.STRING_VALUE_FIVE, clientDut);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s13";
+			errorMessage = "Attempt to enable prefer private has failed";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 13: DESCRIPTION : enable prefer private via webpa");
+			LOGGER.info(
+					"STEP 13: ACTION : Execute WebPa SET command on the object  Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate");
+			LOGGER.info("STEP 13: EXPECTED : The prefer private should get enabled successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+			statusOfEnablePreferPrivate = status;
+			if (status) {
+				LOGGER.info("STEP 13: ACTUAL : Sucessfully enabled prefer private feature via webpa");
+			} else {
+				LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+			LOGGER.info("**********************************************************************************");
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			if (statusOfEnablingWifi) {
+				LOGGER.info("POST-CONDITION : DESCRIPTION :Disable public wifi. ");
+				LOGGER.info("POST-CONDITION : ACTION : Execute set on webpa parameter to enable public wifi");
+				LOGGER.info("POST-CONDITION : EXPECTED :public wifi  should be in disabled state.  ");
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_ENABLING_PUBLIC_WIFI, WebPaDataTypes.BOOLEAN.getValue(),
+						BroadBandTestConstants.FALSE);
+				if (status) {
+					LOGGER.info("POST-CONDITION : Successfully disabled public wifi. ");
+				} else {
+					LOGGER.info("POST-CONDITION : Failed to disable public wifi. ");
+				}
+			}
+			if (!statusOfEnablePreferPrivate) {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS,
+						BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+
+				if (status) {
+					LOGGER.info("POST-CONDITION : Successfully enabled prefer private. ");
+				} else {
+					LOGGER.info("POST-CONDITION : Failed to enabled prefer private. ");
+				}
+			}
+
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1008");
+	}
+
+	/**
+	 * Verify enhanced Wifi logging in Telemetry for 5ghz Public wifi parameters
+	 * <ol>
+	 * <li>Enable Public wifi on the device</li>
+	 * <li>disable prefer private via webpa</li>
+	 * <li>Connect to Wifi client with 2.4Ghz Public wifi SSID</li>
+	 * <li>Verify wifihealth.txt file availability in /rdklogs/logs folder and clear
+	 * the contents</li>
+	 * <li>Check the whether wifi statistics are enabled</li>
+	 * <li>Verify WiFi log interval is 3600 by default using WebPA command</li>
+	 * <li>Change the WiFi log interval to 300sec using WebPA command" and wait for
+	 * 5 minutes</li>
+	 * <li>Run the script sh /usr/ccsp/wifi/aphealth_log.sh</li>
+	 * <li>Verify the log print for RSSI value for client device connected with 2.4
+	 * GHz wifi band</li>
+	 * <li>Verify the log print for bytes of AP RX for client device connected with
+	 * 2.4 GHz wifi band</li>
+	 * <li>Verify the log print for RX DELTA of current and previous value for
+	 * client device connected with 2.4 GHz wifi band</li>
+	 * <li>Change the WiFi log interval to default of 3600sec using WebPA
+	 * command</li></li> enable prefer private via webpa</li>
+	 * <li>enable prefer private via webpa</li>
+	 * </ol>
+	 * 
+	 * @param device {@link Dut}
+	 * @author anandam.s
+	 * @refactor Athira
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-WIFI-TELEMETRY-1009")
+	public void verifyTelemetryMarkersFor5ghzClientsForPublicWifi(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-WIFI-TELEMETRY-109";
+		String stepNum = "";
+		String errorMessage = "";
+		boolean status = false;
+		boolean statusOfEnablingWifi = false;
+		boolean statusOfEnablePreferPrivate = false;
+		// Variable Declation Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1009");
+		LOGGER.info("TEST DESCRIPTION: Verify enhanced Wifi logging in Telemetry for   5ghz Public  wifi parameters");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Enable Public wifi on the device");
+		LOGGER.info("2. disable prefer private via webpa");
+		LOGGER.info("3. Connect to Wifi client with 5Ghz Public wifi SSID  ");
+		LOGGER.info("4. Verify wifihealth.txt file availability in /rdklogs/logs folder  and clear the contents");
+		LOGGER.info("5. Check the whether wifi statistics are enabled ");
+		LOGGER.info("6. Verify WiFi log interval is 3600 by default using WebPA command");
+		LOGGER.info("7. Change the WiFi log interval to 300sec using WebPA command\" and wait for 5 minutes ");
+		LOGGER.info("8. Run the script sh /usr/ccsp/wifi/aphealth_log.sh");
+		LOGGER.info("9. Verify the log print for  RSSI value for client device connected with 5 GHz wifi band");
+		LOGGER.info("10. Verify the log print for bytes of AP RX for  client device connected with 5 GHz wifi band");
+		LOGGER.info(
+				"11. Verify the log print for RX DELTA of current and previous value for  client device connected with 5 GHz wifi band");
+		LOGGER.info("12. Change the WiFi log interval to default of 3600sec using WebPA command");
+		LOGGER.info("13. enable prefer private via webpa");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			BroadBandPreConditionUtils.executePreConditionToFactoryResetAndReacitivateDevice(device, tapEnv,
+					BroadBandTestConstants.CONSTANT_1, true);
+
+			stepNum = "s1";
+			errorMessage = "Attempt to enable Public wifi on device has failed";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Enable Public wifi on the device");
+			LOGGER.info("STEP 1: ACTION : Enable Public wifi on the device via webpa");
+			LOGGER.info("STEP 1: EXPECTED : Public wifi should get enabled successfully");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.settingWebpaparametersForPublicWifi(device, tapEnv,
+					BroadBandTestConstants.DUAL_BAND);
+			statusOfEnablingWifi = status;
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Successfully enabled Public wifi using webpa");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s2";
+			errorMessage = "Attempt to disable prefer private has failed";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : disable prefer private via webpa");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute WebPa SET command on the object  Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate");
+			LOGGER.info("STEP 2: EXPECTED : The prefer private should get disabled successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Sucessfully disabled prefer private feature via webpa");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s3";
+			errorMessage = "Failed to get a 2.4ghz Public wifi SSID  connected client device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION : Connect to Wifi client with 5Ghz Public wifi SSID  ");
+			LOGGER.info("STEP 3: ACTION : Connect the Wifi  client with Gateway:netsh wlan connect name=\"<ssid>\"");
+			LOGGER.info("STEP 3: EXPECTED : Connected client should connect to Public wifi SSID succesfully");
+			LOGGER.info("**********************************************************************************");
+			Dut clientDut = null;
+
+			try {
+				clientDut = BroadBandConnectedClientUtils.getWiFiCapableClientDeviceAndConnectToPublicSsid(device,
+						tapEnv, BroadBandConnectedClientTestConstants.SECURITY_MODE_OPEN.toLowerCase(),
+						WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+				status = (null != clientDut);
+			} catch (Exception e) {
+				errorMessage = "Exception while trying to connect a client to 5ghz Public WIFI";
+				LOGGER.error(errorMessage + " . " + e.getMessage());
+			}
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Successfully connected to Public wifi 5ghz radio");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			/** step 4 to Step 12 */
+			executeCommonStepsForTelemetryTestCases(testCaseId, stepNum, device, WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+					BroadBandTestConstants.STRING_VALUE_SIX, clientDut);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s13";
+			errorMessage = "Attempt to enable prefer private has failed";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 13: DESCRIPTION : enable prefer private via webpa");
+			LOGGER.info(
+					"STEP 13: ACTION : Execute WebPa SET command on the object  Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate");
+			LOGGER.info("STEP 13: EXPECTED : The prefer private should get enabled successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+			statusOfEnablePreferPrivate = status;
+			if (status) {
+				LOGGER.info("STEP 13: ACTUAL : Sucessfully enabled prefer private feature via webpa");
+			} else {
+				LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+			LOGGER.info("**********************************************************************************");
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+
+			LOGGER.info("POST-CONDITION STEPS");
+			if (statusOfEnablingWifi) {
+				LOGGER.info("POST-CONDITION : DESCRIPTION :Disable Public wifi. ");
+				LOGGER.info("POST-CONDITION : ACTION : Execute set operation to enable public wifi");
+				LOGGER.info("POST-CONDITION : EXPECTED :public wifi  should be in disabled state.  ");
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_ENABLING_PUBLIC_WIFI, WebPaDataTypes.BOOLEAN.getValue(),
+						BroadBandTestConstants.FALSE);
+				if (status) {
+					LOGGER.info("POST-CONDITION : Successfully disabled Public wifi. ");
+				} else {
+					LOGGER.info("POST-CONDITION : Failed to disable Public wifi. ");
+				}
+			}
+			if (!statusOfEnablePreferPrivate) {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS,
+						BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+
+				if (status) {
+					LOGGER.info("POST-CONDITION : Successfully enabled prefer private. ");
+				} else {
+					LOGGER.info("POST-CONDITION : Failed to enabled prefer private. ");
+				}
+			}
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-TELEMETRY-1009");
+	}
+
+	/**
+	 * Common steps for wifi telemtery verification test cases
+	 * 
+	 * @param testCaseId        test case Id
+	 * @param step              step number
+	 * @param device            {@link Dut}
+	 * @param band              {@link WiFiFrequencyBand}
+	 * @param accessPointNumber Access Point Number for Wifi.
+	 * @param connectedClient   connected client to be passed
+	 * @refactor Athira
+	 */
+	private void executeCommonStepsForTelemetryTestCases(String testCaseId, String step, Dut device,
+			WiFiFrequencyBand band, String accessPointNumber, Dut connectedClient) {
+
+		String errorMessage = null;
+		boolean status = false;
+		String stepNum = BroadBandCommonUtils.stepAdder(step);
+		String radio = band.equals(WiFiFrequencyBand.WIFI_BAND_2_GHZ) ? "2.4Ghz" : "5Ghz";
+
+		errorMessage = "wifihealth.txt is not present in the logs folder";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+				+ " : DESCRIPTION : Verify wifihealth.txt file availability in /rdklogs/logs folder  and clear the contents");
+		LOGGER.info("STEP " + stepNum + " : ACTION : execute commandls /rdklogs/logs");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : wifihealth.txt file must be present in /rdklogs/logs folder");
+		LOGGER.info("**********************************************************************************");
+		if (CommonMethods.isAtomSyncAvailable(connectedClient, tapEnv) && BroadBandCommonUtils
+				.isFilePresentOnDeviceAtom(tapEnv, device, BroadBandTestConstants.FILE_WIFIHEALTH)) {
+			tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CLEAR_WIFI_HEALTH_LOG);
+			status = true;
+		} else if (CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG)) {
+			status = CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG);
+		}
+		if (status) {
+			LOGGER.info("STEP " + stepNum
+					+ " : ACTUAL : wifihealth.txt is present in /rdklogs/logs directory and its contents are cleared");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Wifi statistics are not enabled.Hence wifi health reporting will not happen";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum + " : DESCRIPTION : Check the whether wifi statistics are enabled ");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : Execute webpa Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnabledmcli eRT getv Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnable");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : Wifi statistics should be enabled ");
+		LOGGER.info("**********************************************************************************");
+		// get the default value of AP statistics
+		String response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_STATS_ENABLE);
+		if (CommonMethods.isNotNull(response) && response.equalsIgnoreCase(BroadBandTestConstants.TRUE)) {
+			status = true;
+		} else {
+			LOGGER.info(
+					"The value of webpa Device.WiFi.X_RDKCENTRAL-COM_vAPStatsEnable is obtained as false. Hence setting it to true");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_STATS_ENABLE, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.TRUE);
+		}
+		if (status) {
+			LOGGER.info("STEP " + stepNum + " : ACTUAL :  Enabling vAP stats was successful");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "The default value of wifi log interval is not 3600";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+				"STEP " + stepNum + " : DESCRIPTION : Verify WiFi log interval is 3600 by default using WebPA command");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : Execute Command Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval");
+		LOGGER.info("STEP " + stepNum
+				+ " : EXPECTED : The webPA command should execute successfully and return default value as 3600 seconds(1 hour)");
+		LOGGER.info("**********************************************************************************");
+		response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL);
+		status = response.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_3600);
+		if (status) {
+			LOGGER.info("STEP " + stepNum
+					+ " : ACTUAL : Verify using WebPA command that WiFi log interval is 3600 by default");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Failed to set the wifi log interval as 300 seconds ";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+				+ " : DESCRIPTION : Change the WiFi log interval to 300sec using WebPA command\" and wait for 5 minutes ");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : Execute WebPa set command for Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : WebPa set command should be successful");
+		LOGGER.info("**********************************************************************************");
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL, BroadBandTestConstants.CONSTANT_1,
+				BroadBandTestConstants.FIVE_MINUTES_IN_SECONDS);
+		if (status) {
+			LOGGER.info("STEP " + stepNum + " : ACTUAL :Changed the WiFi log interval to 300sec");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Failed to execute the script /usr/ccsp/wifi/aphealth_log.sh ";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum + " : DESCRIPTION : Run the script sh /usr/ccsp/wifi/aphealth_log.sh ");
+		LOGGER.info("STEP " + stepNum + " : ACTION : Run the script sh /usr/ccsp/wifi/aphealth_log.sh");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : Script should be executed successfully");
+		LOGGER.info("**********************************************************************************");
+		try {
+			if (CommonMethods.isAtomSyncAvailable(connectedClient, tapEnv)) {
+				response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_RUN_APHEALTH_SCRIPT);
+			} else {
+				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_RUN_APHEALTH_SCRIPT);
+			}
+			status = !(response.contains("can't open /usr/ccsp/wifi/aphealth_log.sh"));
+		} catch (Exception e) {
+			LOGGER.error(errorMessage + "Exception : " + e.getMessage());
+		}
+		if (status) {
+			LOGGER.info(
+					"STEP " + stepNum + " : ACTUAL :Sucessfully executed the script at /usr/ccsp/wifi/aphealth_log.sh");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		LOGGER.info("Waiting for 12 mniutes for the logs to populate");
+		tapEnv.waitTill(BroadBandTestConstants.TWELVE_MINUTE_IN_MILLIS);
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Logs are not in expected format";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+				+ " : DESCRIPTION : Verify the log print for  RSSI value for client device connected with " + radio
+				+ " wifi band");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RSSI_<AccessPoint No>\"");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:" + "  # RSSI of CLients "
+				+ radio + " Band" + "      WIFI_RSSI_1:<RSSI Of client1>,<RSSIof client2>..." + "      ");
+		LOGGER.info("**********************************************************************************");
+		status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
+				BroadBandTraceConstants.LOG_MESSAGE_WIFI_RSSI, BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
+		if (status) {
+			LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RSSI value for " + radio
+					+ " client device is printed as expected");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Logs are not in expected format";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+				+ " : DESCRIPTION : Verify the log print for bytes of AP RX for  client device connected with " + radio
+				+ " wifi band");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RX_<AccessPoint No>:\"");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:" + " # RX of " + radio
+				+ "" + "      WIFI_RX_<AccessPoint No>:<VALUE IN MB>");
+		LOGGER.info("**********************************************************************************");
+		if (accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
+				|| accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
+			status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
+					BroadBandTraceConstants.LOG_MESSAGE_WIFI_RX, BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
+
+			if (status) {
+				LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RX value for " + radio
+						+ "client device is printed as expected");
+			} else {
+				LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		} else {
+			errorMessage = "STEP " + stepNum
+					+ ": ACTUAL : VERIFYING TELEMETRY MARKERS WIFI_RX  NOT APPLICABLE FOR  PUBLIC WIFI ";
+			LOGGER.info(errorMessage);
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+
+		}
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Logs are not in expected format";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+				+ " : DESCRIPTION : Verify the log print for RX DELTA of current and previous value for  client device connected with "
+				+ radio + " wifi band");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RXDELTA_<AccessPoint No>\"");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:"
+				+ "     # RX DELTA of current and previous value " + radio + ""
+				+ "      WIFI_RXDELTA_<AccessPoint No>:<VALUE IN MB>");
+		LOGGER.info("**********************************************************************************");
+		if (accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
+				|| accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
+			status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
+					BroadBandTraceConstants.LOG_MESSAGE_WIFI_RXDELTA,
+					BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
+			if (status) {
+				LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RXDELTA value for " + radio
+						+ "client device is printed as expected");
+			} else {
+				LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		} else {
+			errorMessage = "STEP " + stepNum
+					+ ": ACTUAL : VERIFYING TELEMETRY MARKERS WIFI_RXDELTA NOT APPLICABLE FOR PUBLIC WIFI ";
+			LOGGER.info(errorMessage);
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+
+		}
+
+		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
+		errorMessage = "Failed to revert the log interval using webpa";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP " + stepNum
+				+ " : DESCRIPTION : Change the WiFi log interval to default of 3600sec using WebPA command");
+		LOGGER.info("STEP " + stepNum
+				+ " : ACTION : Execute WebPa set command for Device.DeviceInfo.X_RDKCENTRAL-COM_WIFI_TELEMETRY.LogInterval WebPa parameter");
+		LOGGER.info("STEP " + stepNum + " : EXPECTED : WebPa set command should be successful");
+		LOGGER.info("**********************************************************************************");
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_LOG_INTERVAL, BroadBandTestConstants.CONSTANT_1,
+				BroadBandTestConstants.STRING_CONSTANT_3600);
+
+		if (status) {
+			LOGGER.info("STEP " + stepNum
+					+ " : ACTUAL : Successfully reverted the WiFi log interval to default of 3600sec using WebPA command");
+		} else {
+			LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	}
+
+	/**
+	 * Verify that Wi-Fi connectivity of 2.4GHz frequency is not affected when 5GHz
+	 * frequency Radio is disabled
+	 * <ol>
+	 * <li>STEP 1:Verify WIFI Private Radio and wifi status</li>
+	 * <li>STEP 2:Disable Private 2.4 GHz Radio via WebPA</li>
+	 * <li>STEP 3:Verify the Private 2.4 GHz Radio Disabled status via WebPA</li>
+	 * <li>STEP 4:Verify the Private 5GHz Radio status via WebPA</li>
+	 * <li>STEP 5:Verify the Wifi status</li>
+	 * <li>STEP 6:Verify in /rdklogs/logs/WiFilog,txt.0 - should not observe error
+	 * like \"Failed to get parameter value of\"</li>
+	 * <li>STEP 7:Verify dmcli eRT getv Device.WiFi. - has to give more than 23
+	 * params.</li>
+	 * <li>STEP 8: Connect the device to 5 GHz SSID and verify connection
+	 * status</li>
+	 * <li>STEP 9:Verify whether interface got the correct IPv4 address.</li>
+	 * <li>STEP 10:Verify whether interface got the correct IPv6 address.</li>
+	 * <li>STEP 11: Verify whether you have connectivity using that particular
+	 * interface using IPV4</li>
+	 * <li>STEP 12: Verify whether you have connectivity using that particular
+	 * interface using IPV6</li>
+	 * <li>STEP 13: Enable Private 2.4 GHz Radio via WebPA</li>
+	 * <li>STEP 14:Disable Private 5 GHz Radio via WebPA</li>
+	 * <li>STEP 15:Verify the Private 5 GHz Radio Disabled status via WebPA</li>
+	 * <li>STEP 16:Verify the Private 2.4GHz Radio status via WebPA</li>
+	 * <li>STEP 17:Verify the Wifi status</li> LOGGER.info( "STEP 18:Verify in
+	 * /rdklogs/logs/WiFilog,txt.0 - should not observe error like \"Failed to get
+	 * parameter value of\"</li>
+	 * <li>STEP 19: Verify dmcli eRT getv Device.WiFi. - has to give more than 23
+	 * params.</li>
+	 * <li>STEP 20: Connect the device to 2.4 GHz SSID and verify connection
+	 * status</li>
+	 * <li>STEP 21:Verify whether interface got the correct IPv4 address.</li>
+	 * <li>STEP 22:Verify whether interface got the correct IPv6 address.</li>
+	 * <li>STEP 23: Verify whether you have connectivity using that particular
+	 * interface using IPV4</li>
+	 * <li>STEP 24: Verify whether you have connectivity using that particular
+	 * interface using IPV6</li>
+	 * <li>STEP 25:Enable Private 5 GHz Radio via WebPA</li>
+	 * <li>Postcondition1:Revert WIFI radio to its original state</li>
+	 * </ol>
+	 * 
+	 * @author Deepika Sekar
+	 * @param device {@link Dut}
+	 * @Refactor Sruthi Santhosh
+	 */
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+			BroadBandTestGroup.WEBPA, BroadBandTestGroup.WIFI })
+	@TestDetails(testUID = "TC-RDKB-WIFI-RADIO-5001")
+	public void testVerifyConnectivityOfClientDeviceWhenEnableOrDisablingRadio(Dut device) {
+		// String to store the test case status
+		boolean status = false;
+		// Test case id
+		String testId = "TC-RDKB-WIFI-RADIO-501";
+		// Test step number
+		int step = 1;
+		// String to store the error message
+		String errorMessage = null;
+		String radioStepNumber = "s1";
+		String deviceDateTime = null;
+		try {
+
+			LOGGER.info("STARTING TEST CASE: " + testId);
+			LOGGER.info("#######################################################################################");
+			LOGGER.info(
+					"TEST DESCRIPTION: Test toVerify that Wi-Fi connectivity of 2.4GHz frequency is not affected when 5GHz frequency radio is disabled");
+			LOGGER.info("TEST STEPS : ");
+			LOGGER.info("STEP 1:Verify WIFI Private Radio and wifi status");
+			LOGGER.info("STEP 2:Disable Private 2.4 GHz Radio via WebPA ");
+			LOGGER.info("STEP 3:Verify the Private 2.4 GHz Radio Disabled status via WebPA ");
+			LOGGER.info("STEP 4:Verify the Private 5GHz Radio  status via WebPA");
+			LOGGER.info("STEP 5:Verify the Wifi status");
+			LOGGER.info(
+					"STEP 6:Verify in /rdklogs/logs/WiFilog,txt.0 - should not observe error like \"Failed to get parameter value of\"");
+			LOGGER.info("STEP 7:Verify  dmcli eRT getv Device.WiFi. - has to give more than 23 params.");
+			LOGGER.info("STEP 8: Connect the device to 5 GHz SSID and verify connection status");
+			LOGGER.info("STEP 9:Verify whether interface got the correct IPv4  address.");
+			LOGGER.info("STEP 10:Verify whether interface got the correct IPv6  address.");
+			LOGGER.info("STEP 11: Verify whether you have connectivity using that particular interface using IPV4 ");
+			LOGGER.info("STEP 12: Verify whether you have connectivity using that particular interface using IPV6 ");
+			LOGGER.info("STEP 13: Enable Private 2.4 GHz Radio via WebPA");
+			LOGGER.info("STEP 14:Disable Private 5 GHz Radio via WebPA");
+			LOGGER.info("STEP 15:Verify the Private 5 GHz Radio Disabled status via WebPA ");
+			LOGGER.info("STEP 16:Verify the Private 2.4GHz Radio  status via WebPA ");
+			LOGGER.info("STEP 17:Verify the Wifi status");
+			LOGGER.info(
+					"STEP 18:Verify in /rdklogs/logs/WiFilog,txt.0 - should not observe error like \"Failed to get parameter value of\"");
+			LOGGER.info("STEP 19: Verify  dmcli eRT getv Device.WiFi. - has to give more than 23 params.");
+			LOGGER.info("STEP 20: Connect the device to 2.4 GHz SSID and verify connection status");
+			LOGGER.info("STEP 21:Verify whether interface got the correct IPv4  address.");
+			LOGGER.info("STEP 22:Verify whether interface got the correct IPv6  address.");
+			LOGGER.info("STEP 23: Verify whether you have connectivity using that particular interface using IPV4 ");
+			LOGGER.info("STEP 24: Verify whether you have connectivity using that particular interface using IPV6 ");
+			LOGGER.info("STEP 25:Enable Private 5 GHz Radio via WebPA");
+			LOGGER.info("Postcondition1:Revert WIFI radio to its original state");
+			LOGGER.info("######################################################################################");
+			/**
+			 * Steps 1
+			 */
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + step + ": DESCRIPTION:Verify WIFI Private Radio and wifi status");
+			LOGGER.info("STEP " + step + ": ACTION: Execute WebPA command to\r\n" + "verify Private radio  status\r\n"
+					+ "Device.WiFi.Radio.10001.Status,Device.WiFi.Radio.10101.Status,Device.WiFi.Status");
+			LOGGER.info("STEP " + step
+					+ ": EXPECTED: Device should return the  Private Radioand wifi enabled status as \"Up\".");
+			LOGGER.info("**********************************************************************************");
+
+			errorMessage = "Either one radio or all status is not \"up\"";
+			deviceDateTime = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_STATUS_FOR_2_4GHZ,
+					BroadBandConnectedClientTestConstants.RADIO_STATUS_UP, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+					&& BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_STATUS_FOR_5GHZ,
+							BroadBandConnectedClientTestConstants.RADIO_STATUS_UP,
+							BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
+					&& BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_STATUS,
+							BroadBandConnectedClientTestConstants.RADIO_STATUS_UP,
+							BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP " + step + ": ACTUAL :  WIFI Private Radio and wifi status are Up");
+			} else {
+				LOGGER.error("STEP " + step + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, radioStepNumber, status, errorMessage, true);
+			// common steps to disable radio and verify wifi status
+			/**
+			 * Steps 2-13
+			 */
+			step = verifyRadioStatus(device, testId, tapEnv, step, deviceDateTime,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_STATUS_FOR_2_4GHZ,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_STATUS_FOR_5GHZ);
+			/**
+			 * Steps 14-25
+			 */
+			step = verifyRadioStatus(device, testId, tapEnv, step, deviceDateTime,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_5_RADIO_ENABLE,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_STATUS_FOR_5GHZ,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_STATUS_FOR_2_4GHZ);
+
+		} catch (Exception exception) {
+			LOGGER.error("Exception occured during execution !!!!" + exception.getMessage());
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, radioStepNumber, status, errorMessage,
+					true);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			BroadBandPostConditionUtils.executePostConditionToVerifyDefaultRadioStatus(device, tapEnv,
+					BroadBandTestConstants.CONSTANT_1);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+
+		LOGGER.info("ENDING TESTCASE :TC-RDKB-WIFI-RADIO-5001 ");
+
+	}
+
+	/**
+	 * Common method to check the accessibility of the given websites
+	 * 
+	 * @param device             device instance
+	 * @param testCaseId         test case id
+	 * @param tapEnv             instance of {@link AutomaticsTapApi}
+	 * @param step               current stepNumber
+	 * @param disableParam       Radio to be disabled
+	 * @param disableParamStatus param to verify disabled status
+	 * @param enableParamStatus  param to verify enabled status
+	 * @return int returns current step number
+	 */
+	public int verifyRadioStatus(Dut device, String testCaseId, AutomaticsTapApi tapEnv, int step,
+			String deviceDateTime,
+
+			String disableParam, String disableParamStatus, String enableParamStatus) {
+
+		LOGGER.debug("STARTING METHOD : verifyRadioStatus()");
+		BroadBandResultObject result = new BroadBandResultObject();
+		result.setStatus(false);
+		boolean status = false;
+		String errorMessage = null;
+		WebPaParameter webPaParameter = new WebPaParameter();
+		Dut connectedDeviceActivated = null;
+		try {
+
+			step++;
+			String radioStepNumber = "s" + step;
+			status = false;
+			errorMessage = "Failed to disable" + disableParam + " private wifi";
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + step + ": DESCRIPTION: Disable " + disableParam + " Radio via WebPA ");
+			LOGGER.info("STEP " + step + " : ACTION: Execute WebPA command to disable " + disableParam);
+			LOGGER.info("STEP " + step + " : Device should disable the Private " + disableParam
+					+ "  and WebPA command return success response.");
+			LOGGER.info("******************************************************");
+			String applySetting = null;
+			status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv, disableParam,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+			if (disableParam.contains(String.valueOf(BroadBandTestConstants.CONSTANT_1000))) {
+				applySetting = BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_APPLY_SETTING;
+			} else {
+				applySetting = BroadBandWebPaConstants.WEBPA_PARAM_WIFI_5_APPLY_SETTING;
+			}
+			webPaParameter.setName(applySetting);
+			webPaParameter.setValue(BroadBandTestConstants.TRUE);
+			webPaParameter.setDataType(BroadBandTestConstants.CONSTANT_3);
+			status = BroadBandCommonUtils.setWebPaParam(tapEnv, device, webPaParameter);
+
+			if (status) {
+				LOGGER.info("STEP " + step + ": ACTUAL : " + disableParam + " is disabled");
+			} else {
+				LOGGER.error("STEP " + step + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, radioStepNumber, status, errorMessage, true);
+
+			step++;
+			radioStepNumber = "s" + step;
+			status = false;
+			errorMessage = disableParamStatus + " private  wifi status is not Down";
+			LOGGER.info("******************************************************");
+			LOGGER.info(
+					"STEP " + step + ": DESCRIPTION:Verify the Private " + disableParamStatus + " status via WebPA ");
+			LOGGER.info("STEP " + step + " : ACTION: Execute WebPA command to verify " + disableParamStatus);
+			LOGGER.info("STEP " + step + ": EXPECTED: Device should return the  Private " + disableParamStatus
+					+ "  as \"Down\"");
+			LOGGER.info("******************************************************");
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv, disableParamStatus,
+					BroadBandConnectedClientTestConstants.RADIO_STATUS_DOWN,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP " + step + ": ACTUAL :  WIFI Private Radio " + disableParamStatus + " is Down");
+			} else {
+				LOGGER.error("STEP " + step + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, radioStepNumber, status, errorMessage, true);
+
+			step++;
+			radioStepNumber = "s" + step;
+			status = false;
+			errorMessage = enableParamStatus + " private wifi status is not Up";
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + step + ": DESCRIPTION: Verify the " + enableParamStatus + " via WebPA  ");
+			LOGGER.info("STEP " + step + ": ACTION: Execute WebPA command to verify Private " + enableParamStatus
+					+ "  \r\n" + enableParamStatus);
+			LOGGER.info("STEP " + step + ": Device should return the  Private " + enableParamStatus
+					+ " enabled  as \"Up\"");
+			LOGGER.info("******************************************************");
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv, enableParamStatus,
+					BroadBandConnectedClientTestConstants.RADIO_STATUS_UP, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+			if (status) {
+				LOGGER.info("STEP " + step + ": ACTUAL : Private  " + enableParamStatus + " is Up");
+			} else {
+				LOGGER.error("STEP " + step + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, radioStepNumber, status, errorMessage, true);
+
+			if (!disableParam.contains("SSID")) {
+				step++;
+				radioStepNumber = "s" + step;
+				status = false;
+				errorMessage = "Wifi status is not Down";
+				LOGGER.info("******************************************************");
+				LOGGER.info("STEP " + step + ": DESCRIPTION:Verify the Wifi status ");
+				LOGGER.info("STEP " + step + " : ACTION: Execute WebPA command to Device.WiFi.Status");
+				LOGGER.info("STEP " + step + ": EXPECTED: Wifi status should be down");
+				LOGGER.info("******************************************************");
+
+				status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_STATUS,
+						BroadBandConnectedClientTestConstants.RADIO_STATUS_DOWN,
+						BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				if (status) {
+					LOGGER.info("STEP " + step + ": ACTUAL :  wifi status is Down");
+				} else {
+					LOGGER.error("STEP " + step + ": ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, radioStepNumber, status, errorMessage, true);
+			}
+
+			step = wifiDmcliParseCheck(device, tapEnv, testCaseId, deviceDateTime, step);
+
+			step++;
+			radioStepNumber = "s" + step;
+			status = false;
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + step
+					+ ": Description : Connect the device to broadcasted SSID and verify connection status");
+			LOGGER.info("STEP " + step + ": ACTION: Connect A Client with broadcasted wifi network");
+			LOGGER.info("STEP " + step + ": EXPECTED: Device should be connected with broadcasted wifi network");
+			LOGGER.info("******************************************************");
+
+			tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+			errorMessage = "Connection to broadcasted wifi failed";
+
+			if (disableParam.contains(String.valueOf(BroadBandTestConstants.CONSTANT_1000))) {
+				connectedDeviceActivated = BroadBandConnectedClientUtils
+						.get5GhzWiFiCapableClientDeviceAndConnectToAssociated5GhzSsid(device, tapEnv);
+			} else {
+				connectedDeviceActivated = BroadBandConnectedClientUtils
+						.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+			}
+			if (null != connectedDeviceActivated) {
+				status = true;
+			} else {
+				errorMessage = "Unable to connect to broadcasted private SSID when both radios are enabled";
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, radioStepNumber, status, errorMessage, true);
+
+			/** Steps */
+			BroadBandConnectedClientUtils.checkIpAddressAndConnectivity(device, tapEnv, connectedDeviceActivated,
+					testCaseId,
+					new String[] { "s" + (step + 1), "s" + (step + 2), "s" + (step + 3), "s" + (step + 4) });
+
+			step = step + 5;
+			radioStepNumber = "s" + step;
+			status = false;
+			errorMessage = "Failed to enable private " + disableParam;
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + step + ": DESCRIPTION: Enable Private " + disableParam + " via WebPA ");
+			LOGGER.info("STEP " + step + " : ACTION: Execute WebPA command to Enable Private " + disableParam);
+			LOGGER.info("STEP " + step + " : Device should Enable the Private " + disableParam
+					+ " and WebPA command return success response.");
+			LOGGER.info("******************************************************");
+			status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv, disableParam,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+			webPaParameter.setName(applySetting);
+			webPaParameter.setValue(BroadBandTestConstants.TRUE);
+			webPaParameter.setDataType(BroadBandTestConstants.CONSTANT_3);
+			status = BroadBandCommonUtils.setWebPaParam(tapEnv, device, webPaParameter);
+			if (status) {
+				LOGGER.info("STEP " + step + ": ACTUAL : Private " + disableParam + " is enabled");
+			} else {
+				LOGGER.error("STEP " + step + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, radioStepNumber, status, errorMessage, true);
+
+		} catch (Exception e) {
+			LOGGER.error("Failed to check radio status" + e.getMessage());
+			throw new TestException("Failed to check radio status" + errorMessage);
+
+		}
+
+		LOGGER.debug("ENDING METHOD : verifyRadioStatus()");
+		return step;
+	}
+	
+    /**
+     * Test to verify DCHP range assigning of cable modem with connected clients
+     * <ol>
+     * <li>1:Verify the Private Wi-Fi SSIDs are enabled using WebPA</li>
+     * <li>2:Connect the client 1 to 2.4 GHz Private Wi-Fi Network and verify connection status</li>
+     * <li>3:Verify if the wireless connected client has an IPv4 address from the gateway</li>
+     * <li>4:Verify if the wireless connected client 1 has an IPv6 address.</li>
+     * <li>5:Connect the client 2 to 5 GHz Private Wi-Fi Network and verify connection status</li>
+     * <li>6:Verify if the wireless connected client has an IPv4 address from the gateway</li>
+     * <li>7:Verify if the wireless connected client 2 has an IPv6 address.</li>
+     * <li>8:Verify the client 3 connected to ethernet has IPv4 Address assigned from DHCP</li>
+     * <li>9:Verify if the ethernet connected client has an IPv6 address.</li>
+     * <li>10:Get DHCP beginning address ,DHCP ending address ,DHCP lease time Using Webpa</li>
+     * <li>11:Set DHCP beginning address to 10.0.0.2, DHCP ending address to 10.0.0.3, DHCP lease time to 2
+     * minutes.</li>
+     * <li>12:Verify 2 of 3 Connected clients Should have IP address in Updated DHCP range with IP renew Operation ,if
+     * IP not renewed</li>
+     * </ol>
+     * 
+     * @refactor yamini.s
+     */
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+	    BroadBandTestGroup.WIFI })
+    @TestDetails(testUID = "TC-RDKB-DHCP-CLIENTS-1001")
+
+    public void verifyDHCPRangeAssignInConnectedClients(Dut device) {
+	boolean status = false;// String to store the test case status
+	String testId = "TC-RDKB-DHCP-CLIENTS-101";// Test case id
+	String testStep = null;// Test step number
+	String errorMessage = null;// String to store the error message
+	String dhcpMinAddr = null;// String to store DHCP minimum address
+	String dhcpMaxAddr = null;// String to store DHCP maximum address
+	String leaseTime = null;// String to store lease time
+	Integer statusCounter = 0;// String to store count of DHCP address obtained in clients
+	String wifi5GhzStatus = null;// boolean to store wifi 2.4ghz status
+	String wifi24GhzStatus = null;// boolean to store wifi 5ghz status
+	Dut wifi5GhzClient = null;// Dut wifi client 5Ghz
+	Dut wifi24GhzClient = null;// Dut wifi client 2.4Ghz
+	String setDhcpMaxValue = null;// string to store dhcp max value to set
+	String setDhcpMinValue = null;// string to store dhcp min value to set
+	Dut ethernetClient = null;
+	try {
+	    LOGGER.info("#################### STARTING TEST CASE: TC-RDKB-DHCP-CLIENTS-1001#####################");
+	    LOGGER.info("TEST DESCRIPTION:Test to verify DCHP range assigning of cable modem with connected clients ");
+
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info("1.Verify the Private Wi-Fi SSIDs are enabled using WebPA");
+	    LOGGER.info("2.Connect the client 1 to 2.4 GHz Private Wi-Fi Network and verify connection status ");
+	    LOGGER.info("3.Verify if the wireless connected client has an IPv4 address from the gateway");
+	    LOGGER.info("4.Verify if the wireless connected client 1 has an  IPv6 address.");
+	    LOGGER.info("5.Connect the client 2 to 5 GHz Private Wi-Fi Network and verify connection status ");
+	    LOGGER.info("6.Verify if the wireless connected client has an IPv4 address from the gateway");
+	    LOGGER.info("7.Verify if the wireless connected client 2 has an  IPv6 address.");
+	    LOGGER.info("8.Verify the client 3 connected to ethernet has IPv4 Address assigned from DHCP");
+	    LOGGER.info("9.Verify if the ethernet connected client has an  IPv6 address.");
+	    LOGGER.info("10.Get DHCP beginning address ,DHCP ending  address ,DHCP lease time Using Webpa");
+	    LOGGER.info(
+		    "11.Set DHCP beginning address to 10.0.0.2, DHCP ending address to 10.0.0.3, DHCP lease time to 2 minutes");
+	    LOGGER.info(
+		    "12.Verify 2 of 3 Connected clients Should have IP address in Updated DHCP range with IP renew Operation ,if IP not renewed");
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info(
+		    "######################################### STARTING PRE-CONFIGURATIONS #########################################");
+	    LOGGER.info("PRE-CONFIGURATIONS TEST STEPS : ");
+	    LOGGER.info("1.Verify whether Private SSID 2.4Ghz can be enabled using webPA");
+	    LOGGER.info("2.Verify whether Private SSID 5Ghz can be enabled using webPA");
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("PRE-CONDITION 1: Verify whether Private SSID 2.4Ghz can be enabled using webPA");
+	    LOGGER.info("PRE-CONDITION 1: EXPECTED: Private SSID 2.4Ghz should be enabled successfully");
+	    errorMessage = "Unable to enable 2.4Ghz private SSID using webpa";
+	    LOGGER.info("##########################################################################");
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLED_STATUS,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+		    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (!status) {
+		throw new TestException(RDKBTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	    }
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("PRE-CONDITION 2: Verify whether Private SSID 5Ghz can be enabled using webPA");
+	    LOGGER.info("PRE-CONDITION 2: EXPECTED: Private SSID 5Ghz should be enabled successfully");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Unable to enable 5Ghz private SSID using webpa";
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+		    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (!status) {
+		throw new TestException(RDKBTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	    }
+	    /**
+	     * STEP 1:Verify and enable the Private Wi-Fi SSIDs 2.4Ghz and 5Ghz using WebPA
+	     */
+	    status = false;
+	    testStep = "s1";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("STEP 1 : DESCRIPTION :Verify the Private Wi-Fi SSIDs are enabled using WebPA");
+	    LOGGER.info("STEP 1 : ACTION:Enable 2.4Ghz and 5Ghz Radio SSID of the device ");
+	    LOGGER.info("STEP 1 : EXPECTED:Private SSID's 2.4Ghz and 5Ghz should be enabled successfully");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Unable to enable 2.4Ghz radio SSID using webpa";
+	    wifi24GhzStatus = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+	    wifi5GhzStatus = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+	    if (wifi24GhzStatus.equals(
+		    BroadBandWebPaConstants.RdkBWifiParameters.SSID_ENABLE_STATUS_2GHZ_PRIVATE_WIFI.getDefaultValue())
+		    && wifi5GhzStatus
+			    .equals(BroadBandWebPaConstants.RdkBWifiParameters.SSID_ENABLE_STATUS_5GHZ_PRIVATE_WIFI
+				    .getDefaultValue())) {
+		status = true;
+		LOGGER.info("STEP 1:ACTUAL:Private wifi SSID's 2.4Ghz and 5Ghz are enabled successfully");
+	    } else {
+		LOGGER.error("STEP 1:ACTUAL:" + errorMessage);
+	    }
+
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+	    /**
+	     * STEP 2:Connect the client 1 to 2.4 GHz Private Wi-Fi Network and verify connection status
+	     */
+	    status = false;
+	    testStep = "s2";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 2 : DESCRIPTION :Connect the client 1 to 2.4 GHz Private Wi-Fi Network and verify connection status ");
+	    LOGGER.info("STEP 2 : ACTION:Connect connected client 1 to 2.4Ghz wifi of the devie");
+	    LOGGER.info(
+		    "STEP 2 : EXPECTED:Connection between connected client 1 to 2.4Ghz private SSID should be successful");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Unable to establish connection with 2.4Ghz private SSID";
+	    wifi24GhzClient = BroadBandConnectedClientUtils
+		    .get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    if (null != wifi24GhzClient) {
+		status = true;
+		LOGGER.info("STEP 2:ACTUAL:Connected establishment client 1 to 2.4 private SSID is successful");
+	    } else {
+		LOGGER.error("STEP 2:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+	    /**
+	     * STEP 3:Verify if the wireless connected client has an IPv4 address from the gateway
+	     */
+	    status = false;
+	    testStep = "s3";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 3 : DESCRIPTION :Verify if the wireless connected client has an IPv4 address from the gateway");
+	    LOGGER.info("STEP 3 : ACTION: Retrieve IP address from connected client and verfiy it");
+	    LOGGER.info("STEP 3 : EXPECTED:Connected client should have IP address in gateway range");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Connected client IPv4 address in not in DHCP range";
+	    status = BroadBandConnectedClientUtils
+		    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, wifi24GhzClient).isStatus();
+	    if (status) {
+		LOGGER.info("STEP 3:ACTUAL:Connected client 1 IP address is in DHCP range");
+	    } else {
+		LOGGER.error("STEP 3:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+	    /**
+	     * STEP 4:Verify if the wireless connected client 1 has an IPv6 address.
+	     * 
+	     */
+	    testStep = "s4";
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP 4:DESCRIPTION: Verify if the wireless connected client 1 has an  IPv6 address.");
+	    LOGGER.info("STEP 4:ACTION : Connected client should get the IPV6 Interface");
+	    LOGGER.info("STEP 4:EXPECTED:Interface IPv6 address should  be shown");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "Unable to verify IPv6 address in connected client";
+	    String osType = ((Device) wifi24GhzClient).getOsType();
+	    if (CommonMethods.isNotNull(osType)) {
+		status = BroadBandConnectedClientUtils
+			.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType, wifi24GhzClient, tapEnv);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : Connected client IPv6 address is validated successfully");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+
+	    /**
+	     * STEP 5:Connect the client 2 to 5 GHz Private Wi-Fi Network and verify connection status
+	     */
+	    status = false;
+	    testStep = "s5";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 5 : DESCRIPTION :Connect the client 2 to 5 GHz Private Wi-Fi Network and verify connection status ");
+	    LOGGER.info("STEP 5 : ACTION:Connect Connected client 2 to 5Ghz Wifi SSID");
+	    LOGGER.info(
+		    "STEP 5 : EXPECTED:Connection between connected client 2 to 5Ghz private SSID should be successful");
+	    LOGGER.info("##########################################################################");
+
+	    errorMessage = "Unable to establish connection with 5Ghz private SSID";
+	    wifi5GhzClient = BroadBandConnectedClientUtils.getOtherWiFiCapableClientDeviceAndConnect(device, tapEnv,
+		    wifi24GhzClient, BroadBandTestConstants.BAND_5GHZ);
+	    if (null != wifi5GhzClient) {
+		status = true;
+		LOGGER.info("STEP 5:ACTUAL:Connected client-client 2 connected to 5Ghz wifi ssid successfully");
+	    } else {
+		LOGGER.error("STEP 5:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+	    /**
+	     * STEP 6:Verify if the wireless connected client 2 has an IPv4 address from the gateway
+	     */
+	    status = false;
+	    testStep = "s6";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 6 : DESCRIPTION :Verify if the wireless connected client 2 has an IPv4 address from the gateway");
+	    LOGGER.info("STEP 6 : ACTION:Retrieve IP address from connected client 2 and verfiy it ");
+	    LOGGER.info("STEP 6 : EXPECTED:Connected client 2 should have IP address in gateway range");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Connected client 2 IP address in not in DHCP range";
+	    status = BroadBandConnectedClientUtils
+		    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, wifi5GhzClient).isStatus();
+	    if (status) {
+		LOGGER.info("STEP 6:ACTUAL:Connected client 2 IP address is in DHCP range");
+	    } else {
+		LOGGER.error("STEP 6:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+	    /**
+	     * STEP 7:Verify if the wireless connected client 2 has an IPv6 address.
+	     * 
+	     */
+	    testStep = "s7";
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP 7:DESCRIPTION: Verify if the wireless connected client 2 has an  IPv6 address.");
+	    LOGGER.info("STEP 7:ACTION : Connected client should get the IPV6 Interface");
+	    LOGGER.info("STEP 7:EXPECTED:Interface IPv6 address should  be shown");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "Unable to validate IPv6 address of connected client";
+	    osType = ((Device) wifi5GhzClient).getOsType();
+	    if (CommonMethods.isNotNull(osType)) {
+		status = BroadBandConnectedClientUtils
+			.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType, wifi5GhzClient, tapEnv);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : IPv6 address of connected client 2 is validated successfully");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+	    /**
+	     * STEP 8:Verify the client 3 connected to ethernet has IPv4 Address assigned from DHCP
+	     */
+	    status = false;
+	    testStep = "s8";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 8 : DESCRIPTION :Verify the client 3 connected to ethernet has IP Address assigned from DHCP");
+	    LOGGER.info("STEP 8 : ACTION:Retrieve IP address of connected client 3 and verify it");
+	    LOGGER.info("STEP 8 : EXPECTED:Connected client 3 IP address should be in DHCP range");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Ethernet client IP address is not in DHCP range";
+	    ethernetClient = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+	    if (null != ethernetClient) {
+		status = BroadBandConnectedClientUtils
+			.verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, ethernetClient).isStatus();
+	    }
+	    if (status) {
+		LOGGER.info("STEP 8:ACTUAL:Connected client 3 IP address is in DHCP range");
+	    } else {
+		LOGGER.error("STEP 8:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+	    /**
+	     * STEP 9:Verify if the ethernet connected client has an IPv6 address.
+	     * 
+	     */
+	    testStep = "s9";
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP 9:DESCRIPTION: Verify if the ethernet connected client has an  IPv6 address.");
+	    LOGGER.info("STEP 9:ACTION : Connected client should get the IPV6 Interface");
+	    LOGGER.info("STEP 9:EXPECTED:Interface IPv6 address should  be shown");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "Unable to verify IPv6 address of connected client";
+	    osType = ((Device) ethernetClient).getOsType();
+	    status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType,
+		    ethernetClient, tapEnv);
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : IPv6 address in connected client is validated successfully");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+	    /**
+	     * STEP 10:Get DHCP beginning address and Change the DHCP beginning address to 10.0.0.2
+	     */
+	    status = false;
+	    testStep = "s10";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 10 : DESCRIPTION :Get DHCP beginning address ,DHCP ending  address ,DHCP lease time Using Webpa");
+	    LOGGER.info(
+		    "STEP 10 : ACTION:Execute Webpa command with Parameter :Device.DHCPv4.Server.Pool.1.MinAddress,Device.DHCPv4.Server.Pool.1.MaxAddress,Device.DHCPv4.Server.Pool.1.LeaseTime ");
+	    LOGGER.info("STEP 10 : EXPECTED:Webpa get request should be successful");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Unable to perform webpa get request on device";
+	    String[] webPaParametersForDhcp = {
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_STARTING_IP_ADDRESS,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_ENDING_IP_ADDRESS,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_LEASETIME };
+	    Map<String, String> webPaGetResponse = tapEnv.executeMultipleWebPaGetCommands(device,
+		    webPaParametersForDhcp);
+	    if (!webPaGetResponse.isEmpty()) {
+		dhcpMinAddr = webPaGetResponse
+			.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_STARTING_IP_ADDRESS);
+		dhcpMaxAddr = webPaGetResponse
+			.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_ENDING_IP_ADDRESS);
+		leaseTime = webPaGetResponse.get(BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_LEASETIME);
+		if (CommonMethods.isIpv4Address(dhcpMinAddr) && CommonMethods.isIpv4Address(dhcpMaxAddr)
+			&& CommonMethods.isNotNull(leaseTime)) {
+		    status = true;
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 10:ACTUAL:Webpa get request is performed successfully ");
+	    } else {
+		LOGGER.error("STEP 10:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+
+	    /**
+	     * STEP 11:Set DHCP beginning address to 10.0.0.2, DHCP ending address to 10.0.0.3, DHCP lease time to 2
+	     * minutes using webpa
+	     */
+	    status = false;
+	    testStep = "s11";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 11 : DESCRIPTION :Set DHCP beginning address to 10.0.0.2, DHCP ending address to 10.0.0.3, DHCP lease time to 2 minutes using webpa");
+	    LOGGER.info(
+		    "STEP 11 : ACTION:Execute Webpa Set command for DHCP Min address,Max Address and Lease time with values");
+	    LOGGER.info("STEP 11 : EXPECTED:Webpa set request should be successful with status code 200");
+	    LOGGER.info("##########################################################################");
+	    errorMessage = "Failed to change DHCP ending address 10.0.0.3 with webpa request";
+	    if (DeviceModeHandler.isBusinessClassDevice(device)) {
+		setDhcpMinValue = BroadBandTestConstants.STRING_DHCP_MIN_ADDRESS_BUSSI;
+		setDhcpMaxValue = BroadBandTestConstants.STRING_DHCP_MAX_ADDRESS_BUSSI;
+	    } else {
+		setDhcpMinValue = BroadBandTestConstants.STRING_DHCP_MIN_ADDRESS;
+		setDhcpMaxValue = BroadBandTestConstants.STRING_DHCP_MAX_ADDRESS;
+	    }
+
+	    Boolean status1 = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_STARTING_IP_ADDRESS, 0, setDhcpMinValue);
+	    Boolean status2 = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_ENDING_IP_ADDRESS, 0, setDhcpMaxValue);
+	    Boolean status3 = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_LEASETIME, 1,
+		    BroadBandTestConstants.STRING_LEASE_TIME_VALUE);
+	    status = status1 && status2 && status3;
+	    if (status) {
+		LOGGER.info("STEP 11:ACTUAL:DHCP ending address is changed successfully ");
+	    } else {
+		LOGGER.error("STEP 11:ACTUAL:" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+	    /**
+	     * STEP 12:Verify 2 of 3 Connected clients Should have IP address in Updated DHCP range with IP renew
+	     * Operation ,if IP not renewed.
+	     */
+	    status = false;
+	    testStep = "s12";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info(
+		    "STEP 12 : DESCRIPTION :Verify 2 of 3 Connected clients Should have IP address in Updated DHCP range with IP renew Operation ,if IP not renewed");
+	    LOGGER.info("STEP 12 : ACTION:Retrieve IPv4 from connected clients and Verfiy it is in DHCP range");
+	    LOGGER.info("STEP 12 : EXPECTED:IPv4 address should be retrieved successfully and validated");
+	    LOGGER.info("##########################################################################");
+
+	    if (BroadBandConnectedClientUtils
+		    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, ethernetClient).isStatus()) {
+		LOGGER.info("Ethernet client has IP address in DHCP range");
+		statusCounter++;
+	    } else {
+		errorMessage = "Failure in validating Ethernet Client IP address in DHCP range \n";
+	    }
+	    BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv, wifi24GhzClient,
+		    WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    if (BroadBandConnectedClientUtils
+		    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, wifi24GhzClient).isStatus()) {
+		LOGGER.info("Wifi Connected client 1 has IP address in DHCP range");
+		statusCounter++;
+	    } else {
+		errorMessage += "Failure in validating Wifi Connected Client 1 IP address in DHCP range \n";
+	    }
+	    BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv, wifi5GhzClient,
+		    WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    if (BroadBandConnectedClientUtils
+		    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, wifi5GhzClient).isStatus()) {
+		LOGGER.info("Wifi Connected client 2 has IP address in DHCP range");
+		statusCounter++;
+	    } else {
+		errorMessage += "Failure in validating Wifi Connected Client 2 IP address in DHCP range \n";
+	    }
+
+	    errorMessage += "Unable to validate connected clients is in DHCP range " + statusCounter
+		    + " Client/s are in DHCP range";
+	    if (statusCounter == 2) {
+		status = true;
+		LOGGER.info(
+			"STEP 12:ACTUAL : Validation is success - 2 of 3 Connected clients IPv4 address are in DHCP range  ");
+	    } else {
+		LOGGER.error("STEP 12:ACTUAL :" + errorMessage);
+	    }
+	    LOGGER.info("##########################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Failed in executing verifyDHCPRangeAssignInConnectedClients \n" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, testStep, status, errorMessage, true);
+	} finally {
+	    LOGGER.info("###############################STARTING POST-CONFIGURATIONS###############################");
+	    LOGGER.info("POST-CONDITION 1: DESCRIPTION:RESTORE VALUES OF DHCP MIN ADDRESS");
+	    LOGGER.info(
+		    "POST CONDITION 1: ACTION:EXECUTE WEBPA COMMAND PARAMETER:Device.DHCPv4.Server.Pool.1.MinAddress with Value retrieved");
+	    LOGGER.info("POST-CONDITION 1: EXPECTED:VALUES OF DHCP MIN ADDRESS SHOULD BE RESTORED SUCCESSFULLY");
+	    LOGGER.info("##########################################################################");
+	    status = false;
+	    try {
+		if (CommonMethods.isNotNull(dhcpMinAddr)) {
+		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_STARTING_IP_ADDRESS,
+			    BroadBandTestConstants.CONSTANT_0, dhcpMinAddr,
+			    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		}
+		LOGGER.info("POST CONDITION 1:ACTUAL:DHCP MIN ADDRESS RESTORATION STATUS: " + status);
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURED WHILE CONFIGURING POST CONDITION 1:\n" + e.getMessage());
+	    }
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("POST-CONDITION 2: DESCRIPTION:RESTORE VALUES OF DHCP MAX ADDRESS");
+	    LOGGER.info(
+		    "POST CONDITION 2: ACTION:EXECUTE WEBPA COMMAND PARAMETER:Device.DHCPv4.Server.Pool.1.MaxAddress with Value retrieved");
+	    LOGGER.info("POST-CONDITION 2: EXPECTED:VALUES OF DHCP MAX ADDRESS SHOULD BE RESTORED SUCCESSFULLY");
+	    LOGGER.info("##########################################################################");
+	    status = false;
+	    try {
+		if (CommonMethods.isNotNull(dhcpMaxAddr)) {
+		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_TO_RETRIEVE_DHCP_ENDING_IP_ADDRESS,
+			    BroadBandTestConstants.CONSTANT_0, dhcpMaxAddr,
+			    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		    LOGGER.info("Waiting for two minutes");
+		    tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+		}
+		LOGGER.info("POST CONDITION 2:ACTUAL:DHCP MAX ADDRESS RESTORATION STATUS: " + status);
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURED WHILE CONFIGURING POST CONDITION 2:\n" + e.getMessage());
+	    }
+
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("POST-CONDITION 3: DESCRIPTION:VERIFY THAT ETHERNET CONNECTED CLIENT IS IN DHCP RANGE");
+	    LOGGER.info("POST CONDITION 3: ACTION:EXECUTE ipconfig/ifconfig AND VERIFY IP ADDRESS");
+	    LOGGER.info("POST-CONDITION 3: EXPECTED:ETHERNET CLIENT IP ADDRESS SHOULD BE IN DHCP RANGE ");
+	    LOGGER.info("##########################################################################");
+	    status = false;
+	    try {
+		if (ethernetClient != null) {
+		    BroadBandResultObject broadBandResultObject = BroadBandConnectedClientUtils
+			    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, ethernetClient);
+		    LOGGER.info("POST CONDITION 3:ACTUAL:ETHERNET CLIENT IP ADDRESS DHCP RANGE STATUS: "
+			    + broadBandResultObject.isStatus());
+		}
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURED WHILE CONFIGURING POST CONDITION 3:\n" + e.getMessage());
+	    }
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("POST-CONDITION 4: DESCRIPTION:VERIFY THAT WIFI CONNECTED CLIENT 1 IS IN DHCP RANGE");
+	    LOGGER.info("POST CONDITION 4: ACTION:EXECUTE ipconfig/ifconfig AND VERIFY IP ADDRESS");
+	    LOGGER.info("POST-CONDITION 4: EXPECTED:CLIENT IP ADDRESS SHOULD BE IN DHCP RANGE");
+	    LOGGER.info("##########################################################################");
+	    status = false;
+	    try {
+		if (wifi24GhzClient != null) {
+		    BroadBandResultObject broadBandResultObject = BroadBandConnectedClientUtils
+			    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, wifi24GhzClient);
+		    LOGGER.info("POST CONDITION 4:ACTUAL:WIFI CONNECTED CLIENT 1 IP ADDRESS DHCP RANGE : STATUS: "
+			    + broadBandResultObject.isStatus());
+		}
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURED WHILE CONFIGURING POST CONDITION 4:\n" + e.getMessage());
+	    }
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("POST-CONDITION 5: DESCRIPTION:VERIFY THAT WIFI CONNECTED CLIENT 2 IS IN DHCP RANGE");
+	    LOGGER.info("POST CONDITION 5: ACTION:EXECUTE ipconfig/ifconfig AND VERIFY IP ADDRESS");
+	    LOGGER.info("POST-CONDITION 5: EXPECTED:CLIENT IP ADDRESS SHOULD BE IN DHCP RANGE");
+	    LOGGER.info("##########################################################################");
+	    status = false;
+	    try {
+		if (wifi5GhzClient != null) {
+		    BroadBandResultObject broadBandResultObject = BroadBandConnectedClientUtils
+			    .verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, wifi5GhzClient);
+
+		    LOGGER.info("POST CONDITION 5:ACTUAL:WIFI CONNECTED CLIENT 2 IP ADDRESS DHCP RANGE : STATUS: "
+			    + broadBandResultObject.isStatus());
+		}
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURED WHILE CONFIGURING POST CONDITION 5:\n" + e.getMessage());
+	    }
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("POST-CONDITION 6: DESCRIPTION:RESTORE VALUES OF DHCP  LEASE TIME");
+	    LOGGER.info(
+		    "POST CONDITION 6: ACTION:EXECUTE WEBPA COMMAND PARAMETER:Device.DHCPv4.Server.Pool.1.LeaseTime with Value retrieved");
+	    LOGGER.info("POST-CONDITION 6: EXPECTED:VALUES OF LEASE SHOULD BE RESTORED SUCCESSFULLY");
+	    LOGGER.info("##########################################################################");
+	    status = false;
+	    try {
+		if (CommonMethods.isNotNull(leaseTime)) {
+		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_LEASETIME,
+			    BroadBandTestConstants.CONSTANT_1, leaseTime, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		}
+		LOGGER.info("POST CONDITION 6:ACTUAL:DHCP LEASE TIME RESTORATION STATUS: " + status);
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURED WHILE CONFIGURING POST CONDITION 6:\n" + e.getMessage());
+	    }
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 7 : DESCRIPTION : Disconnect Wifi Radio 2.4Ghz SSID from the device");
+	    LOGGER.info("POST-CONDITION 7 : ACTION :Disconnect wifi radio 2.4Ghz SSID ");
+	    LOGGER.info("POST-CONDITION 7 : EXPECTED : Wifi radio 2.4Ghz SSID should be disconnected successfully");
+	    LOGGER.info("#######################################################################################");
+	    try {
+		String ssidName = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+			WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+		LOGGER.info("SSIDNAME:" + ssidName);
+		boolean connectionStatus = ConnectedNattedClientsUtils.disconnectSSID(wifi24GhzClient, tapEnv,
+			ssidName);
+		LOGGER.info("POST CONDITION 7:ACTUAL: WIFI SSID 2.4GHZ Disconnect status:" + connectionStatus);
+	    } catch (Exception exception2) {
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING POST CONFIGURATION 7" + exception2.getMessage());
+	    }
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 8 : DESCRIPTION : Disconnect Wifi Radio 5Ghz SSID from the device");
+	    LOGGER.info("POST-CONDITION 8 : ACTION :Disconnect wifi radio 5Ghz SSID ");
+	    LOGGER.info("POST-CONDITION 8 : EXPECTED : Wifi radio 5Ghz SSID should be disconnected successfully");
+	    LOGGER.info("#######################################################################################");
+	    try {
+		String ssidName = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+			WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+		LOGGER.info("SSIDNAME:" + ssidName);
+		boolean connectionStatus = ConnectedNattedClientsUtils.disconnectSSID(wifi5GhzClient, tapEnv, ssidName);
+		LOGGER.info("POST CONDITION 8:ACTUAL: WIFI SSID 5GHZ Disconnect status:" + connectionStatus);
+	    } catch (Exception exception2) {
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING POST CONFIGURATION 8" + exception2.getMessage());
+	    }
+	    LOGGER.info("########################### COMPLETED POST-CONFIGURATIONS ###########################");
+
+	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-DHCP-CLIENTS-1001");
+    }
+    
+    /**
+     * Helper method to post telemetry profile to xconf
+     * 
+     * @param device
+     *            {@link Dut}
+     * @author ArunKumar Jayachandran
+     * @refactor Athira
+     */
+    public static final void postTelemetryData(Dut device) {
+	String errorMessage = null;
+	LOGGER.info("STEP 2: Upload telemetry profile to Xconf");
+	LOGGER.info("PRE-CONDITION : DESCRIPTION : Upload telemetry profile to Xconf ");
+	LOGGER.info("PRE-CONDITION : EXPECTED : Post request to Xconf should respond with HTTP 200 code ");
+	if (BroadBandTelemetryUtils.postDataToProxyDcmServer(device, tapEnv, false,
+		true) != BroadBandTestConstants.CONSTANT_200) {
+	    errorMessage = "Unable to Post telemetry data to XConf";
+	    LOGGER.error(errorMessage);
+	    throw new TestException(
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.PRE_CONDITION_ERROR,
+			    BroadBandTestConstants.SINGLE_SPACE_CHARACTER, errorMessage));
+	}
+	LOGGER.info("PRE-CONDITION : ACTUAL: Successfully Uploaded telemetry profile to Xconf");
+	LOGGER.info("PRE-CONFIGURATIONS : FINAL STATUS -  " + true);
+    }
+    
+    /**
+     * Helper method to configure telemetry settings in device
+     * 
+     * @param settop
+     *            {@link settop}
+     * @param testCaseId
+     *            test case id
+     * @author ArunKumar Jayachandran
+     * @refactor Athira
+     */
+    public static void telemetryConfiguration(Dut device, String testCaseId) {
+	boolean status = false;
+	String errorMessage = null;
+	String stepNumber = null;
+	// Step 1 : Copy dcm.properties to /nvram folder and change the
+	// DCM_LOG_SERVER_URL.
+	stepNumber = "s1";
+	status = false;
+	LOGGER.info("*******************************************************************************");
+	LOGGER.info("STEP 1: DESCRIPTION : Copy dcm.properties to /nvram folder and change the DCM_LOG_SERVER_URL");
+	LOGGER.info("STEP 1: ACTION : Execute Command cp /etc/dcm.properties /nvram and update xconf url");
+	LOGGER.info("STEP 1: EXPECTED : The file should be copied and updated");
+	LOGGER.info("*******************************************************************************");
+	int validationStatus = BroadBandTelemetryUtils.copyAndUpdateDcmProperties(device, tapEnv);
+	// updating the test case based on the return value from the helper
+	// method
+	if (BroadBandTestConstants.CONSTANT_0 == validationStatus) {
+	    errorMessage = "dcm.properties is not present, missing, in /etc/ folder";
+	} else if (BroadBandTestConstants.CONSTANT_2 == validationStatus) {
+	    errorMessage = "Successfuly copied /etc/dcm.properties to /nvram folder, But Failed to update Xconf url!!!!";
+	} else {
+	    status = true;
+	}
+	LOGGER.info("STEP 1: " + (status
+		? " ACTUAL: Successfully copied dcm.properties file to /nvram and verified the DCM_LOG_SERVER_URL"
+		: errorMessage));
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+	// Step 2 : Reboot the device and wait for IP acquisition.
+	stepNumber = "s2";
+	status = false;
+	LOGGER.info("*******************************************************************************");
+	LOGGER.info("STEP 2: DESCRIPTION : Reboot the device and wait for IP acquisition");
+	LOGGER.info("STEP 2: ACTION : Execute Command /sbin/reboot");
+	LOGGER.info("STEP 2: EXPECTED : Device should be rebooted");
+	LOGGER.info("*******************************************************************************");
+	status = BroadBandTelemetryUtils.rebootAndWaitForDeviceAccessible(tapEnv, device,
+		BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS);
+	LOGGER.info("STEP 2: Device reboot status is - " + status);
+	errorMessage = "Failed to reboot the device. Checked for 10 min to access the device after reboot.";
+	LOGGER.info("STEP 2: "
+		+ (status ? "ACTUAL: Successfully reboot the STB and able to access the device " : errorMessage));
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	// Step 3 : Validate modified url in dcmscript.log file
+	stepNumber = "s3";
+	status = false;
+	LOGGER.info("*******************************************************************************");
+	LOGGER.info("STEP 3: DESCRIPTION : Validate modified url in dcmscript.log file");
+	LOGGER.info(
+		"STEP 3: ACTION : Verify Xconf url present in dcmscript.log file");
+	LOGGER.info("STEP 3: EXPECTED : File should have modified xconf url");
+	LOGGER.info("*******************************************************************************");
+
+	try {
+	    BroadBandTelemetryUtils.verifyXconfDcmConfigurationUrlAndDownloadStatusFromDcmScriptLogs(device, tapEnv,
+		    BroadBandTestConstants.PROP_KEY_PROXY_XCONF_URL);
+	    status = true;
+	} catch (TestException exception) {
+	    errorMessage = exception.getMessage();
+	}
+
+	LOGGER.info("STEP 3: " + (status ? "ACTUAL:  Modified URL is present in dcmscript.log file "
+		: " Modified URL is not present in dcmscript.log. Error Message - " + errorMessage));
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
     }
 
 }

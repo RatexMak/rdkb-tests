@@ -24,14 +24,17 @@ import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
+import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -54,7 +57,6 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	 * <p>
 	 * STEPS:
 	 * </p>
-	 * <li>PRE-CONDITION : Reboot the device</li>
 	 * <li>S1) Verify retrieving default SSID for 2.4 Ghz using WebPA get
 	 * request.</li>
 	 * <li>S2) Verify retrieving default SSID for 5 Ghz using WebPA get
@@ -78,31 +80,25 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 		boolean status = false;
 		String errorMessage = null;
 		String defaultSSIDName2dot4Ghz = null;
+		String currentSSIDName2dot4Ghz = null;
 		boolean factoryResetStatus = false;
 		String defaultSSIDName5Ghz = null;
+		String currentSSIDName5Ghz = null;
 		LOGGER.info("###################################################################################");
 		LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-1010");
 		LOGGER.info("TEST DESCRIPTION: Verify default SSID using WebPA");
 
 		LOGGER.info("TEST STEPS : ");
 
-		LOGGER.info("Pre-condition 1: Reboot the device and wait for IPAccusition");
 		LOGGER.info("1. Verify retrieving default SSID for 2.4 Ghz using WebPA get request.  ");
 		LOGGER.info("2. Verify retrieving default SSID for 5 Ghz using WebPA get request");
-		LOGGER.info("3. Modify Current SSID name of 2.4 Ghz and 5 Ghz. ");
+		LOGGER.info("3. Modify Current SSID name of 2.4 Ghz and 5 Ghz if current SSID is default SSID");
 		LOGGER.info("4. Perform Factory reset on the device using WebPA request ");
 		LOGGER.info("5. Verify the Current SSID value for 2.4 Ghz using WebPA request ");
 		LOGGER.info("6. Verify the Current SSID value for 5 Ghz using WebPA request");
 		LOGGER.info("############################################################################");
 
 		try {
-
-			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
-			LOGGER.info("PRE-CONDITION STEPS");
-			LOGGER.info("Model Name is : " + device.getModel());
-			BroadBandPreConditionUtils.preConditionToRebootAndWaitForIpAccusition(device, tapEnv,
-					BroadBandTestConstants.CONSTANT_1);
-			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
 
 			/**
 			 * Step 1 : Verify retrieving default SSID for 2.4 Ghz using WebPA get request.
@@ -165,37 +161,58 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 			stepNumber = "s3";
 			status = false;
 			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 3: DESCRIPTION : Modify Current SSID name of 2.4 Ghz and 5 Ghz");
-			LOGGER.info("STEP 3 : ACTION : Execute webpa command to Modify Current SSID name of 2.4 Ghz and 5 Ghz.");
+			LOGGER.info("STEP 3: DESCRIPTION : Modify Current SSID name of 2.4 Ghz and 5 Ghz if current SSID is default SSID");
+			LOGGER.info("STEP 3 : ACTION : Execute webpa command to Modify Current SSID name of 2.4 Ghz and 5 Ghz if current SSID is default SSID");
 			LOGGER.info(
-					"STEP 3 : EXPTECTED : Current SSID name for 2.4 Ghz and 5 Ghz should be modified with value other than default SSID.");
+					"STEP 3 : EXPTECTED : Current SSID name for 2.4 Ghz and 5 Ghz should be a value other than default SSID.");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "Failed to set 2.4 Ghz SSID name using WebPA parameter "
 					+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME;
+			
+			currentSSIDName2dot4Ghz = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME);
+			LOGGER.info("SSID for 2.4 Ghz of the device is " + currentSSIDName2dot4Ghz);
+			
 			// Set Current 2.4 Ghz SSID name, other than default value SSID
-			String newSSIDName2Dot4Ghz = BroadBandTestConstants.STRING_TEST_1.equals(defaultSSIDName2dot4Ghz)
-					? BroadBandTestConstants.STRING_TEST_2
-					: BroadBandTestConstants.STRING_TEST_1;
-			LOGGER.info("Modify Current SSID name of 2.4 Ghz, other than default SSID value");
-			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
-					BroadBandTestConstants.CONSTANT_0, newSSIDName2Dot4Ghz);
-			LOGGER.info("Is Current SSID for 2.4 Ghz modified - " + status);
-			if (status) {
-				errorMessage = "Failed to set 2.4 Ghz SSID name using WebPA parameter "
-						+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME;
-				// Set Current 5Ghz SSID name, other than default value SSID
-				LOGGER.info("Modify Current SSID name of 5 Ghz, other than default SSID value");
-				String newSSIDName5Ghz = BroadBandTestConstants.STRING_TEST_1.equals(defaultSSIDName5Ghz)
-						? BroadBandTestConstants.STRING_TEST_2
-						: BroadBandTestConstants.STRING_TEST_1;
+			
+			if (currentSSIDName2dot4Ghz.equals(defaultSSIDName2dot4Ghz))
+			{
+				String newSSIDName2Dot4Ghz = BroadBandTestConstants.STRING_TEST_1;
+				LOGGER.info("Modify Current SSID name of 2.4 Ghz, other than default SSID value");
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME,
-						BroadBandTestConstants.CONSTANT_0, newSSIDName5Ghz);
-				LOGGER.info("Is Current SSID for 5 Ghz modified - " + status);
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
+						BroadBandTestConstants.CONSTANT_0, newSSIDName2Dot4Ghz);
+				LOGGER.info("Is Current SSID for 2.4 Ghz modified - " + status);
+				if (status) {
+					errorMessage = "Failed to set 5 Ghz SSID name using WebPA parameter "
+							+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME;
+					// Set Current 5Ghz SSID name, other than default value SSID
+					currentSSIDName5Ghz = tapEnv.executeWebPaCommand(device,
+							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME);
+					LOGGER.info("SSID for 5 Ghz of the device is " + currentSSIDName5Ghz);
+					if (currentSSIDName5Ghz.equals(defaultSSIDName5Ghz))
+					{
+						String newSSIDName5Ghz = BroadBandTestConstants.STRING_TEST_1;
+						LOGGER.info("Modify Current SSID name of 2.4 Ghz, other than default SSID value");
+						status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+								BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME,
+								BroadBandTestConstants.CONSTANT_0, newSSIDName5Ghz);
+						LOGGER.info("Is Current SSID for 5 Ghz modified - " + status);						
+					}
+					else
+					{
+						status = true;					
+					}
+					
+				}
 			}
+			else
+			{
+				status = true;
+			}
+
 			if (status) {
-				LOGGER.info("STEP 3: ACTUAL : Modifed Current SSID name of 2.4 Ghz and 5 Ghz");
+				LOGGER.info("STEP 3: ACTUAL : SSID name of 2.4 Ghz and 5 Ghz are not default SSID name");
 			} else {
 				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
 			}
@@ -215,14 +232,9 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 					+ WebPaParamConstants.WEBPA_PARAM_FACTORY_RESET);
 			LOGGER.info("STEP 4 : EXPTECTED : WebPA request should return success message");
 			LOGGER.info("**********************************************************************************");
-			factoryResetStatus = BroadBandWiFiUtils.setWebPaParams(device,
-					WebPaParamConstants.WEBPA_PARAM_FACTORY_RESET, BroadBandTestConstants.STRING_FACTORY_RESET_WIFI,
-					BroadBandTestConstants.CONSTANT_0);
-			LOGGER.info("Is Wifi Factory Reset success " + factoryResetStatus);
-			if (factoryResetStatus) {
-				status = BroadBandWiFiUtils.verifyWifiBroadCastedAfterFactoryReboot(device);
-				errorMessage = " Failed to set default values after WiFi factory Reset.";
-			}
+			
+			status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
+
 			if (status) {
 				LOGGER.info("STEP 4: ACTUAL : Device has been factory reset Successfully.");
 			} else {
@@ -533,15 +545,9 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 					+ WebPaParamConstants.WEBPA_PARAM_FACTORY_RESET);
 			LOGGER.info("STEP " + stepNum + " : EXPECTED : WebPA request should return success message");
 			LOGGER.info("**********************************************************************************");
-			factoryResetStatus = BroadBandWiFiUtils.setWebPaParams(device,
-					WebPaParamConstants.WEBPA_PARAM_FACTORY_RESET, BroadBandTestConstants.STRING_FACTORY_RESET_WIFI,
-					BroadBandTestConstants.CONSTANT_0);
-			errorMessage = "Failed to factory reset wifi interface using WebPa parameter "
-					+ WebPaParamConstants.WEBPA_PARAM_FACTORY_RESET;
-			LOGGER.info("Is Wifi Factory Reset success " + factoryResetStatus);
-			if (factoryResetStatus) {
-				status = BroadBandWiFiUtils.verifyWifiBroadCastedAfterFactoryReboot(device);
-			}
+
+			status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
+			
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Factory reset performed successfully");
 			} else {
@@ -781,5 +787,157 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 		    true);
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-DEF-SSID-5005");
+    }
+    
+    /**
+     * Test to verify data transmission between 2 connected(LAN-WLAN;WLAN to LAN) clients
+     * <ol>
+     * <li>STEP 1:Retrieve private IPv6 IP's from LAN client and save it</li>
+     * <li>STEP 2:Retrieve private IPv6 IP's from WLAN client and save it</li>
+     * <li>STEP 3:Ping the IPv6 IP of the WLAN cilent from the LAN client</li>
+     * <li>STEP 4:Ping the IPv6 IP of the LAN cilent from the WLAN client</li>
+     * </ol>
+     * 
+     * @author PRASANTH REDDY
+     * @refactor Rakesh
+     */
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, groups = {
+	    TestGroup.WEBPA, TestGroup.WIFI }, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-WIFI-TRANS-1000")
+    public void LanToWifiIPv6DataTransmissionTest(Dut device) {
+	boolean status = false;// String to store the test case status
+	String testId = "TC-RDKB-WIFI-TRANS-100";// Test case id
+	String testStep = null;// Test step number
+	String errorMessage = null;// String to store the error message
+	Dut ethernetClient = null;// Dut object for ethernet client
+	Dut wifiClient = null;// Dut object for wificlient
+	String lanIpv6Address = null;// String to store Lan ipv6 address
+	String wlanIpv6Address = null;// String to store Wlan ipv6 address
+
+	try {
+	    LOGGER.info("#################### STARTING TEST CASE: TC-RDKB-WIFI-TRANS-1000#####################");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Test to verify data transmission between 2 connected(LAN-WLAN;WLAN to LAN) clients");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info("1.Retrieve private IPv6 IP's from LAN client and save it");
+	    LOGGER.info("2.Retrieve private IPv6 IP's from WLAN client and save it");
+	    LOGGER.info("3.Ping the IPv6  IP of the WLAN cilent from the LAN client ");
+	    LOGGER.info("4.Ping the IPv6  IP of the LAN cilent from the WLAN  client ");
+	    LOGGER.info("#####################################################################################");
+	    /**
+	     * STEP 1:Retrieve private IPV6 IP of LAN client and save it .
+	     */
+	    status = false;
+	    testStep = "s1";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("STEP 1 : DESCRIPTION :Retrieve private IPV6 IP of LAN client and save it");
+	    LOGGER.info("STEP 1 : ACTION:Retrieve IPv6 address of Lan client ");
+	    LOGGER.info("STEP 1 : EXPECTED:Private IPv6 address of Lan client should be retrieved successfully");
+	    errorMessage = "Unable to retrieve IPv6 address of Lan client";
+	    ethernetClient = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+	    if (null != ethernetClient) {
+		lanIpv6Address = BroadBandConnectedClientUtils
+			.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(ethernetClient, tapEnv);
+		status = CommonMethods.isNotNull(lanIpv6Address);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 1:ACTUAL :Lan client IPv6 address is retrieved successfully;IPv6 Address: "
+			+ lanIpv6Address);
+	    } else {
+		LOGGER.error("STEP 1:ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+	    LOGGER.info("##########################################################################");
+
+	    /**
+	     * STEP 2:Retrieve private IPv6 IP from WLAN client and save it
+	     */
+	    status = false;
+	    testStep = "s2";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("STEP 2 : DESCRIPTION :Retrieve private IPv6 IP's from WLAN client and save it");
+	    LOGGER.info("STEP 2 : ACTION:Retrieve IPV6 address of Wlan client");
+	    LOGGER.info("STEP 2 : EXPECTED:Private IPv6 Address of wlan client should be retrieved successfully");
+	    errorMessage = "Unable to retrieve Ipv6 address of wireless client";
+	    wifiClient = BroadBandConnectedClientUtils
+		    .get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
+	    if (null != wifiClient) {
+		wlanIpv6Address = BroadBandConnectedClientUtils
+			.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(wifiClient, tapEnv);
+		status = CommonMethods.isNotNull(wlanIpv6Address);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 2:ACTUAL :Wlan client IPv6 address retrieved successfully;IPv6 Address: "
+			+ wlanIpv6Address);
+	    } else {
+		LOGGER.error("STEP 2:ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+	    LOGGER.info("##########################################################################");
+
+	    /**
+	     * STEP 3:Ping the IPv6 IP of the WLAN client from the LAN client
+	     */
+	    status = false;
+	    testStep = "s3";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("STEP 3 : DESCRIPTION :Ping the IPv6 address of the WLAN cilent from the LAN client");
+	    LOGGER.info("STEP 3 : ACTION:Ping WLAN client IPv6 address from LAN client");
+	    LOGGER.info(
+		    "STEP 3 : EXPECTED:Ping should be successful from LAN client to WLAN client without packet loss");
+	    errorMessage = "Unable to ping from LAN client to WLAN client";
+	    status = ConnectedNattedClientsUtils.verifyPingConnection(ethernetClient, tapEnv, wlanIpv6Address);
+	    if (status) {
+		LOGGER.info("STEP 3:ACTUAL :Ping from LAN client to WLAN client is successful");
+	    } else {
+		LOGGER.error("STEP 3:ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+	    LOGGER.info("##########################################################################");
+
+	    /**
+	     * STEP 4:Ping the IPv6 IP of the LAN client from the WLAN client
+	     */
+	    status = false;
+	    testStep = "s4";
+	    LOGGER.info("##########################################################################");
+	    LOGGER.info("STEP 4 : DESCRIPTION :Ping the IPv6  address of the LAN cilent from the WLAN  client ");
+	    LOGGER.info("STEP 4 : ACTION:Ping LAN client IPv6 address from WLAN client");
+	    LOGGER.info(
+		    "STEP 4 : EXPECTED:Ping should be successful from WLAN client to LAN client without packet loss");
+
+	    errorMessage = "Unable to ping from WLAN client to LAN client";
+	    status = ConnectedNattedClientsUtils.verifyPingConnection(wifiClient, tapEnv, lanIpv6Address);
+	    if (status) {
+		LOGGER.info("STEP 4:ACTUAL :Ping from WLAN client to LAN client is successful");
+	    } else {
+		LOGGER.error("STEP 4:ACTUAL :" + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+
+	    LOGGER.info("##########################################################################");
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Failed in executing LanToWifiIPv6DataTransmissionTest \n" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, testStep, status, errorMessage, true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Disconnect Wifi Radio 2.4Ghz/5Ghz SSID from the device");
+	    LOGGER.info("POST-CONDITION 1 : ACTION :Disconnect wifi radio 2.4Ghz/5Ghz SSID ");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : EXPECTED : Wifi radio 2.4Ghz/5Ghz SSID should be disconnected successfully");
+	    LOGGER.info("#######################################################################################");
+	    try {
+		BroadBandResultObject bandResultObject = BroadBandConnectedClientUtils
+			.disconnectCnnClientFromSsid(tapEnv, device, wifiClient);
+		LOGGER.info("POST CONDITION 1:ACTUAL: WIFI SSID 2.4GHZ/5GHZ Disconnect status: "
+			+ bandResultObject.isStatus());
+	    } catch (Exception exception2) {
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING POST CONFIGURATION 1" + exception2.getMessage());
+	    }
+	    LOGGER.info("########################### ENDING POST CONFIGURATION ####################################");
+	}
+	LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-WIFI-TRANS-1000#####################");
     }
 }

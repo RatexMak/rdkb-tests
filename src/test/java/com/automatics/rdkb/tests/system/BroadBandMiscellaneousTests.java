@@ -18,6 +18,8 @@
 
 package com.automatics.rdkb.tests.system;
 
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -34,7 +36,10 @@ import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
+import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -1181,4 +1186,440 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase{
 
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-THERMAL_FAN-1000");
     }
+    
+    /**
+    *
+    * Test Case : Verify CPE on-boarding process logging in the already onboarded device
+    *
+    * <p>
+    * STEPS:
+    * </p>
+    * <ol>
+    * <li>PRE-CONDITION 1 : Verify device accessible.</li>
+    * <li>Step 1 : Verify that "syscfg get unit_activated" value is 1</li>
+    * <li>Step 2 : Verify that \"/etc/ONBOARD_LOGGING_ENABLE\" file is created</li>
+    * <li>Step 3 : Verify that \"/nvram/.device_onboarded\" file is created</li>
+    * <li>Step 4 : Verify that get for \"Device.DeviceInfo.X_RDKCENTRAL-COM_OnBoarding_State\" parameter is "OnBoarded"
+    * </li>
+    * <li>Step 5 : Verify "sysevent get snmp-onboard-reboot" is EMPTY</li>
+    * <li>Step 6 : Trigger DOCSIS SNMP REBOOT</li>
+    * <li>Step 7 : Once the device comes up, verify the LastRebootReason as Docsis_SNMP_Reboot</li>
+    * <li>Step 8 : Verify that \"OnBoardingLog*.txt.0\" file is not created after reboot</li>
+    * <li>Step 9 : Trigger DOCSIS SNMP REBOOT</li>
+    * <li>Step 10 : Once the device comes up, verify the LastRebootReason as Docsis_SNMP_Reboot</li>
+    * <li>Step 11 : Verify log is captured to Consolelog.txt.0/ArmConsolelog.txt.0
+    * 
+    * @param device
+    *            {@link Dut}
+    * 
+    * @author Dipankar Nalui
+    * @refactor Govardhan
+    *
+    */
+   @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+   @TestDetails(testUID = "TC-RDKB-ONBOARDING-1000")
+   public void testToVerifyOnboardingProcessLoggingInTheAlreadyOnboardedDevice(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-ONBOARDING-100";
+	int stepNumber = 1;
+	String step = "S" + stepNumber;
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	JSONObject parameters = new JSONObject();
+	JSONArray params = new JSONArray();
+	JSONObject jsonData = new JSONObject();
+	String onboardLogsCreatedTime=null;
+	String rebootReason=null;
+	// Variable Declaration Ends
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-ONBOARDING-1000");
+	    LOGGER.info("TEST DESCRIPTION: Verify CPE on-boarding process logging in the already onboarded device");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info(" PRE CONDITION 1 : Verify device accessible.");
+	    LOGGER.info("1. Verify that \"syscfg get unit_activated\" value is 1 ");
+	    LOGGER.info("2. Verify that ONBOARD_LOGGING_ENABLE file is created");
+	    LOGGER.info("3. Verify that device_onboarded file is created");
+	    LOGGER.info(
+		    "4. Verify that get for \"Device.DeviceInfo.X_RDKCENTRAL-COM_OnBoarding_State\" parameter is \"OnBoarded\"");
+	    LOGGER.info("5. Verify \"sysevent get snmp-onboard-reboot\" is EMPTY");
+	    LOGGER.info("6. Trigger DOCSIS SNMP REBOOT ");
+	    LOGGER.info("7. Once the device comes up, verify the LastRebootReason as Docsis_SNMP_Reboot");
+	    LOGGER.info("8. Verify that \"OnBoardingLog*.txt.0\" file is not created after reboot");
+	    LOGGER.info("9. Trigger DOCSIS SNMP REBOOT ");
+	    LOGGER.info("10. Once the device comes up, verify the LastRebootReason as Docsis_SNMP_Reboot");
+	    LOGGER.info(
+		    "11. Verify log is captured to Consolelog.txt.0/ArmConsolelog.txt.0  RDKB_REBOOT: Device is up after reboot");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION : Verify device accessible
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : VERIFY DEVICE ACCESSIBLE.");
+	    LOGGER.info("PRE-CONDITION 1 : ACTION : SSH THE DEVICE.");
+	    LOGGER.info("PRE-CONDITION 1 : EXPTECTED : DEVICE MUSH BE ACCESSIBLE.");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SSH THE DEVICE.";
+	    long startTime = System.currentTimeMillis();
+	    try {
+		do {
+		    status = CommonMethods.isSTBAccessible(device);
+		} while (!status
+			&& ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS)
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    } catch (Exception exception) {
+		LOGGER.error("Exception occured in accessing the device " + exception.getMessage());
+	    }
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1 : ACTUAL : DEVICE IS ACCESSIBLE.");
+	    } else {
+		LOGGER.error("PRE-CONDITION 1 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION : 1 FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("################### ENDING PRE-CONFIGURATIONS ###################");
+
+	    /**
+	     * Step 1: VERIFY THAT "SYSCFG GET UNIT_ACTIVATED" VALUE IS 1
+	     */
+	    step = "S" + stepNumber;
+	    errorMessage = "response does not show " + BroadBandTestConstants.STRING_VALUE_ONE;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify that \"syscfg get unit_activated\" value is 1 ");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute the following command: syscfg get unit_activated");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : response should show "
+		    + BroadBandTestConstants.STRING_VALUE_ONE);
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+		    BroadBandCommandConstants.CMD_FOR_SYSCFG_GET, BroadBandTestConstants.STRING_UNIT_ACTIVATED));
+	    status = CommonMethods.isNotNull(response)
+		    && CommonMethods.patternMatcher(response.trim(), BroadBandTestConstants.STRING_VALUE_ONE);
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + ": ACTUAL : response shows " + BroadBandTestConstants.STRING_VALUE_ONE);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 2: VERIFY THAT ONBOARD_LOGGING_ENABLE FILE IS CREATED
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = BroadBandCommandConstants.FILE_ETC_ONBOARD_LOGGING_ENABLE + " File is not available";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify that "+BroadBandCommandConstants.FILE_ETC_ONBOARD_LOGGING_ENABLE+" file is created ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command: ls -al "+BroadBandCommandConstants.FILE_ETC_ONBOARD_LOGGING_ENABLE);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : /etc/ONBOARD_LOGGING_ENABLE File should be available");
+	    LOGGER.info("**********************************************************************************");
+	    status = CommonUtils.isFileExists(device, tapEnv,
+		    BroadBandCommandConstants.FILE_ETC_ONBOARD_LOGGING_ENABLE);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+			+ BroadBandCommandConstants.FILE_ETC_ONBOARD_LOGGING_ENABLE + " File is available");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 3: VERIFY THAT DEVICE_ONBOARDED FILE IS CREATED
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = BroadBandCommandConstants.FILE_NVRAM_DEVICE_ONBOARDED + " File is not available";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION : Verify that "+BroadBandCommandConstants.FILE_NVRAM_DEVICE_ONBOARDED+" file is created ");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTION : Execute the following command: ls -al "+BroadBandCommandConstants.FILE_NVRAM_DEVICE_ONBOARDED);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : " + BroadBandCommandConstants.FILE_NVRAM_DEVICE_ONBOARDED
+		    + "File should be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.FILE_NVRAM_DEVICE_ONBOARDED);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : " + BroadBandCommandConstants.FILE_NVRAM_DEVICE_ONBOARDED
+			+ " File is available");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 4: VERIFY THAT GET FOR \"DEVICE.DEVICEINFO.X_RDKCENTRAL-COM_ONBOARDING_STATE\" PARAMETER IS "
+	     * ONBOARDED"
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "Value of " + BroadBandWebPaConstants.WEBPA_PARAM_FEATURE_ONBOARDING_STATE
+		    + " is not returned as " + BroadBandTestConstants.STRING_ONBOARDED;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify that get for \"Device.DeviceInfo.X_RDKCENTRAL-COM_OnBoarding_State\" parameter is \"OnBoarded\"  ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><ECM_MAC>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_OnBoarding_State");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : Value of OnBoarding_State should be returned as OnBoarded ");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FEATURE_ONBOARDING_STATE,
+		    BroadBandTestConstants.STRING_ONBOARDED, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    boolean isOnboardLogsFileExist = CommonUtils.isFileExists(device, tapEnv,
+		    BroadBandCommandConstants.FILE_NVRAM_ONBOARDLOGS_ONBOARDINGLOG);
+	    if(isOnboardLogsFileExist) {
+		onboardLogsCreatedTime=tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_ONBOARD_LOGS_TIME);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Value of "
+			+ BroadBandWebPaConstants.WEBPA_PARAM_FEATURE_ONBOARDING_STATE + " is returned as "
+			+ BroadBandTestConstants.STRING_ONBOARDED);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 5: VERIFY "SYSEVENT GET SNMP-ONBOARD-REBOOT" IS EMPTY
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "sysevent get snmp-onboard-reboot did not return EMPTY";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify \"sysevent get snmp-onboard-reboot\" is EMPTY");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTION : Execute the following command:sysevent get snmp-onboard-reboot");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : sysevent get snmp-onboard-reboot should return EMPTY");
+	    LOGGER.info("**********************************************************************************");
+	    status = CommonMethods.isNull(tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_SYSEVENT_GET,
+			    BroadBandTestConstants.STRING_SNMP_ONBOARD_REBOOT)));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : sysevent get snmp-onboard-reboot returned EMPTY");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 6: TRIGGER DOCSIS SNMP REBOOT
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "Trigger of DOCSIS SNMP REBOOT is failed";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Trigger DOCSIS SNMP REBOOT ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command to Trigger DOCSIS SNMP REBOOT using mib  1.3.6.1.2.1.69.1.1.3.0 i 1");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Trigger of DOCSIS SNMP REBOOT should success");
+	    LOGGER.info("**********************************************************************************");
+	    if (DeviceModeHandler.isFibreDevice(device)) {
+		response = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
+			BroadBandSnmpMib.ENABLE_DOCSIS_SNMP_REBOOT.getOid(), SnmpDataType.INTEGER,
+			BroadBandTestConstants.STRING_VALUE_ONE);
+		if (CommonMethods.isNotNull(response)) {
+		    status = CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+			    BroadBandTestConstants.CONSTANT_14);
+		}
+	    } else {
+		if (BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+			BroadBandSnmpMib.ENABLE_DOCSIS_SNMP_REBOOT.getOid(), SnmpDataType.INTEGER,
+			BroadBandTestConstants.STRING_VALUE_ONE,
+			BroadBandSnmpMib.ENABLE_DOCSIS_SNMP_REBOOT.getTableIndex())) {
+		    status = CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+			    BroadBandTestConstants.CONSTANT_14);
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Trigger of DOCSIS SNMP REBOOT is success");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 7: ONCE THE DEVICE COMES UP, VERIFY THE LASTREBOOTREASON AS DOCSIS_SNMP_REBOOT
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "Last reboot reason is not snmp reboot";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Once the device comes up, verify the LastRebootReason as snmp reboot");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><ECM_MAC>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Last reboot reason should be snmp reboot");
+	    LOGGER.info("**********************************************************************************");
+	    if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device)) {
+		status = BroadBandCommonUtils.verifySnmpRebootReason(device, tapEnv);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Last reboot reason is snmp reboot");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 8: VERIFY THAT \"ONBOARDINGLOG*.TXT.0\" FILE IS NOT CREATED AFTER REBOOT
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = BroadBandCommandConstants.FILE_NVRAM_ONBOARDLOGS_ONBOARDINGLOG
+		    + "File is created after reboot";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify that "
+		    + BroadBandCommandConstants.FILE_NVRAM_ONBOARDLOGS_ONBOARDINGLOG
+		    + " file is not created after reboot");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command:ls -al /nvram2/onboardlogs/OnBoardingLog*.txt.0");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : "
+		    + BroadBandCommandConstants.FILE_NVRAM_ONBOARDLOGS_ONBOARDINGLOG
+		    + "File should not be created after reboot");
+	    LOGGER.info("**********************************************************************************");
+	    response=tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_ONBOARD_LOGS_TIME);
+	    status = !CommonUtils.isFileExists(device, tapEnv,
+		    BroadBandCommandConstants.FILE_NVRAM_ONBOARDLOGS_ONBOARDINGLOG) || response.equalsIgnoreCase(onboardLogsCreatedTime);
+	   
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : "
+			+ BroadBandCommandConstants.FILE_NVRAM_ONBOARDLOGS_ONBOARDINGLOG
+			+ " file is not created after reboot");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 9 : TRIGGER DOCSIS SNMP REBOOT
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "Trigger of DOCSIS SNMP REBOOT is failed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Trigger DOCSIS SNMP REBOOT ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command to Trigger DOCSIS SNMP REBOOT using mib  1.3.6.1.2.1.69.1.1.3.0 i 1");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : response should be SNMPv2-SMI::mib-2.69.1.1.3.0 = INTEGER: 1");
+	    LOGGER.info("**********************************************************************************");
+	    if (DeviceModeHandler.isFibreDevice(device)) {
+		response = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
+			BroadBandSnmpMib.ENABLE_DOCSIS_SNMP_REBOOT.getOid(), SnmpDataType.INTEGER,
+			BroadBandTestConstants.STRING_VALUE_ONE);
+		if (CommonMethods.isNotNull(response)) {
+		    status = CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+			    BroadBandTestConstants.CONSTANT_14);
+		}
+	    } else {
+		if (BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+			BroadBandSnmpMib.ENABLE_DOCSIS_SNMP_REBOOT.getOid(), SnmpDataType.INTEGER,
+			BroadBandTestConstants.STRING_VALUE_ONE,
+			BroadBandSnmpMib.ENABLE_DOCSIS_SNMP_REBOOT.getTableIndex())) {
+		    errorMessage = "Device is not rebooted after triggering snmp reboot";
+		    status = CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+			    BroadBandTestConstants.CONSTANT_14);
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Trigger of DOCSIS SNMP REBOOT is success");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 10 : ONCE THE DEVICE COMES UP, VERIFY THE LASTREBOOTREASON AS DOCSIS_SNMP_REBOOT
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "Last reboot reason is not SNMP Reboot";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Once the device comes up, verify the LastRebootReason as SNMP Reboot");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><ECM_MAC>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Last reboot reason should be SNMP Reboot");
+	    LOGGER.info("**********************************************************************************");
+	    if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device)) {
+		status = BroadBandCommonUtils.verifySnmpRebootReason(device, tapEnv);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Last reboot reason is SNMP Reboot");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 11 : VERIFY LOG IS CAPTURED TO CONSOLELOG.TXT.0/ARMCONSOLELOG.TXT.0
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    errorMessage = "Consolelog.txt.0 or ArmConsolelog.txt.0 did not show "
+		    + BroadBandTestConstants.RDKB_REBOOT_REASON_ARM_CONSOLE;
+	    status = false;
+	    startTime = System.currentTimeMillis();
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify log is captured to Consolelog.txt.0/ArmConsolelog.txt.0  "
+		    + BroadBandTestConstants.RDKB_REBOOT_REASON_ARM_CONSOLE);
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command:grep -i \"RDKB_REBOOT\" /rdklogs/logs/*");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Consolelog.txt.0 or ArmConsolelog.txt.0 should show "
+		    + BroadBandTestConstants.RDKB_REBOOT_REASON_ARM_CONSOLE);
+	    LOGGER.info("**********************************************************************************");
+	    do {
+		response = BroadBandCommonUtils.searchLogsInArmConsoleOrConsole(device, tapEnv,
+			BroadBandTestConstants.STRING_RDKB_REBOOT);
+		status = CommonMethods.isNotNull(response)
+			&& CommonUtils.isGivenStringAvailableInCommandOutput(response.trim().toLowerCase(),
+				BroadBandTestConstants.RDKB_REBOOT_REASON_ARM_CONSOLE.toLowerCase());
+	    } while (!status
+		    && ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS)
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Consolelog.txt.0 or ArmConsolelog.txt.0 showed "
+			+ BroadBandTestConstants.RDKB_REBOOT_REASON_ARM_CONSOLE);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, status, errorMessage, false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-ONBOARDING-1000");
+   }
 }

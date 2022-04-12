@@ -95,7 +95,7 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
     * <li>Step 10 : Verify the Current SSID value for 2.4 Ghz using SNMP request.</li>
     * <li>Step 11 : Verify 2.4 GHz channel bandwidth value is 20/40 MHz.
     * <li>
-    * <li>Step 12 : Verify 5GHZ Xfinity Home SSID is disabled through WebPA request.
+    * <li>Step 12 : Verify 5GHZ public Home SSID is disabled through WebPA request.
     * <li>
     * 
     */

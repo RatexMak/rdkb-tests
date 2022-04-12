@@ -34,6 +34,7 @@ import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.error.ErrorType;
 import com.automatics.exceptions.TestException;
+import com.automatics.providers.objects.DeviceObject;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
@@ -579,92 +580,105 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	}
     }
 
-    /**
-     * Test to Verify the WAN MAC Address using IF-MIB::ifPhysAddress.1 (.1.3.6.1.2.1.2.2.1.6.1) SNMP MIB.
-     * 
-     * 
-     * <ol>
-     * <li>Step 1 : Retrieve the Mac Address from the response of IF-MIB::ifPhysAddress.1 command and verify with the
-     * actual MAC Address of the device using device object</li>
-     * </ol>
-     * 
-     * @author Selvaraj Mariyappan
-     * @Refactor Athira
-     * 
-     * @param device
-     *            {@link Dut}
-     */
+	/**
+	 * Test to Verify the WAN MAC Address using IF-MIB::ifPhysAddress.1
+	 * (.1.3.6.1.2.1.2.2.1.6.1) SNMP MIB.
+	 * 
+	 * 
+	 * <ol>
+	 * <li>Step 1 : Retrieve the Mac Address from the response of
+	 * IF-MIB::ifPhysAddress.1 command and verify with the actual MAC Address of the
+	 * device using device object</li>
+	 * </ol>
+	 * 
+	 * @author Selvaraj Mariyappan
+	 * @Refactor Athira
+	 * 
+	 * @param device {@link Dut}
+	 */
 
-    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
-	    BroadBandTestGroup.SNMP_OPERATIONS })
-    @TestDetails(testUID = "TC-RDKB-SNMP-1003")
-    public void testSnmpGetOnWanMacAddress(Dut device) {
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+			BroadBandTestGroup.SNMP_OPERATIONS })
+	@TestDetails(testUID = "TC-RDKB-SNMP-1003")
+	public void testSnmpGetOnWanMacAddress(Dut device) {
 
-	String testCaseId = "TC-RDKB-SNMP-003";
-	String stepNumber = "s1";
-	boolean status = false;
-	String errorMessage = null;
-	String snmpWanMacAddress = null;
-	String wanMacAddress = null;
-	String ifTableIndex = null;
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1003");
-	LOGGER.info(
-		"TEST DESCRIPTION:Verify the WAN MAC Address using IF-MIB::ifPhysAddress.1 (.1.3.6.1.2.1.2.2.1.6) ");
-	LOGGER.info("TEST STEPS : ");
-	LOGGER.info(
-		"1:Verify the Mac Address from the response of IF-MIB::ifPhysAddress.1(for fibre device getting the erouter0 mib index) command and verify with the actual MAC Address of the device using device object");
-	LOGGER.info("#######################################################################################");
+		String testCaseId = "TC-RDKB-SNMP-003";
+		String stepNumber = "s1";
+		boolean status = false;
+		String errorMessage = null;
+		String snmpWanMacAddress = null;
+		String wanMacAddress = null;
+		String ifTableIndex = null;
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-SNMP-1003");
+		LOGGER.info(
+				"TEST DESCRIPTION:Verify the WAN MAC Address using IF-MIB::ifPhysAddress.1 (.1.3.6.1.2.1.2.2.1.6) ");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info(
+				"1:Verify the Mac Address from the response of IF-MIB::ifPhysAddress.1(for Fibre devices getting the erouter0 mib index) command and verify with the actual MAC Address of the device using device object");
+		LOGGER.info("#######################################################################################");
 
-	try {
-	    errorMessage = "Seems like IF-MIB::ifPhysAddress.1 (.1.3.6.1.2.1.2.2.1.6) providing wrong WAN MAC Address.";
-	    /**
-	     * Step 1 : Retrieve the Mac Address from the response of IF-MIB::ifPhysAddress.1 command and verify with
-	     * the actual MAC Address of the device using device object
-	     */
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP 1:DESCRIPTION: Retrieve the Mac Address from the response of IF-MIB::ifPhysAddress.1(for fibre device getting the erouter0 mib index) command and verify with the actual MAC Address of the device using device object");
-	    LOGGER.info(
-		    "STEP 1:ACTION: Execute SNMP command to retrive the WAN MAC Address by using SNMP and compare with Wan Mac address retrived using device object");
-	    LOGGER.info("STEP 1:EXPECTED: Should return the Device WAN MAC Address");
-	    LOGGER.info("**********************************************************************************");
-	    ifTableIndex = BroadBandCommonUtils.getIndexForWanMac(tapEnv, device);
-	    if (CommonMethods.isNotNull(ifTableIndex)) {
-		snmpWanMacAddress = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
-			BroadBandSnmpMib.ECM_IF_MIB_IF_PHYSICAL_ADDRESS.getOid(), ifTableIndex);
-		LOGGER.info("SNMP command output for IF-MIB::ifPhysAddress." + ifTableIndex
-			+ "(.1.3.6.1.2.1.2.2.1.6) : " + snmpWanMacAddress);
-		wanMacAddress = BroadBandSnmpUtils.formatMacAddressWithoutLeadingZeros(device.getHostMacAddress());
-		if (CommonMethods.isNotNull(snmpWanMacAddress) && CommonMethods.isNotNull(wanMacAddress)) {
-		    // Verify the retrieved MAC with the actual MAC address of the
-		    // device
-		    status = CommonUtils.patternSearchFromTargetString(snmpWanMacAddress, wanMacAddress);
-		    if (status) {
+		try {
+			errorMessage = "Seems like IF-MIB::ifPhysAddress.1 (.1.3.6.1.2.1.2.2.1.6) providing wrong WAN MAC Address.";
+			/**
+			 * Step 1 : Retrieve the Mac Address from the response of
+			 * IF-MIB::ifPhysAddress.1 command and verify with the actual MAC Address of the
+			 * device using device object
+			 */
+			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-				"STEP 1: ACTUAL : retreived Wan MAC address using SNMP and WAN MAC Address using device object are same ");
-		    } else {
-			LOGGER.error("STEP 1: ACTUAL :" + errorMessage + " ACTUAL OUTPUT :  WAN MAC Address :  "
-				+ snmpWanMacAddress + " " + " EXPECTED OUTPUT: WAN MAC Address  : " + wanMacAddress);
-		    }
-		} else {
-		    status = false;
-		    LOGGER.error("Unable to retrieve IF-MIB::ifPhysAddress." + ifTableIndex
-			    + "(.1.3.6.1.2.1.2.2.1.6) details using SNMP MIB");
+					"STEP 1:DESCRIPTION: Retrieve the Mac Address from the response of IF-MIB::ifPhysAddress.1(for fibre devices getting the erouter0 mib index) command and verify with the actual MAC Address of the device using device object");
+			LOGGER.info(
+					"STEP 1:ACTION: Execute SNMP command to retrive the WAN MAC Address by using SNMP and compare with Wan Mac address retrived using device object");
+			LOGGER.info("STEP 1:EXPECTED: Should return the Device WAN MAC Address");
+			LOGGER.info("**********************************************************************************");
+			/*
+			 * Choosing mib index based on erouter0 interface for Fibre devices.
+			 */
+			ifTableIndex = BroadBandCommonUtils.getIndexForWanMac(tapEnv, device);
+			LOGGER.info("ifTableIndex is " + ifTableIndex);
+			if (CommonMethods.isNotNull(ifTableIndex)) {
+
+				if (DeviceModeHandler.isFibreDevice(device)) {
+					DeviceObject deviceResponse = new DeviceObject();
+					snmpWanMacAddress = CommonMethods.snmpGetOnEstb(tapEnv, device, deviceResponse.getEstbIpAdress(),
+							BroadBandSnmpMib.ECM_IF_MIB_IF_PHYSICAL_ADDRESS.getOid() + "." + ifTableIndex);
+				} else {
+
+					snmpWanMacAddress = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+							BroadBandSnmpMib.ECM_IF_MIB_IF_PHYSICAL_ADDRESS.getOid(), ifTableIndex);
+				}
+				LOGGER.info("SNMP command output for the WAN MAC Address is" + snmpWanMacAddress);
+				wanMacAddress = BroadBandSnmpUtils.formatMacAddressWithoutLeadingZeros(device.getHostMacAddress());
+				if (CommonMethods.isNotNull(snmpWanMacAddress) && CommonMethods.isNotNull(wanMacAddress)) {
+					// Verify the retrieved MAC with the actual MAC address of the
+					// device
+					status = CommonUtils.patternSearchFromTargetString(snmpWanMacAddress, wanMacAddress);
+					if (status) {
+						LOGGER.info(
+								"STEP 1: ACTUAL : retreived Wan MAC address using SNMP and WAN MAC Address using device object are same ");
+					} else {
+						LOGGER.error("STEP 1: ACTUAL :" + errorMessage + " ACTUAL OUTPUT :  WAN MAC Address :  "
+								+ snmpWanMacAddress + " " + " EXPECTED OUTPUT: WAN MAC Address  : " + wanMacAddress);
+					}
+				} else {
+					status = false;
+					LOGGER.error("Unable to retrieve IF-MIB::ifPhysAddress." + ifTableIndex
+							+ "(.1.3.6.1.2.1.2.2.1.6) details using SNMP MIB");
+				}
+			} else {
+				LOGGER.error(
+						"Index to get WAN MAC address is null. Hence Will not able to get WAN MAC Address using SNMP.");
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, true);
+		} catch (Exception exception) {
+			status = false;
+			LOGGER.error("Unable to retrieve IF-MIB::ifPhysAddress." + ifTableIndex
+					+ "(.1.3.6.1.2.1.2.2.1.6) details using SNMP MIB" + exception.getMessage());
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+					true);
 		}
-	    } else {
-		LOGGER.error(
-			"Index to get WAN MAC address is null. Hence Will not able to get WAN MAC Address using SNMP.");
-	    }
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, ErrorType.SNMP + errorMessage, true);
-	} catch (Exception exception) {
-	    status = false;
-	    LOGGER.error("Unable to retrieve IF-MIB::ifPhysAddress." + ifTableIndex
-		    + "(.1.3.6.1.2.1.2.2.1.6) details using SNMP MIB" + exception.getMessage());
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
-		    true);
 	}
-    }
 
     /**
      * Test to Verify the Cable Modem MAC Address using IF-MIB::ifPhysAddress.2 (.1.3.6.1.2.1.2.2.1.6.2) SNMP MIB.
@@ -2876,8 +2890,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
      * GHz private Wi-Fi SSID</li>
      * <li>STEP 9:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101) to get the value of 5 GHz
      * private Wi-Fi SSID</li>
-     * <li>STEP 10: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID</li>
-     * <li>STEP 11: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID</li>
+     * <li>STEP 10: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz public Wi-Fi SSID</li>
+     * <li>STEP 11: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz public Wi-Fi SSID</li>
      * <li>STEP 12: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001) to get the value of 2.4
      * GHz private Wi-Fi Passphrase</li>
      * <li>STEP 13:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10101) to get the value of 5 GHz
@@ -2955,13 +2969,13 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 9:Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101) to get the value of 5 GHz private Wi-Fi SSID");
 	    LOGGER.info(
-		    "STEP 10: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID");
+		    "STEP 10: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz public Wi-Fi SSID");
 	    LOGGER.info(
-		    "STEP 11: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID");
+		    "STEP 11: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz public Wi-Fi SSID");
 	    LOGGER.info(
-		    "STEP 12: Execute SNMP v3 GET command on OID(1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10002) to get the value of 2.4 GHz Xfinity Home SSID");
+		    "STEP 12: Execute SNMP v3 GET command on OID(1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10002) to get the value of 2.4 GHz public Home SSID");
 	    LOGGER.info(
-		    "STEP 13: SNMP v3  GET command on OID(1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10102) to get the value of 5 GHz Xfinity Home SSID");
+		    "STEP 13: SNMP v3  GET command on OID(1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10102) to get the value of 5 GHz public Home SSID");
 	    LOGGER.info(
 		    "STEP 14: Execute SNMP v3 GET command on OID (1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001) to get the value of  2.4 GHz private Wi-Fi Passphrase");
 	    LOGGER.info(
@@ -3356,7 +3370,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
 
 	    /**
-	     * Step 10 : Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID
+	     * Step 10 : Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz public Wi-Fi SSID
 	     * 
 	     */
 	    if (!isFibreDevice) {
@@ -3365,20 +3379,20 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 		status = false;
 		testStatus = ExecutionStatus.FAILED;
 		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Retrieve Xfinity Wi-Fi 2.4Ghz SSID using webpa");
+		LOGGER.info("STEP " + stepNum + ": DESCRIPTION: Retrieve public Wi-Fi 2.4Ghz SSID using webpa");
 		LOGGER.info("STEP " + stepNum
-			+ ": ACTION: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz Xfinity Wi-Fi SSID");
+			+ ": ACTION: Execute TR181 Device.WiFi.SSID.10003.SSID to get the value of 2.4 GHz public Wi-Fi SSID");
 		LOGGER.info("STEP " + stepNum
-			+ ": EXPECTED: The Xfinity Wi-Fi SSID of 2.4GHz Radio should be retrieved using webpa Query");
+			+ ": EXPECTED: The public Wi-Fi SSID of 2.4GHz Radio should be retrieved using webpa Query");
 		LOGGER.info("**********************************************************************************");
 		System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
-		// Enable 2.4 GHz xfinity Wifi
-		LOGGER.info("### Enabling 2.4 GHz xfinity Wi-Fi ###");
+		// Enable 2.4 GHz public Wifi
+		LOGGER.info("### Enabling 2.4 GHz public Wi-Fi ###");
 		status = BroadBandWebPaUtils.settingWebpaparametersForPublicWifi(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID_ENABLE_STATUS)
 			&& BroadBandWebPaUtils.checkAndEnableSSIDForGivenInterface(device, tapEnv,
 				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID_ENABLE_STATUS);
-		errorMessage = "Unable to check 2.4 Ghz SSID of Xfinity Wi-Fi using SNMP v3, since Xfinity Wi-Fi can not be enabled";
+		errorMessage = "Unable to check 2.4 Ghz SSID of public Wi-Fi using SNMP v3, since public Wi-Fi can not be enabled";
 		testStatus = ExecutionStatus.NOT_TESTED;
 		isPublicWifiEnabled = status;
 		if (status) {
@@ -3407,7 +3421,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 		}
 		if (status) {
 		    LOGGER.info("STEP " + stepNum
-			    + ": ACTUAL: The Xfinity Wi-Fi SSID of 2.4GHz Radio can be retrieved using webpa");
+			    + ": ACTUAL: The public Wi-Fi SSID of 2.4GHz Radio can be retrieved using webpa");
 		} else {
 		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
 		}
@@ -3415,7 +3429,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
 
 		/**
-		 * Step 11 : Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID
+		 * Step 11 : Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz public Wi-Fi SSID
 		 * 
 		 */
 		stepNum++;
@@ -3424,20 +3438,20 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 		testStatus = ExecutionStatus.FAILED;
 		LOGGER.info("**********************************************************************************");
 		LOGGER.info(
-			"STEP " + stepNum + ": DESCRIPTION: Retrieve value of 5 GHz Xfinity Wi-Fi SSID using webpa");
+			"STEP " + stepNum + ": DESCRIPTION: Retrieve value of 5 GHz public Wi-Fi SSID using webpa");
 		LOGGER.info("STEP " + stepNum
-			+ ": ACTION: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz Xfinity Wi-Fi SSID");
+			+ ": ACTION: Execute TR181 Device.WiFi.SSID.10103.SSID to get the value of 5 GHz public Wi-Fi SSID");
 		LOGGER.info("STEP " + stepNum
-			+ ": EXPECTED: The Xfinity Wi-Fi SSID of 5GHz Radio should be retrieved using webpa Query");
+			+ ": EXPECTED: The public Wi-Fi SSID of 5GHz Radio should be retrieved using webpa Query");
 		LOGGER.info("**********************************************************************************");
 		System.setProperty(SnmpConstants.SYSTEM_PARAM_SNMP_VERSION, SnmpProtocol.SNMP_V3.toString());
-		// Enable 5 GHz xfinity Wifi
-		LOGGER.info("### Enabling 5 GHz xfinity Wi-Fi ###");
+		// Enable 5 GHz public Wifi
+		LOGGER.info("### Enabling 5 GHz public Wi-Fi ###");
 		status = BroadBandWebPaUtils.settingWebpaparametersForPublicWifi(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID_ENABLE_STATUS)
 			&& BroadBandWebPaUtils.checkAndEnableSSIDForGivenInterface(device, tapEnv,
 				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID_ENABLE_STATUS);
-		errorMessage = "Unable to check 5 Ghz SSID of Xfinity Wi-Fi using SNMP v3, since Xfinity Wi-Fi can not be enabled";
+		errorMessage = "Unable to check 5 Ghz SSID of public Wi-Fi using SNMP v3, since public Wi-Fi can not be enabled";
 		testStatus = ExecutionStatus.NOT_TESTED;
 		isPublicWifiEnabled = (isPublicWifiEnabled) ? isPublicWifiEnabled : status;
 		if (status) {
@@ -3467,14 +3481,14 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 		}
 		if (status) {
 		    LOGGER.info("STEP " + stepNum
-			    + ": ACTUAL: The Xfinity Wi-Fi SSID of 5 GHz Radio can be retrieved using webpa");
+			    + ": ACTUAL: The public Wi-Fi SSID of 5 GHz Radio can be retrieved using webpa");
 		} else {
 		    LOGGER.error("STEP " + stepNum + ": ACTUAL: " + errorMessage);
 		}
 		LOGGER.info("******************************************************************************");
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, testStatus, errorMessage, false);
 	    } else {
-		errorMessage = "Xfinity wifi is not applicable for fibre models ";
+		errorMessage = "public wifi is not applicable for fibre models ";
 		stepNum = 10;
 		while (stepNum <= 11) {
 		    stepNumber = "s" + stepNum;

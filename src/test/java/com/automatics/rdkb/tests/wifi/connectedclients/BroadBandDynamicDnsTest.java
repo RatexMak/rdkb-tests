@@ -62,11 +62,11 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 	 * client using ipv4 interface</li>
 	 * <li>PRE-CONDITION 5 : Verify the internet connectivity in the connected wifi
 	 * client using ipv6 interface</li>
-	 * <li>Step 1:Perform nslookup for which.opendns.com with 75.75.75.75</li>
-	 * <li>Step 2:Perform nslookup for which.opendns.com with 208.67.222.222</li>
-	 * <li>Step 3:Perform nslookup for which.opendns.com with 208.67.220.220</li>
-	 * <li>Step 4:Perform nslookup for which.opendns.com with 208.67.222.220</li>
-	 * <li>Step 5:Perform nslookup for which.opendns.com with 208.67.220.222</li>
+	 * <li>Step 1:Perform nslookup for which.opendns.com </li>
+	 * <li>Step 2:Perform nslookup for which.opendns.com </li>
+	 * <li>Step 3:Perform nslookup for which.opendns.com </li>
+	 * <li>Step 4:Perform nslookup for which.opendns.com </li>
+	 * <li>Step 5:Perform nslookup for which.opendns.com </li>
 	 * <li>POST-CONDITION 1 : Verify disconnecting the 2.4GHZ private wifi ssid</li>
 	 * </ol>
 	 * 
@@ -95,11 +95,11 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 				"PRE-CONDITION 4 : Verify the internet connectivity in the connected wifi client using ipv4 interface");
 		LOGGER.info(
 				"PRE-CONDITION 5 : Verify the internet connectivity in the connected wifi client using ipv6 interface");
-		LOGGER.info("1. Perform nslookup for which.opendns.com with 75.75.75.75");
-		LOGGER.info("2. Perform nslookup for which.opendns.com with 208.67.222.222");
-		LOGGER.info("3. Perform nslookup for which.opendns.com with 208.67.220.220");
-		LOGGER.info("4. Perform nslookup for which.opendns.com with 208.67.222.220 ");
-		LOGGER.info("5. Perform nslookup for which.opendns.com with  208.67.220.222 ");
+		LOGGER.info("1. Perform nslookup for which.opendns.com");
+		LOGGER.info("2. Perform nslookup for which.opendns.com");
+		LOGGER.info("3. Perform nslookup for which.opendns.com");
+		LOGGER.info("4. Perform nslookup for which.opendns.com with");
+		LOGGER.info("5. Perform nslookup for which.opendns.com with");
 		LOGGER.info("POST-CONDITION 1 : Verify disconnecting the 2.4GHZ private wifi ssid");
 		LOGGER.info("#######################################################################################");
 		try {
@@ -150,11 +150,11 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 	 * client using ipv4 interface</li>
 	 * <li>PRE-CONDITION 5 : Verify the internet connectivity in the connected wifi
 	 * client using ipv6 interface</li>
-	 * <li>Step 1:Perform nslookup for which.opendns.com with 75.75.75.75</li>
-	 * <li>Step 2:Perform nslookup for which.opendns.com with 208.67.222.222</li>
-	 * <li>Step 3:Perform nslookup for which.opendns.com with 208.67.220.220</li>
-	 * <li>Step 4:Perform nslookup for which.opendns.com with 208.67.222.220</li>
-	 * <li>Step 5:Perform nslookup for which.opendns.com with 208.67.220.222</li>
+	 * <li>Step 1:Perform nslookup for which.opendns.com</li>
+	 * <li>Step 2:Perform nslookup for which.opendns.com</li>
+	 * <li>Step 3:Perform nslookup for which.opendns.com</li>
+	 * <li>Step 4:Perform nslookup for which.opendns.com</li>
+	 * <li>Step 5:Perform nslookup for which.opendns.com</li>
 	 * <li>POST-CONDITION 1 : Verify disconnecting the 5GHZ private wifi ssid</li>
 	 * </ol>
 	 * 
@@ -183,11 +183,11 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 				"PRE-CONDITION 4 : Verify the internet connectivity in the connected wifi client using ipv4 interface");
 		LOGGER.info(
 				"PRE-CONDITION 5 : Verify the internet connectivity in the connected wifi client using ipv6 interface");
-		LOGGER.info("1. Perform nslookup for which.opendns.com with 75.75.75.75");
-		LOGGER.info("2. Perform nslookup for which.opendns.com with 208.67.222.222");
-		LOGGER.info("3. Perform nslookup for which.opendns.com with 208.67.220.220");
-		LOGGER.info("4. Perform nslookup for which.opendns.com with 208.67.222.220 ");
-		LOGGER.info("5. Perform nslookup for which.opendns.com with 208.67.220.222 ");
+		LOGGER.info("1. Perform nslookup for which.opendns.com with IPV4 interface");
+		LOGGER.info("2. Perform nslookup for which.opendns.com with IPV6 interface");
+		LOGGER.info("3. Perform nslookup for which.opendns.com with IPV6 interface");
+		LOGGER.info("4. Perform nslookup for which.opendns.com with IPV6 interface ");
+		LOGGER.info("5. Perform nslookup for which.opendns.com with IPV6 interface ");
 		LOGGER.info("POST-CONDITION 1 : Verify disconnecting the 5GHZ private wifi ssid");
 		LOGGER.info("#######################################################################################");
 		try {
@@ -235,17 +235,17 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 		errorMessage = "";
 		status = false;
 		/**
-		 * STEP 1: PERFORM NSLOOKUP FOR WHICH.OPENDNS.COM WITH 75.75.75.75
+		 * STEP 1: PERFORM NSLOOKUP FOR WHICH.OPENDNS.COM
 		 */
 		status = false;
 		errorMessage = null;
 		LOGGER.info("#######################################################################################");
-		LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : PERFORM NSLOOKUP FOR WHICH.OPENDNS.COM WITH 75.75.75.75");
+		LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : PERFORM NSLOOKUP FOR WHICH.OPENDNS.COM");
 		LOGGER.info(
-				"STEP " + stepNumber + ": ACTION : EXECUTE COMMAND: NSLOOKUP -TYPE=TXT WHICH.OPENDNS.COM. 75.75.75.75");
+				"STEP " + stepNumber + ": ACTION : EXECUTE COMMAND: NSLOOKUP -TYPE=TXT WHICH.OPENDNS.COM");
 		LOGGER.info("STEP " + stepNumber + ": EXPECTED : MUST RETURN THE RESPONSE AS 'I AM NOT AN OPENDNS RESOLVER'");
 		LOGGER.info("#######################################################################################");
-		errorMessage = "FAILED TO VERIFY NSLOOKUP FOR 75.75.75.75";
+		errorMessage = "FAILED TO VERIFY NSLOOKUP";
 		status = BroadBandCommonUtils.executeAndVerifyNsLookUpCommandInConnectedClient(deviceConnected, tapEnv,
 				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE,
 				BroadBandTestConstants.NS_LOOKUP_GLOBAL_DNS_RESPONSE);

@@ -165,7 +165,7 @@ public class BroadBandXconfCdlNegativeScenarios extends AutomaticsTestBase {
 	LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Configure the mock xconf server for CDL with delayDownload"
 		+ delayDownload + " mins");
 	LOGGER.info("STEP " + stepNumber
-		+ ": ACTION : Configure mock xconf similar to CDL process) Update /nvram/swupdate.conf file with mock xconf url.echo \"https://<url>/xconf/swu/stb\" > /nvram/swupdate.conf2) Configure the different image name of the device in the mock xconf server3)Add delay as 30 minutes and reboot immediately as false");
+		+ ": ACTION : Configure mock xconf similar to CDL process) Update /nvram/swupdate.conf file with mock xconf url");
 	LOGGER.info("STEP " + stepNumber + ": EXPECTED : Mock xconf configuration should be successful");
 	LOGGER.info("**********************************************************************************");
 
@@ -270,7 +270,8 @@ public class BroadBandXconfCdlNegativeScenarios extends AutomaticsTestBase {
      * <li>Reboot the device and wait till the devices acquires IP</li>
      * <li>Verify the latest image version in the device</li>
      * </ol>
-     * @author anandam.s
+     * 
+     * @author Anandam.S
      * @refactor Said Hisham
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)

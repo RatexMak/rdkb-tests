@@ -26,6 +26,7 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
+import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
@@ -45,9 +46,11 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.enums.BroadBandManagementPowerControlEnum;
+import com.automatics.rdkb.tests.snmp.BroadBandSnmpTest;
 import com.automatics.rdkb.utils.BroadBandBandSteeringUtils;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandMeshUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
@@ -1378,11 +1381,11 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("STEP 2: ACTION      : Enable xfinityWifi for both radios using webpa commands ");
 			LOGGER.info("STEP 2: EXPECTED    :Configuration should be successful.");
 			LOGGER.info("******************************************************");
-			errorMessage = "Failed to enable xfinity wifi for both radios";
-			// enable xfinity wifi
+			errorMessage = "Failed to enable public wifi for both radios";
+			// enable public wifi
 			status = BroadBandWebPaUtils.enablePublicWifiWithSetParameters(device, tapEnv);
 			LOGGER.info("STEP 1 : ACTUAL :"
-					+ (status ? "Successfully enabled xfinity wifi for both radios. " : errorMessage));
+					+ (status ? "Successfully enabled public wifi for both radios. " : errorMessage));
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
 			errorMessage = "Failed to configure same SSID for both radios";
@@ -1703,9 +1706,9 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 
 			}
 			tapEnv.executeMultipleWebPaSetCommands(device, webPaParameters);
-			LOGGER.info("Waiting for 90 seconds to disable xfinity wifi");
+			LOGGER.info("Waiting for 90 seconds to disable public wifi");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			// disabling the xfinity wifi
+			// disabling the public wifi
 			boolean isPublicWifiDisabled = BroadBandWiFiUtils.setWebPaParams(device,
 					BroadBandWebPaConstants.WEBPA_PARAM_ENABLING_PUBLIC_WIFI, BroadBandTestConstants.FALSE,
 					BroadBandTestConstants.CONSTANT_3);
@@ -2885,152 +2888,632 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 		LOGGER.debug("ENDING METHOD : verifyEnablingPrivateSsidUsingWebpa");
 		return status;
 	}
-	
-    /**
-     * Test to verify that WIFI radio does not support channel number other than the possible channels defined
-     * 
-     * <li>1. Get the possible channels for 2.4 GHz radio via webpa</li>
-     * <li>2. Validate if the channels are within pre-defined list</li>
-     * <li>3. Get the possible channels for 5 GHz radio via webpa</li>
-     * <li>4. Validate if the channels are within pre-defined list</li>
-     * 
-     * @author Sathurya_R
-     * @Refactor Alan_Bivera
-     * 
-     * @param device
-     */
 
-    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
-	    BroadBandTestGroup.WIFI })
-    @TestDetails(testUID = "TC-RDKB-WIFI-POSSIBLE-CHANNELS-1001")
+	/**
+	 * Test to verify that WIFI radio does not support channel number other than the
+	 * possible channels defined
+	 * 
+	 * <li>1. Get the possible channels for 2.4 GHz radio via webpa</li>
+	 * <li>2. Validate if the channels are within pre-defined list</li>
+	 * <li>3. Get the possible channels for 5 GHz radio via webpa</li>
+	 * <li>4. Validate if the channels are within pre-defined list</li>
+	 * 
+	 * @author Sathurya_R
+	 * @Refactor Alan_Bivera
+	 * 
+	 * @param device
+	 */
 
-    public void testToValidateWifiRadioChannelsAreFromDefinedList(Dut device) {
-	// Variable Declaration begins
-	String testCaseId = "";
-	String stepNum = "";
-	String errorMessage = "";
-	int stepNumber = 1;
-	boolean status = false;
-	String channelsSupported24 = "";
-	String channelsSupported5 = "";
-	// Variable Declaration Ends
-	testCaseId = "TC-RDKB-WIFI-POSSIBLE-CHANNELS-001";
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-POSSIBLE-CHANNELS-1001");
-	LOGGER.info(
-		"TEST DESCRIPTION: Test to verify that WIFI radio does not support channel number other than the possible channels defined");
-	LOGGER.info("TEST STEPS : ");
-	LOGGER.info("1. Get the possible channels for 2.4 GHz radio via webpa ");
-	LOGGER.info("2. Validate if the channels are within pre-defined list ");
-	LOGGER.info("3. Get the possible channels for 5 GHz radio via webpa ");
-	LOGGER.info("4. Validate if the channels are within pre-defined list");
-	LOGGER.info("#######################################################################################");
-	try {
-	    /**
-	     * STEP 1 : GET THE POSSIBLE CHANNELS FOR 2.4 GHZ RADIO VIA WEBPA
-	     */
-	    stepNum = "S" + stepNumber;
-	    status = false;
-	    errorMessage = "Attempt to get possible channels via webpa for 2.4 GHz has failed";
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP " + stepNumber + " :DESCRIPTION : Get the possible channels for 2.4 GHz radio via webpa ");
-	    LOGGER.info("STEP " + stepNumber + " :ACTION : Execute webpa get on the parameter "
-		    + BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_2GHZ);
-	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The webpa get should be successful ");
-	    LOGGER.info("**********************************************************************************");
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+			BroadBandTestGroup.WIFI })
+	@TestDetails(testUID = "TC-RDKB-WIFI-POSSIBLE-CHANNELS-1001")
 
-	    channelsSupported24 = tapEnv.executeWebPaCommand(device,
-		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_2GHZ);
-	    status = CommonMethods.isNotNull(channelsSupported24) && CommonMethods.patternMatcher(channelsSupported24,
-		    (CommonMethods.isAtomSyncAvailable(device,tapEnv))
-			    ? BroadBandTestConstants.PATTERN_MATCHER_24_GHZ_CHANNEL_ATOM
-			    : BroadBandTestConstants.PATTERN_MATCHER_CHANNEL_LIST_WITH_COMMA);
-	    if (status) {
-		LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are obtained successfully via webpa");
-	    } else {
-		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	public void testToValidateWifiRadioChannelsAreFromDefinedList(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "";
+		String stepNum = "";
+		String errorMessage = "";
+		int stepNumber = 1;
+		boolean status = false;
+		String channelsSupported24 = "";
+		String channelsSupported5 = "";
+		// Variable Declaration Ends
+		testCaseId = "TC-RDKB-WIFI-POSSIBLE-CHANNELS-001";
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-POSSIBLE-CHANNELS-1001");
+		LOGGER.info(
+				"TEST DESCRIPTION: Test to verify that WIFI radio does not support channel number other than the possible channels defined");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Get the possible channels for 2.4 GHz radio via webpa ");
+		LOGGER.info("2. Validate if the channels are within pre-defined list ");
+		LOGGER.info("3. Get the possible channels for 5 GHz radio via webpa ");
+		LOGGER.info("4. Validate if the channels are within pre-defined list");
+		LOGGER.info("#######################################################################################");
+		try {
+			/**
+			 * STEP 1 : GET THE POSSIBLE CHANNELS FOR 2.4 GHZ RADIO VIA WEBPA
+			 */
+			stepNum = "S" + stepNumber;
+			status = false;
+			errorMessage = "Attempt to get possible channels via webpa for 2.4 GHz has failed";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + stepNumber + " :DESCRIPTION : Get the possible channels for 2.4 GHz radio via webpa ");
+			LOGGER.info("STEP " + stepNumber + " :ACTION : Execute webpa get on the parameter "
+					+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_2GHZ);
+			LOGGER.info("STEP " + stepNumber + " : EXPECTED : The webpa get should be successful ");
+			LOGGER.info("**********************************************************************************");
 
-	    /**
-	     * STEP 2 : VALIDATE IF THE CHANNELS ARE WITHING PRE-DEFINED LIST
-	     */
-	    ++stepNumber;
-	    stepNum = "S" + stepNumber;
-	    status = false;
-	    errorMessage = "The possible channels are not within pre-defined list";
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Validate if the channels are within pre-defined list ");
-	    LOGGER.info("STEP " + stepNumber + " :ACTION : Validate the channels against pre-defined list of 2.4 GHz");
-	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The channels for 2.4 should be within expected list ");
-	    LOGGER.info("**********************************************************************************");
+			channelsSupported24 = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_2GHZ);
+			status = CommonMethods.isNotNull(channelsSupported24) && CommonMethods.patternMatcher(channelsSupported24,
+					(CommonMethods.isAtomSyncAvailable(device, tapEnv))
+							? BroadBandTestConstants.PATTERN_MATCHER_24_GHZ_CHANNEL_ATOM
+							: BroadBandTestConstants.PATTERN_MATCHER_CHANNEL_LIST_WITH_COMMA);
+			if (status) {
+				LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are obtained successfully via webpa");
+			} else {
+				LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
-	    status = BroadBandWiFiUtils.validateIfChannelsAreFromSupportedList(channelsSupported24,
-		    WiFiFrequencyBand.WIFI_BAND_2_GHZ, device);
-	    if (status) {
-		LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are withing the expected range");
-	    } else {
-		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			/**
+			 * STEP 2 : VALIDATE IF THE CHANNELS ARE WITHING PRE-DEFINED LIST
+			 */
+			++stepNumber;
+			stepNum = "S" + stepNumber;
+			status = false;
+			errorMessage = "The possible channels are not within pre-defined list";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Validate if the channels are within pre-defined list ");
+			LOGGER.info("STEP " + stepNumber + " :ACTION : Validate the channels against pre-defined list of 2.4 GHz");
+			LOGGER.info("STEP " + stepNumber + " : EXPECTED : The channels for 2.4 should be within expected list ");
+			LOGGER.info("**********************************************************************************");
 
-	    /**
-	     * STEP 3 : GET THE POSSIBLE CHANNELS FOR 5 GHZ RADIO VIA WEBPA
-	     */
-	    ++stepNumber;
-	    stepNum = "S" + stepNumber;
-	    status = false;
-	    errorMessage = "Attempt to get possible channels via webpa for 5 GHz has failed";
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Get the possible channels for 5 GHz radio via webpa ");
-	    LOGGER.info("STEP " + stepNumber + " :ACTION : Execute webpa get on the parameter "
-		    + BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_5GHZ);
-	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The webpa get should be successful ");
-	    LOGGER.info("**********************************************************************************");
+			status = BroadBandWiFiUtils.validateIfChannelsAreFromSupportedList(channelsSupported24,
+					WiFiFrequencyBand.WIFI_BAND_2_GHZ, device);
+			if (status) {
+				LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are withing the expected range");
+			} else {
+				LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
-	    channelsSupported5 = tapEnv.executeWebPaCommand(device,
-		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_5GHZ);
-	    status = CommonMethods.isNotNull(channelsSupported5) && CommonMethods.patternMatcher(channelsSupported5,
-		    BroadBandTestConstants.PATTERN_MATCHER_CHANNEL_LIST_WITH_COMMA);
-	    if (status) {
-		LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are obtained successfully via webpa");
-	    } else {
-		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+			/**
+			 * STEP 3 : GET THE POSSIBLE CHANNELS FOR 5 GHZ RADIO VIA WEBPA
+			 */
+			++stepNumber;
+			stepNum = "S" + stepNumber;
+			status = false;
+			errorMessage = "Attempt to get possible channels via webpa for 5 GHz has failed";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Get the possible channels for 5 GHz radio via webpa ");
+			LOGGER.info("STEP " + stepNumber + " :ACTION : Execute webpa get on the parameter "
+					+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_5GHZ);
+			LOGGER.info("STEP " + stepNumber + " : EXPECTED : The webpa get should be successful ");
+			LOGGER.info("**********************************************************************************");
 
-	    /**
-	     * STEP 4 : VALIDATE IF THE CHANNELS ARE WITHIN PRE-DEFINED LIST
-	     */
-	    ++stepNumber;
-	    stepNum = "S" + stepNumber;
-	    status = false;
-	    errorMessage = "The possible channels are not within pre-defined list";
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Validate if the channels are within pre-defined list ");
-	    LOGGER.info("STEP " + stepNumber + " :ACTION : Validate the channels against pre-defined list of 5 GHz");
-	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The channels for 5 should be within expected list ");
-	    LOGGER.info("**********************************************************************************");
+			channelsSupported5 = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_FOR_POSSIBLECHANNELS_IN_5GHZ);
+			status = CommonMethods.isNotNull(channelsSupported5) && CommonMethods.patternMatcher(channelsSupported5,
+					BroadBandTestConstants.PATTERN_MATCHER_CHANNEL_LIST_WITH_COMMA);
+			if (status) {
+				LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are obtained successfully via webpa");
+			} else {
+				LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
-	    status = BroadBandWiFiUtils.validateIfChannelsAreFromSupportedList(channelsSupported5,
-		    WiFiFrequencyBand.WIFI_BAND_5_GHZ, device);
-	    if (status) {
-		LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are withing the expected range");
-	    } else {
-		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-	} catch (Exception e) {
-	    LOGGER.error(
-		    "Exception occured while trying to verify that WIFI radio does not support channel number other than the possible channels defined",
-		    e);
+			/**
+			 * STEP 4 : VALIDATE IF THE CHANNELS ARE WITHIN PRE-DEFINED LIST
+			 */
+			++stepNumber;
+			stepNum = "S" + stepNumber;
+			status = false;
+			errorMessage = "The possible channels are not within pre-defined list";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Validate if the channels are within pre-defined list ");
+			LOGGER.info("STEP " + stepNumber + " :ACTION : Validate the channels against pre-defined list of 5 GHz");
+			LOGGER.info("STEP " + stepNumber + " : EXPECTED : The channels for 5 should be within expected list ");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWiFiUtils.validateIfChannelsAreFromSupportedList(channelsSupported5,
+					WiFiFrequencyBand.WIFI_BAND_5_GHZ, device);
+			if (status) {
+				LOGGER.info("STEP " + stepNum + ": ACTUAL : Possible channels are withing the expected range");
+			} else {
+				LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		} catch (Exception e) {
+			LOGGER.error(
+					"Exception occured while trying to verify that WIFI radio does not support channel number other than the possible channels defined",
+					e);
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-POSSIBLE-CHANNELS-1001");
 	}
-	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-POSSIBLE-CHANNELS-1001");
-    }
+
+	/**
+	 * @TestDetails To enable XDNS feature and Verify status after Reboot and
+	 *              Factory Reset the device.*
+	 *              <li>PRE-CONDITION-1 : Set and verify the Global DNS IPv4 value
+	 *              using webpa param
+	 *              'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'</li>
+	 *              <li>PRE-CONDITION-2 : Set and verify the Global DNS IPv6 using webpa param
+	 *              'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'</li>
+	 *              <li>PRE-CONDITION-3 : Verify 2.4GHz private SSID status on the
+	 *              Device and Enable using webpa param
+	 *              'Device.WiFi.SSID.10001.Enable'</li>
+	 *              <li>PRE-CONDITION-4 : Verify 5GHz private SSID status on the
+	 *              Device and Enable using webpa param
+	 *              'Device.WiFi.SSID.10101.Enable'</li>
+	 * 
+	 *              <li>PRE-CONDITION-5 : Re-Activate and verify the device by
+	 *              setting 2.4GHz and 5GHz SSID and Passphrase</li>
+	 *              <li>PRE-CONDITION 6 : Factory reset the device and Verify
+	 *              whether WebPA is Up and Running in the Device</li>
+	 * 
+	 *              STEP 1: Verify if XDNS feature is disabled by default using
+	 *              webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS
+	 *              <li>EXPECTED: XDNS Feature must be disabled
+	 *
+	 *              STEP 2: Enable the XDNS feature by setting true to webpa param
+	 *              Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS
+	 *              <li>EXPECTED: XDNS feature must enabled successfully
+	 *
+	 *              STEP 3: Reboot the broadband device and Verify if device is up
+	 *              <li>EXPECTED: Device should come up and the image version should
+	 *              be not null
+	 *
+	 *              STEP 4: Verify if XDNS feature persist Enable status after
+	 *              device reboot
+	 *              <li>EXPECTED: XDNS feature should persist Enable status after
+	 *              device reboot
+	 * 
+	 *              STEP 5 : Backup SecConsole log and PAMlog to nvram
+	 *              <li>EXPECTED: Backup of secconsole and pamlog is successful
+	 *
+	 *              STEP 6 : Factory Reset the device and verify if device comes up
+	 *              <li>EXPECTED: Device should come up after Factory reset
+	 * 
+	 *              STEP 7 : Validate for after reboot Device led logs in
+	 *              SecConsole.txt.0 and PAMlog.txt.0
+	 *              <li>EXPECTED: After reboot led logs should be caputured
+	 *
+	 *              STEP 8 : Validate before reboot Device led logs in Backup
+	 *              SecConsole.txt.0 and PAMlog.txt.0 In nvram
+	 *              <li>EXPECTED: Before factory reset led logs should be caputured
+	 * 
+	 *              STEP 9: Verify the Captive portal status after Factory reseting
+	 *              the router using webpa param
+	 *              Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable
+	 *              <li>EXPECTED: Webpa param
+	 *              Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable should
+	 *              return true
+	 *
+	 *              STEP 10: Verify if the XDNS feature is Disabled after factory
+	 *              reset using webpa param
+	 *              Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS
+	 *              <li>EXPECTED: XDNS Feature must be Disabled *
+	 *              <li>POST-CONDITION 1 : Disable and verify the XDNS feature using
+	 *              webpa param 'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS'</li>
+	 * 
+	 *              <li>POST-CONDITION 2 : Reactivate the router device after
+	 *              factory reset</li>
+	 *              <li>POST-CONDITION 3 : Delete temporary files in Nvram</li>
+	 * @param device
+	 * @author Susheela C,prasanthreddy.a
+	 * @Refactor Sruthi Santhosh
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+			BroadBandTestGroup.XDNS })
+	@TestDetails(testUID = "TC-RDKB-XDNS-1000")
+
+	public void enableXDNSAndVerifyStatusAfterRebootAndFactoryReset(Dut device) {
+		// Holds the test case ID
+		String testCaseId = "TC-RDKB-XDNS-100";
+		// boolean variable to store the status
+		boolean status = false;
+		// boolean variable to store the factory reset status
+		boolean factoryResetStatus = false;
+		// Test step number
+		String stepNumber = "s1";
+		// Error message
+		String errorMessage = null;
+		// String to hold the response
+		String response = null;
+		Map<String, String> backupMap = null;
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-XDNS-1000");
+		LOGGER.info(
+				"TEST DESCRIPTION: To  enable XDNS feature and Verify status after Reboot and Factory Reset the device");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info(
+				"PRE-CONDITION-1 : Set and verify the Global DNS IPv4 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'");
+		LOGGER.info(
+				"PRE-CONDITION-2 : Set and verify the Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'");
+		LOGGER.info(
+				"PRE-CONDITION-3 : Verify 2.4GHz private SSID status on the Device and Enable using webpa param 'Device.WiFi.SSID.10001.Enable'");
+		LOGGER.info(
+				"PRE-CONDITION-4 : Verify 5GHz private SSID status on the Device and Enable using webpa param 'Device.WiFi.SSID.10101.Enable'");
+
+		LOGGER.info(
+				"PRE-CONDITION-5 : Re-Activate and verify the device by setting 2.4GHz and 5GHz SSID and Passphrase");
+		LOGGER.info(
+				"PRE-CONDITION 6 : Factory reset the device and Verify whether WebPA is Up and Running in the Device");
+		LOGGER.info(
+				"STEP 1: Verify if XDNS feature is disabled by default using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+		LOGGER.info(
+				"STEP 2: Enable the XDNS feature by setting true to webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+		LOGGER.info("STEP 3: Reboot the broadband device and Verify if device is up");
+		LOGGER.info("STEP 4: Verify if XDNS feature persist Enable status after device reboot");
+		LOGGER.info("STEP 5 : Backup SecConsole log and PAMlog to nvram");
+		LOGGER.info("STEP 6 : Factory Reset the device and verify if device comes up");
+		LOGGER.info("STEP 7 : Validate for after reboot Device led logs in SecConsole.txt.0 and PAMlog.txt.0");
+		LOGGER.info(
+				"STEP 8 : Validate before reboot Device led logs in Backup SecConsole.txt.0 and PAMlog.txt.0 In nvram");
+		LOGGER.info(
+				"STEP 9: Verify the Captive portal status after Factory reseting the router using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable");
+		LOGGER.info(
+				"STEP 10: Verify if the XDNS feature is Disabled after factory reset using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+		LOGGER.info(
+				"POST-CONDITION 1  : Disable and verify the XDNS feature using webpa param 'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS'");
+
+		LOGGER.info("POST-CONDITION 2  : Reactivate the router device after factory reset");
+		LOGGER.info("POST-CONDITION 3  : Delete temporary files in Nvram");
+		LOGGER.info("#######################################################################################");
+		try {
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"PRE-CONDITION 1: DESCRIPTION : Factory reset the device and Verify whether WebPA is Up and Running in the Device");
+			LOGGER.info("PRE-CONDITION 1: ACTION : Performing factory reset");
+			LOGGER.info("PRE-CONDITION 1: EXPECTED : The device should get factory resetted and device should come up");
+			LOGGER.info("#####################################################################################");
+			if (!BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)) {
+				status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
+						BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
+				if (status) {
+					LOGGER.info("PRE-CONDITION 1: ACTUAL: Factory Reset is successful");
+				} else {
+					LOGGER.error("PRE-CONDITION 1: ACTUAL : Factory reset is not successfull");
+					throw new TestException(
+							BroadBandTestConstants.PRE_CONDITION_ERROR + "Factory Resetting the device failed");
+				}
+			} else {
+				LOGGER.info(
+						"Skipping Pre condition 1 to factory reset the gateway since Xdns feature is already in default state(disabled state).");
+			}
+
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info(
+					"PRE-CONDITION 2: DESCRIPTION : Set and verify the Global DNS IPv4 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'");
+			LOGGER.info(
+					"PRE-CONDITION 2: ACTION : Set the Global DNS IPv4 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'");
+			LOGGER.info(
+					"PRE-CONDITION 2: EXPECTED : Global DNS IPv4 value should be set using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'");
+			LOGGER.info("#######################################################################################");
+
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, WebPaDataTypes.STRING.getValue(),
+					AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
+					AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+			// Error message
+			errorMessage = "Failed to set Global DNS IPv4 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'";
+			if (status) {
+				LOGGER.info("PRE-CONDITION 2: ACTUAL: Global DNS IPv4 value sucessfully set");
+			} else {
+				LOGGER.error("PRE-CONDITION 2: ACTUAL : " + errorMessage);
+				throw new TestException(
+						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 2 FAILED : " + errorMessage);
+			}
+
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info(
+					"PRE-CONDITION 3: DESCRIPTION : Set and verify the Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'");
+			LOGGER.info(
+					"PRE-CONDITION 3: ACTION : Set the Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'");
+			LOGGER.info(
+					"PRE-CONDITION 3: EXPECTED : Global DNS IPv6 value should be set using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'");
+			LOGGER.info("#######################################################################################");
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
+					AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
+					AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			// Error message
+			errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
+			if (status) {
+				LOGGER.info("PRE-CONDITION 3: ACTUAL: Global DNS IPv6 value sucessfully set'");
+			} else {
+				LOGGER.error("PRE-CONDITION 3: ACTUAL : " + errorMessage);
+				throw new TestException(
+						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION-3 FAILED : " + errorMessage);
+			}
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			/**
+			 * STEP 1: Verify if XDNS feature is disabled by default using webpa param
+			 * Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS
+			 * <li>EXPECTED: XDNS Feature must be disabled
+			 */
+			// Test step number
+			stepNumber = "s1";
+			// boolean variable to store the status
+			status = false;
+			// Error message
+			errorMessage = "XDNS feature is not disabled by default, validated using tr181 param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : DESCRIPTION : Verify if XDNS feature is disabled by default using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : ACTION : Get XDNS feature status using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+			LOGGER.info("STEP :  " + stepNumber + " : EXPECTED: XDNS Feature must be disabled by default");
+			LOGGER.info("**********************************************************************************");
+			response = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS);
+			status = CommonMethods.isNotNull(response)
+					&& CommonUtils.patternSearchFromTargetString(response, AutomaticsConstants.FALSE);
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : XDNS feature is disabled by default");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 2: Enable the XDNS feature by setting true to webpa param
+			 * Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS
+			 * <li>EXPECTED: XDNS feature must enabled successfully
+			 */
+			stepNumber = "s2";
+			status = false;
+			errorMessage = "Unable to set new tag name to device by this parameter "
+					+ BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP :  " + stepNumber + " : DESCRIPTION : Enable XDNS with default settings");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : ACTION : Execute command :dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag string Test_xdns1"
+					+ "dmcli eRT getv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag"
+					+ "dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool true"
+					+ "dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+			LOGGER.info("STEP :  " + stepNumber + " : EXPECTED : Check values get set and enabled properly");
+			LOGGER.info("**********************************************************************************");
+			if (BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG, BroadBandTestConstants.CONSTANT_0,
+					BroadBandTraceConstants.XDNS_TAG_NAME)) {
+				errorMessage = "Not able to enable XDNS by using this parameter "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS;
+				status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS,
+						BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+			}
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Successfully enabled XDNS with default settings.");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			/**
+			 * STEP 3: Reboot the broadband device and Verify if device is up
+			 * <li>EXPECTED: Device should come up and the image version should be not null
+			 */
+			// Test step number
+			stepNumber = "s3";
+			// boolean variable to store the status
+			status = false;
+			// Error message
+			errorMessage = "Device didn't come up after reboot";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : DESCRIPTION : Reboot the broadband device and Verify if device is up");
+			LOGGER.info("STEP :  " + stepNumber + " : ACTION : Execute '/sbin/reboot' command in the device");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : EXPECTED: Device should come up and the image version should be not null");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv)
+					&& CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Device rebooted and came up successfully");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			/**
+			 * STEP 4: Verify if XDNS feature persist Enable status after device reboot
+			 * <li>EXPECTED: XDNS feature should persist Enable status after device reboot
+			 */
+			// Test step number
+			stepNumber = "s4";
+			// boolean variable to store the status
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : DESCRIPTION : Verify if XDNS feature persist Enable status after device reboot");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : ACTION : Get XDNS feature status using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : EXPECTED: XDNS feature should persist Enable status after device reboot");
+			LOGGER.info("**********************************************************************************");
+			// Error message
+			errorMessage = "Webpa service is not up in the device after reboot. Unable to verify XDNS feature status.";
+			if (BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true)) {
+				// Error message
+				errorMessage = "XDNS feature did not persist Enable status after device reboot";
+				response = tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS);
+				if (CommonMethods.isNotNull(response)
+						&& CommonUtils.patternSearchFromTargetString(response, AutomaticsConstants.TRUE)) {
+					status = true;
+				}
+			}
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : XDNS Feature is enabled after rebooting the device.");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+			/** Step 5 : Backup Secconsole,Pamlog logs to given path */
+			backupMap = BroadBandSnmpTest.helperMethodToBackupFiles(device, tapEnv, testCaseId,
+					BroadBandTestConstants.CONSTANT_5);
+
+			/**
+			 * STEP 6 : Factory Reset the device and verify if device comes up
+			 * <li>EXPECTED: Device should come up after Factory reset
+			 */
+			// Test step number
+			stepNumber = "s6";
+			// boolean variable to store the status
+			status = false;
+
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : DESCRIPTION : Factory Reset the device and verify if device comes up");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : ACTION : Factory Reset the device using webpa param Device.X_CISCO_COM_DeviceControl.FactoryReset");
+			LOGGER.info("STEP :  " + stepNumber + " : EXPECTED: Device should come up after Factory reset");
+			LOGGER.info("#######################################################################################");
+			// Error message
+			errorMessage = "Failed to Tigger Factory Reset/Device didn't come up after Factory Reset.";
+
+			status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
+
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : Device came up after Factory reset successfully.");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+
+			/** Step 7 and Step 8 To validate LED Logs before and after FR */
+			BroadBandSnmpTest.helperMethodToValidateLedLogs(device, tapEnv, backupMap, testCaseId,
+					BroadBandTestConstants.CONSTANT_7);
+
+			/**
+			 * STEP 9: Verify the Captive portal status after Factory reseting the router
+			 * using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable
+			 * <li>EXPECTED: Webpa param
+			 * Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable should return true
+			 * 
+			 */
+			// Test step number
+			stepNumber = "s9";
+			// boolean variable to store the factory reset status
+			factoryResetStatus = true;
+			// boolean variable to store the status
+			status = false;
+			String defaultPartner = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : DESCRIPTION : Verify the Captive portal status after Factory reseting the router using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : ACTION : Get Captive portal status using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : EXPECTED: Webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable should return true");
+			LOGGER.info("**********************************************************************************");
+
+			if (!DeviceModeHandler.isDSLDevice(device)) {
+
+				// Error message
+				errorMessage = "Device is not in Captive portal after factory reset.";
+				try {
+					factoryResetStatus = BroadBandWiFiUtils.verifyCaptivePortalModeUsingWebPaCommand(tapEnv, device);
+				} catch (Exception exe) {
+					errorMessage = "Following Exception occurred while querying the Captive portal status using WebPA/Dmcli command  -> "
+							+ exe.getMessage();
+				}
+
+				if (factoryResetStatus) {
+					LOGGER.info("STEP 9: ACTUAL : Device is in Captive portal after factory reset as excepted.");
+				} else {
+					LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, factoryResetStatus, errorMessage, true);
+			} else if (defaultPartner.equalsIgnoreCase(BroadBandTestConstants.PARTNER_ID_COX)
+					|| defaultPartner.equalsIgnoreCase(BroadBandTestConstants.PARTNER_ID_SHAW)) {
+				errorMessage = "This step is not applicable for Syndication Partner-COX and SHAW";
+				LOGGER.info("STEP " + stepNumber + " - ACTUAL: " + errorMessage);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			} else {
+				errorMessage = "This step is not applicable for DSL device";
+				LOGGER.info("STEP " + stepNumber + " - ACTUAL: " + errorMessage);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
+
+			/**
+			 * STEP 10: Verify if the XDNS feature is Disabled after factory reset using
+			 * webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS
+			 * <li>EXPECTED: XDNS Feature must be Disabled
+			 */
+			// Test step number
+			stepNumber = "s10";
+			// boolean variable to store the status
+			status = false;
+			// Error message
+			errorMessage = "XDNS feature is enabled after factory resetting the device, which is not expected.";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : DESCRIPTION : Verify if the XDNS feature is Disabled after factory reset using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+			LOGGER.info("STEP :  " + stepNumber
+					+ " : ACTION : Get XDNS feature status using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+			LOGGER.info("STEP :  " + stepNumber + " : EXPECTED: XDNS Feature must be disabled");
+			LOGGER.info("**********************************************************************************");
+			long startTime = System.currentTimeMillis();
+			do {
+				response = tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS);
+				status = CommonMethods.isNotNull(response)
+						&& CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.FALSE);
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
+					&& DeviceModeHandler.isDSLDevice(device) && !status
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (status) {
+				LOGGER.info("STEP 10: ACTUAL : XDNS Feature is disabled as expected.");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+		} catch (TestException exception) {
+			LOGGER.error("TC-RDKB-XDNS-1000 : Execution error occured due to exception --> " + exception.getMessage());
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, exception.getMessage(), true);
+		} finally {
+			try {
+				BroadBandPostConditionUtils.executePostConditionForXdns(device, tapEnv, true);
+				if (backupMap != null) {
+					BroadBandPostConditionUtils.executePostCondtDeleteTemporaryFilesInGateway(device, tapEnv,
+							BroadBandTestConstants.CONSTANT_3, backupMap);
+				}
+				LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+			} catch (TestException exception) {
+				LOGGER.error(
+						"TC-RDKB-XDNS-1000 : Execution error occurred while executing post conditions due to exception --> "
+								+ exception.getMessage());
+			}
+		}
+
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-XDNS-1000");
+
+	}
 
 }

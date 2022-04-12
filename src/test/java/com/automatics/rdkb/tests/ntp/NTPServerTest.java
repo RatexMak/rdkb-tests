@@ -286,7 +286,6 @@ public class NTPServerTest extends AutomaticsTestBase {
 		deviceDateTime = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
 		// Setting the Device.Time.Enable to true to start NTP server synch, ntp server
 		// url with incorrect url
-		
 		String ntpServerInvalidUrl = AutomaticsPropertyUtility.getProperty(BroadBandPropertyKeyConstants.PROPKEY_FOR_INVALID_NTPHOST);
 		if (NTPServerUtils.setDeviceTimeEnableParamValue(tapEnv, device, true)) {
 		    status = NTPServerUtils.setDeviceTimeNTPServerParamValue(tapEnv, device, ntpServerInvalidUrl);
