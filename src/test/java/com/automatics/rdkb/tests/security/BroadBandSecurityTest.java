@@ -23,6 +23,7 @@ import java.util.List;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
+import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
@@ -36,6 +37,7 @@ import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
@@ -929,7 +931,7 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
      * manually, that there is no negative effect with this change.</li>
      * </ol>
      * 
-     * @author Praveen Kumar P, ppaner200
+     * @author Praveen Kumar P,  Praveenkumar Paneerselvam
      * @refactor yamini.s
      * @param device
      * @ {@link Dut}
@@ -4153,5 +4155,465 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-SECURITY-1104");
     }
+    
+    /**
+     * Test to verify the sensitive informations are removed from logs
+     * 
+     * <ol>
+     * <li>STEP 1: Verify the 2.4 GHz Private Wi-Fi passphrase is modified via WebPa</li>
+     * <li>STEP 2: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file</li>
+     * <li>STEP 3: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log</li>
+     * <li>STEP 4: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log</li>
+     * <li>STEP 5: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt</li>
+     * <li>STEP 6: Verify the 5 GHz Private Wi-Fi passphrase is modified via WebPa</li>
+     * <li>STEP 7: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file</li>
+     * <li>STEP 8: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in qtn_hal.log</li>
+     * <li>STEP 9: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log</li>
+     * <li>STEP 10: Verify the gateway doesn't 5 GHz Private Wi-Fi log Passphrase in Consolelog.txt</li>
+     * <li>STEP 11: Verify the MoCA can be enabled</li>
+     * <li>STEP 12: Verify the gateway doesn't log Passphrase in MOCAlog.txt</li>
+     * <li>STEP 13: Verify the Signature is removed from CURL command in Consolelog.txt</li>
+     * <li>STEP 14: Verify the Signature is removed from CURL command in ArmConsolelog.txt</li>
+     * <li>Post-Condition: Factory Reset and reactivate the device to default values</li>
+     * </ol>
+     * 
+     * @param device
+     *            The device to be used.
+     * @refactor Said Hisham
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.SECURITY })
+    @TestDetails(testUID = "TC-RDKB-SEC-RM-SENS-INFO-5001")
+    public void testToVerifySensitiveInformationAreRemovedFromLogs(Dut device) {
+
+	String testCaseId = "TC-RDKB-SEC-RM-SENS-INFO-501";
+	String stepNumber = "s1";
+	boolean status = false; // stores the test status
+	String errorMessage = null; // stores the error message
+	String response = null;
+	String ssidPassword = AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_2_4_PRIVATE_SSID_PWD);
+	String ssidPassword5Ghz = AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_5_PRIVATE_SSID_PWD);
+
+	try {
+	    boolean isAtom = CommonMethods.isAtomSyncAvailable(device, tapEnv);
+
+	    /**
+	     * Step 1: Verify the 2.4 GHz Private Wi-Fi passphrase is modified via WebPa
+	     * 
+	     */
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1 :DESCRIPTION: Verify the 2.4 GHz Private Wi-Fi passphrase is modified via WebPa");
+	    LOGGER.info("STEP 1 :ACTION: Execute Webpa command to set the 2.4ghz private wifi passphrase");
+	    LOGGER.info("STEP 1 :EXPECTED: Value of  Private Wi-Fi passphrase of 2.4GHz Radio should be modified");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "The private Wi-Fi Passphrase of 2.4 GHz Radio cannot be modified using webPA Parameter: "
+		    + WebPaParamConstants.WEBPA_PARAM_SSID_PASSWORD_2_4GHZ;
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    WebPaParamConstants.WEBPA_PARAM_SSID_PASSWORD_2_4GHZ, AutomaticsConstants.CONSTANT_0, ssidPassword);
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : The private Wi-Fi Passphrase of 2.4 GHz Radio has been modified successfully");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 2: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file
+	     * 
+	     */
+	    if (status) {
+		stepNumber = "s2";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 2 :DESCRIPTION: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file");
+		LOGGER.info(
+			"STEP 2 :ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file");
+		LOGGER.info("STEP 2 :EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword, BroadBandCommandConstants.LOG_FILE_WEBPA_TEXT, isAtom);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 2: ACTUAL : Gateway didn't log 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file");
+		} else {
+		    LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 3: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log
+		 * 
+		 */
+		stepNumber = "s3";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 3: DESCRIPTION Verify the gateway doesn't log  2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log");
+		LOGGER.info(
+			"STEP 3: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log");
+		LOGGER.info("STEP 3: EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword, BroadBandTestConstants.LOG_FILE_QTN_HAL, isAtom);
+		if (status) {
+		    LOGGER.info("STEP 3: ACTUAL : Gateway didn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log");
+		} else {
+		    LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 4: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log
+		 * 
+		 */
+		stepNumber = "s4";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 4: DESCRIPTION: Verify the gateway doesn't log  2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log");
+		LOGGER.info(
+			"STEP 4: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log");
+		LOGGER.info("STEP 4: EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword, BroadBandTestConstants.LOG_FILE_QTN_SYSTEM_SNAPSHOT, isAtom);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 4: ACTUAL : Gateway didn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log");
+		} else {
+		    LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 5: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt
+		 * 
+		 */
+		stepNumber = "s5";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 5:DESCRIPTION: Verify the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt");
+		LOGGER.info(
+			"STEP 5: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt");
+		LOGGER.info("STEP 5: EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword, BroadBandTestConstants.RDKLOGS_LOGS_CONSOLE_TXT_0, isAtom);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 5: ACTUAL : Gateway didn't log 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt");
+		} else {
+		    LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    } else {
+		int stepNo = BroadBandTestConstants.INTEGER_VALUE_2;
+		while (stepNo < BroadBandTestConstants.CONSTANT_6) {
+		    stepNumber = "S" + stepNo;
+		    LOGGER.info("STEP " + stepNumber
+			    + ": The private Wi-Fi Passphrase of 2.4 GHz Radio is unable to modified using webPA Parameter. So verifying the private Wi-Fi passphrase in logs are not required:");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_TESTED,
+			    errorMessage, false);
+		    stepNo++;
+		}
+	    }
+
+	    /**
+	     * Step 6: Verify the 5 GHz Private Wi-Fi passphrase is modified via WebPa
+	     * 
+	     */
+	    stepNumber = "s6";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION: Verify the 5 GHz Private Wi-Fi passphrase is modified via WebPa");
+	    LOGGER.info("STEP 6: ACTION: Execute Webpa command to set the 5Ghz private wifi passphrase");
+	    LOGGER.info("STEP 6 :EXPECTED: Value of  Private Wi-Fi passphrase of 5GHz Radio should be modified");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "The private Wi-Fi Passphrase of 5 GHz Radio can not be modified using webPA Parameter: "
+		    + WebPaParamConstants.WEBPA_PARAM_SSID_PASSWORD_5GHZ;
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    WebPaParamConstants.WEBPA_PARAM_SSID_PASSWORD_5GHZ, AutomaticsConstants.CONSTANT_0,
+		    ssidPassword5Ghz);
+	    if (status) {
+		LOGGER.info(
+			"STEP 6: ACTUAL : The private Wi-Fi Passphrase of 5 GHz Radio has been modified successfully");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 7: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file
+	     * 
+	     */
+	    if (status) {
+		stepNumber = "s7";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 7: DESCRIPTION:  Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file");
+		LOGGER.info(
+			"STEP 7: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file");
+		LOGGER.info("STEP 7: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 5 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword5Ghz, BroadBandCommandConstants.LOG_FILE_WEBPA_TEXT, isAtom);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 7: ACTUAL : Gateway didn't log 5 GHz Private Wi-Fi Passphrase in WEBPAlog.txt file");
+		} else {
+		    LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 8: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in qtn_hal.log
+		 * 
+		 */
+		stepNumber = "s8";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 8: DESCRIPTION: Verify the gateway doesn't log  5 GHz Private Wi-Fi Passphrase in qtn_hal.log");
+		LOGGER.info(
+			"STEP 8: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_hal.log");
+		LOGGER.info("STEP 8: EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 5 GHz Private Wi-Fi Passphrase in qtn_hal.log";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword5Ghz, BroadBandTestConstants.LOG_FILE_QTN_HAL, isAtom);
+		if (status) {
+		    LOGGER.info("STEP 8: ACTUAL : Gateway didn't log 5 GHz Private Wi-Fi Passphrase in qtn_hal.log");
+		} else {
+		    LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 9: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log
+		 * 
+		 */
+		stepNumber = "s9";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 9: DESCRIPTION: Verify the gateway doesn't log  5 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log");
+		LOGGER.info(
+			"STEP 9: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log");
+		LOGGER.info("STEP 9: EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 5 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword5Ghz, BroadBandTestConstants.LOG_FILE_QTN_SYSTEM_SNAPSHOT, isAtom);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 9: ACTUAL : Gateway didn't log 5 GHz Private Wi-Fi Passphrase in qtn_system_snapshot.log");
+		} else {
+		    LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		/**
+		 * Step 10: Verify the gateway doesn't log 5 GHz Private Wi-Fi Passphrase in Consolelog.txt
+		 * 
+		 */
+		stepNumber = "s10";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 10: DESCRIPTION: Verify the gateway doesn't log  5 GHz Private Wi-Fi Passphrase in Consolelog.txt");
+		LOGGER.info(
+			"STEP 10: ACTION: Execute commands to Verify whether the gateway doesn't log 2.4 GHz Private Wi-Fi Passphrase in Consolelog.txt");
+		LOGGER.info("STEP 10: EXPECTED: It should not contain Passphrase");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "Gateway logged 5 GHz Private Wi-Fi Passphrase in Consolelog.txt";
+		status = BroadBandCommonUtils.verifyLogsInAtomOrArmConsoleWithErrorLogValidations(tapEnv, device,
+			ssidPassword5Ghz, BroadBandTestConstants.RDKLOGS_LOGS_CONSOLE_TXT_0, isAtom);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 10: ACTUAL : Gateway didn't log 5 GHz Private Wi-Fi Passphrase in Consolelog.txt");
+		} else {
+		    LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    } else {
+		int stepNo = BroadBandTestConstants.CONSTANT_7;
+		while (stepNo < BroadBandTestConstants.CONSTANT_11) {
+		    stepNumber = "S" + stepNo;
+		    LOGGER.info("STEP " + stepNumber
+			    + ": The private Wi-Fi Passphrase of 5GHz Radio is unable to modified using webPA Parameter. So verifying the private Wi-Fi passphrase in logs are not required");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_TESTED,
+			    errorMessage, false);
+		    stepNo++;
+		}
+	    }
+	    /**
+	     * Step 11: Verify the MoCA can be enabled
+	     * 
+	     */
+	    stepNumber = "s11";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION: Verify the MoCA can be enabled");
+	    LOGGER.info("STEP 11: ACTION: Execute webpa commands to enable MOCA");
+	    LOGGER.info("STEP 11: EXPECTED: Value of  Private Wi-Fi passphrase of 5GHz Radio should be modified");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "MoCA can not be enabled using WebPa Parameter: "
+		    + WebPaParamConstants.WEBPA_PARAM_ENABLE_MOCA_STATUS;
+	    if (!DeviceModeHandler.isDSLDevice(device)) {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			WebPaParamConstants.WEBPA_PARAM_ENABLE_MOCA_STATUS, AutomaticsConstants.CONSTANT_3,
+			AutomaticsConstants.TRUE);
+		if (status) {
+		    LOGGER.info("STEP 11: ACTUAL : MoCA has been enabled");
+		} else {
+		    LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+			"This test step is not applicable for DSL Devices", false);
+	    }
+
+	    /**
+	     * Step 12: Verify the gateway doesn't log Passphrase in MOCAlog.txt
+	     * 
+	     */
+	    stepNumber = "s12";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 12: DESCRIPTION: Verify the gateway doesn't log Passphrase in MOCAlog.txt");
+	    LOGGER.info(
+		    "STEP 12: ACTION: Execute commands to Verify whether the gateway doesn't log Passphrase in MOCAlog.txt");
+	    LOGGER.info("STEP 12: EXPECTED: It should not contain Passphrase");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Passphrase is logged in MOCAlog.txt";
+	    
+	    if (!DeviceModeHandler.isDSLDevice(device)) {
+		response = isAtom
+			? BroadBandCommonUtils.searchAtomConsoleLogs(tapEnv, device,
+				BroadBandTestConstants.KEY_PASSPHRASE, BroadBandTestConstants.LOG_FILE_MOCA_TEXT)
+			: BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.KEY_PASSPHRASE,
+				BroadBandTestConstants.LOG_FILE_MOCA_TEXT);
+		status = CommonMethods.isNull(response) || (CommonMethods.isNotNull(response)
+			&& !CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.PATTERN_TO_EXTRACT_PASSPHRASE_FROM_MOCA_LOG)
+			&& !CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.NO_ROUTE_TO_HOST)
+			&& !CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.ACCESS_TO_URL_USING_CURL_CONNECTION_TIMEOUT_MESSAGE)
+			&& !CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.STRING_CONNECTION_REFUSED)
+			&& !CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.AUTHENTICATION_FAILED));
+		if (status) {
+		    LOGGER.info("STEP 12: ACTUAL : Passphrase is not logged in MOCAlog.txt");
+		} else {
+		    LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    } else {
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+			"This test step is not applicable for DSL Devices", false);
+	    }
+
+	    /**
+	     * Step 13: Verify the Signature is removed from CURL command in Consolelog.txt
+	     * 
+	     */
+	    stepNumber = "s13";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION: Verify the Signature is removed from CURL command in Consolelog.txt");
+	    LOGGER.info(
+		    "STEP 13: ACTION: Execute commands to Verify whether Signature is removed from CURL command in Consolelog.txt");
+	    LOGGER.info("STEP 13: EXPECTED: It should not contain Passphrase");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "The Signature is not removed from CURL command in Consolelog.txt";
+	    response = isAtom
+		    ? BroadBandCommonUtils.searchAtomConsoleLogs(tapEnv, device, BroadBandTestConstants.CURL,
+			    BroadBandTestConstants.RDKLOGS_LOGS_CONSOLE_TXT_0)
+		    : BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.CURL,
+			    BroadBandTestConstants.RDKLOGS_LOGS_CONSOLE_TXT_0);
+	    status = CommonMethods.isNull(response) || (CommonMethods.isNotNull(response)
+		    && !CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.SIGNATURE)
+		    && !CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.NO_ROUTE_TO_HOST)
+		    && !CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.ACCESS_TO_URL_USING_CURL_CONNECTION_TIMEOUT_MESSAGE)
+		    && !CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.STRING_CONNECTION_REFUSED)
+		    && !CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.AUTHENTICATION_FAILED));
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL : The Signature is removed from CURL command in Consolelog.txt");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	    /**
+	     * Step 14: Verify the Signature is removed from CURL command in Consolelog.txt
+	     * 
+	     */
+	    stepNumber = "s14";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 14: DESCRIPTION: Verify the Signature is removed from CURL command in ArmConsolelog.txt");
+	    LOGGER.info(
+		    "STEP 14: ACTION: Execute commands to Verify whether Signature is removed from CURL command in ArmConsolelog.txt");
+	    LOGGER.info("STEP 14: EXPECTED: It should not contain Passphrase");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "The Signature is not removed from CURL command in ArmConsolelog.txt";
+	    response = isAtom
+		    ? BroadBandCommonUtils.searchAtomConsoleLogs(tapEnv, device, BroadBandTestConstants.CURL,
+			    BroadBandTestConstants.RDKLOGS_LOGS_ARM_CONSOLE_0)
+		    : BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.CURL,
+			    BroadBandTestConstants.RDKLOGS_LOGS_ARM_CONSOLE_0);
+	    status = CommonMethods.isNull(response) || (CommonMethods.isNotNull(response)
+		    && !CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.SIGNATURE)
+		    && !CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.NO_ROUTE_TO_HOST)
+		    && !CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.ACCESS_TO_URL_USING_CURL_CONNECTION_TIMEOUT_MESSAGE)
+		    && !CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.STRING_CONNECTION_REFUSED)
+		    && !CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.AUTHENTICATION_FAILED));
+	    if (status) {
+		LOGGER.info("STEP 14: ACTUAL : The Signature is removed from CURL command in ArmConsolelog.txt");
+	    } else {
+		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	} catch (Exception testException) {
+	    errorMessage = "Exception occurred while trying to verify the sensitive informations are removed from logs"
+		    + testException.getMessage();
+	    LOGGER.error(errorMessage);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SEC-RM-SENS-INFO-5001");
+    }
+
 
 }

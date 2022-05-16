@@ -19,7 +19,9 @@ package com.automatics.rdkb.tests.telemetry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.http.HttpStatus;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -37,12 +39,14 @@ import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.dmcli.DmcliUtils;
 import com.automatics.rdkb.utils.telemetry.BroadBandTelemetryUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -1407,5 +1411,509 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-1004");
     }
+    
+    /**
+     * Test Case : Verify telemetry/logging for memory fragmentation details
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>Set and verify CPU Memory fragmentation interval as 121 using webpa</li>
+     * <li>Set CPU Memory fragmentation interval as 1 using RFC</li>
+     * <li>Verify CPU memory fragmentation configuration updated through RFC in dcmrfc.log file</li>
+     * <li>Verify CPU Memory fragmentation interval changed to 1 hour interval</li>
+     * <li>Verify cron job is scheduled</li>
+     * <li>Verify CPU fragmentation details log message in CPUInfo.txt.0 file</li>
+     * <li>Verify Log message format in CPUInfo.txt.0 file</li>
+     * <li>Get CPU fragmentation details from /proc/buddyinfo</li>
+     * <li>Verify default primary and secondary CPU fragmentation zone values using webpa</li>
+     * <li>POST-CONDITION 1 : Set CPU fragmentation interval to default</li>
+     * <li>POST-CONDITION 2 : Begin Broadband Device Reactivation/li>
+     * <li>POST-CONDITION 3 : Revert the status of Periodic firmware check to default value</li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Betel Costrow
+     * @refactor Said Hisham
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-TELEMETRY-1006")
+    public void testToVerifyTelemetryMemoryFragmentationDetails(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-TELEMETRY-106";
+	String stepNum = "s1";
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	int postConditionStepNum = BroadBandTestConstants.CONSTANT_1;
+	String marginValue = BroadBandTestConstants.STRING_VALUE_12 + BroadBandTestConstants.STRING_VALUE_ONE;
+	String pattenMatcher = null;
+	String searchLogMessage = null;
+	List<String> arrPrimaryZones = new ArrayList<String>();
+	List<String> arrSecondaryZones = new ArrayList<String>();
+	List<String> arrPrimaryValues = new ArrayList<String>();
+	List<String> arrSecondaryValues = new ArrayList<String>();
+	List<String> arrBuddyInfo = new ArrayList<String>();
+	List<String> arrBuddyInfoAtomDevice = new ArrayList<String>();
+	String[] arrExecuteMultiplePrimaryParams = new String[4];
+	arrExecuteMultiplePrimaryParams[0] = BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_CPU_MEMFRAG_DMA;
+	arrExecuteMultiplePrimaryParams[1] = BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_CPU_MEMFRAG_DMA32;
+	arrExecuteMultiplePrimaryParams[2] = BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_CPU_MEMFRAG_NORMAL;
+	arrExecuteMultiplePrimaryParams[3] = BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_CPU_MEMFRAG_HIGHMEM;
+	String arrExecuteMultipleSecondaryParams[] = new String[4];
+	arrExecuteMultipleSecondaryParams[0] = BroadBandWebPaConstants.WEBPA_PARAM_SECONDARY_CPU_MEMFRAG_DMA;
+	arrExecuteMultipleSecondaryParams[1] = BroadBandWebPaConstants.WEBPA_PARAM_SECONDARY_CPU_MEMFRAG_DMA32;
+	arrExecuteMultipleSecondaryParams[2] = BroadBandWebPaConstants.WEBPA_PARAM_SECONDARY_CPU_MEMFRAG_NORMAL;
+	arrExecuteMultipleSecondaryParams[3] = BroadBandWebPaConstants.WEBPA_PARAM_SECONDARY_CPU_MEMFRAG_HIGHMEM;
+	boolean defaultValue = false;
+	boolean removingRfcProfile = false;
+	boolean postExecution = false;
+	boolean isFactoryReset = false;
+	String fileName = null;
+	// Variable Declaration Ends
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-TELEMETRY-1006");
+	LOGGER.info("TEST DESCRIPTION: Verify telemetry/logging for memory fragmentation details");
+	LOGGER.info("TEST STEPS : ");
+
+	LOGGER.info("1. Set and verify CPU Memory fragmentation interval as 121 using webpa  ");
+	LOGGER.info("2. Set CPU Memory fragmentation interval as 1 using RFC ");
+	LOGGER.info("3. Verify CPU memory fragmentation configuration updated through RFC in dcmrfc.log file");
+	LOGGER.info("4. Verify CPU Memory fragmentation interval changed to 1 hour interval");
+	LOGGER.info("5. Verify  cron job is scheduled");
+	LOGGER.info("6. Verify CPU fragmentation details log message in CPUInfo.txt.0 file");
+	LOGGER.info("7. Verify Log message format in CPUInfo.txt.0 file");
+	LOGGER.info("8. Get CPU fragmentation details from /proc/buddyinfo");
+	LOGGER.info("9. Verify default primary and secondary CPU fragmentation zone values using webpa");
+	LOGGER.info("POST-CONDITION 1 : Set CPU fragmentation interval to default");
+	LOGGER.info("POST-CONDITION 2 : Begin Broadband Device Reactivation");
+	LOGGER.info("POST-CONDITION 3 : Revert the status of Periodic firmware check to default value");
+	LOGGER.info("#######################################################################################");
+	try {
+
+	    /**
+	     * Step 1 : Set and verify CPU Memory fragmentation interval as 121 using webpa
+	     */
+	    stepNum = "s1";
+	    errorMessage = "Unable to Change CPU Memory fragmentation interval as 121 using webpa ";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Set and verify CPU Memory fragmentation interval as 121 using webpa  ");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute webpa set command:parameter: Device.SelfHeal.X_RDKCENTRAL-COM_CpuMemFragIntervaldata type: unsignedintvalue: 121");
+	    LOGGER.info("STEP 1: EXPECTED : Webpa set operation should fail.");
+	    LOGGER.info("***************************************************************************************");
+	    status = !BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_CPU_FRAGMENTATION_INTERVAL, BroadBandTestConstants.CONSTANT_2,
+		    marginValue);
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : Not able to set CPU memory fragmentation interval as 121 because 1 to 120 can set as CPU memory fragmentation interval");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 2 : Set CPU Memory fragmentation interval as 1 using webpa
+	     */
+	    stepNum = "s2";
+	    errorMessage = "Unable to set CPU Memory fragmentation interval as 1 using RFC  ";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Set CPU Memory fragmentation interval as 1 using RFC ");
+	    LOGGER.info("STEP 2: ACTION : Update CPU memory fragmentation interval value using RFC");
+	    LOGGER.info("STEP 2: EXPECTED :Parameter should updated with new value");
+	    LOGGER.info("***************************************************************************************");
+
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_CPU_MEMORY_FRAGMENTATION, true);
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfully updated CPU fragmentation interval using RFC");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 3 : Verify CPU memory fragmentation configuration updated through RFC in dcmrfc.log file
+	     */
+	    stepNum = "s3";
+	    errorMessage = "Failed to get the log message in dcmrfc.log file";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION: Verify CPU memory fragmentation configuration updated through RFC in dcmrfc.log file");
+	    LOGGER.info("STEP 3: ACTION: grep -i CPU_MEMORY_FRAGMENTATION /rdklogs/logs/dcmrfc.log");
+	    LOGGER.info("STEP 3: EXPECTED: Response should contain the log message in dcmrfc.log file");
+	    LOGGER.info("******************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_CPU_MEMORY_FRAGMENTATION,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info(
+			"STEP 3: ACTUAL: Successfully verified the CPU memory fragmentation configuration log message in dcmrfc.log file");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 4: Verify default CPU Memory fragmentation interval
+	     */
+	    stepNum = "s4";
+	    errorMessage = "Unable to check default CPU Memory fragmentation interval";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify CPU Memory fragmentation interval changed to 1 hour interval");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute webpa get command:Device.SelfHeal.X_RDKCENTRAL-COM_CpuMemFragInterval");
+	    LOGGER.info("STEP 4: EXPECTED : Webpa get operation should get response code as 200 and the value as 1hrs");
+	    LOGGER.info("***************************************************************************************");
+
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_CPU_FRAGMENTATION_INTERVAL,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : Verified CPU fragmentation interval through Webpa & response is " + response);
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 5 : Verify cron job is scheduled
+	     */
+	    stepNum = "s5";
+	    errorMessage = "Unable to check  crontab time interval for buddyinfo";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify  cron job is scheduled");
+	    LOGGER.info("STEP 5: ACTION : Execute command:crontab -l -c /var/spool/cron/crontabs ");
+	    LOGGER.info("STEP 5: EXPECTED : Response should contain " + "0 1,2,"
+		    + "3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23 * * * log_buddyinfo.sh");
+	    LOGGER.info("***************************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CRONTAB_EXECUTE_BUDDYINFO);
+	    if (CommonMethods.isNotNull(response)) {
+		response = CommonMethods.patternFinder(response,
+			BroadBandTestConstants.PATTERN_TO_FETCH_CRONTAB_TIME_INTERVAL_FOR_1HR);
+		LOGGER.info("This time interval scheduled in cron tab " + response);
+		status = CommonMethods.isNotNull(response)
+			&& response.equalsIgnoreCase(BroadBandTestConstants.ONE_HRS_TIME_INTERVAL);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Cron job is scheduled for 1 hour CPU fragmentation interval");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 6 : Verify CPU fragmentation details log message in CPUInfo.txt.0 file
+	     */
+	    stepNum = "s6";
+	    errorMessage = "Unable to verify CPU fragmentation details log message in CPUInfo.txt.0 file";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify CPU fragmentation details log message in CPUInfo.txt.0 file");
+	    LOGGER.info("STEP 6: ACTION : Execute command:cat /rdklogs/logs/CPUInfo.txt.0");
+	    LOGGER.info("STEP 6: EXPECTED : Response should contain the log message" + "Sample output:"
+		    + "2019-04-24 [07:32:18] PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-Normal,..."
+		    + "2019-04-24 [07:32:18] PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA,..."
+		    + "2019-04-24 [07:32:18] PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-Normal,...");
+	    LOGGER.info("***************************************************************************************");
+	    try {
+		tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_TRIGGER_LOG_BUDDYINFO);
+		tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_TRIGGER_LOG_MEM_CPU_INFO);
+		response = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_TO_GET_PROCESS_MEM_LOG_COUNT);
+		if (CommonMethods.isNotNull(response)
+			&& (!CommonMethods.patternMatcher(response, BroadBandTestConstants.STRING_VALUE_12))) {
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_SET_PROCESS_MEM_LOG_COUNT);
+		    response = tapEnv.executeCommandUsingSsh(device,
+			    BroadBandCommandConstants.CMD_TO_GET_PROCESS_MEM_LOG_COUNT);
+		    if (CommonMethods.isNotNull(response)
+			    && CommonMethods.patternMatcher(response, BroadBandTestConstants.STRING_VALUE_12)) {
+			tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_CPU_INFO);
+		    } else {
+			errorMessage = "Unable to set process_memory_log_count to 12 ";
+		    }
+		}
+	    } catch (Exception e) {
+		errorMessage = errorMessage + e.getMessage();
+		LOGGER.error("Exception occured during execution" + errorMessage);
+	    }
+	    if (CommonMethods.isNotNull(response)) {
+		arrPrimaryZones = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			BroadBandTestConstants.PATTERN_TO_FETCH_HOST_ZONES_CPU_MEMFRAG);
+		arrPrimaryValues = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			BroadBandTestConstants.PATTERN_TO_FETCH_HOST_VALUES_CPU_MEMFRAG);
+		if ((arrPrimaryZones == null || arrPrimaryZones.isEmpty()) && arrPrimaryValues == null
+			|| (arrPrimaryValues.isEmpty())) {
+
+		    LOGGER.info("HOST memory does not have any zones and values");
+		} else {
+		    LOGGER.info("These are the zones present in CPUInfo.txt.0 for HOST : " + arrPrimaryZones);
+		    LOGGER.info("These are the Values present in CPUInfo.txt.0 for HOST : " + arrPrimaryValues);
+		    status = true;
+		}
+	    } else {
+		LOGGER.info("CPUInfo.txt.0 doesnot have log for HOST memory");
+	    }
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
+		status = false;
+		if (CommonMethods.isNotNull(response)) {
+		    arrSecondaryZones = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			    BroadBandTestConstants.PATTERN_TO_FETCH_PEER_ZONES_CPU_MEMFRAG);
+		    arrSecondaryValues = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			    BroadBandTestConstants.PATTERN_TO_FETCH_PEER_VALUES_CPU_MEMFRAG);
+		    if ((arrSecondaryZones == null || arrSecondaryZones.isEmpty()) && arrSecondaryValues == null
+			    || (arrSecondaryValues.isEmpty())) {
+			LOGGER.info("PEER memory does not have any zones and values");
+		    } else {
+			LOGGER.info("These are the zones present in CPUInfo.txt.0 for PEER : " + arrSecondaryZones);
+
+			LOGGER.info("These are the Values present in CPUInfo.txt.0 for PEER : " + arrSecondaryValues);
+			status = true;
+		    }
+		} else {
+		    LOGGER.info("CPUInfo.txt.0 doesnot have log for PEER memory");
+		}
+	    } else {
+		LOGGER.info("It is only applicable for Atom based devices");
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Verified CPU fragmentation log message in CPUInfo.txt.0 file");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 7 : Verify Log message format in CPUInfo.txt.0 file
+	     */
+	    stepNum = "s7";
+	    errorMessage = "Unable verify Log message format in CPUInfo.txt.0 file";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify Log message format in CPUInfo.txt.0 file");
+	    LOGGER.info("STEP 7: ACTION : Execute command:cat /rdklogs/logs/CPUInfo.txt.0");
+	    LOGGER.info("STEP 7: EXPECTED : Log message format should be Timestamp:CPU Mem Frag:zone:value");
+	    LOGGER.info("***************************************************************************************");
+	    if (CommonMethods.isNotNull(response)) {
+		status = CommonMethods.patternMatcher(response,
+			BroadBandTestConstants.PATTERN_TO_CHECK_CPU_FRAGMENTATION_FORMAT);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : Log messages are present in correct format in CPUInfo.txt.0 file");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step8 : Get CPU fragmentation details from /proc/buddyinfo
+	     */
+	    stepNum = "s8";
+	    errorMessage = "Unable to fetch details from buddyinfo";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Get CPU fragmentation details from /proc/buddyinfo");
+	    LOGGER.info("STEP 8: ACTION : Execute command:cat /proc/buddyinfo");
+	    LOGGER.info("STEP 8: EXPECTED : Response should contain the CPU fragmentation details" + "Sample output:"
+		    + "~ # cat /proc/buddyinfo"
+		    + "Node 0, zone   Normal      9     24     86     36      6      3      2      2      2      3     13");
+	    LOGGER.info("***************************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_BUDDYINFO);
+	    if (CommonMethods.isNotNull(response)) {
+		arrBuddyInfo = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			BroadBandTestConstants.PATTERN_TO_FETCH_BUDDYINFO);
+		LOGGER.info("These are the logs present in buddyinfo: " + arrBuddyInfo);
+		status = BroadBandCommonUtils.convertListOfStringsToLowerCase(arrBuddyInfo)
+			.equals(BroadBandCommonUtils.convertListOfStringsToLowerCase(arrPrimaryZones));
+		LOGGER.info("CPUInfo.txt.0 and buddyinfo having same zones for host");
+
+	    } else {
+		LOGGER.info("CPU fragmentation details is not present for host memory in buddyinfo");
+	    }
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
+		status = false;
+		response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_BUDDYINFO);
+		if (CommonMethods.isNotNull(response)) {
+		    arrBuddyInfoAtomDevice = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			    BroadBandTestConstants.PATTERN_TO_FETCH_BUDDYINFO);
+		    LOGGER.info("These are the logs present in buddyinfo: " + arrBuddyInfoAtomDevice);
+		    status = (arrBuddyInfoAtomDevice.equals(arrSecondaryZones));
+		    LOGGER.info("CPUInfo.txt.0 and buddyinfo having same zones for peer");
+
+		} else {
+		    LOGGER.info("CPU fragmentation details is not present for peer memory in buddyinfo");
+		}
+	    } else {
+		LOGGER.info("It is only applicable for Atom based devices");
+	    }
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : CPU Fragmentation details are present in /proc/buddyinfo");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 9 : Verify default primary and Secondary CPU fragmentation zone values using webpa
+	     */
+	    stepNum = "s9";
+	    errorMessage = "Unable to verify default primary and secondary CPU fragmentation zone values using webpa";
+	    status = false;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info(
+		    "STEP 9: DESCRIPTION : Verify default primary and Secondary CPU fragmentation zone values using webpa");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Execute webpa get command:Device.SelfHeal.CpuMemFrag.1.DMA, Device.SelfHeal.CpuMemFrag.1.DMA32, Device.SelfHeal.CpuMemFrag.1.Normal, and Device.CpuMemFrag.1.Highmem,Device.SelfHeal.CpuMemFrag.2.DMA, Device.SelfHeal.CpuMemFrag.2.DMA32, Device.SelfHeal.CpuMemFrag.2.Normal, and Device.CpuMemFrag.2.Highmem");
+	    LOGGER.info(
+		    "STEP 9: EXPECTED : Response should contain the primary and secondary CPU memory fragmentation details");
+	    LOGGER.info("***************************************************************************************");
+
+	    Map<String, String> webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device,
+		    arrExecuteMultiplePrimaryParams);
+	    LOGGER.info("Compare the values in CPUInfo.txt.0 " + arrPrimaryValues
+		    + " and cpu memory fragmentation details through webpa parameter " + webpaResponseMap);
+	    for (String param : webpaResponseMap.values()) {
+		if (arrPrimaryValues.contains(webpaResponseMap.get(param))
+			|| CommonMethods.isNull(webpaResponseMap.get(param))) {
+		    status = true;
+		} else {
+		    status = false;
+		    break;
+		}
+	    }
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
+		status = false;
+		webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device, arrExecuteMultipleSecondaryParams);
+		LOGGER.info("Compare the values in CPUInfo.txt.0 " + arrSecondaryValues
+			+ " and cpu memory fragmentation details through webpa parameter " + webpaResponseMap);
+		for (String param : webpaResponseMap.values()) {
+		    if (arrSecondaryValues.contains(webpaResponseMap.get(param))
+			    || CommonMethods.isNull(webpaResponseMap.get(param))) {
+
+			status = true;
+		    } else {
+			status = false;
+			break;
+		    }
+		}
+	    } else {
+		LOGGER.info("Its is applicable for AtomSyncDevices devices only");
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 9: ACTUAL : Verified primary and secondary CPU fragmentation zone values using webpa");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, false, errorMessage,
+		    false);
+	} finally {
+	    status = false;
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    /**
+	     * Post-Condition 1 : Set CPU fragmentation interval to default
+	     */
+	    LOGGER.info("###########################################################################");
+	    LOGGER.info("POST-CONDITION " + postConditionStepNum
+		    + ": DESCRIPTION : Set CPU fragmentation interval to default and Removing RFC profile from Proxy xconf dcm server");
+	    LOGGER.info("POST-CONDITION " + postConditionStepNum
+		    + " : ACTION : Device.SelfHeal.X_RDKCENTRAL-COM_CpuMemFragInterval");
+	    LOGGER.info("POST-CONDITION " + postConditionStepNum
+		    + " : EXPECTED : Webpa parameter should set CPU fragmentation interval to default and RFC profile should be removed");
+	    LOGGER.info("###########################################################################");
+
+	    defaultValue = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_CPU_FRAGMENTATION_INTERVAL, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_CONSTANT_4);
+	    removingRfcProfile = (HttpStatus.SC_OK == BroadBandRfcFeatureControlUtils
+		    .clearSettingsInProxyXconfDcmServerForRDKB(device, tapEnv, false,
+			    BroadBandTraceConstants.LOG_MESSAGE_CPU_MEMORY_FRAGMENTATION));
+	    status = defaultValue && removingRfcProfile;
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION " + postConditionStepNum
+			+ " : ACTUAL : Successfully changed CPU fragmentation interval to default and Removed RFC profile Proxy xconf dcm server");
+	    } else {
+		LOGGER.error("POST-CONDITION " + postConditionStepNum + " : ACTUAL : "
+			+ (defaultValue ? "" : " Unable to change CPU fragmentation interval to default")
+			+ (removingRfcProfile ? "" : "RFC profile is not removed from Proxy xconf dcm server"));
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    /**
+	     * Post-Condition 2 : BEGIN BROAD BAND DEVICE REACTIVATION
+	     */
+	    if (isFactoryReset) {
+		++postConditionStepNum;
+		LOGGER.info("###########################################################################");
+		LOGGER.info("POST-CONDITION " + postConditionStepNum
+			+ " : DESCRIPTION : BEGIN BROAD BAND DEVICE REACTIVATION.");
+		LOGGER.info("POST-CONDITION " + postConditionStepNum + " : ACTION : BROAD BAND DEVICE REACTIVATION. ");
+		LOGGER.info("POST-CONDITION " + postConditionStepNum + " : EXPECTED : device should get reactivated");
+		LOGGER.info("###########################################################################");
+		BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
+	    }
+	    /**
+	     * Post-Condition 3 : Revert periodic firmware check process to deafult value
+	     */
+	    if (postExecution) {
+		++postConditionStepNum;
+		LOGGER.info("#####################################################################################");
+		LOGGER.info("POST-CONDITION " + postConditionStepNum
+			+ ": DESCRIPTION : Revert periodic firmware check process to deafult value");
+		LOGGER.info("POST-CONDITION " + postConditionStepNum
+			+ ": ACTION : Execute webpa command to set finger print enable parameter to true");
+		LOGGER.info(
+			"POST-CONDITION " + postConditionStepNum + ": EXPECTED : Post condition executed successfully");
+		LOGGER.info("#####################################################################################");
+		status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE, BroadBandTestConstants.CONSTANT_3,
+			BroadBandTestConstants.FALSE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+
+		if (status) {
+		    LOGGER.info("POST-CONDITION " + postConditionStepNum
+			    + ": ACTUAL : Post condition executed successfully");
+		} else {
+		    LOGGER.error("POST-CONDITION " + postConditionStepNum + ": ACTUAL : Post condition failed");
+		}
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+
+	    LOGGER.info("################### ENDING POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-1006");
+    }
+
 
 }

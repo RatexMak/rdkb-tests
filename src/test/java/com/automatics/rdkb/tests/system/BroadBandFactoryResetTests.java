@@ -1174,8 +1174,8 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
     /**
      * Test method used to enable the bridge mode
      * 
-     * @param settop
-     *            Instance of {@link Settop}
+     * @param device
+     *            Instance of {@link Dut}
      * @param testId
      *            Test case ID
      * @param stepNumber

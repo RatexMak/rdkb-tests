@@ -893,13 +893,13 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
      * @param device
      *            {@link Dut}
      * @param ethernetClient
-     *            Settop object representing the Ethernet Client
+     *            Dut object representing the Ethernet Client
      * @param is2GhzRadio
      *            Boolean flag representing the 2.4GHz/5GHz Radio; TRUE if 2.4GHz Radio; else FALSE
      * @param startedCapturingWiFiPackets
      *            Boolean representing the flag whether packet capture started successfully
      */
-    private void executePostCondition(Dut settop, Dut ethernetClient, boolean is2GhzRadio) throws TestException {
+    private void executePostCondition(Dut device, Dut ethernetClient, boolean is2GhzRadio) throws TestException {
 	boolean status = false;
 	String errorMessage = null;
 	String webpaParam = is2GhzRadio ? BroadBandWebPaConstants.WEBPA_PARAM_FOR_WIFI_AUTOCHANNELENABLE_STATUS_2GHZ
@@ -912,7 +912,7 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 	LOGGER.info("POST-CONDITION 1 : EXPECTED : CHANNEL SELECTION MODE MUST BE CHANGED TO 'AUTO'");
 	LOGGER.info("#######################################################################################");
 	try {
-	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(settop, tapEnv, webpaParam,
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv, webpaParam,
 		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
 	} catch (Exception exception) {
 	    errorMessage = "Unable to change the channel selection mode to 'Auto' using WebPA Param " + webpaParam;
@@ -922,7 +922,7 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 	    try {
 		BroadBandSnmpMib wifiAutoChannelMib = is2GhzRadio ? BroadBandSnmpMib.ECM_WIFI_2_4_CHANNEL_INFO
 			: BroadBandSnmpMib.ECM_WIFI_5_CHANNEL_INFO;
-		String response = BroadBandSnmpUtils.executeSnmpSetWithTableIndexOnRdkDevices(tapEnv, settop,
+		String response = BroadBandSnmpUtils.executeSnmpSetWithTableIndexOnRdkDevices(tapEnv, device,
 			wifiAutoChannelMib.getOid(), SnmpDataType.UNSIGNED_INTEGER, BroadBandTestConstants.STRING_ZERO,
 			wifiAutoChannelMib.getTableIndex());
 		status = CommonMethods.isNotNull(response)

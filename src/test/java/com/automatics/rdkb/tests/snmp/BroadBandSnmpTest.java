@@ -47,6 +47,7 @@ import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
+import com.automatics.rdkb.enums.BroadBandWhixEnumConstants.WEBPA_AP_INDEXES;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
@@ -66,6 +67,7 @@ import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
+import com.automatics.webpa.WebPaParameter;
 
 public class BroadBandSnmpTest extends AutomaticsTestBase {
 
@@ -1766,8 +1768,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
      * 
      * Step 3: Validate the IP returned in the above response is in line with the TR-181 parameters
      * 
-     * @param settop
-     *            The settop to be used.
+     * @param device
+     *            The device to be used.
      * 
      * @author Sathurya Ravi
      * @Refactor Alan_Bivera
@@ -2642,7 +2644,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
      * 
      * @param device
      *            {@link Dut}
-     * @author dsekar054
+     * @author Deepika Sekar
      * @refactor anandam
      *
      */
@@ -6690,6 +6692,286 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	    result = false;
 	    LOGGER.error("Unable to reset MTA of the device");
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, result, errorMessage, false);
+	}
+    }
+    
+    /**
+     * Validate the SSID name and BSSID of the Publicwifi
+     * <ol>
+     * <li>1. Perform factory reset on the unit via WebPa</li>
+     * <li>2. Cross validate the 2.4 GHz BSSID Mac via webpa</li>
+     * <li>3. Cross validate the 5 GHz BSSID Mac via webpa</li>
+     * <li>4. Get the SSID of the 2.4 GHz public wifi via webpa</li>
+     * <li>5. Get the SSID of the 5 GHz public wifi via webpa</li>
+     * <li>6. Enable public wifi on the device</li>
+     * <li>7. Get the SSID of the 2.4 GHz public wifi via webpa</li>
+     * <li>8. Get the SSID of the 5 GHz public wifi via webpa</li>
+     * </ol>
+     * @refactor Govardhan
+     */
+
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-PUBLIC-WIFI-CONFIG-1001")
+    public void testVerifyPublicWifiMibs(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-PUBLIC-WIFI-CONFIG-001";
+	int stepNumber = 1;
+	String stepNum = null;
+	String errorMessage = null;
+	String bssid_24 = null;
+	String bssid_5 = null;
+	String response = null;
+	boolean status = false;
+	boolean isFactoryReset = false;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-PUBLIC-WIFI-CONFIG-1001");
+	LOGGER.info("TEST DESCRIPTION: Validate the SSID name and BSSID of the Publicwifi");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Perform factory reset on the unit via WebPa ");
+	LOGGER.info("2. Cross validate the 2.4 GHz BSSID Mac via webpa ");
+	LOGGER.info("3. Cross validate the 5 GHz BSSID Mac via webpa ");
+	LOGGER.info("4. Get the SSID of the 2.4 GHz public wifi via webpa ");
+	LOGGER.info("5. Get the SSID of the 5 GHz public wifi via webpa ");
+	LOGGER.info("6. Enable public wifi on the device ");
+	LOGGER.info("7. Get the SSID of the 2.4 GHz public wifi via webpa ");
+	LOGGER.info("8. Get the SSID of the 5 GHz public wifi via webpa ");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    // STEP 1 : Perform factory reset on the unit via WebPa
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to factory reset via WebPa has failed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Perform factory reset on the unit via WebPa");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute WebPa SET command on the object "
+		    + "Device.X_CISCO_COM_DeviceControl.FactoryReset using the command,"
+		    + " \"curl --request SET --url \"<WEBPA_URL>:<ECM MAC>/config?names" + "=Device.X_CISCO_COM_DeviceControl.FactoryReset\" "
+		    + "--header \"authorization: Bearer <SAT-TOKEN>\"\"");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : The parameter should get set successfully and return a 200 success response");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
+	    isFactoryReset = status;
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to factory reset via WebPa is successful");
+		LOGGER.info("Waiting for a minute..");
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    // STEP 2 : Cross validate the 2.4 GHz BSSID Mac via webpa
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to retrieve 2.4 GHz public wifi BSSID Mac has failed via webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION :Verify the 2.4 GHz BSSID Mac via webpa");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute WebPa GET command on the object Device.WiFi.SSID.10003.BSSID"
+		    + " using the command, \"curl --request GET --url " + "'<WEBPA_URL>:<ECM MAC>/config?names="
+		    + "Device.WiFi.SSID.10003.BSSID ' --header 'authorization: Bearer <SAT-TOKEN>'\"");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : The BSSID from webpa should be retieved sucessfully ");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PUBLIC_WIFI_SSID_BSSID
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, WEBPA_AP_INDEXES.PUBLIC_WIFI.get24Ghz()));
+	    LOGGER.info("2.4 GHz Public wifi BSSID Mac = " + response);
+	    status = CommonMethods.isNotNull(response) && CommonMethods.isMacValid(response);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : The 2.4 GHz BSSID Mac address for public wifi is as expected");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    // STEP 3 : Cross validate the 5 GHz BSSID Mac via webpa
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to retrieve 5 GHz public wifi BSSID Mac has failed via webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify 5 GHz BSSID Mac via webpa");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute WebPa GET command on the object Device.WiFi.SSID.10103.BSSID"
+		    + " using the command, \"curl --request GET --url " + "'<WEBPA_URL>:<ECM MAC>/config?names="
+		    + "Device.WiFi.SSID.10103.BSSID ' --header 'authorization: Bearer <SAT-TOKEN>'\"");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : The BSSID from webpa should be retieved sucessfully");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PUBLIC_WIFI_SSID_BSSID
+			    .replace(BroadBandTestConstants.TR181_NODE_REF, WEBPA_AP_INDEXES.PUBLIC_WIFI.get5Ghz()));
+	    LOGGER.info("5 GHz Public wifi BSSID Mac = " + response);
+	    status = CommonMethods.isNotNull(response) && CommonMethods.isMacValid(response);
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + ": ACTUAL : The 5 GHz BSSID Mac address for public wifi is as expected");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    // STEP 4 : Get the SSID of the 2.4 GHz public wifi via webpa
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to retrieve 2.4 GHz public wifi SSID has failed via webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Get the SSID of the 2.4 GHz public wifi via webpa");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute the following webpa command"
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID);
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : The following response should be received. : \"OutOfService\"");
+	    LOGGER.info("**********************************************************************************");
+	    String ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID);
+	    LOGGER.info("2.4GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
+	    status = CommonMethods.isNotNull(ssidNameFromWebPa)
+		    && ssidNameFromWebPa.equals(BroadBandTestConstants.OUTOFSERVICE);
+	    if (status) {
+		bssid_24 = response;
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The 2.4 GHz SSID for public wifi is as expected");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    // STEP 5 : Get the SSID of the 5 GHz public wifi via webpa
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to retrieve 5 GHz public wifi SSID has failed via webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Get the SSID of the 5 GHz public wifi via SNMP");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute WebPa GET command on the object Device.WiFi.SSID.10003.BSSID");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : The following response should be received. \"OutOfService\"");
+	    LOGGER.info("**********************************************************************************");
+	    ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
+	    LOGGER.info("5GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
+	    status = CommonMethods.isNotNull(ssidNameFromWebPa)
+		    && ssidNameFromWebPa.equals(BroadBandTestConstants.OUTOFSERVICE);
+	    if (status) {
+
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The 5 GHz SSID for public wifi is as expected");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    // STEP 6 : Enable public wifi on the device
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to enable public wifi on device has failed";
+	    status = false;
+	    BroadBandResultObject resultObject = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Enable public wifi on the device ");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Enable public wifi on the device via webpa");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : public wifi should get enabled successfuly");
+	    LOGGER.info("**********************************************************************************");
+
+	    List<WebPaParameter> webPaParameters = BroadBandWebPaUtils.getListOfWebpaParametersForBothPublicWifis();
+	    resultObject = BroadBandWebPaUtils.executeSetAndGetOnMultipleWebPaGetParams(device, tapEnv,
+		    webPaParameters);
+	    status = resultObject.isStatus();
+	    errorMessage = resultObject.getErrorMessage();
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to enable public wifi on device is successful");
+		LOGGER.info("Waiting for 60 seconds for the changes to take effect");
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    
+	    // STEP 7 : Get the SSID of the 2.4 GHz public wifi via webpa
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to retrieve 2.4 GHz public wifi SSID has failed via SNMP";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Get the SSID of the 2.4 GHz public wifi via webpa");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute the following webpa command"
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID);
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : The following response should be received. : \"OutOfService\"");
+	    LOGGER.info("**********************************************************************************");
+	    ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID);
+	    LOGGER.info("2.4GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
+	    status = CommonMethods.isNotNull(ssidNameFromWebPa)
+		    && ssidNameFromWebPa.equals(BroadBandTestConstants.OUTOFSERVICE);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The 2.4 GHz SSID for public wifi is as expected");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    // STEP 8 : Get the SSID of the 5 GHz public wifi via webpa
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to retrieve 5 GHz public wifi SSID has failed via SNMP";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Get the SSID of the 5 GHz public wifi via SNMP");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute WebPa GET command on the object Device.WiFi.SSID.10003.BSSID");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : The following response should be received. \"OutOfService\"");
+	    LOGGER.info("**********************************************************************************");
+	    ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
+	    LOGGER.info("5GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
+	    status = CommonMethods.isNotNull(ssidNameFromWebPa)
+		    && ssidNameFromWebPa.equals(BroadBandTestConstants.PUBLIC_WIFI_SSID_5);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The 5 GHz SSID for public wifi is as expected");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+
+	} finally {
+
+	    if (isFactoryReset) {
+		LOGGER.info("### POST-CONDITION ### BEGIN BROAD BAND DEVICE REACTIVATION.");
+		BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, false,
+			BroadBandTestConstants.CONSTANT_1);
+		LOGGER.info("### POST-CONDITION ### END BROAD BAND DEVICE REACTIVATION.");
+	    }
+	    LOGGER.info("ENDING TEST CASE: TC-RDKB-PUBLIC-WIFI-CONFIG-1001");
+	    LOGGER.info("#######################################################################################");
 	}
     }
 }

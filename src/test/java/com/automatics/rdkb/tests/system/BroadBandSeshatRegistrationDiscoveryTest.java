@@ -58,7 +58,7 @@ public class BroadBandSeshatRegistrationDiscoveryTest extends AutomaticsTestBase
      * <li>Step 7: Verify seshat binary is not present using systemctl command in arm console</li>
      * </ol>
      * 
-     * @author  Ashwin sankara
+     * @author Ashwin Sankarasubramanian
      * @Refactor Alan_Bivera
      * 
      * @param Dut

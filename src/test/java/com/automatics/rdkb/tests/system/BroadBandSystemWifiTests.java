@@ -52,7 +52,7 @@ public class BroadBandSystemWifiTests extends AutomaticsTestBase {
      * <li>Verify Linux Kernel Upgrade Version.</li>
      * </ol>
      * 
-     * @param settop
+     * @param device
      *            {@link Dut}
      * @author Joseph M
      */

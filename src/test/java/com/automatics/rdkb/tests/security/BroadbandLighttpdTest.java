@@ -919,7 +919,6 @@ public class BroadbandLighttpdTest extends AutomaticsTestBase {
      * </ol>
      * 
      * @param device
-     * @author SATHYA KISHORE
      * @Refactor Alan_Bivera
      */
     @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)

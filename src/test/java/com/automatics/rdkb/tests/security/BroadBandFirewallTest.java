@@ -513,7 +513,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SECURITY)
     @TestDetails(testUID = "TC-RDKB-SECURITY_FIREWALL-1001")
-    public void testToVerifySecurityFirewallParams(Dut settop) {
+    public void testToVerifySecurityFirewallParams(Dut device) {
 
 	// Variable Declaration begins
 	String testCaseId = "TC-RDKB-SECURITY_FIREWALL-001";
@@ -573,7 +573,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP 1: EXPECTED : Device should go for factory reset");
 	    LOGGER.info("***************************************************************************************");
 
-	    status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, settop);
+	    status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
 
 	    if (status) {
 		isFactoryReset = status;
@@ -582,7 +582,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 	    stepNum = "s2";
 	    errorMessage = "Device.Firewall.X_RDKCENTRAL-COM_Security.V4.BlockFragIPPkts is responding true";
@@ -597,7 +597,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 2: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.BlockFragIPPkts should respond false ");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(settop, tapEnv,
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_FRAGMENTATION_IPPKTS
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    BroadBandTestConstants.FALSE);
@@ -609,7 +609,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -626,7 +626,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 3: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.IPFloodDetect should respond false ");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(settop, tapEnv,
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_IPFLOOD_DETECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    BroadBandTestConstants.FALSE);
@@ -638,7 +638,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -655,7 +655,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 4: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.PortScanProtect should respond false ");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(settop, tapEnv,
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_PORTSCAN_PROTECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    BroadBandTestConstants.FALSE);
@@ -667,7 +667,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -684,7 +684,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 5: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.BlockFragIPPkts should respond false ");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(settop, tapEnv,
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_FRAGMENTATION_IPPKTS
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    BroadBandTestConstants.FALSE);
@@ -696,7 +696,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -713,7 +713,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 6: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.IPFloodDetect should respond false ");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(settop, tapEnv,
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_IPFLOOD_DETECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    BroadBandTestConstants.FALSE);
@@ -725,7 +725,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -742,7 +742,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 7: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.PortScanProtect should respond false ");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(settop, tapEnv,
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_PORTSCAN_PROTECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    BroadBandTestConstants.FALSE);
@@ -754,7 +754,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -769,7 +769,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 8: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.BlockFragIPPkts should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_FRAGMENTATION_IPPKTS
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
@@ -780,7 +780,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -795,7 +795,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 9: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.IPFloodDetect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_IPFLOOD_DETECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
@@ -806,7 +806,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -821,7 +821,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 10: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.PortScanProtect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_PORTSCAN_PROTECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
@@ -832,7 +832,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -847,7 +847,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 11: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.BlockFragIPPkts should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_FRAGMENTATION_IPPKTS
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
@@ -858,7 +858,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -873,7 +873,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 12: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.IPFloodDetect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_IPFLOOD_DETECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
@@ -884,7 +884,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -899,7 +899,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 13: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.PortScanProtect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_PORTSCAN_PROTECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
@@ -910,7 +910,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -927,7 +927,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 
 	    LOGGER.info("Waiting for 30 seconds to iptables get update");
 	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-	    response = tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
 		    + BroadBandTraceConstants.LOG_MESSAGE_FRAG_DROP);
 	    if (CommonMethods.isNotNull(response)) {
 		broadBandResultObject = BroadBandCommonUtils.isGivenStringListAvailableInCommandOutput(response,
@@ -941,7 +941,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -956,7 +956,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 15: EXPECTED : Response should have all the rules applicable for ipv4 Flood detect security ");
 	    LOGGER.info("**********************************************************************************");
 
-	    response = tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
 		    + BroadBandTraceConstants.LOG_MESSAGE_DOS);
 	    if (CommonMethods.isNotNull(response)) {
 		broadBandResultObject = BroadBandCommonUtils.isGivenStringListAvailableInCommandOutput(response,
@@ -970,7 +970,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -985,7 +985,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 16: EXPECTED : Response should have all the rules applicable for ipv4 portscan security ");
 	    LOGGER.info("**********************************************************************************");
 
-	    response = tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
 		    + BroadBandTraceConstants.LOG_MESSAGE_PORT_SCAN);
 	    if (CommonMethods.isNotNull(response)) {
 		broadBandResultObject = BroadBandCommonUtils.isGivenStringListAvailableInCommandOutput(response,
@@ -999,7 +999,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1014,7 +1014,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 17: EXPECTED : Response should have all the rules applicable for ipv6 fragmented security");
 	    LOGGER.info("**********************************************************************************");
 
-	    response = tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
 		    + BroadBandTraceConstants.LOG_MESSAGE_FRAG_DROP);
 	    if (CommonMethods.isNotNull(response)) {
 		broadBandResultObject = BroadBandCommonUtils.isGivenStringListAvailableInCommandOutput(response,
@@ -1028,7 +1028,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1043,7 +1043,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 18: EXPECTED : Response should have all the rules applicable for ipv6 Flood detect security ");
 	    LOGGER.info("**********************************************************************************");
 
-	    response = tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
 		    + BroadBandTraceConstants.LOG_MESSAGE_DOS);
 	    if (CommonMethods.isNotNull(response)) {
 		broadBandResultObject = BroadBandCommonUtils.isGivenStringListAvailableInCommandOutput(response,
@@ -1057,7 +1057,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1072,7 +1072,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 19: EXPECTED : Response should have all the rules applicable for ipv6 portscan security ");
 	    LOGGER.info("**********************************************************************************");
 
-	    response = tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
 		    + BroadBandTraceConstants.LOG_MESSAGE_PORT_SCAN);
 	    if (CommonMethods.isNotNull(response)) {
 		broadBandResultObject = BroadBandCommonUtils.isGivenStringListAvailableInCommandOutput(response,
@@ -1086,7 +1086,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1101,7 +1101,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 20: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.BlockFragIPPkts should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_FRAGMENTATION_IPPKTS
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
@@ -1112,7 +1112,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 20: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1127,7 +1127,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 21: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.IPFloodDetect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_IPFLOOD_DETECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
@@ -1138,7 +1138,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 21: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1153,7 +1153,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 22: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V4.PortScanProtect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_PORTSCAN_PROTECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_4),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
@@ -1164,7 +1164,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 22: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1179,7 +1179,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 23: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.BlockFragIPPkts should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_FRAGMENTATION_IPPKTS
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
@@ -1190,7 +1190,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 23: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1205,7 +1205,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 24: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.IPFloodDetect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_IPFLOOD_DETECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
@@ -1216,7 +1216,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 24: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1231,7 +1231,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		    "STEP 25: EXPECTED : Device.Firewall.X_RDKCENTRAL-COM_Security.V6.PortScanProtect should response 200 ok msg");
 	    LOGGER.info("**********************************************************************************");
 
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FIREWALL_PORTSCAN_PROTECT
 			    .replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_6),
 		    WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
@@ -1242,7 +1242,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 25: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1261,7 +1261,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("Waiting for 30 seconds to iptables get update");
 	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    status = CommonMethods.isNull(
-		    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
 			    + BroadBandTraceConstants.LOG_MESSAGE_FRAG_DROP));
 
 	    if (status) {
@@ -1271,7 +1271,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 26: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1287,7 +1287,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.isNull(
-		    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
 			    + BroadBandTraceConstants.LOG_MESSAGE_DOS));
 
 	    if (status) {
@@ -1297,7 +1297,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 27: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1313,7 +1313,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.isNull(
-		    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IPTABLE
 			    + BroadBandTraceConstants.LOG_MESSAGE_PORT_SCAN));
 
 	    if (status) {
@@ -1322,7 +1322,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 28: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1339,7 +1339,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.isNull(
-		    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
 			    + BroadBandTraceConstants.LOG_MESSAGE_FRAG_DROP));
 
 	    if (status) {
@@ -1349,7 +1349,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 29: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1365,7 +1365,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.isNull(
-		    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
 			    + BroadBandTraceConstants.LOG_MESSAGE_DOS));
 
 	    if (status) {
@@ -1375,7 +1375,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 30: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
@@ -1391,7 +1391,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.isNull(
-		    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GREP_VALUES_FROM_IP6TABLES
 			    + BroadBandTraceConstants.LOG_MESSAGE_PORT_SCAN));
 
 	    if (status) {
@@ -1400,14 +1400,14 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 31: ACTUAL : " + errorMessage);
 	    }
 
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    LOGGER.info("**********************************************************************************");
 
 	} catch (Exception e) {
 	    errorMessage = errorMessage + e.getMessage();
 	    LOGGER.error(errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, settop, testCaseId, stepNum, status, errorMessage,
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
 		    false);
 	} finally {
 	    if (isFactoryReset) {
@@ -1417,7 +1417,7 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		LOGGER.info("POST-CONDITION 1: ACTION : Broadband device reactivation.");
 		LOGGER.info("POST-CONDITION 1: EXPECTED : device should get reactivated");
 
-		BroadBandWiFiUtils.reactivateBroadBandDeviceWebPa(tapEnv, settop);
+		BroadBandWiFiUtils.reactivateBroadBandDeviceWebPa(tapEnv, device);
 
 		LOGGER.info("POST-CONDITION 1: ACTUAL : Reactivated device successfully");
 		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");

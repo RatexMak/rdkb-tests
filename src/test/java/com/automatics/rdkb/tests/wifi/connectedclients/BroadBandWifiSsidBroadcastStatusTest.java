@@ -1179,7 +1179,15 @@ public class BroadBandWifiSsidBroadcastStatusTest extends AutomaticsTestBase {
 	    // kill the wpa_supplicant process in RPI device
 	    status = BroadBandConnectedClientUtils.killProcessInConnectedClientSettop(raspberryPi, tapEnv,
 		    BroadBandTestConstants.STRING_WPA_SUPPLICANT);
-
+	    LOGGER.info("POST-CONDITION:Removing files that are added ");
+	    command = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_SUDO,
+		    RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+		    BroadBandCommandConstants.PATH_WPA_SUPPLICANT + BroadBandCommandConstants.FILE_WPA_SUPPLICANT_CONF);
+	    // tapEnv.executeCommandOnOneIPClients(raspberryPi, command);
+	    command = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_SUDO,
+		    RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+		    BroadBandCommandConstants.PATH_CERTIFICATE);
+	    // tapEnv.executeCommandOnOneIPClients(raspberryPi, command);
 	    LOGGER.info(
 		    (status ? "POST-CONDITION : ACTUAL: Successfully killed the wpa_supplicant process in RPI device"
 			    : "Failed to kill the wpa_supplicant process"));

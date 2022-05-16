@@ -277,7 +277,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
      * 
      * </ol>
      * 
-     * @param settop
+     * @param device
      *            {@link Dut}
      * 
      * @author Elangovan
@@ -287,7 +287,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
     @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
 	    BroadBandTestGroup.SYSTEM })
     @TestDetails(testUID = "TC-RDKB-SYSTEM-5002")
-    public void testToVerifyHarvesterAndLmliteLog(Dut settop) {
+    public void testToVerifyHarvesterAndLmliteLog(Dut device) {
 	String testCaseId = "TC-RDKB-SYSTEM-502";
 	String errorMessage = null;
 	boolean status = false;
@@ -323,13 +323,13 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    /**
 	     * PRE-CONDITION 1 : PERFORM FACTORY RESET ON THE DEVICE
 	     */
-	    isFactoryResetDone = BroadBandPreConditionUtils.executePreConditionToFactoryResetDevice(settop, tapEnv,
+	    isFactoryResetDone = BroadBandPreConditionUtils.executePreConditionToFactoryResetDevice(device, tapEnv,
 		    preConStepNumber);
 	    /**
 	     * PRE-CONDITION 2 : REACTIVATE THE ROUTER DEVICE
 	     */
 	    preConStepNumber++;
-	    isReactivated = BroadBandPreConditionUtils.executePreConditionToReacitivateDevice(settop, tapEnv,
+	    isReactivated = BroadBandPreConditionUtils.executePreConditionToReacitivateDevice(device, tapEnv,
 		    preConStepNumber);
 	    LOGGER.info("################### ENDING PRE-CONFIGURATIONS ###################");
 	    /**
@@ -344,7 +344,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: PARODUS PROCESS DETAILS SHOULD BE DISPLAYED AS (/USR/BIN/PARODUS).");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "PARODUS PROCESS DETAILS IS NOT DISPLAYED";
-	    String response = tapEnv.executeCommandUsingSsh(settop,
+	    String response = tapEnv.executeCommandUsingSsh(device,
 		    BroadBandTestConstants.COMMAND_TO_GET_PARODUS_PROCESS);
 	    status = CommonMethods.isNotNull(response) && CommonUtils.patternSearchFromTargetString(response,
 		    BroadBandTestConstants.PARODUS_PROCESS_OUTPUT);
@@ -354,7 +354,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
 	    /**
 	     * Step 2: VERIFY ENABLING THE INTERFACE DEVICES WIFI VIA WEBPA COMMAND
@@ -371,7 +371,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: ENABLING INTERFACE DEVICES WIFI VIA WEBPA SHOULD BE SUCCESSFUL");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "UNABLE TO ENABLE THE INTERFACE DEVICES WIFI VIA WEBPA COMMAND";
-	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_INTERFACE_DEVICES_WIFI_REPORT, BroadBandTestConstants.CONSTANT_3,
 		    BroadBandTestConstants.TRUE, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
 		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
@@ -382,7 +382,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
 	    /**
 	     * Step 3 : VERIFY CCSPLMLITE PROCESS IS RUNNING ON ATOM SIDE. KILL THE CCSPLMLITE PROCESS AND VERIFY NEW
@@ -399,7 +399,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: PID OF CCSPLMLITE SHOULD RETURN NEW VALUE THAN EXISTING PID.");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "UNABLE TO VERIFY CCSPLMLITE PROCESS IS RUNNING ON ATOM SIDE";
-	    status = BroadBandSystemUtils.killAndVerifyProcessRestarted(settop, tapEnv,
+	    status = BroadBandSystemUtils.killAndVerifyProcessRestarted(device, tapEnv,
 		    BroadBandTestConstants.CONSTANT_LMLITE);
 	    if (status) {
 		LOGGER.info("STEP " + stepNumber + " : ACTUAL : CCSPLMLITE PROCESS RESTARTED WITH NEW PID.");
@@ -407,7 +407,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
 
 	    /**
 	     * SETP 4 : VERIFY LOG INFORMATION "LMLite: Init for parodus Success..!!" IS AVAILABLE IN LM.TXT.0 LOG
@@ -424,7 +424,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: LOG INFORMATION 'LMLITE: INIT FOR PARODUS SUCCESS..!!' SHOULD BE AVAILABLE IN LM.TXT.0 LOG");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "UNABLE TO VERIFY THE 'LMLITE: INIT FOR PARODUS SUCCESS..!!' IN LM.TXT.0 LOG";
-	    status = BroadBandCommonUtils.verifyLogsInAtomOrArmWithPatternMatcher(tapEnv, settop,
+	    status = BroadBandCommonUtils.verifyLogsInAtomOrArmWithPatternMatcher(tapEnv, device,
 		    BroadBandTraceConstants.LOG_MESSAGE_LMLITE_INTEGRATION, BroadBandCommandConstants.LOG_FILE_LMLITE,
 		    BroadBandTraceConstants.LOG_MESSAGE_LMLITE_INTEGRATION
 			    .replaceAll(BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.EMPTY_STRING),
@@ -436,7 +436,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
 	    /**
 	     * Step 5 : VERIFY ENABLING THE NETWORK DEVICE TRAFFIC VIA WEBPA COMMAND
@@ -453,7 +453,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: ENABLING NETWORK DEVICE TRAFFIC VIA WEBPA SHOULD BE SUCCESSFUL");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "UNABLE TO ENABLE THE NETWORK DEVICE TRAFFIC VIA WEBPA COMMAND";
-	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(settop, tapEnv,
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_NETWORK_DEVICES_TRAFFIC_WIFI_REPORT,
 		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
 		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
@@ -463,7 +463,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
 	    /**
 	     * Step 6 : VERIFY HARVESTER PROCESS IS RUNNING ON ATOM SIDE. KILL THE HARVESTER PROCESS AND VERIFY NEW
@@ -480,7 +480,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: PID OF HARVERSTER SHOULD RETURN NEW VALUE THAN EXISTING PID.");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "UNABLE TO VERIFY HARVESTER PROCESS IS RUNNING ON ATOM SIDE";
-	    status = BroadBandSystemUtils.killAndVerifyProcessRestarted(settop, tapEnv,
+	    status = BroadBandSystemUtils.killAndVerifyProcessRestarted(device, tapEnv,
 		    BroadBandTestConstants.STRING_HARVESTER);
 	    if (status) {
 		LOGGER.info("STEP " + stepNumber + " : ACTUAL : HARVESTER PROCESS RESTARTED WITH NEW PID.");
@@ -488,7 +488,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
 
 	    /**
 	     * SETP 7 : VERIFY LOG INFORMATION "HARVESTER_INITIALIZED CREATED" IS AVAILABLE IN HARVESTERLOG.TXT.0 LOG
@@ -505,7 +505,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    + " : EXPECTED: LOG INFORMATION 'HARVESTER_INITIALIZED CREATED' SHOULD BE AVAILABLE IN HARVESTERLOG.TXT.0 LOG");
 	    LOGGER.info("***************************************************************************************");
 	    errorMessage = "UNABLE TO VERIFY THE 'HARVESTER_INITIALIZED CREATED' LOG IN HARVESTERLOG.TXT.0 LOG";
-	    status = BroadBandCommonUtils.verifyLogsInAtomOrArmWithPatternMatcher(tapEnv, settop,
+	    status = BroadBandCommonUtils.verifyLogsInAtomOrArmWithPatternMatcher(tapEnv, device,
 		    BroadBandTraceConstants.LOG_MESSAGE_HARVESTER_INITIALIZATION,
 		    BroadBandCommandConstants.FILE_HARVESTER_LOG,
 		    BroadBandTraceConstants.LOG_MESSAGE_HARVESTER_INITIALIZATION
@@ -518,11 +518,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("***************************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, step, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 	} catch (Exception exception) {
 	    errorMessage = exception.getMessage();
 	    LOGGER.error("EXCEPTION OCCURRED WHILE VERIFING LOGS FOR HARVESTER AND LMLITE REPORTS : " + errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, settop, testCaseId, step, status, errorMessage, true);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, status, errorMessage, true);
 	} finally {
 	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
 	    LOGGER.info("POST-CONDITION STEPS");
@@ -530,7 +530,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	     * POST-CONDITION 1 : DEVICE REACTIVATION
 	     */
 	    if (isFactoryResetDone && !isReactivated) {
-		BroadBandPostConditionUtils.executePostConditionToReActivateDevice(settop, tapEnv, isReactivated,
+		BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, isReactivated,
 			postConStepNumber);
 		postConStepNumber++;
 	    }
@@ -556,7 +556,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    BroadBandWebPaConstants.WEBPA_NETWORK_DEVICES_TRAFFIC_WIFI_REPORT, BroadBandTestConstants.FALSE,
 		    WebPaDataTypes.BOOLEAN.getValue());
 	    webPaParameters.add(networkDisabled);
-	    status = BroadBandWebPaUtils.setVerifyMultipleWebPAInPolledDuration(settop, tapEnv, webPaParameters,
+	    status = BroadBandWebPaUtils.setVerifyMultipleWebPAInPolledDuration(device, tapEnv, webPaParameters,
 		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    if (status) {
 		LOGGER.info("POST-CONDITION " + postConStepNumber
@@ -2389,7 +2389,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 10: DESCRIPTION : Verify whether the DNS queries first sent to primary wrong URL");
 	    LOGGER.info("STEP 10: ACTION : 1) grep -I \"google.com\" /tmp/dummy.txt");
 	    LOGGER.info(
-		    "STEP 10: EXPECTED : In the response invalid ip address should be present");
+		    "STEP 10: EXPECTED : In the response invalid ip address should be present(2001:558:feed::10 ip)");
 	    LOGGER.info("**********************************************************************************");
 
 	    tapEnv.executeCommandUsingSsh(device,
@@ -2419,7 +2419,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 11: DESCRIPTION : Verify whether the DNS queries then fallback to secondary when the primary is not available");
 	    LOGGER.info("STEP 11: ACTION : 1) grep -I \"google.com\" /tmp/dummy.txt");
-	    LOGGER.info("STEP 11: EXPECTED : response should contain secondary dns server name");
+	    LOGGER.info("STEP 11: EXPECTED : response should contain secondary dns server name ( 2001:558:feed::2 ip)");
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.patternMatcher(response, dns_server_2);

@@ -3416,15 +3416,17 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP 2 : EXPECTED: should be able to get datablocksize by WebPA");
 	    LOGGER.info("#####################################################################################");
 
+	    String logFileSecuresyscfg = AutomaticsPropertyUtility
+			    .getProperty(BroadBandTestConstants.PROP_KEY_LOG_FILE_SECURE_SYSCFG);
 	    status = BroadBandCommonUtils
 		    .searchLogFiles(tapEnv, device, BroadBandTraceConstants.DATA_BLOCK_SIZE_LOG_MESSAGE,
-			    BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG,
+		    	logFileSecuresyscfg,
 			    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)
 		    .contains(BroadBandTraceConstants.DATA_BLOCK_SIZE_LOG_MESSAGE.replace("\"", ""));
 
-	    errorMessage = "ping datablockSize is not logged in /opt/secure/data/syscfg.db file";
+	    errorMessage = "ping datablockSize is not logged in syscfg.db file";
 	    LOGGER.info("STEP 2 :  ACTUAL:"
-		    + (status ? "ping DatablockSize is logged in /opt/secure/data/syscfg.db file" : errorMessage));
+		    + (status ? "ping DatablockSize is logged in syscfg.db file" : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 	}
 
@@ -4600,7 +4602,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
      * pingInterval between 14 and 1440 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.4.0)</li>
      * </ol>
      *
-     * @author Joseph Maduram, INFOSYS
+     * @author Joseph Maduram
      * @refactor anandam
      * 
      * @param device

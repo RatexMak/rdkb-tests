@@ -259,7 +259,7 @@ public class BaseQuickTest extends AutomaticsTestBase {
     /**
      * Helper method to update the execution results.
      * 
-     * @param settop
+     * @param device
      *            The device to be used for testing.
      * @param testId
      *            The manual Test ID.

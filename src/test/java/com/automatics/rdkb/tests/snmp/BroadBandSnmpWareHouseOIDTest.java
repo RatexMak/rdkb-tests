@@ -1768,7 +1768,7 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
     /**
      * Utils method to compare expected values
      * 
-     * @param settop
+     * @param device
      * @param output
      * @param webPaParam
      * @return

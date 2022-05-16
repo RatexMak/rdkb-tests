@@ -1448,7 +1448,7 @@ public class BroadBandWebPaPerformanceTest extends AutomaticsTestBase {
      * <li>Step 1 :Verify parallel Webpa requests for multiple component webpa parameters</li>
      * </ol>
      * 
-     * @author asanka200
+     * @author Ashwin Sankarasubramanian
      * @Refactor Alan_Bivera
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)

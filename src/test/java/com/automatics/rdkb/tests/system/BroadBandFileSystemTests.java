@@ -1898,10 +1898,10 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
      * <li>4. Verify ntpd process running status in Arm side</li>
      * <li>5. Verify ntpd client running status in Atom side</li>
      * <li>6. Verify COSAXcalibur.XML file removed status</li>
-     * <li>7. Verify files listed in Acceptance criteria 1 of removed status in Atom side</li>
-     * <li>8. Verify files listed in Acceptance criteria 2 of removed status in Atom side</li>
+     * <li>7. Verify Verify files listed in Acceptance criteria 1 of removed status in Atom side</li>
+     * <li>8. Verify Verify files listed in Acceptance criteria 2 of removed status in Atom side</li>
      * <li>9. Verify Atom Console files status from Atom side</li>
-     * <li>10. Verify 13 Arm console files listed removed status from Arm side on all platforms</li>
+     * <li>10. STEP 10: Verify 13 Arm console files removed status from Arm side on all platforms</li>
      *
      * @author ArunKumar Jayachandran
      * @author RamaTeja Meduri
@@ -2089,7 +2089,7 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 		LOGGER.info("******************************************************************************");
 		LOGGER.info(
 			"STEP 7: Verify files listed in Acceptance criteria 1 of removed status in Atom side of atom sync platforms");
-		LOGGER.info("STEP 7: ACTION: Execute Command to verify Files listed in Acceptance criteria 1");
+		LOGGER.info("STEP 7: ACTION: Execute Command to verify files listed in Acceptance criteria 1");
 		LOGGER.info(
 			"STEP 7: EXPECTED: Files listed in Acceptance criteria 1  should not be present in Atom side ");
 		LOGGER.info("******************************************************************************");
@@ -2128,7 +2128,7 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 		status = false;
 		LOGGER.info("******************************************************************************");
 		LOGGER.info("STEP 8: Verify files listed in Acceptance criteria 2 of  removed status in Atom side ");
-		LOGGER.info("STEP 8: ACTION: Execute Command to verify Files listed in Acceptance criteria 2 ");
+		LOGGER.info("STEP 8: ACTION: Execute Command to verify files listed in Acceptance criteria 2 of  removed status in Atom side");
 		LOGGER.info(
 			"STEP 8: EXPECTED: Files listed in Acceptance criteria 2 should not be present in Atom side ");
 		LOGGER.info("******************************************************************************");
@@ -2205,7 +2205,7 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 	    status = false;
 	    LOGGER.info("******************************************************************************");
 	    LOGGER.info("STEP 10: Verify 13 Arm console files removed status from Arm side on all platforms");
-	    LOGGER.info("STEP 10: ACTION: Execute Command to Verify 13 Arm console files removed status from Arm side on all platforms");
+	    LOGGER.info("STEP 10: ACTION: Execute Command to verify 13 Arm console files listed must be removed from Arm side side of the device");
 	    LOGGER.info(
 		    "STEP 10: EXPECTED: 13 Arm console files listed must be removed from Arm side side of the device");
 	    LOGGER.info("******************************************************************************");

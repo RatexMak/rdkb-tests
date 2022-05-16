@@ -1893,7 +1893,7 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 	 * <li>3. Verify device is excluded from FW upgrade for triggered CDL<\li>
 	 * <li>4. verify xconf file is empty<\li>
 	 * 
-	 * @author ajayac200
+	 * @author ArunKumar Jayachandran
 	 */
 
 	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
@@ -2185,7 +2185,7 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 	 * <li>3. Update swupdate.conf file with MOCK url & Verify triggered cdl
 	 * successfull with latest firmware version through xconf<\li>
 	 * 
-	 * @author ajayac200
+	 * @author ArunKumar Jayachandran
 	 */
 
 	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
@@ -2319,7 +2319,7 @@ public class BroadBandXconfCdlTest extends AutomaticsTestBase {
 	 * <li>3. Verify device is excluded from FW upgrade for triggered CDL<\li>
 	 * <li>4. verify xconf file is empty<\li>
 	 * 
-	 * @author ajayac200
+	 * @author ArunKumar Jayachandran
 	 */
 
 	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)

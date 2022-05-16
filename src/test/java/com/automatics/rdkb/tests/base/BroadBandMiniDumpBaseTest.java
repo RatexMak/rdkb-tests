@@ -32,8 +32,8 @@ import com.automatics.utils.CommonMethods;
 /**
  * Base class to perform all the pre and post operations for Google breakpad automation
  * 
- * @author Divya R S, TATA Elxsi
- * @author Styles Mangalasseri, TATA Elxsi
+ * @author Divya R S
+ * @author Styles Mangalasseri
  * @refactor Anandam
  */
 public class BroadBandMiniDumpBaseTest extends AutomaticsTestBase {

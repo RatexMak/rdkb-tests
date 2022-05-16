@@ -20,6 +20,8 @@ package com.automatics.rdkb.tests.wifi;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.HttpStatus;
+
 /**
  * Class for Validating the Configuration of Transmission Rates for both 2.4GHz Radio and 5GHz radio on BroadBand
  * Devices.
@@ -35,6 +37,7 @@ import com.automatics.enums.TR69ParamDataType;
 import com.automatics.exceptions.TestException;
 import com.automatics.providers.tr69.Parameter;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCdlConstants;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
@@ -46,6 +49,7 @@ import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
@@ -58,7 +62,7 @@ import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 
 public class BroadBandWifiTxRateConfigurationTest extends AutomaticsTestBase {
-    
+
     /** Instance variable to store the Factory Reset Flag value */
     private boolean performedFactoryResetInitTest = false;
 
@@ -626,7 +630,7 @@ public class BroadBandWifiTxRateConfigurationTest extends AutomaticsTestBase {
      * </ol>
      * *
      * 
-     * @author BALAJI V,JOSEPH M, INFOSYS
+     * @author BALAJI V,JOSEPH M
      * @author ArunKumar Jayachandran
      * @refactor Said Hisham
      * 
@@ -2433,7 +2437,7 @@ public class BroadBandWifiTxRateConfigurationTest extends AutomaticsTestBase {
 	    LOGGER.info("#######################################################################################");
 	}
     }
-    
+
     /**
      * The method to be executed once during the execution of the test case; factory reset is being performed here.
      * 
@@ -2470,7 +2474,7 @@ public class BroadBandWifiTxRateConfigurationTest extends AutomaticsTestBase {
 		+ BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true));
 	LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
     }
-    
+
     /**
      * The method to be executed after test method where the factory reset needs to be performed on the device and then
      * the activation.
@@ -2500,1260 +2504,1671 @@ public class BroadBandWifiTxRateConfigurationTest extends AutomaticsTestBase {
 	LOGGER.info("POST-CONDITION STEP 2: DEVICE REACTIVATION COMPLETED USING WEBPA.");
 	LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
     }
-    
+
     /**
-	 * Test case is created as part of Configuration of WiFi Tx Rate for 2.4GHz
-	 * Radio and 5Ghz Radio.
-	 *
-	 * Test Case # 2: Verify the configuration of Transmission Control Rate for both
-	 * 2.4GHz Radio and 5ghz using TR-69.
-	 *
-	 * <p>
-	 * STEPS:
-	 * </p>
-	 * <ol>
-	 * <li>S1) Verify the default value of operational transmission rate of the 2.4
-	 * GHz with operating standard as g/n</li>
-	 * <li>S2) Verify the supported data transmit rate of the 2.4GHz with operating
-	 * standard as g/n</li>
-	 * <li>S3) Verify the default value of basic transmission rate of the 2.4 GHz
-	 * with operating standard as g/n</li>
-	 * <li>S4) Verify the default value of operational transmission rate of the 2.4
-	 * GHz with operating standard as b/g/n</li>
-	 * <li>S5) Verify the supported data transmit rate of the 2.4GHz with operating
-	 * standard as b/g/n</li>
-	 * <li>S6) Verify the default value of basic transmission rate of the 2.4 GHz
-	 * with operating standard as b/g/n</li>
-	 * <li>S7) Verify setting the operational transmission rate for 2.4GHz with
-	 * operating standard as b/g/n with values 1,2,6,9</li>
-	 * <li>S8) Verify retrieving the operational transmission rate for 2.4GHz with
-	 * operating standard as b/g/n.</li>
-	 * <li>S9) Verify retrieving the value of basic transmission rate of the 2.4 GHz
-	 * with operating standard as b/g/n</li>
-	 * <li>S10) Verify setting the operational transmission rate for 2.4GHz with
-	 * operating standard as g/n with values 6,9,12,18</li>
-	 * <li>S11) Verify retrieving the operational transmission rate for 2.4GHz with
-	 * operating standard as g/n.</li>
-	 * <li>S12) Verify retrieving the value of basic transmission rate of the 2.4
-	 * GHz with operating standard as g/n</li>
-	 * <li>S13) Verify the beacon traffic use the lowest supported basic rate
-	 * (2.4GHz)</li>
-	 * <li>S14) Verify the default OperatingStandards for 5GHz by TR69</li>
-	 * <li>S15) Verify the basic transmission rate of the 5GHz with operating
-	 * standard as 802.11 a/n/ac by TR69</li>
-	 * <li>S16) Verify the SupportedDataTransmitRates for 5GHz with operating
-	 * standard as 802.11a/n/ac by TR69</li>
-	 * <li>S17) Verify the operational transmission rate for 5GHz with operating
-	 * standard as 802.11a/n/ac by TR69</li>
-	 * <li>S18) Change the operating mode for 5GHz Wi-Fi from device to 802.11 n/ac
-	 * by TR69</li>
-	 * <li>S19) Verify retrieving the OperatingStandards for 5GHz as 802.11 n/ac by
-	 * Tr69</li>
-	 * <li>S20) Verify the basic transmission rate of the 5GHz with operating
-	 * standard as 802.11 n/ac by TR69</li>
-	 * <li>S21) Verify the SupportedDataTransmitRates for 5GHz with operating
-	 * standard as 802.11 n/ac by TR69</li>
-	 * <li>S22) Verify the operational transmission rate for 5GHz with operating
-	 * standard as 802.11n/ac by TR69</li>
-	 * <li>S23) Change the operating mode for 5GHz Wi-Fi from device to 802.11ac by
-	 * TR69</li>
-	 * <li>S24) Verify retrieving the OperatingStandards for 5GHz as 802.11 ac by
-	 * Tr69</li>
-	 * <li>S25) Verify the basic transmission rate of the 5GHz with operating
-	 * standard as 802.11ac by TR69</li>
-	 * <li>S26) Verify the SupportedDataTransmitRates for 5GHz with operating
-	 * standard as 802.11ac by TR69</li>
-	 * <li>S27) Verify the operational transmission rate for 5GHz with operating
-	 * standard as 802.11ac by TR69</li>
-	 * <li>S28) Change the operating mode for 5GHz Wi-Fi from device to 802.11n by
-	 * TR69</li>
-	 * <li>S29) Verify retrieving the OperatingStandards for 5GHz s 802.11 n by
-	 * Tr69</li></li>
-	 * </ol>
-	 *
-	 * @author BALAJI V,JOSEPH M
-	 * @refactor yamini.s
-	 * 
-	 * @param device {@link Dut}
-	 */
-	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, enabled = true, alwaysRun = true, groups = {
-			BroadBandTestGroup.NEW_FEATURE, BroadBandTestGroup.WIFI })
-	@TestDetails(testUID = "TC-RDKB-WIFI-TX-RATE-CONFIG-5062")
-	public void testTxRateConfigTr69(Dut device) {
-		String testCaseId = "TC-RDKB-WIFI-TX-RATE-CONFIG-562";
-		boolean result = false;
-		String errorMessage = null;
-		String step = null;
-		String expectedValue = null;
-		String operatingStandard = null;
-		String objectName = "";
-		long tr69WaitDuration = BroadBandTestConstants.TWO_MINUTE_IN_MILLIS;
-		List<String> get_param = new ArrayList<String>();
-		List<Parameter> set_param = new ArrayList<Parameter>();
-
-		try {
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-TX-RATE-CONFIG-5062");
-			LOGGER.info(
-					"TEST DESCRIPTION: Verify the configuration of Transmission Control Rate for both 2.4 GHz Radio and 5GHz Radio using TR-69.");
-
-			// Invoke Pre-Condition Method.
-			executePreConditions(tapEnv, device);
-			int stepNumber = 1;
-			step = "S" + stepNumber;
-			/**
-			 * S1) Verify the default value of operational transmission rate of the 2.4GHz
-			 * with operating standard as g/n.
-			 */
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATION_TX_RATE_G_N, BroadBandTestConstants.OPERATION_TX_RATE_G_N_2GHZ,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY DEFAULT VALUE OF OPERATIONAL TX RATE OF 2.4GHz (g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			String response = null;
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz (g/n) Default Operating Tx Rate: Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info(
-						"STEP " + stepNumber + " ACTUAL: DEFAULT OPERATIONAL TX RATE OF 2.4GHz (g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S2) Verify the supported data transmit rate of the 2.4GHz with operating
-			 * standard as g/n
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATION_TX_RATE_G_N, BroadBandTestConstants.SUPPORTED_TX_RATE_2GHZ,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY SUPPORTED TX RATE OF 2.4GHz (g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.SupportedDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_SUPPORTED_DATA_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz (g/n) Supported Data Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: SUPPORTED TX RATE OF 2.4GHz (g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S3) Verify the default value of basic transmission rate of the 2.4GHz with
-			 * operating standard as g/n
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.BASIC_TX_RATE_G_N, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY DEFAULT VALUE OF BASIC TX RATE OF 2.4GHz (g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz  (g/n) Default Basic Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: DEFAULT BASIC TX RATE OF 2.4GHz (g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S4) Verify the default value of operational transmission rate of the 2.4GHz
-			 * with operating standard as b/g/n.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATION_TX_RATE_B_G_N, BroadBandTestConstants.OPERATION_TX_RATE_G_N_2GHZ,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
-			operatingStandard = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.WIFI_OPERATING_STANDARD_B_G_N,
-					BroadBandTestConstants.WIFI_OPERATING_STANDARD_G_N,
-					BroadBandTestConstants.G_N_AX_MODE_ON_WIRELESS_SETTINGS);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY DEFAULT VALUE OF OPERATIONAL TX RATE OF 2.4GHz  (b/g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10000.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to set the 2.4GHz Operating Standard to b/g/n.";
-			try {
-
-				set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-						BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATING_STD, operatingStandard);
-
-				response = tapEnv.setTR69ParameterValues(device, set_param);
-
-				result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
-
-				if (result) {
-					tapEnv.waitTill(tr69WaitDuration);
-
-					objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
-					get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-					response = tapEnv.getTR69ParameterValues(device, get_param);
-
-					errorMessage = "Unable to verify the 2.4GHz (b/g/n) Default Operating Tx Rate: Expected Value = "
-							+ expectedValue + " | Actual Value = " + response;
-					result = CommonMethods.isNotNull(response)
-							&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-				}
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: DEFAULT OPERATIONAL TX RATE OF 2.4GHz (b/g/n) IS: "
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S5) Verify the supported data transmit rate of the 2.4GHz with operating
-			 * standard as b/g/n
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATION_TX_RATE_B_G_N, BroadBandTestConstants.SUPPORTED_TX_RATE_2GHZ,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY SUPPORTED TX RATE OF 2.4GHz (b/g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.SupportedDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_SUPPORTED_DATA_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz (b/g/n) Supported Data Tx Rate: Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: SUPPORTED TX RATE OF 2.4GHz (b/g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S6) Verify the default value of basic transmission rate of the 2.4 GHz with
-			 * operating standard as b/g/n
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.BASIC_TX_RATE_B_G_N, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION: VERIFY DEFAULT VALUE OF BASIC TX RATE OF 2.4GHz (b/g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz  (b/g/n) Default Basic Tx Rate: Expected Value = "
-					+ expectedValue + " | Actual Value - " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: DEFAULT BASIC TX RATE OF 2.4GHz (b/g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S7) Verify setting the operational transmission rate for 2.4GHz with
-			 * operating standard as b/g/n with values 1,2,6,9
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.TEMP_OPEATIONAL_TX_RATE_2GHZ;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY SETTING THE VALUE OF OPERATIONAL TX RATE OF 2.4GHz  (b/g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE SET SUCCESSFULLY.");
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to set the Operational Tx Rates for 2.4GHz with Operating Standard as b/g/n.";
-			try {
-
-				set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-						BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES, expectedValue);
-
-				response = tapEnv.setTR69ParameterValues(device, set_param);
-
-				result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
-
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error(
-						"EXCEPTION OCCURRED WHILE SETTING THE VALUE FOR TR-69 PARAMETER: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL: SUCCESSFULLY SET THE OPERATIONAL TX RATE FOR 2.4GHz WITH OPERATING STANDARD AS b/g/n");
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S8) Verify retrieving the operational transmission rate for 2.4GHz with
-			 * operating standard as b/g/n.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.TEMP_OPEATIONAL_TX_RATE_2GHZ;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING OPERATIONAL TX RATE OF 2.4GHz (b/g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz (b/g/n) Operational Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: OPERATIONAL TX RATE OF 2.4GHz (b/g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S9) Verify retrieving the basic transmission rate for 2.4GHz with operating
-			 * standard as b/g/n.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.TEMP_BASIC_TX_RATE, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING BASIC TX RATE OF 2.4GHz (b/g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz (b/g/n) Basic Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: BASIC TX RATE OF 2.4GHz (b/g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S10) Verify setting the operational transmission rate for 2.4GHz with
-			 * operating standard as g/n with values 6,9,12,18
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.TEMP_OPRATIONAL_TX_RATE_G_N;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY SETTING THE VALUE OF OPERATIONAL TX RATE OF 2.4GHz  (g/n).");
-			LOGGER.info("STEP" + stepNumber
-					+ ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10000.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE SET SUCCESSFULLY.");
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to set the 2.4GHz Operating Standard to g/n.";
-			try {
-
-				set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-						BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATING_STD,
-						BroadBandTestConstants.WIFI_OPERATING_STANDARD_G_N);
-
-				response = tapEnv.setTR69ParameterValues(device, set_param);
-
-				result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
-				errorMessage = "Unable to set the Operational Tx Rates for 2.4GHz with Operating Standard as g/n.";
-				if (result) {
-					tapEnv.waitTill(tr69WaitDuration);
-
-					set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-							BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES, expectedValue);
-
-					response = tapEnv.setTR69ParameterValues(device, set_param);
-					result = CommonMethods.isNotNull(response)
-							&& response.equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
-					tapEnv.waitTill(tr69WaitDuration);
-				}
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL: SUCCESSFULLY SET THE OPERATIONAL TX RATE FOR 2.4GHz WITH OPERATING STANDARD AS g/n");
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S11) Verify retrieving the operational transmission rate for 2.4GHz with
-			 * operating standard as g/n.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.TEMP_OPRATIONAL_TX_RATE_G_N;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING OPERATIONAL TX RATE OF 2.4GHz (g/n).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz (g/n) Operational Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: OPERATIONAL TX RATE OF 2.4GHz (g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S12) Verify retrieving the basic transmission rate for 2.4GHz with operating
-			 * standard as g/n.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.TEMP_BASIC_TX_RATE, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING BASIC TX RATE OF 2.4GHz (g/n).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 2.4GHz  (b/g/n) Basic Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: BASIC TX RATE OF 2.4GHz (g/n) IS: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S13) Verify the beacon traffic use the lowest supported basic rate (2.4GHz)
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.TEXT_SIX_MBPS;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY BEACON TRAFFIC USE LOWEST SUPPORTED BASIC RATE (2.4GHz).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.AccessPoint.10001.X_RDKCENTRAL-COM_BeaconRate");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BEACON_RATE;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the Beacon Rate (2.4GHz): Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareValues("TXT_COMPARISON", expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL: BEACON TRAFFIC USES TX RATE: " + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			// 5ghz radio
-			/**
-			 * S14) Verify retrieving the default OperatingStandards for 5GHz by Tr69.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			tapEnv.waitTill(tr69WaitDuration);
-			expectedValue = BroadBandTestConstants.OPERATING_MODE_ANAC;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION: Verify  the default OperatingStandards for 5GHz  by Tr69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE FOR OPERATING STANDARDS MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to retrieve the default OperatingStandards for 5GHz  by Tr69";
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-				errorMessage = "Unable to retrieve the OperatingStandards for 5GHz by Tr69: Expected Value = "
-						+ expectedValue + " | Actual Value = " + response;
-				result = CommonMethods.isNotNull(response)
-						&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL:The default OperatingStandards for 5GHz  by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S15) Verify the basic transmission rate of the 5GHz with operating standard
-			 * as 802.11 a/n/ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.BASIC_TX_RATE_G_N, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION: VERIFY DEFAULT VALUE OF BASIC TX RATE OF 5GHz (a/n/ac).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 5GHz(a/n/ac) Default Basic Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:BASIC TX RATE OF 5GHz (a/n/ac) with operating standard 802.11 a/n/ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S16) Verify the SupportedDataTransmitRates for 5GHz with operating standard
-			 * as 802.11a/n/ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ,
-					BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY THE VALUE OF SUPPORTED DATA TX RATE OF 5GHz as 802.11(a/n/ac).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_SUPPORTED_DATA_TRANSMIT_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the value of supported data rate for 5GHz as 802.11(a/n/ac): Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:SUPPORTED DATA TX RATE OF 5GHz (a/n/ac) IS with operating standard 802.11 a/n/ac by Tr69 is "
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S17) Verify the operational transmission rate for 5GHz with operating
-			 * standard as 802.11a/n/ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ, BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF 5GHz as 802.11(a/n/ac).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATIONAL_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the value of operational transmission rate for 5GHz as 802.11(a/n/ac): Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:OPERATIONAL TRANSMISSION DATA TX RATE OF 5GHz as 802.11(a/n/ac) IS: with operating standard 802.11a/n/ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S18) Change the operating mode for 5GHz Wi-Fi from device to 802.11 n/ac by
-			 * TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N_AC;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Change the operating mode for 5GHz Wi-Fi for  device to 802.11 n/ac by TR69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to change the operating mode for 5GHz Wi-Fi for  device to 802.11 n/ac by TR69";
-			try {
-
-				set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-						BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD, BroadBandTestConstants.OPERATING_MODE_NAC);
-
-				response = tapEnv.setTR69ParameterValues(device, set_param);
-
-				result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
-				tapEnv.waitTill(tr69WaitDuration);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:operating mode for 5GHz Wi-Fi for  device to 802.11 n/ac by TR69 successful "
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S19) Verify retrieving the OperatingStandards for 5GHz as 802.11 n/ac by
-			 * Tr69.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			tapEnv.waitTill(tr69WaitDuration);
-			expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N_AC;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Verify retrieving the OperatingStandards for 5GHz as 802.11 n/ac  by Tr69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to retrieve the  OperatingStandards for 5GHz as 802.11 n/ac  by Tr69";
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-				errorMessage = "Unable to retrieve the OperatingStandards for 5GHz with operating standard by Tr69: Expected Value = "
-						+ expectedValue + " | Actual Value = " + response;
-				result = CommonMethods.isNotNull(response)
-						&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL:The  OperatingStandards for 5GHz  by Tr69 is" + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S20) Verify the basic transmission rate of the 5GHz with operating standard
-			 * as 802.11 n/ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.BASIC_TX_RATE_G_N, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Verify the basic transmission rate of the 5GHz with operating standard as 802.11 n/ac by TR69.");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 5GHz(n/ac)  Basic Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:BASIC TX RATE OF 5GHz (n/ac) IS with operating standard 802.11 n/ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S21) Verify the SupportedDataTransmitRates for 5GHz with operating standard
-			 * as 802.11 n/ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ,
-					BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY THE VALUE OF SUPPORTED DATA TX RATE OF 5GHz as 802.11 (n/ac).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.SupportedDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_SUPPORTED_DATA_TRANSMIT_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the value of supported data rate for 5GHz as 802.11(n/ac): Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:SUPPORTED DATA TX RATE OF 5GHz (n/ac) IS with operating standard as 802.11 n/ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S22) Verify the operational transmission rate for 5GHz with operating
-			 * standard as 802.11n/ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ, BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF 5GHz for 802.11(n/ac).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATIONAL_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the value of operational transmission rate for 5GHz as 802.11(n/ac): Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:OPERATIONAL TRANSMISSION DATA TX RATE OF 5GHz as 802.11(n/ac) IS: with operating standard 802.11 n/ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S23) Change the operating mode for 5GHz Wi-Fi from device to 802.11ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_AC;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Change the operating mode for 5GHz Wi-Fi for  device to 802.11ac by TR69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to change the operating mode for 5GHz Wi-Fi for  device to 802.11ac by TR69";
-			try {
-
-				set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-						BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD, BroadBandTestConstants.OPERATING_MODE_AC);
-
-				response = tapEnv.setTR69ParameterValues(device, set_param);
-
-				result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				tapEnv.waitTill(tr69WaitDuration);
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:operating mode for 5GHz Wi-Fi for  device to 802.11ac by TR69 successful"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S24) Verify retrieving the OperatingStandards for 5GHz as 802.11 ac by Tr69.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			tapEnv.waitTill(tr69WaitDuration);
-			expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_AC;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Verify retrieving the OperatingStandards for 5GHz as 802.11 ac  by Tr69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to retrieve the  OperatingStandards for 5GHz as 802.11ac  by Tr69";
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-				errorMessage = "Unable to retrieve the OperatingStandards for 5GHz with operating standard by Tr69: Expected Value = "
-						+ expectedValue + " | Actual Value = " + response;
-				result = CommonMethods.isNotNull(response)
-						&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL:The  OperatingStandards for 5GHz  by Tr69 is" + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S25) Verify the basic transmission rate of the 5GHz with operating standard
-			 * as 802.11ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ, BroadBandTestConstants.BASIC_TX_RATE,
-					BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Verify the basic transmission rate of the 5GHz with operating standard as 802.11ac by TR69.");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + "EXPECTED : VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_BASIC_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the 5GHz(ac)  Basic Tx Rate: Expected Value = " + expectedValue
-					+ " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:BASIC TX RATE OF 5GHz (ac) IS with operating standard 802.11ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S26) Verify the SupportedDataTransmitRates for 5GHz with operating standard
-			 * as 802.11ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ,
-					BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
-					BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION: VERIFY THE  SUPPORTED DATA TX RATE OF 5GHz as 802.11ac.");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.SupportedDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_SUPPORTED_DATA_TRANSMIT_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the value of supported data rate for 5GHz as 802.11(ac): Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:SUPPORTED DATA TX RATE OF 5GHz (ac) IS with operating standard 802.11ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S27) Verify the operational transmission rate for 5GHz with operating
-			 * standard as 802.11ac by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ, BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
-					BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF 5GHz for 802.11(ac).");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperationalDataTransmitRates");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATIONAL_TX_RATES;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
-			}
-			errorMessage = "Unable to verify the value of operational transmission rate for 5GHz as 802.11(ac): Expected Value = "
-					+ expectedValue + " | Actual Value = " + response;
-			result = CommonMethods.isNotNull(response)
-					&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:OPERATIONAL TRANSMISSION DATA TX RATE OF 5GHz as 802.11(ac) IS: with operating standard 802.11ac by Tr69 is"
-						+ response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S28) Change the operating mode for 5GHz Wi-Fi from device to 802.11n by TR69
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Change the operating mode for 5GHz Wi-Fi for  device to 802.11n by TR69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to change the operating mode for 5GHz Wi-Fi for  device to 802.11n by TR69";
-			try {
-
-				set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
-						BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD, BroadBandTestConstants.OPERATING_MODE_N);
-
-				response = tapEnv.setTR69ParameterValues(device, set_param);
-
-				result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber
-						+ " ACTUAL:operating mode for 5GHz Wi-Fi for  device to 802.11n by TR69 successful" + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-
-			/**
-			 * S29) Verify retrieving the OperatingStandards for 5GHz by Tr69.
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
-			result = false;
-			expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N;
-			LOGGER.info("#######################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION: Verify retrieving the OperatingStandards for 5GHz as 802.11n  by Tr69");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to retrieve the  OperatingStandards for 5GHz as 802.11n  by Tr69";
-			try {
-
-				objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
-				get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
-				response = tapEnv.getTR69ParameterValues(device, get_param);
-				errorMessage = "Unable to retrieve the OperatingStandards for 5GHz with operating standard by Tr69: Expected Value = "
-						+ expectedValue + " | Actual Value = " + response;
-				result = CommonMethods.isNotNull(response)
-						&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
-
-			} catch (Exception exception) {
-				// Log & Suppress the Exception.
-				LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
-			}
-			if (result) {
-				LOGGER.info("STEP " + stepNumber + " ACTUAL:The  OperatingStandards for 5GHz  by Tr69 is" + response);
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-			// ##################################################################################################//
-			
-		} catch (Exception exception) {
-			errorMessage = exception.getMessage();
-			LOGGER.error(
-					"EXCEPTION OCCURRED WHILE VERIFYING THE TR-69 TRANSIMISSION RATE CONFIGURATION: " + errorMessage);
-			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, result, errorMessage, false);
-		} finally {
-			// Post-Configuration
-			performFactoryResetAndActivatation(tapEnv, device);
-			LOGGER.info("COMPLETED TEST CASE: TC-RDKB-WIFI-TX-RATE-CONFIG-5062");
-			LOGGER.info("#######################################################################################");
+     * Test case is created as part of Configuration of WiFi Tx Rate for 2.4GHz Radio and 5Ghz Radio.
+     *
+     * Test Case # 2: Verify the configuration of Transmission Control Rate for both 2.4GHz Radio and 5ghz using TR-69.
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>S1) Verify the default value of operational transmission rate of the 2.4 GHz with operating standard as
+     * g/n</li>
+     * <li>S2) Verify the supported data transmit rate of the 2.4GHz with operating standard as g/n</li>
+     * <li>S3) Verify the default value of basic transmission rate of the 2.4 GHz with operating standard as g/n</li>
+     * <li>S4) Verify the default value of operational transmission rate of the 2.4 GHz with operating standard as
+     * b/g/n</li>
+     * <li>S5) Verify the supported data transmit rate of the 2.4GHz with operating standard as b/g/n</li>
+     * <li>S6) Verify the default value of basic transmission rate of the 2.4 GHz with operating standard as b/g/n</li>
+     * <li>S7) Verify setting the operational transmission rate for 2.4GHz with operating standard as b/g/n with values
+     * 1,2,6,9</li>
+     * <li>S8) Verify retrieving the operational transmission rate for 2.4GHz with operating standard as b/g/n.</li>
+     * <li>S9) Verify retrieving the value of basic transmission rate of the 2.4 GHz with operating standard as
+     * b/g/n</li>
+     * <li>S10) Verify setting the operational transmission rate for 2.4GHz with operating standard as g/n with values
+     * 6,9,12,18</li>
+     * <li>S11) Verify retrieving the operational transmission rate for 2.4GHz with operating standard as g/n.</li>
+     * <li>S12) Verify retrieving the value of basic transmission rate of the 2.4 GHz with operating standard as
+     * g/n</li>
+     * <li>S13) Verify the beacon traffic use the lowest supported basic rate (2.4GHz)</li>
+     * <li>S14) Verify the default OperatingStandards for 5GHz by TR69</li>
+     * <li>S15) Verify the basic transmission rate of the 5GHz with operating standard as 802.11 a/n/ac by TR69</li>
+     * <li>S16) Verify the SupportedDataTransmitRates for 5GHz with operating standard as 802.11a/n/ac by TR69</li>
+     * <li>S17) Verify the operational transmission rate for 5GHz with operating standard as 802.11a/n/ac by TR69</li>
+     * <li>S18) Change the operating mode for 5GHz Wi-Fi from device to 802.11 n/ac by TR69</li>
+     * <li>S19) Verify retrieving the OperatingStandards for 5GHz as 802.11 n/ac by Tr69</li>
+     * <li>S20) Verify the basic transmission rate of the 5GHz with operating standard as 802.11 n/ac by TR69</li>
+     * <li>S21) Verify the SupportedDataTransmitRates for 5GHz with operating standard as 802.11 n/ac by TR69</li>
+     * <li>S22) Verify the operational transmission rate for 5GHz with operating standard as 802.11n/ac by TR69</li>
+     * <li>S23) Change the operating mode for 5GHz Wi-Fi from device to 802.11ac by TR69</li>
+     * <li>S24) Verify retrieving the OperatingStandards for 5GHz as 802.11 ac by Tr69</li>
+     * <li>S25) Verify the basic transmission rate of the 5GHz with operating standard as 802.11ac by TR69</li>
+     * <li>S26) Verify the SupportedDataTransmitRates for 5GHz with operating standard as 802.11ac by TR69</li>
+     * <li>S27) Verify the operational transmission rate for 5GHz with operating standard as 802.11ac by TR69</li>
+     * <li>S28) Change the operating mode for 5GHz Wi-Fi from device to 802.11n by TR69</li>
+     * <li>S29) Verify retrieving the OperatingStandards for 5GHz s 802.11 n by Tr69</li></li>
+     * </ol>
+     *
+     * @author BALAJI V,JOSEPH M
+     * @refactor yamini.s
+     * 
+     * @param device
+     *            {@link Dut}
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, enabled = true, alwaysRun = true, groups = {
+	    BroadBandTestGroup.NEW_FEATURE, BroadBandTestGroup.WIFI })
+    @TestDetails(testUID = "TC-RDKB-WIFI-TX-RATE-CONFIG-5062")
+    public void testTxRateConfigTr69(Dut device) {
+	String testCaseId = "TC-RDKB-WIFI-TX-RATE-CONFIG-562";
+	boolean result = false;
+	String errorMessage = null;
+	String step = null;
+	String expectedValue = null;
+	String operatingStandard = null;
+	String objectName = "";
+	long tr69WaitDuration = BroadBandTestConstants.TWO_MINUTE_IN_MILLIS;
+	List<String> get_param = new ArrayList<String>();
+	List<Parameter> set_param = new ArrayList<Parameter>();
+
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-TX-RATE-CONFIG-5062");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Verify the configuration of Transmission Control Rate for both 2.4 GHz Radio and 5GHz Radio using TR-69.");
+
+	    // Invoke Pre-Condition Method.
+	    executePreConditions(tapEnv, device);
+	    int stepNumber = 1;
+	    step = "S" + stepNumber;
+	    /**
+	     * S1) Verify the default value of operational transmission rate of the 2.4GHz with operating standard as
+	     * g/n.
+	     */
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATION_TX_RATE_G_N, BroadBandTestConstants.OPERATION_TX_RATE_G_N_2GHZ,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY DEFAULT VALUE OF OPERATIONAL TX RATE OF 2.4GHz (g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    String response = null;
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz (g/n) Default Operating Tx Rate: Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info(
+			"STEP " + stepNumber + " ACTUAL: DEFAULT OPERATIONAL TX RATE OF 2.4GHz (g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S2) Verify the supported data transmit rate of the 2.4GHz with operating standard as g/n
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATION_TX_RATE_G_N, BroadBandTestConstants.SUPPORTED_TX_RATE_2GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY SUPPORTED TX RATE OF 2.4GHz (g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.SupportedDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_SUPPORTED_DATA_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz (g/n) Supported Data Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: SUPPORTED TX RATE OF 2.4GHz (g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S3) Verify the default value of basic transmission rate of the 2.4GHz with operating standard as g/n
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.BASIC_TX_RATE_G_N, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY DEFAULT VALUE OF BASIC TX RATE OF 2.4GHz (g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz  (g/n) Default Basic Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: DEFAULT BASIC TX RATE OF 2.4GHz (g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S4) Verify the default value of operational transmission rate of the 2.4GHz with operating standard as
+	     * b/g/n.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATION_TX_RATE_B_G_N, BroadBandTestConstants.OPERATION_TX_RATE_G_N_2GHZ,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
+	    operatingStandard = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.WIFI_OPERATING_STANDARD_B_G_N,
+		    BroadBandTestConstants.WIFI_OPERATING_STANDARD_G_N,
+		    BroadBandTestConstants.G_N_AX_MODE_ON_WIRELESS_SETTINGS);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY DEFAULT VALUE OF OPERATIONAL TX RATE OF 2.4GHz  (b/g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10000.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to set the 2.4GHz Operating Standard to b/g/n.";
+	    try {
+
+		set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATING_STD, operatingStandard);
+
+		response = tapEnv.setTR69ParameterValues(device, set_param);
+
+		result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
+
+		if (result) {
+		    tapEnv.waitTill(tr69WaitDuration);
+
+		    objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
+		    get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		    response = tapEnv.getTR69ParameterValues(device, get_param);
+
+		    errorMessage = "Unable to verify the 2.4GHz (b/g/n) Default Operating Tx Rate: Expected Value = "
+			    + expectedValue + " | Actual Value = " + response;
+		    result = CommonMethods.isNotNull(response)
+			    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
 		}
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: DEFAULT OPERATIONAL TX RATE OF 2.4GHz (b/g/n) IS: "
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S5) Verify the supported data transmit rate of the 2.4GHz with operating standard as b/g/n
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATION_TX_RATE_B_G_N, BroadBandTestConstants.SUPPORTED_TX_RATE_2GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY SUPPORTED TX RATE OF 2.4GHz (b/g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.SupportedDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_SUPPORTED_DATA_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz (b/g/n) Supported Data Tx Rate: Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: SUPPORTED TX RATE OF 2.4GHz (b/g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S6) Verify the default value of basic transmission rate of the 2.4 GHz with operating standard as b/g/n
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.BASIC_TX_RATE_B_G_N, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: VERIFY DEFAULT VALUE OF BASIC TX RATE OF 2.4GHz (b/g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz  (b/g/n) Default Basic Tx Rate: Expected Value = "
+		    + expectedValue + " | Actual Value - " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: DEFAULT BASIC TX RATE OF 2.4GHz (b/g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S7) Verify setting the operational transmission rate for 2.4GHz with operating standard as b/g/n with
+	     * values 1,2,6,9
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.TEMP_OPEATIONAL_TX_RATE_2GHZ;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY SETTING THE VALUE OF OPERATIONAL TX RATE OF 2.4GHz  (b/g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE SET SUCCESSFULLY.");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to set the Operational Tx Rates for 2.4GHz with Operating Standard as b/g/n.";
+	    try {
+
+		set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES, expectedValue);
+
+		response = tapEnv.setTR69ParameterValues(device, set_param);
+
+		result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
+
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error(
+			"EXCEPTION OCCURRED WHILE SETTING THE VALUE FOR TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL: SUCCESSFULLY SET THE OPERATIONAL TX RATE FOR 2.4GHz WITH OPERATING STANDARD AS b/g/n");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S8) Verify retrieving the operational transmission rate for 2.4GHz with operating standard as b/g/n.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.TEMP_OPEATIONAL_TX_RATE_2GHZ;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING OPERATIONAL TX RATE OF 2.4GHz (b/g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz (b/g/n) Operational Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: OPERATIONAL TX RATE OF 2.4GHz (b/g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S9) Verify retrieving the basic transmission rate for 2.4GHz with operating standard as b/g/n.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.TEMP_BASIC_TX_RATE, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING BASIC TX RATE OF 2.4GHz (b/g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz (b/g/n) Basic Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: BASIC TX RATE OF 2.4GHz (b/g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S10) Verify setting the operational transmission rate for 2.4GHz with operating standard as g/n with
+	     * values 6,9,12,18
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.TEMP_OPRATIONAL_TX_RATE_G_N;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY SETTING THE VALUE OF OPERATIONAL TX RATE OF 2.4GHz  (g/n).");
+	    LOGGER.info("STEP" + stepNumber
+		    + ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10000.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE SET SUCCESSFULLY.");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to set the 2.4GHz Operating Standard to g/n.";
+	    try {
+
+		set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATING_STD,
+			BroadBandTestConstants.WIFI_OPERATING_STANDARD_G_N);
+
+		response = tapEnv.setTR69ParameterValues(device, set_param);
+
+		result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
+		errorMessage = "Unable to set the Operational Tx Rates for 2.4GHz with Operating Standard as g/n.";
+		if (result) {
+		    tapEnv.waitTill(tr69WaitDuration);
+
+		    set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			    BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES, expectedValue);
+
+		    response = tapEnv.setTR69ParameterValues(device, set_param);
+		    result = CommonMethods.isNotNull(response)
+			    && response.equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+		    tapEnv.waitTill(tr69WaitDuration);
+		}
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL: SUCCESSFULLY SET THE OPERATIONAL TX RATE FOR 2.4GHz WITH OPERATING STANDARD AS g/n");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S11) Verify retrieving the operational transmission rate for 2.4GHz with operating standard as g/n.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.TEMP_OPRATIONAL_TX_RATE_G_N;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING OPERATIONAL TX RATE OF 2.4GHz (g/n).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_OPERATIONAL_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz (g/n) Operational Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: OPERATIONAL TX RATE OF 2.4GHz (g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S12) Verify retrieving the basic transmission rate for 2.4GHz with operating standard as g/n.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.TEMP_BASIC_TX_RATE, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: VERIFY RETRIEVING BASIC TX RATE OF 2.4GHz (g/n).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10000.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 2.4GHz  (b/g/n) Basic Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: BASIC TX RATE OF 2.4GHz (g/n) IS: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S13) Verify the beacon traffic use the lowest supported basic rate (2.4GHz)
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.TEXT_SIX_MBPS;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY BEACON TRAFFIC USE LOWEST SUPPORTED BASIC RATE (2.4GHz).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.AccessPoint.10001.X_RDKCENTRAL-COM_BeaconRate");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_2_4_BEACON_RATE;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the Beacon Rate (2.4GHz): Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareValues("TXT_COMPARISON", expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL: BEACON TRAFFIC USES TX RATE: " + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    // 5ghz radio
+	    /**
+	     * S14) Verify retrieving the default OperatingStandards for 5GHz by Tr69.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    tapEnv.waitTill(tr69WaitDuration);
+	    expectedValue = BroadBandTestConstants.OPERATING_MODE_ANAC;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: Verify  the default OperatingStandards for 5GHz  by Tr69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE FOR OPERATING STANDARDS MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to retrieve the default OperatingStandards for 5GHz  by Tr69";
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+		errorMessage = "Unable to retrieve the OperatingStandards for 5GHz by Tr69: Expected Value = "
+			+ expectedValue + " | Actual Value = " + response;
+		result = CommonMethods.isNotNull(response)
+			&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL:The default OperatingStandards for 5GHz  by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S15) Verify the basic transmission rate of the 5GHz with operating standard as 802.11 a/n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.BASIC_TX_RATE_G_N, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: VERIFY DEFAULT VALUE OF BASIC TX RATE OF 5GHz (a/n/ac).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 5GHz(a/n/ac) Default Basic Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:BASIC TX RATE OF 5GHz (a/n/ac) with operating standard 802.11 a/n/ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S16) Verify the SupportedDataTransmitRates for 5GHz with operating standard as 802.11a/n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY THE VALUE OF SUPPORTED DATA TX RATE OF 5GHz as 802.11(a/n/ac).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_SUPPORTED_DATA_TRANSMIT_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the value of supported data rate for 5GHz as 802.11(a/n/ac): Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:SUPPORTED DATA TX RATE OF 5GHz (a/n/ac) IS with operating standard 802.11 a/n/ac by Tr69 is "
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S17) Verify the operational transmission rate for 5GHz with operating standard as 802.11a/n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ, BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF 5GHz as 802.11(a/n/ac).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATIONAL_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the value of operational transmission rate for 5GHz as 802.11(a/n/ac): Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:OPERATIONAL TRANSMISSION DATA TX RATE OF 5GHz as 802.11(a/n/ac) IS: with operating standard 802.11a/n/ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S18) Change the operating mode for 5GHz Wi-Fi from device to 802.11 n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N_AC;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Change the operating mode for 5GHz Wi-Fi for  device to 802.11 n/ac by TR69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to change the operating mode for 5GHz Wi-Fi for  device to 802.11 n/ac by TR69";
+	    try {
+
+		set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD, BroadBandTestConstants.OPERATING_MODE_NAC);
+
+		response = tapEnv.setTR69ParameterValues(device, set_param);
+
+		result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
+		tapEnv.waitTill(tr69WaitDuration);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:operating mode for 5GHz Wi-Fi for  device to 802.11 n/ac by TR69 successful "
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S19) Verify retrieving the OperatingStandards for 5GHz as 802.11 n/ac by Tr69.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    tapEnv.waitTill(tr69WaitDuration);
+	    expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N_AC;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Verify retrieving the OperatingStandards for 5GHz as 802.11 n/ac  by Tr69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to retrieve the  OperatingStandards for 5GHz as 802.11 n/ac  by Tr69";
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+		errorMessage = "Unable to retrieve the OperatingStandards for 5GHz with operating standard by Tr69: Expected Value = "
+			+ expectedValue + " | Actual Value = " + response;
+		result = CommonMethods.isNotNull(response)
+			&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL:The  OperatingStandards for 5GHz  by Tr69 is" + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S20) Verify the basic transmission rate of the 5GHz with operating standard as 802.11 n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.BASIC_TX_RATE_G_N, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Verify the basic transmission rate of the 5GHz with operating standard as 802.11 n/ac by TR69.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 5GHz(n/ac)  Basic Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:BASIC TX RATE OF 5GHz (n/ac) IS with operating standard 802.11 n/ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S21) Verify the SupportedDataTransmitRates for 5GHz with operating standard as 802.11 n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY THE VALUE OF SUPPORTED DATA TX RATE OF 5GHz as 802.11 (n/ac).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.SupportedDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_SUPPORTED_DATA_TRANSMIT_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the value of supported data rate for 5GHz as 802.11(n/ac): Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:SUPPORTED DATA TX RATE OF 5GHz (n/ac) IS with operating standard as 802.11 n/ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S22) Verify the operational transmission rate for 5GHz with operating standard as 802.11n/ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ, BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF 5GHz for 802.11(n/ac).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATIONAL_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the value of operational transmission rate for 5GHz as 802.11(n/ac): Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:OPERATIONAL TRANSMISSION DATA TX RATE OF 5GHz as 802.11(n/ac) IS: with operating standard 802.11 n/ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S23) Change the operating mode for 5GHz Wi-Fi from device to 802.11ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_AC;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Change the operating mode for 5GHz Wi-Fi for  device to 802.11ac by TR69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to change the operating mode for 5GHz Wi-Fi for  device to 802.11ac by TR69";
+	    try {
+
+		set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD, BroadBandTestConstants.OPERATING_MODE_AC);
+
+		response = tapEnv.setTR69ParameterValues(device, set_param);
+
+		result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		tapEnv.waitTill(tr69WaitDuration);
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:operating mode for 5GHz Wi-Fi for  device to 802.11ac by TR69 successful"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S24) Verify retrieving the OperatingStandards for 5GHz as 802.11 ac by Tr69.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    tapEnv.waitTill(tr69WaitDuration);
+	    expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_AC;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Verify retrieving the OperatingStandards for 5GHz as 802.11 ac  by Tr69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to retrieve the  OperatingStandards for 5GHz as 802.11ac  by Tr69";
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+		errorMessage = "Unable to retrieve the OperatingStandards for 5GHz with operating standard by Tr69: Expected Value = "
+			+ expectedValue + " | Actual Value = " + response;
+		result = CommonMethods.isNotNull(response)
+			&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL:The  OperatingStandards for 5GHz  by Tr69 is" + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S25) Verify the basic transmission rate of the 5GHz with operating standard as 802.11ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ, BroadBandTestConstants.BASIC_TX_RATE,
+		    BroadBandTestConstants.BASIC_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Verify the basic transmission rate of the 5GHz with operating standard as 802.11ac by TR69.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.BasicDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + "EXPECTED : VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_BASIC_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the 5GHz(ac)  Basic Tx Rate: Expected Value = " + expectedValue
+		    + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:BASIC TX RATE OF 5GHz (ac) IS with operating standard 802.11ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S26) Verify the SupportedDataTransmitRates for 5GHz with operating standard as 802.11ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
+		    BroadBandTestConstants.SUPPORTED_DATA_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: VERIFY THE  SUPPORTED DATA TX RATE OF 5GHz as 802.11ac.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.SupportedDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_SUPPORTED_DATA_TRANSMIT_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the value of supported data rate for 5GHz as 802.11(ac): Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:SUPPORTED DATA TX RATE OF 5GHz (ac) IS with operating standard 802.11ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S27) Verify the operational transmission rate for 5GHz with operating standard as 802.11ac by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandCommonUtils.getTxRateExpctdValForDeviceType(device,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ, BroadBandTestConstants.SUPPORTED_DATATX_RATE_5GHZ,
+		    BroadBandTestConstants.OPERATIONAL_TX_RATE_5GHZ);
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF 5GHz for 802.11(ac).");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperationalDataTransmitRates");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATIONAL_TX_RATES;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE RETRIEVING THE TR-69 PARAMETER: " + exception.getMessage());
+	    }
+	    errorMessage = "Unable to verify the value of operational transmission rate for 5GHz as 802.11(ac): Expected Value = "
+		    + expectedValue + " | Actual Value = " + response;
+	    result = CommonMethods.isNotNull(response)
+		    && BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:OPERATIONAL TRANSMISSION DATA TX RATE OF 5GHz as 802.11(ac) IS: with operating standard 802.11ac by Tr69 is"
+			+ response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S28) Change the operating mode for 5GHz Wi-Fi from device to 802.11n by TR69
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Change the operating mode for 5GHz Wi-Fi for  device to 802.11n by TR69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 set operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to change the operating mode for 5GHz Wi-Fi for  device to 802.11n by TR69";
+	    try {
+
+		set_param = BroadBandTr69Utils.setParameterForTr69Set(device, TR69ParamDataType.STRING.get(),
+			BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD, BroadBandTestConstants.OPERATING_MODE_N);
+
+		response = tapEnv.setTR69ParameterValues(device, set_param);
+
+		result = CommonMethods.isNotNull(response) && response.contains(AutomaticsConstants.SUCCESS);
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL:operating mode for 5GHz Wi-Fi for  device to 802.11n by TR69 successful" + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	    /**
+	     * S29) Verify retrieving the OperatingStandards for 5GHz by Tr69.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    result = false;
+	    expectedValue = BroadBandTestConstants.OPERATING_STANDARDS_N;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Verify retrieving the OperatingStandards for 5GHz as 802.11n  by Tr69");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute tr069 get operation for Device.WiFi.Radio.10100.OperatingStandards");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: VALUE MUST BE " + expectedValue);
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to retrieve the  OperatingStandards for 5GHz as 802.11n  by Tr69";
+	    try {
+
+		objectName = BroadBandWebPaConstants.WEBPA_PARAM_5_OPERATING_STD;
+		get_param = BroadBandTr69Utils.getParameterForTr69Get(objectName);
+		response = tapEnv.getTR69ParameterValues(device, get_param);
+		errorMessage = "Unable to retrieve the OperatingStandards for 5GHz with operating standard by Tr69: Expected Value = "
+			+ expectedValue + " | Actual Value = " + response;
+		result = CommonMethods.isNotNull(response)
+			&& BroadBandCommonUtils.compareCommaSeparateValues(expectedValue, response);
+
+	    } catch (Exception exception) {
+		// Log & Suppress the Exception.
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING TR-69 OPERATION: " + exception.getMessage());
+	    }
+	    if (result) {
+		LOGGER.info("STEP " + stepNumber + " ACTUAL:The  OperatingStandards for 5GHz  by Tr69 is" + response);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+	    // ##################################################################################################//
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error(
+		    "EXCEPTION OCCURRED WHILE VERIFYING THE TR-69 TRANSIMISSION RATE CONFIGURATION: " + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, result, errorMessage, false);
+	} finally {
+	    // Post-Configuration
+	    performFactoryResetAndActivatation(tapEnv, device);
+	    LOGGER.info("COMPLETED TEST CASE: TC-RDKB-WIFI-TX-RATE-CONFIG-5062");
+	    LOGGER.info("#######################################################################################");
 	}
+    }
+
+    /**
+     * Test to verify Default values after factoryreset and value persistent after reboot
+     * <ol>
+     * <li>1. set and verify WifiBlaster RFC config parameter is enabled using RFC</li>
+     * <li>2. Set and Verify Wifi Blaster PacketSize Parameter to 64</li>
+     * <li>3. Set and verify Wifi Blaster PacketSize Parameter to 63 and and verify the value to be previous
+     * setvalue</li>
+     * <li>4. Set and Verify Wifi Blaster PacketSize Parameter to 1470</li>
+     * <li>5. Set and Verify Wifi Blaster PacketSize Parameter to 1471 and verify the value to be previous setvalue</li>
+     * <li>6. Set and Verify Wifi Blaster SampleDuration Parameter to 1</li>
+     * <li>7. Set Wifi Blaster SampleDuration Parameter to 0 and verify the value to be previous set value</li>
+     * <li>8. Set and Verify Wifi Blaster SampleDuration Parameter to 10000</li>
+     * <li>9. Set Wifi Blaster SampleDuration Parameter to 10001 and verify the value to be previous set value</li>
+     * <li>10. Set and Verify Wifi Blaster NumberOfSamples Parameter to 1</li>
+     * <li>11. Set Wifi Blaster NumberOfSamples Parameter to 0 and verify the value to be previous set value</li>
+     * <li>12. Set and Verify Wifi Blaster NumberOfSamples Parameter to 100</li>
+     * <li>13. Set Wifi Blaster NumberOfSamples Parameter to 101 and verify the value to be previous set value</li>
+     * </ol>
+     * 
+     * @author RamaTeja Meduri
+     * @refactor Govardhan
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+	    TestGroup.NEW_FEATURE, TestGroup.WIFI })
+    @TestDetails(testUID = "TC-RDKB-WIFI_BLASTER-1001")
+    public void testToVerifyWifiBlastertest(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI_BLASTER-1001");
+	LOGGER.info(
+		"TEST DESCRIPTION: Validate wifi balster featurte to be enabled using RFC and parameter in range values");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION: Disable wifi balster if already enabled");
+	LOGGER.info("1. set and verify WifiBlaster RFC config parameter is enabled using RFC");
+	LOGGER.info("2. Set and Verify Wifi Blaster PacketSize Parameter to 64");
+	LOGGER.info(
+		"3. Set and verify Wifi Blaster PacketSize Parameter to 63 and and verify the value to be previous set value");
+	LOGGER.info("4. Set and Verify Wifi Blaster PacketSize Parameter to 1470");
+	LOGGER.info(
+		"5. Set and Verify Wifi Blaster PacketSize Parameter to 1471 and verify the value to be previous set value");
+	LOGGER.info("6. Set and Verify Wifi Blaster SampleDuration Parameter to 1");
+	LOGGER.info("7. Set Wifi Blaster SampleDuration Parameter to 0 and verify the value to be previous set value");
+	LOGGER.info("8. Set and Verify Wifi Blaster SampleDuration Parameter to 10000");
+	LOGGER.info(
+		"9. Set Wifi Blaster SampleDuration Parameter to 10001 and verify the value to be previous set value");
+	LOGGER.info("10. Set and Verify Wifi Blaster NumberOfSamples Parameter to 1");
+	LOGGER.info(
+		"11. Set Wifi Blaster NumberOfSamples Parameter to 0 and verify the value to be previous set value");
+	LOGGER.info("12. Set and Verify Wifi Blaster NumberOfSamples Parameter to 100");
+	LOGGER.info(
+		"13. Set Wifi Blaster NumberOfSamples Parameter to 101 and verify the value to be previous set value");
+
+	int stepNumber = BroadBandTestConstants.CONSTANT_1;
+	String testCaseId = "TC-RDKB-WIFI_BLASTER-101";
+	String stepNum = "s" + stepNumber;
+	String errorMessage = null;
+	boolean status = false;
+
+	try {
+
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("PRE-CONDITION: DESCRIPTION: Disable wifi blaster ");
+	    LOGGER.info(
+		    "PRE-CONDITION: ACTION : tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.WifiClient.ActiveMeasurements.Enable bool false");
+	    LOGGER.info("PRE-CONDITION: EXPECTED : Wifi Blaster feature must be disabled");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster feature is not disabled";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_RFC_WIFI_BLASTER_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+		    BroadBandTestConstants.FALSE, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION: ACTUAL: Wifi Blaster feature is disabled by Webpa");
+	    } else {
+		LOGGER.error("PRE-CONDITION: ACTUAL: " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: Enable Wifi Balster feature using RFC ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.WifiClient.ActiveMeasurements.Enable bool true");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Wifi Blaster feature must be enabled using RFC");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster feature is not enabled by RFC";
+
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTestConstants.FEATURE_NAME_WIFIBLASTER_CONFIG, BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+	    if (status) {
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_RFC_WIFI_BLASTER_ENABLE, BroadBandTestConstants.TRUE);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Wifi Blaster feature is enabled using RFC");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : Wifi Blaster feature is not enabled using RFC");
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION: Set and Verify Wifi Blaster PacketSize Parameter to 64");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.PacketSize uint 64");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Wifi Blaster PacketSize Parameter must be set to 64");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster PacketSize Parameter is not set to 64";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PACKETSIZE, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_VALUE_SIXTY_FOUR, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster PacketSize Parameter is set to 64");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set Wifi Blaster PacketSize Parameter to 63 and verify the value to be previous set value");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.PacketSize uint 63");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED: Wifi Blaster PacketSize Parameter must be set to previous set value");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster PacketSize Parameter is not set to previous set value";
+
+	    status = !BroadBandCommonUtils.setWebPaParam(tapEnv, device,
+		    BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PACKETSIZE,
+			    BroadBandTestConstants.STRING_63, BroadBandTestConstants.CONSTANT_2));
+	    if (status) {
+		errorMessage = "Failed as Packet size parameter value is set to 63";
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PACKETSIZE,
+			BroadBandTestConstants.STRING_VALUE_SIXTY_FOUR);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL: Wifi Blaster PacketSize Parameter is set to previous set value");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: Set and Verify Wifi Blaster PacketSize Parameter to 1470");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.PacketSize uint 1470");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Wifi Blaster PacketSize Parameter must be set to 1470");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster PacketSize Parameter is not set to 1470";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PACKETSIZE, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_1470, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster PacketSize Parameter is set to 1470");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set Wifi Blaster PacketSize Parameter to 1471 and verify the value to be previous set value");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.PacketSize uint 1471");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED: Wifi Blaster PacketSize Parameter must be set to previous set value");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster PacketSize Parameter is not set to previous set value";
+
+	    status = !BroadBandCommonUtils.setWebPaParam(tapEnv, device,
+		    BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PACKETSIZE,
+			    BroadBandTestConstants.STRING_1471, BroadBandTestConstants.CONSTANT_2));
+	    if (status) {
+		errorMessage = "Failed as Packet size parameter value is set to 1471";
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PACKETSIZE, BroadBandTestConstants.STRING_1470);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL: Wifi Blaster PacketSize Parameter is set to previous set value");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: Set and Verify Wifi Blaster SampleDuration Parameter to 1");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.SampleDuration uint 1");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Wifi Blaster SampleDuration Parameter must be set to 1");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster SampleDuration Parameter is not set to 1";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_SAMPLEDURATION, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster SampleDuration Parameter is set to 1");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set Wifi Blaster SampleDuration Parameter to 0 and verify the value to be previous set value");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.SampleDuration uint 0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED: Wifi Blaster SampleDuration Parameter must be set to previous set value");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster SampleDuration Parameter is not set to previous set value";
+
+	    status = !BroadBandCommonUtils.setWebPaParam(tapEnv, device,
+		    BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_SAMPLEDURATION,
+			    BroadBandTestConstants.STRING_ZERO, BroadBandTestConstants.CONSTANT_2));
+	    if (status) {
+		errorMessage = "Failed as SampleDuration parameter value is set to 0";
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_SAMPLEDURATION,
+			BroadBandTestConstants.STRING_CONSTANT_1);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL: Wifi Blaster SampleDuration Parameter is set to previous set value");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set and Verify Wifi Blaster SampleDuration Parameter to 10000");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.SampleDuration uint 10000");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED: Wifi Blaster SampleDuration Parameter must be set to 10000");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster SampleDuration Parameter is not set to 10000";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_SAMPLEDURATION, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_10000, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster SampleDuration Parameter is set to 10000");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set Wifi Blaster SampleDuration Parameter to 10001 and verify the value to be previous set value");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.SampleDuration uint 10001");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED: Wifi Blaster SampleDuration Parameter must be set to previous set value");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster SampleDuration Parameter is not set to previous set value";
+
+	    status = !BroadBandCommonUtils.setWebPaParam(tapEnv, device,
+		    BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_SAMPLEDURATION,
+			    BroadBandTestConstants.WIFI_24_GHZ_INDEX, BroadBandTestConstants.CONSTANT_2));
+	    if (status) {
+		errorMessage = "Failed as SampleDuration parameter value is set to 10001";
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_SAMPLEDURATION,
+			BroadBandTestConstants.STRING_10000);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL: Wifi Blaster SampleDuration Parameter is set to previous set value");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION: Set and Verify Wifi Blaster NumberOfSamples Parameter to 1");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.NumberOfSamples uint 1");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Wifi Blaster NumberOfSamples Parameter must be set to 1");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster NumberOfSamples Parameter is not set to 1";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_NUMOFSAMPLES, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster NumberOfSamples Parameter is set to 1");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set Wifi Blaster NumberOfSamples Parameter to 0 and verify the value to be previous set value");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.NumberOfSamples uint 0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED: Wifi Blaster NumberOfSamples Parameter must be set to previous set value");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster NumberOfSamples Parameter is not set to previous set value";
+
+	    status = !BroadBandCommonUtils.setWebPaParam(tapEnv, device,
+		    BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_NUMOFSAMPLES,
+			    BroadBandTestConstants.STRING_ZERO, BroadBandTestConstants.CONSTANT_2));
+	    if (status) {
+		errorMessage = "Failed as NumberOfSamples parameter value is set to 0";
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_NUMOFSAMPLES,
+			BroadBandTestConstants.STRING_CONSTANT_1);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL: Wifi Blaster NumberOfSamples Parameter is set to default value");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set and Verify Wifi Blaster NumberOfSamples Parameter to 100");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.NumberOfSamples uint 100");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Wifi Blaster NumberOfSamples Parameter must be set to 100");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster NumberOfSamples Parameter is not set to 100";
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_NUMOFSAMPLES, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_VALUE_100, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster NumberOfSamples Parameter is set to 100");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNum = "s" + (++stepNumber);
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION: Set Wifi Blaster NumberOfSamples Parameter to 101 and verify the value to be previous set value");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION: Execute webpa command: tr181.Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ActiveMeasurements.NumberOfSamples uint 101");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED: Wifi Blaster NumberOfSamples Parameter must be set to previous set value");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Wifi Blaster NumberOfSamples Parameter is not set to previous set value";
+
+	    status = !BroadBandCommonUtils.setWebPaParam(tapEnv, device,
+		    BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
+			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_NUMOFSAMPLES,
+			    BroadBandTestConstants.STRING_101, BroadBandTestConstants.CONSTANT_2));
+	    if (status) {
+		errorMessage = "Failed as NumberOfSamples parameter value is set to 101";
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_NUMOFSAMPLES,
+			BroadBandTestConstants.STRING_VALUE_100);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL: Wifi Blaster NumberOfSamples Parameter is set to previous set value");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    status = false;
+	    LOGGER.info("****************************************************************");
+	    LOGGER.info("STEP POST-CONDITION: DESCRIPTION: Remove RFC settings for IE Enable feature from DCM server");
+	    LOGGER.info("STEP POST-CONDITION: ACTION: call method clearSettingsInProxyXconfDcmServer");
+	    LOGGER.info("STEP POST-CONDITION: EXPECTED: RFC Settings should be successfully removed from DCM server");
+	    LOGGER.info("****************************************************************");
+	    errorMessage = "Failed to remove IE Enable feature RFC settings from DCM server";
+
+	    status = (HttpStatus.SC_OK == BroadBandRfcFeatureControlUtils.clearSettingsInProxyXconfDcmServerForRDKB(
+		    device, tapEnv, false, BroadBandTestConstants.FEATURE_NAME_WIFIBLASTER_CONFIG));
+
+	    if (status) {
+		LOGGER.info(
+			"POST-CONDITION : ACTUAL : IE Enable feature RFC settings are removed from DCM server successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : " + errorMessage);
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE TC-RDKB-WIFI_BLASTER-1001");
+    }
+
 }

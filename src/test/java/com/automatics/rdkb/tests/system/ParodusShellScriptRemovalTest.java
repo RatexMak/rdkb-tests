@@ -55,7 +55,7 @@ public class ParodusShellScriptRemovalTest extends AutomaticsTestBase {
      * <li>S3)verify the parodus process is running after getting started in selfheal window</li>
      * </ol>
      * 
-     * @author JOSEPH M, INFOSYS
+     * @author JOSEPH M
      * @Refactor Alan_Bivera
      * 
      * @param device

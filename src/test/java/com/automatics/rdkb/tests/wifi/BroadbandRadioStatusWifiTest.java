@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -30,7 +31,10 @@ import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
+import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -405,5 +409,583 @@ public class BroadbandRadioStatusWifiTest extends AutomaticsTestBase{
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-1016");
 	// ###############################################################//
+    }
+    
+    /**
+     * Method to execute steps to set force wifi disable to true and verify
+     * 
+     * @param device
+     *            Dut instance
+     * @param testId
+     *            test case id
+     * @param stepNum
+     *            step number to execute from
+     * 
+     * @author Ashwin Sankarasubramanian
+     * @refactor Athira
+     */
+    public static void executeForceWiFiDisableSetToTrueSteps(Dut device, String testCaseId, int stepNum) {
+
+	String step = "s" + stepNum;
+	;
+	boolean status = false;
+	String errorMessage = "Failed to set value of force disable wifi parameter to true";
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Set value of Force Disable WiFi parameter to true");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute webpa or dmcli command to set value of Device.WiFi.X_RDK-CENTRAL_COM_ForceDisable to true");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Successfully set parameter value to true");
+	LOGGER.info("**********************************************************************************");
+
+	status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_FORCE_WIFI_DISABLE, BroadBandTestConstants.CONSTANT_3,
+		BroadBandTestConstants.TRUE);
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : Successfully set parameter value to true");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	;
+	errorMessage = "Unable to find log message for force disable wifi set to true";
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify log message for Force Disable WiFi set to true");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute command (on atom):grep \"WIFI_FORCE_DISABLE_CHANGED_TO_TRUE\" /rdklogs/logs/WiFilog.txt.0");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Log message is present after setting");
+	LOGGER.info("**********************************************************************************");
+
+	status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+		BroadBandTraceConstants.LOG_MESSAGE_FORCE_WIFI_DISABLE_TRUE, BroadBandTestConstants.LOCATION_WIFI_LOG,
+		BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : Log message is present after setting");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	;
+	errorMessage = "Failed to verify value of 2.4G radio enable parameter as false after force disable";
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify 2.4Ghz radio has been disabled");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute webpa or dmcli command  to get value of Device.WiFi.Radio.1.Enable");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Value of parameter should be set to false");
+	LOGGER.info("**********************************************************************************");
+
+	status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, BroadBandTestConstants.FALSE,
+		BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : Value of parameter should be set to false");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	;
+	errorMessage = "Failed to get value of 5G radio enable parameter";
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify 5Ghz radio has been disabled");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute webpa or dmcli command  to get value of Device.WiFi.Radio.2.Enable");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Value of parameter should be set to false");
+	LOGGER.info("**********************************************************************************");
+
+	status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_WIFI_5_RADIO_ENABLE, BroadBandTestConstants.FALSE,
+		BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : Value of parameter should be set to false");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+    }
+    
+    /**
+     * Method to execute all steps to verify wifi configuration disabled when radio force disabled
+     * 
+     * @param device
+     *            Dut instance
+     * @param testId
+     *            test case id
+     * @param stepNum
+     *            step number to execute from
+     * 
+     * @author Ashwin Sankarasubramanian
+     * @refactor Athira
+     */
+    public static void executeWiFiConfigBlockedSteps(Dut device, String testCaseId, int stepNum) {
+
+	String step = "s" + stepNum;
+	boolean status = false;
+	String errorMessage = null;
+	BroadBandResultObject result = null;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum
+		+ ": DESCRIPTION : Verify radio enable write not allowed using webpa and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute webpa command: {'parameters':[{'dataType':3,'name':'Device.WiFi.Radio.10001.Enable','value':'true','attributes':{'notify':0}}]}\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : Radio enable is not writable using webpa and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiWebPaConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, BroadBandTestConstants.CONSTANT_3,
+		BroadBandTestConstants.TRUE);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTUAL : Radio enable is not writable using webpa and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info(
+		"STEP " + stepNum + ": DESCRIPTION : Verify AP enable write not allowed using webpa and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute webpa command: {'parameters':[{'dataType':3,'name':'Device.WiFi.AccessPoint.10001.Enable','value':'true','attributes':{'notify':0}}]}\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : AP enable is not writable using webpa and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiWebPaConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4GHZ_ENABLE,
+		BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info(
+		    "STEP " + stepNum + ": ACTUAL : AP enable is not writable using webpa and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify SSID write not allowed using webpa and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute webpa command: {'parameters':[{'dataType':0,'name':'Device.WiFi.SSID.10001.SSID','value':'test-ssid-2.4','attributes':{'notify':0}}]}\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : SSID is not writable using webpa and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiWebPaConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
+		BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.TEST_SSID_2_4);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : SSID is not writable using webpa and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info(
+		"STEP " + stepNum + ": DESCRIPTION : Verify passphrase write not allowed using webpa and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute webpa command: {'parameters':[{'dataType':0,'name':'Device.WiFi.AccessPoint.10001.Security.X_COMCAST-COM_KeyPassphrase','value':'password123','attributes':{'notify':0}}]}\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : Passphrase is not writable using webpa and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiWebPaConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_FOR_WIFI_PRIVATE_SSID_2GHZ_PASSPHRASE,
+		BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.TEST_SSID_PASSWORD);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info(
+		    "STEP " + stepNum + ": ACTUAL : Passphrase is not writable using webpa and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum
+		+ ": DESCRIPTION : Verify radio enable write not allowed using dmcli and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute command: dmcli eRT setv Device.WiFi.Radio.1.Enable bool true\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : Radio enable is not writable using dmcli and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiDmcliConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE
+			.replace(BroadBandTestConstants.RADIO_24_GHZ_INDEX, BroadBandTestConstants.STRING_VALUE_ONE),
+		BroadBandTestConstants.DMCLI_SUFFIX_TO_SET_BOOLEAN_PARAMETER, BroadBandTestConstants.TRUE);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTUAL : Radio enable is not writable using dmcli and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info(
+		"STEP " + stepNum + ": DESCRIPTION : Verify AP enable write not allowed using dmcli and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute command: dmcli eRT setv Device.WiFi.AccessPoint.1.Enable bool true\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : AP enable is not writable using dmcli and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiDmcliConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4GHZ_ENABLE.replace(
+			BroadBandWebPaConstants.WEBPA_INDEX_2_4_GHZ_PRIVATE_SSID,
+			BroadBandTestConstants.STRING_VALUE_ONE),
+		BroadBandTestConstants.DMCLI_SUFFIX_TO_SET_BOOLEAN_PARAMETER, BroadBandTestConstants.TRUE);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info(
+		    "STEP " + stepNum + ": ACTUAL : AP enable is not writable using dmcli and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify SSID write not allowed using dmcli and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute command: dmcli eRT getv Device.WiFi.SSID.1.SSID string test-ssid-2.4\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : SSID is not writable using dmcli and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiDmcliConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME.replace(
+			BroadBandWebPaConstants.WEBPA_INDEX_2_4_GHZ_PRIVATE_SSID,
+			BroadBandTestConstants.STRING_VALUE_ONE),
+		BroadBandTestConstants.DMCLI_SUFFIX_TO_SET_STRING_PARAMETER, BroadBandTestConstants.TEST_SSID_2_4);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : SSID is not writable using dmcli and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info(
+		"STEP " + stepNum + ": DESCRIPTION : Verify passphrase write not allowed using dmcli and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute command: dmcli eRT setv Device.WiFi.AccessPoint.1.Security.X_COMCAST-COM_KeyPassphrase string password123\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : Passphrase is not writable using dmcli and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiDmcliConfigDisabledStep(device,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_1_SECURITY_COMCAST_COM_KEYPASSPHRASE,
+		BroadBandTestConstants.DMCLI_SUFFIX_TO_SET_STRING_PARAMETER, BroadBandTestConstants.TEST_SSID_PASSWORD);
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info(
+		    "STEP " + stepNum + ": ACTUAL : Passphrase is not writable using dmcli and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info(
+		"STEP " + stepNum + ": DESCRIPTION : Verify radio enable write not allowed using snmp and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute snmp command: snmpset -v2c -c <comm_string> udp6:[DEVICE_IP] 1.3.6.1.4.1.17270.50.2.2.6.1.1.1.10000 i 1\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : Radio enable is not writable using snmp and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiSnmpConfigDisabledStep(device,
+		BroadBandSnmpMib.ENABLE_DISABLE_WIFI_RADIO_2_4_GHZ.getOid(), SnmpDataType.INTEGER,
+		BroadBandTestConstants.STRING_VALUE_ONE,
+		BroadBandSnmpMib.ENABLE_DISABLE_WIFI_RADIO_2_4_GHZ.getTableIndex());
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTUAL : Radio enable is not writable using snmp and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify SSID write not allowed using snmp and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)\n2. Execute snmp command: snmpset -v2c -c <comm_string> udp6:[DEVICE_IP] 1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10001 s 'test-ssid-2.4'\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : SSID is not writable using snmp and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiSnmpConfigDisabledStep(device,
+		BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_2_4.getOid(), SnmpDataType.STRING,
+		BroadBandTestConstants.TEST_SSID_2_4, BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_2_4.getTableIndex());
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : SSID is not writable using snmp and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info(
+		"STEP " + stepNum + ": DESCRIPTION : Verify passphrase write not allowed using snmp and log message");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : 1. Execute command: echo > /rdklogs/logs/WiFilog.txt.0 (on atom)\n2. Execute snmp command: snmpset -v2c -c <comm_string> udp6:[DEVICE_IP] 1.3.6.1.4.1.17270.50.2.2.3.1.1.2.10001 s ï¿½password123ï¿½\n3. Execute command: grep WIFI_ATTEMPT_TO_CHANGE_CONFIG_WHEN_FORCE_DISABLED /rdklogs/logs/WiFilog.txt.0 (on atom for atom based devices)");
+	LOGGER.info(
+		"STEP " + stepNum + ": EXPECTED : Passphrase is not writable using snmp and log message is present");
+	LOGGER.info("**********************************************************************************");
+
+	result = BroadBandWiFiUtils.verifyWiFiSnmpConfigDisabledStep(device,
+		BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_PASSPHRASE.getOid(), SnmpDataType.STRING,
+		BroadBandTestConstants.TEST_SSID_PASSWORD,
+		BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_PASSPHRASE.getTableIndex());
+	status = result.isStatus();
+	errorMessage = result.getErrorMessage();
+
+	if (status) {
+	    LOGGER.info(
+		    "STEP " + stepNum + ": ACTUAL : Passphrase is not writable using snmp and log message is present");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+    }
+    
+    /**
+     * Method to execute steps to set force wifi disable to false and verify
+     * 
+     * @param device
+     *            Dut instance
+     * @param testId
+     *            test case id
+     * @param stepNum
+     *            step number to execute from
+     * 
+     * @author Ashwin Sankarasubramanian
+     * @refactor Athira
+     */
+    public static void executeForceWiFiDisableSetToFalseSteps(Dut device, String testCaseId, int stepNum,
+	    String radio24Status, String radio5Status) {
+
+	String step = "s" + stepNum;
+	;
+	boolean status = false;
+	String errorMessage = "Failed to set value of force disable wifi parameter to false";
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Set value of Force Disable WiFi parameter to false");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute webpa or dmcli command to set value of Device.WiFi.X_RDK-CENTRAL_COM_ForceDisable to false");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Successfully set parameter value to false");
+	LOGGER.info("**********************************************************************************");
+
+	status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_FORCE_WIFI_DISABLE, BroadBandTestConstants.CONSTANT_3,
+		BroadBandTestConstants.FALSE);
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : Successfully set parameter value to false");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	;
+	errorMessage = "Unable to find log message for force disable wifi set to false";
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify log message for Force Disable WiFi set to false");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute command (on atom for atom based devices):grep \"WIFI_FORCE_DISABLE_CHANGED_TO_FALSE\" /rdklogs/logs/WiFilog.txt.0");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Log message is present after setting");
+	LOGGER.info("**********************************************************************************");
+
+	status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+		BroadBandTraceConstants.LOG_MESSAGE_FORCE_WIFI_DISABLE_FALSE, BroadBandTestConstants.LOCATION_WIFI_LOG,
+		BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : Log message is present after setting");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	;
+	errorMessage = "Failed to verify value of 2.4G radio enable parameter reset to: " + radio24Status;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify 2.4Ghz radio has been reset to original value");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute webpa or dmcli command  to get value of Device.WiFi.Radio.1.Enable");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Value of parameter should be set to value in step 2");
+	LOGGER.info("**********************************************************************************");
+
+	status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, radio24Status,
+		BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : 2.4Ghz radio has been reset to original value");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
+	step = "s" + ++stepNum;
+	;
+	errorMessage = "Failed to verify value of 5G radio enable parameter reset to: " + radio5Status;
+	status = false;
+
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify 5Ghz radio has been reset to original value");
+	LOGGER.info("STEP " + stepNum
+		+ ": ACTION : Execute webpa or dmcli command  to get value of Device.WiFi.Radio.2.Enable");
+	LOGGER.info("STEP " + stepNum + ": EXPECTED : Value of parameter should be set to value in step 2");
+	LOGGER.info("**********************************************************************************");
+
+	status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_WIFI_5_RADIO_ENABLE, radio5Status,
+		BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	if (status) {
+	    LOGGER.info("STEP " + stepNum + ": ACTUAL : 5Ghz radio has been reset to original value");
+	} else {
+	    LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	}
+
+	tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+
+	LOGGER.info("**********************************************************************************");
+
     }
 }

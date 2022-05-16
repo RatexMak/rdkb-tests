@@ -1637,14 +1637,14 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
      * <li>Step 6 : Verify RDKB_REBOOT:docsDevResetNow log in Consolelog.txt.0.</li>
      * </ol>
      * 
-     * @param settop
-     *            Settop to be used
+     * @param device
+     *            Dut to be used
      * @author Prabhakaran
      * @refactor anandam
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
     @TestDetails(testUID = "TC-RDKB-REBOOT-5001")
-    public void verifyDeviceRebootUsingDocsDevResetNowSnmpCommand(Dut settop) {
+    public void verifyDeviceRebootUsingDocsDevResetNowSnmpCommand(Dut device) {
 	// Variable declaration starts
 	boolean status = false;
 	String testCaseId = "TC-RDKB-REBOOT-501";
@@ -1679,7 +1679,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 1: ACTION : Execute SNMP Set command for MIB: .1.3.6.1.2.1.69.1.1.3 and set value as 2.");
 	    LOGGER.info("STEP 1: EXPECTED : SNMP Set command should execute successfully and return output as 2.");
 	    LOGGER.info("**********************************************************************************");
-	    snmpSetOutput = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, settop,
+	    snmpSetOutput = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
 		    BroadBandSnmpMib.ECM_RESET_MIB.getOid() + ".0", SnmpDataType.INTEGER,
 		    BroadBandTestConstants.STRING_VALUE_TWO);
 	    status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
@@ -1691,7 +1691,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNumber, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
 
 	    stepNumber = "S2";
 	    errorMessage = "Device went for reboot even after setting SNMP MIB DOCS-CABLE-DEVICE-MIB::docsDevResetNow(.1.3.6.1.2.1.69.1.1.3) to 2.";
@@ -1702,7 +1702,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 2: ACTION : Check device accessibility after every 30 seconds continously for 5 min.");
 	    LOGGER.info("STEP 2: EXPECTED : Device shouldn't go for reboot.");
 	    LOGGER.info("**********************************************************************************");
-	    status = !CommonMethods.isSTBRebooted(tapEnv, settop, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+	    status = !CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
 		    BroadBandTestConstants.CONSTANT_10);
 	    if (status) {
 		LOGGER.info(
@@ -1711,13 +1711,13 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNumber, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
 
 	    /*
 	     * Due to large buffer size, it takes more time for searching in buffer. So clearing buffer and start
 	     * buffering the trace.
 	     */
-	    tapEnv.cleanupTraceBuffer(settop);
+	    tapEnv.cleanupTraceBuffer(device);
 
 	    stepNumber = "S3";
 	    errorMessage = "Unable to set SNMP MIB DOCS-CABLE-DEVICE-MIB::docsDevResetNow(.1.3.6.1.2.1.69.1.1.3) value as 1.";
@@ -1728,13 +1728,13 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 3: ACTION : Execute SNMP Set command for MIB: .1.3.6.1.2.1.69.1.1.3 and set value as 1.");
 	    LOGGER.info("STEP 3: EXPECTED : SNMP Set command should execute successfully and return output as 1.");
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.COMMAND_TO_COPY_TO_NVRAM_CONSOLELOG);
-	    snmpSetOutput = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, settop,
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.COMMAND_TO_COPY_TO_NVRAM_CONSOLELOG);
+	    snmpSetOutput = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
 		    BroadBandSnmpMib.ECM_RESET_MIB.getOid() + ".0", SnmpDataType.INTEGER,
 		    BroadBandTestConstants.STRING_VALUE_ONE);
 	    status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
 		    BroadBandTestConstants.STRING_VALUE_ONE, snmpSetOutput);
-	    boolean isSTBRebooted = CommonMethods.isSTBRebooted(tapEnv, settop,
+	    boolean isSTBRebooted = CommonMethods.isSTBRebooted(tapEnv, device,
 		    BroadBandTestConstants.TEN_SECOND_IN_MILLIS, BroadBandTestConstants.CONSTANT_60);
 
 	    if (status) {
@@ -1744,7 +1744,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNumber, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
 
 	    stepNumber = "S4";
 	    errorMessage = "Device did not go for reboot even after setting SNMP MIB DOCS-CABLE-DEVICE-MIB::docsDevResetNow(.1.3.6.1.2.1.69.1.1.3) to 1.";
@@ -1758,7 +1758,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    if (isSTBRebooted) {
 		LOGGER.info("Device rebooted successfully.");
 		errorMessage = "Device is not coming up after successful reboot.";
-		status = CommonMethods.waitForEstbIpAcquisition(tapEnv, settop);
+		status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
 	    }
 	    if (status) {
 		LOGGER.info("STEP 4: ACTUAL: Device went for reboot and came up with all the processes.");
@@ -1766,7 +1766,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		LOGGER.error("STEP 4: ACTUAL: " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNumber, status, errorMessage, true);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
 
 	    stepNumber = "S5";
 	    errorMessage = "Unable to verify last reboot reason.";
@@ -1777,14 +1777,14 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		    "STEP 5: ACTION : Execute the WebPa Get command for following param: Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason.");
 	    LOGGER.info("STEP 5: EXPECTED : Last reboot reason should be 'snmp-reboot'.");
 	    LOGGER.info("**********************************************************************************");
-	    status = BroadBandCommonUtils.verifySnmpRebootReason(settop, tapEnv);
+	    status = BroadBandCommonUtils.verifySnmpRebootReason(device, tapEnv);
 	    if (status) {
 		LOGGER.info("STEP 5: ACTUAL: Last reboot reason is verified successfully as 'snmp-reboot'.");
 	    } else {
 		LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNumber, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 
 	    stepNumber = "S6";
 	    errorMessage = "Log message is not found after Rebooting the device thorugh docsDevResetNow.0 mib Since this logging might or might not appear,"
@@ -1797,22 +1797,22 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 6: EXPECTED :Required log message:'RDKB_REBOOT:docsDevResetNow'for device, 'RDKB_REBOOT: Docsis_SNMP_Reboot request received, rebooting device' in /rdklogs/logs/SecConsole.txt.0 /nvram2/logs/SecConsole_lastreboot.txt.0 for arm devices and 'RDKB_REBOOT: SNMP Reboot request received, rebooting device' for fiber devices and 'RDKB_REBOOT: Reboot triggered by SNMP' for other devices should be present in Consolelog.txt.0/nvram2/logs/Consolelog.txt.0.");
 	    LOGGER.info("**********************************************************************************");
-	    status = BroadBandCommonUtils.verifyTelemetryMarkerForDeviceRebootInitiatedBySnmpDocDevMib(settop, tapEnv);
+	    status = BroadBandCommonUtils.verifyTelemetryMarkerForDeviceRebootInitiatedBySnmpDocDevMib(device, tapEnv);
 	    if (status) {
 		LOGGER.info("STEP 6: ACTUAL: Required log message is present in Device Logs.");
 		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(settop, testCaseId, stepNumber, status, errorMessage, true);
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
 	    } else {
 		errorMessage = "Logging didn't appear.Marking the step as NA";
 		LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
 		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionForAllStatus(settop, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
 			errorMessage, false);
 	    }
 	} catch (Exception exception) {
 	    errorMessage = errorMessage + exception.getMessage();
 	    LOGGER.error(errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, settop, testCaseId, stepNumber, status, errorMessage,
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
 		    true);
 	} finally {
 	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
@@ -1824,7 +1824,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info("####################################################################");
 	    status = false;
 	    errorMessage = "Failed to remove /tmp/Consolelog.txt file";
-	    status = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, settop,
+	    status = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
 		    BroadBandCommandConstants.FILE_PATH_TMP_CONSOLE_LOG);
 	    if (status) {
 		LOGGER.info("POST-CONDITION 1 : ACTUAL : File removed successfully");

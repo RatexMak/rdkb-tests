@@ -18,6 +18,8 @@
 
 package com.automatics.rdkb.tests.wifi.connectedclients;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -30,13 +32,18 @@ import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
+import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
+import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.RDKBTestConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
+import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
@@ -46,9 +53,22 @@ import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
+import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
 
 public class BroadBandXdnsOverride extends AutomaticsTestBase {
+    
+    /** SLF4j logger. */
+    public static final Logger LOGGER = LoggerFactory.getLogger(BroadBandXdnsOverride.class);
+
+    /** Constant holds the test step number with S **/
+    private static String stepNum = null;
+
+    /** Constant holds the test status **/
+    private static boolean status = false;
+
+    /** Constant holds the errormessage **/
+    private static String errorMessage = null;
 
     /**
      * 
@@ -651,7 +671,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		"STEP 3 : Verify if connected client is able to access the internet by pinging the site : 'www.google.com'");
 
 	LOGGER.info(
-		"STEP 4 : Verify the presence of the dnsmasq_servers.conf file in the device and Applying xdns override by adding DNS mapping table add DNS mapping table with values MacAddress : Wi-Fi MacAddress of the connected client ");
+		"STEP 4 : Verify the presence of the dnsmasq_servers.conf file in the device and Applying xdns override by adding DNS mapping table add DNS mapping table with values MacAddress : Wi-Fi MacAddress of the connected client");
 	LOGGER.info(
 		"STEP 5 : Verify xdns override at client mac Level by Accessing site : www.seriesw.net on the connected client");
 	LOGGER.info("STEP 6 : Factory Reset the device and verify if device comes up");
@@ -664,35 +684,35 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		"STEP 9 : Verify Captive portal status of the router after factory reset and connect the client device to the SSID after reactivating the router.");
 
 	LOGGER.info(
-		"STEP 10 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4, DnsIPv6");
+		"STEP 10 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 11 : Verify xdns override at client mac Level by validating the domain name of the site : <site> after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 12 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z, DnsIPv4, DnsIPv6");
+		"STEP 12 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 13 : Verify xdns override at client mac Level by validating the domain name of the site : <site> after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 14 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4, DnsIPv6");
+		"STEP 14 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 15 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 16 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4, DnsIPv6 ");
+		"STEP 16 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 17 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 18 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4 : 0.0.0.0, DnsIPv6");
+		"STEP 18 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 19 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 20 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values  MacAddress, DnsIPv4, DnsIPv6");
+		"STEP 20 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 21 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 22 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress, DnsIPv4, DnsIPv6");
+		"STEP 22 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 23 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 24 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values  MacAddress, DnsIPv4, DnsIPv6, Wi-Fi MacAddress of the client");
+		"STEP 24 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 	LOGGER.info(
 		"STEP 25 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info("#######################################################################################");
@@ -1739,7 +1759,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
      * <li>EXPECTED: Connected client should be able to access the site : 'www.google.com'
      *
      * STEP 4 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values
-     * MacAddress : Wi-Fi MacAddress of the connected client , DnsIPv4 , DnsIPv6 
+     * MacAddress : Wi-Fi MacAddress of the connected client
      * <li>EXPECTED: dnsmasq_servers.conf file should exist and DNS mapping table should be added successfully.
      *
      * STEP 5 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net on
@@ -1748,7 +1768,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
      * 'www.seriesw.net'
      *
      * STEP 6 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values
-     * MacAddress : Wi-Fi MacAddress of the connected client , DnsIPv4 , DnsIPv6
+     * MacAddress : Wi-Fi MacAddress of the connected client , DnsIPv4 : 75.75.75.20 , DnsIPv6 : 2001:558:feed::7520
      * <li>EXPECTED: dnsmasq_servers.conf file should exist and DNS mapping table should be added successfully.
      *
      * STEP 7 : Verify xdns override at client mac Level by validating the domain name of the site :
@@ -1788,8 +1808,8 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
      * STEP 15 : Verify connected client is able to access the site : www.ar15.com, After Factory resetting the router
      * <li>EXPECTED: The response should have 'www.ar15.com' as the domain name for the site : www.ar15.com
      * 
-     * @param settop
-     *            The settop to be used.
+     * @param device
+     *            The Dut to be used.
      * @author Susheela C
      * @refactor Alan_Bivera
      */
@@ -1811,7 +1831,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	LOGGER.info(
 		"STEP 3 : Verify if connected client is able to access the internet by pinging the site : 'www.google.com'");
 	LOGGER.info(
-		"STEP 4 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : Wi-Fi MacAddress of the connected client , DnsIPv4 , DnsIPv6");
+		"STEP 4 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : Wi-Fi MacAddress of the connected client");
 	LOGGER.info(
 		"STEP 5 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net on the connected client");
 	LOGGER.info(
@@ -1988,8 +2008,10 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    status = false;
 	    String defaultPartner = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
-	    if (!defaultPartner.equalsIgnoreCase(BroadBandTestConstants.PARTNER_ID_COX)
-		    || !defaultPartner.equalsIgnoreCase(BroadBandTestConstants.PARTNER_ID_SHAW)) {
+	    if (!defaultPartner.equalsIgnoreCase(AutomaticsPropertyUtility
+			    .getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SPECIFIC_PARTNER_ID_ONE))
+		    || !defaultPartner.equalsIgnoreCase(AutomaticsPropertyUtility
+				    .getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SPECIFIC_PARTNER_ID_TWO))) {
 		verifyCaptivePrtlModeToReactivateRtrAndConnctClient(device, connectedClientSettop, testCaseId,
 			stepNumber);
 	    } else {
@@ -2048,4 +2070,1509 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	}
     }
 
+    /**
+    *
+    * Test Case : Verify if Skipping either one of the DNS server IP configuration -LEVEL 1 ,2 and 3 Primary Servers
+    *
+    * <p>
+    * STEPS:
+    * </p>
+    * <ol>
+    * <li>PRE-CONDITION 1: Connect the client setup to 2.4/5 GHZ SSID and verify connection status</li>
+    * <li>PRE-CONDITION 2: Verify the correct IPv4 address for client connected with 2.4/5 GHz SSID</li>
+    * <li>PRE-CONDITION 3: Verify the correct IPv6 address for client connected with 2.4/5 GHz SSID</li>
+    * <li>PRE-CONDITION 4: Verify the internet connectivity in the connected wifi client using ipv4 interface</li>
+    * <li>PRE-CONDITION 5: Verify the internet connectivity in the connected wifi client using ipv6 interface.</li>
+    * <li>PRE-CONDITION 6: Enable and verify the XDNS feature</li>
+    * <li>PRE-CONDITION 7: Set and verify the Global DNS IPv4 value to '75.75.75.75'</li>
+    * <li>PRE-CONDITION 8: Set and verify the Global DNS IPv6 value to '2001:558:feed::1'</li>
+    * <li>Step 1: Add the device details in mapping table for Level 1 Primary Server DnsIPv4 and verify the Verify the
+    * presence of the dnsmasq_servers.conf file in the device</li>
+    * <li>Step 2: Verify low level blocked site www.seriesw.net is accessible on level 1 primary server DnsIPv4</li>
+    * <li>Step 3: Verify medium level blocked site www.plannedparenthood.org is accessible on level 1 primary server
+    * DnsIPv4</li>
+    * <li>Step 4: Verify high level blocked site www.ar15.com is accessible on level 1 primary server DnsIPv4</li>
+    * <li>Step 5: Add the device details in mapping table for Level 1 Primary Server DnsIPv6 and verify the Verify the
+    * presence of the dnsmasq_servers.conf file in the device</li>
+    * <li>Step 6: Verify low level blocked site www.seriesw.net is accessible on level 1 primary server DnsIPv6</li>
+    * <li>Step 7: Verify medium level blocked site www.plannedparenthood.org is accessible on level 1 primary server
+    * DnsIPv6</li>
+    * <li>Step 8: Verify high level blocked site www.ar15.com is accessible on level 1 primary server DnsIPv6</li>
+    * <li>Step 9: Add the device details in mapping table for Level 2 Primary Server DnsIPv4 and verify the Verify the
+    * presence of the dnsmasq_servers.conf file in the device</li>
+    * <li>Step 10: Verify low level blocked site www.seriesw.net is accessible on level 2 primary server DnsIPv4</li>
+    * <li>Step 11: Verify medium level blocked site www.plannedparenthood.org is accessible on level 2 primary server
+    * DnsIPv4</li>
+    * <li>Step 12: Verify high level blocked site www.ar15.com is accessible on level 2 primary server DnsIPv4</li>
+    * <li>Step 13: Add the device details in mapping table for Level 2 Primary Server DnsIPv6 and verify the Verify the
+    * presence of the dnsmasq_servers.conf file in the device</li>
+    * <li>Step 14: Verify low level blocked site www.seriesw.net is accessible on level 2 primary server DnsIPv6</li>
+    * <li>Step 15: Verify medium level blocked site www.plannedparenthood.org is accessible on level 2 primary server
+    * DnsIPv6</li>
+    * <li>Step 16: Verify high level blocked site www.ar15.com is accessible on level 2 primary server DnsIPv6</li>
+    * <li>Step 17: Add the device details in mapping table for Level 3 Primary Server DnsIPv4 and verify the Verify the
+    * presence of the dnsmasq_servers.conf file in the device</li>
+    * <li>Step 18: Verify low level blocked site www.seriesw.net is accessible on level 3 primary server DnsIPv4</li>
+    * <li>Step 19: Verify medium level blocked site www.plannedparenthood.org is accessible on level 3 primary server
+    * DnsIPv4</li>
+    * <li>Step 20: Verify high level blocked site www.ar15.com is accessible on level 3 primary server DnsIPv4</li>
+    * <li>Step 21: Add the device details in mapping table for Level 3 Primary Server DnsIPv6 and verify the Verify the
+    * presence of the dnsmasq_servers.conf file in the device</li>
+    * <li>Step 22: Verify low level blocked site www.seriesw.net is accessible on level 3 primary server DnsIPv6</li>
+    * <li>Step 23: Verify medium level blocked site www.plannedparenthood.org is accessible on level 3 primary server
+    * DnsIPv6</li>
+    * <li>Step 24: Verify high level blocked site www.ar15.com is accessible on level 3 primary server DnsIPv6</li>
+    * <li>POST-CONDITION 1: Disable and verify the XDNS feature</li>
+    * </ol>
+    * 
+    * @param device
+    *            {@link Dut}
+    * 
+    * @author Muthukumar
+    * @refactor Govardhan
+    **/
+   @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+   @TestDetails(testUID = "TC-RDKB-XDNS-PRI-ALL-LVL-5001")
+   public void testToVerifyPrimaryAllLevelDnsServerConfigSkipIPv4OrIPv6(Dut device) {
+	String testCaseId = "TC-RDKB-XDNS-PRI-ALL-LVL-501";
+	Dut deviceConnected = null;
+	int stepNumber = 1;
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-XDNS-PRI-ALL-LVL-5001");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify if Skipping either one of the DNS server IP configuration -LEVEL 1 ,2 and 3 Primary Servers");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION 1: Connect the client setup to 2.4/5 GHZ SSID and verify connection status");
+	LOGGER.info("PRE-CONDITION 2: Verify the correct IPv4 address for client connected with 2.4/5 GHz SSID");
+	LOGGER.info("PRE-CONDITION 3: Verify the correct IPv6 address for client connected with 2.4/5 GHz SSID");
+	LOGGER.info(
+		"PRE-CONDITION 4: Verify the internet connectivity in the connected wifi client using ipv4 interface");
+	LOGGER.info(
+		"PRE-CONDITION 5: Verify the internet connectivity in the connected wifi client using ipv6 interface.");
+	LOGGER.info("PRE-CONDITION 6: Enable and verify the XDNS feature");
+	LOGGER.info("PRE-CONDITION 7: Set and verify the Global DNS IPv4 value to '75.75.75.75'");
+	LOGGER.info("PRE-CONDITION 8: Set and verify the Global DNS IPv6 value to '2001:558:feed::1'");
+	LOGGER.info(
+		"Step 1: Add the device details in mapping table for Level 1 Primary Server DnsIPv4 and verify the Verify the presence of the dnsmasq_servers.conf file in the device");
+	LOGGER.info(
+		"Step 2: Verify low level blocked site www.seriesw.net is accessible on level 1 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 3: Verify medium level blocked site www.plannedparenthood.org is accessible on level 1 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 4: Verify high level blocked site www.ar15.com is accessible on level 1 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 5: Add the device details in mapping table for Level 1 Primary Server DnsIPv6 and verify the Verify the presence of the dnsmasq_servers.conf file in the device");
+	LOGGER.info(
+		"Step 6: Verify low level blocked site www.seriesw.net is accessible on level 1 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 7: Verify medium level blocked site www.plannedparenthood.org is accessible on level 1 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 8: Verify high level blocked site www.ar15.com is accessible on level 1 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 9: Add the device details in mapping table for Level 2 Primary Server DnsIPv4 and verify the Verify the presence of the dnsmasq_servers.conf file in the device");
+	LOGGER.info(
+		"Step 10: Verify low level blocked site www.seriesw.net is accessible on level 2 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 11: Verify medium level blocked site www.plannedparenthood.org is accessible on level 2 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 12: Verify high level blocked site www.ar15.com is accessible on level 2 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 13: Add the device details in mapping table for Level 2 Primary Server DnsIPv6 and verify the Verify the presence of the dnsmasq_servers.conf file in the device");
+	LOGGER.info(
+		"Step 14: Verify low level blocked site www.seriesw.net is accessible on level 2 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 15: Verify medium level blocked site www.plannedparenthood.org is accessible on level 2 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 16: Verify high level blocked site www.ar15.com is accessible on level 2 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 17: Add the device details in mapping table for Level 3 Primary Server DnsIPv4 and verify the Verify the presence of the dnsmasq_servers.conf file in the device");
+	LOGGER.info(
+		"Step 18: Verify low level blocked site www.seriesw.net is accessible on level 3 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 19: Verify medium level blocked site www.plannedparenthood.org is accessible on level 3 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 20: Verify high level blocked site www.ar15.com is accessible on level 3 primary server DnsIPv4");
+	LOGGER.info(
+		"Step 21: Add the device details in mapping table for Level 3 Primary Server DnsIPv6 and verify the Verify the presence of the dnsmasq_servers.conf file in the device");
+	LOGGER.info(
+		"Step 22: Verify low level blocked site www.seriesw.net is accessible on level 3 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 23: Verify medium level blocked site www.plannedparenthood.org is accessible on level 3 primary server DnsIPv6");
+	LOGGER.info(
+		"Step 24: Verify high level blocked site www.ar15.com is accessible on level 1 primary server DnsIPv6");
+	LOGGER.info("POST-CONDITION 1: Disable and verify the XDNS feature");
+	LOGGER.info("#######################################################################################");
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    deviceConnected = BroadBandPreConditionUtils.executePreConditionToVerifyWiFiClientStatus(device, tapEnv,
+		    BroadBandTestConstants.BAND_2_4GHZ_OR_5GHZ);
+	    /**
+	     * PRECONDITION 6 : ENABLE AND VERIFY THE XDNS FEATURE
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 6 : DESCRIPTION : ENABLE AND VERIFY THE XDNS FEATURE");
+	    LOGGER.info("PRE-CONDITION 6 : ACTION : ENABLE AND VERIFY THE XDNS FEATURE USING WEBPA");
+	    LOGGER.info("PRE-CONDITION 6 : EXPECTED : XDNS FEATURE MUST BE ENABLED SUCESSFULLY ");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "FAILED TO ENABLE THE XDNS FEATURE";
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.TRUE, RDKBTestConstants.THREE_MINUTES,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 6 : ACTUAL : XDNS FEATURE ENABLED SUCCESSFULLY.");
+	    } else {
+		LOGGER.error("PRE-CONDITION 6 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 6 : FAILED : " + errorMessage);
+	    }
+
+	    /**
+	     * PRECONDITION 7 : SET AND VERIFY THE GLOBAL DNS IPV4 VALUE TO <IPv4>
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 7 : DESCRIPTION : SET AND VERIFY THE GLOBAL DNS IPV4 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv4Value());
+	    LOGGER.info("PRE-CONDITION 7 : ACTION : SET AND VERIFY THE GLOBAL DNS IPV4 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv4Value() + " USING WEBPA");
+	    LOGGER.info("PRE-CONDITION 7 : EXPECTED : MUST SET AND VERIFY THE GLOBAL DNS IPV4 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv4Value());
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET AND VERIFY THE GLOBAL DNS IPV4 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv4Value();
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, WebPaDataTypes.STRING.getValue(),
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value(), RDKBTestConstants.THREE_MINUTES,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 7 : ACTUAL : SUCCESSFULLY SET AND VERIFIED THE GLOBAL DNS IPV4 VALUE TO "
+			+ BroadbandPropertyFileHandler.getGlobalDNSIpv4Value());
+	    } else {
+		LOGGER.error("PRE-CONDITION 7 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 7 : FAILED : " + errorMessage);
+	    }
+	    /**
+	     * PRECONDITION 8 : SET AND VERIFY THE GLOBAL DNS IPV6 VALUE TO <IPv6>
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 8 : DESCRIPTION : SET AND VERIFY THE GLOBAL DNS IPV6 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv6Value());
+	    LOGGER.info("PRE-CONDITION 8 : ACTION : SET AND VERIFY THE GLOBAL DNS IPV6 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv6Value() + " USING WEBPA");
+	    LOGGER.info("PRE-CONDITION 8 : EXPECTED : MUST SET AND VERIFY THE GLOBAL DNS IPV6 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv6Value());
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET AND VERIFY THE GLOBAL DNS IPV6 VALUE TO "
+		    + BroadbandPropertyFileHandler.getGlobalDNSIpv6Value();
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv6Value(), RDKBTestConstants.THREE_MINUTES,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 8 : ACTUAL : SUCCESSFULLY SET AND VERIFIED THE GLOBAL DNS IPV6 VALUE TO "
+			+ BroadbandPropertyFileHandler.getGlobalDNSIpv6Value());
+	    } else {
+		LOGGER.error("PRE-CONDITION 8 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 8 : FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+	    /**
+	     * Step 1 : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL 1 PRIMARY SERVER DNS IPV4 AND VERIFY THE
+	     * VERIFY THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	     */
+	    addDeviceDetailsMappingInDnsServer(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getDNSIpv4ValueLevelOnePrimary(),
+		    BroadBandTestConstants.STRING_DNS_IPV4, stepNumber, testCaseId,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+
+	    /**
+	     * Step 2-4 : VERIFY ALL LEVEL BLOCKED SITES ARE ACCESSIBLE ON LEVEL 1 PRIMARY SERVER DNSIPV4
+	     */
+	    stepNumber++;
+	    performNsLookUpOnConnectedDevice(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value(), BroadBandTestConstants.STRING_DNS_IPV4,
+		    stepNumber, testCaseId, BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandTestConstants.LOW_LEVEL_SITE_BLOCKER);
+
+	    /**
+	     * Step 5 : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL 1 PRIMARY SERVER DNSIPV6 AND VERIFY THE VERIFY
+	     * THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	     */
+	    stepNumber = 5;
+	    addDeviceDetailsMappingInDnsServer(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getDNSIpv6ValueLevelOnePrimary(),
+		    BroadBandTestConstants.STRING_DNS_IPV6, stepNumber, testCaseId,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+
+	    /**
+	     * Step 6-8 : VERIFY ALL LEVEL BLOCKED SITES ARE ACCESSIBLE ON LEVEL 1 PRIMARY SERVER DNSIPV6
+	     */
+	    stepNumber++;
+	    performNsLookUpOnConnectedDevice(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv6Value(), BroadBandTestConstants.STRING_DNS_IPV6,
+		    stepNumber, testCaseId, BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandTestConstants.LOW_LEVEL_SITE_BLOCKER);
+
+	    /**
+	     * Step 9 : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL 2 PRIMARY SERVER DNS IPV4 AND VERIFY THE
+	     * VERIFY THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	     */
+	    stepNumber = 9;
+	    addDeviceDetailsMappingInDnsServer(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getDNSIpv4ValueLevelTwoPrimary(),
+		    BroadBandTestConstants.STRING_DNS_IPV4, stepNumber, testCaseId,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+
+	    /**
+	     * Step 10-12 : VERIFY ALL LEVEL BLOCKED SITES ARE ACCESSIBLE ON LEVEL 2 PRIMARY SERVER DNSIPV4
+	     */
+	    stepNumber++;
+	    performNsLookUpOnConnectedDevice(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value(), BroadBandTestConstants.STRING_DNS_IPV4,
+		    stepNumber, testCaseId, BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandTestConstants.MEDIUM_LEVEL_SITE_BLOCKER);
+
+	    /**
+	     * Step 13 : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL 2 PRIMARY SERVER DNSIPV6 AND VERIFY THE
+	     * VERIFY THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	     */
+	    stepNumber = 13;
+	    addDeviceDetailsMappingInDnsServer(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getDNSIpv6ValueLevelTwoPrimary(),
+		    BroadBandTestConstants.STRING_DNS_IPV6, stepNumber, testCaseId,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+
+	    /**
+	     * Step 14-16 : VERIFY ALL LEVEL BLOCKED SITES ARE ACCESSIBLE ON LEVEL 1 PRIMARY SERVER DNSIPV6
+	     */
+	    stepNumber++;
+	    performNsLookUpOnConnectedDevice(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv6Value(), BroadBandTestConstants.STRING_DNS_IPV6,
+		    stepNumber, testCaseId, BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandTestConstants.MEDIUM_LEVEL_SITE_BLOCKER);
+
+	    /**
+	     * Step 17 : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL 3 PRIMARY SERVER DNS IPV4 AND VERIFY THE
+	     * VERIFY THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	     */
+	    stepNumber = 17;
+	    addDeviceDetailsMappingInDnsServer(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getDNSIpv4ValueLevelThreePrimary(),
+		    BroadBandTestConstants.STRING_DNS_IPV4, stepNumber, testCaseId,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+
+	    /**
+	     * Step 18-20 : VERIFY ALL LEVEL BLOCKED SITES ARE ACCESSIBLE ON LEVEL 3 PRIMARY SERVER DNSIPV4
+	     */
+	    stepNumber++;
+	    performNsLookUpOnConnectedDevice(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value(), BroadBandTestConstants.STRING_DNS_IPV4,
+		    stepNumber, testCaseId, BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandTestConstants.HIGH_LEVEL_SITE_BLOCKER);
+
+	    /**
+	     * Step 21 : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL 3 PRIMARY SERVER DNSIPV6 AND VERIFY THE
+	     * VERIFY THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	     */
+	    stepNumber = 21;
+	    addDeviceDetailsMappingInDnsServer(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getDNSIpv6ValueLevelThreePrimary(),
+		    BroadBandTestConstants.STRING_DNS_IPV6, stepNumber, testCaseId,
+		    BroadBandTestConstants.STRING_CONSTANT_1);
+
+	    /**
+	     * Step 22-24 : VERIFY ALL LEVEL BLOCKED SITES ARE ACCESSIBLE ON LEVEL 1 PRIMARY SERVER DNSIPV6
+	     */
+	    stepNumber++;
+	    performNsLookUpOnConnectedDevice(device, deviceConnected,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv6Value(), BroadBandTestConstants.STRING_DNS_IPV6,
+		    stepNumber, testCaseId, BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandTestConstants.HIGH_LEVEL_SITE_BLOCKER);
+	} catch (Exception e) {
+	    errorMessage = e.getMessage();
+	    LOGGER.error(
+		    "EXCEPTION OCCURRED WHILE VERIFYING EITHER ONE OF THE DNS SERVER IP CONFIGURATION -LEVEL 1 ,2 AND 3 PRIMARY SERVERS :"
+			    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    BroadBandPostConditionUtils.executePostConditionToDisableXdnsStatus(device, tapEnv,
+		    BroadBandTestConstants.CONSTANT_1);
+	    if (deviceConnected != null) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("POST-CONDITION 2 : DESCRIPTION : DISCONNECT WIFI RADIO 2.4GHZ/5GHZ SSID FROM THE DEVICE");
+		LOGGER.info("POST-CONDITION 2 : ACTION : DISCONNECT WIFI RADIO 2.4GHZ/5GHZ SSID ");
+		LOGGER.info(
+			"POST-CONDITION 2 : EXPECTED : PRIVATE WIFI 2.4GHZ/5GHZ SSID SHOULD BE DISCONNECTED SUCCESSFULLY");
+		LOGGER.info("#######################################################################################");
+		status = false;
+		try {
+		    BroadBandResultObject resultObject = BroadBandConnectedClientUtils
+			    .disconnectCnnClientFromSsid(tapEnv, device, deviceConnected);
+		    status = resultObject.isStatus();
+		    errorMessage = resultObject.getErrorMessage();
+		} catch (Exception e) {
+		    errorMessage = e.getMessage();
+		    LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING POST CONDITION 1" + errorMessage);
+		}
+		if (status) {
+		    LOGGER.info("POST-CONDITION 2 : ACTUAL : PRIVATE WIFI 2.4GHZ/5GHZ SSID DISCONNECTED SUCCESSFULLY");
+		} else {
+		    LOGGER.error("POST-CONDITION 2 : ACTUAL : " + errorMessage);
+		}
+	    }
+	    LOGGER.info("########################### ENDING POST CONFIGURATION ####################################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-XDNS-PRI-ALL-LVL-5001");
+   }
+   
+   /**
+    * This method is to verify if the blocked site is accessible on the dns server by checking the DNS Configuration
+    * 
+    * @param device
+    *            instance of {@link Dut}
+    * @param deviceConnected
+    *            instance of {@link ConnectedClient}
+    * @param dnsServerIp
+    *            DNS server IP Address
+    * @param dnsServerIpType
+    *            DNS Server Ip Address Type(IPv4/IPv6)
+    * @param stepNumber
+    *            Step Number
+    * @param testCaseId
+    *            Test case Id
+    * @param primaryLevel
+    *            Primary level
+    * @param siteBlocker
+    *            DNS Site blocker for
+    * @refactor Govardhan
+    */
+   private static void performNsLookUpOnConnectedDevice(Dut device, Dut deviceConnected, String dnsServerIp,
+	    String dnsServerIpType, int stepNumber, String testCaseId, String primaryLevel, String siteBlocker) {
+	/**
+	 * Step : VERIFY LOW LEVEL BLOCKED SITE WWW.SERIESW.NET IS ACCESSIBLE ON PRIMARY SERVER AND RESPECTIVE DNSIP
+	 * TYPE
+	 */
+	stepNum = "S" + stepNumber;
+	status = false;
+	errorMessage = null;
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : VERIFY LOW LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE)
+		+ " IS ACCESSIBLE ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	LOGGER.info("STEP " + stepNumber + " : ACTION : PERFORM NSLOOKUP FOR LOW LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE)
+		+ " ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType + ": EXECUTE COMMAND : nslookup "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE) + " "
+		+ dnsServerIp);
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : LOW LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE)
+		+ " MUST BE ACCESSIBLE ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	LOGGER.info("#######################################################################################");
+	errorMessage = "UNABLE TO ACCESS THE LOW LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE)
+		+ " IN LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType;
+	status = BroadBandConnectedClientUtils.verifySiteNsLookUpOnCnctdClient(tapEnv, deviceConnected,
+		BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE), dnsServerIp,
+		BroadBandTestConstants.DNS_SITE_BLOCKER_MAPPING.get(siteBlocker));
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : LOW LEVEL BLOCKED SITE "
+		    + BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.LOW_LEVEL_SITE)
+		    + " IS ACCESSIBLE SUCCESSFULLY IN LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("#######################################################################################");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	/**
+	 * Step : VERIFY LOW LEVEL BLOCKED WWW.PLANNEDPARENTHOOD.ORG IS ACCESSIBLE ON PRIMARY SERVER AND RESPECTIVE
+	 * DNSIP TYPE
+	 */
+	stepNumber++;
+	stepNum = "S" + stepNumber;
+	status = false;
+	errorMessage = null;
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : VERIFY MEDIUM LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE)
+		+ " IS ACCESSIBLE ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	LOGGER.info("STEP " + stepNumber + " : ACTION : PERFORM NSLOOKUP FOR MEDIUM LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE)
+		+ " ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType + ": EXECUTE COMMAND : nslookup "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE) + " "
+		+ dnsServerIp);
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : MEDIUM LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE)
+		+ " MUST BE ACCESSIBLE ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	LOGGER.info("#######################################################################################");
+	errorMessage = "UNABLE TO ACCESS THE MEDIUM LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE)
+		+ " IN LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType;
+	status = BroadBandConnectedClientUtils.verifySiteNsLookUpOnCnctdClient(tapEnv, deviceConnected,
+		BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE),
+		dnsServerIp, BroadBandTestConstants.DNS_SITE_BLOCKER_MAPPING.get(siteBlocker));
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : MEDIUM LEVEL BLOCKED SITE "
+		    + BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.MEDIUM_LEVEL_SITE)
+		    + " IS ACCESSIBLE SUCCESSFULLY IN LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("#######################################################################################");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	/**
+	 * Step : VERIFY LOW LEVEL BLOCKED SITE WWW.AR15.COM IS ACCESSIBLE ON PRIMARY SERVER AND RESPECTIVE DNSIP TYPE
+	 */
+	stepNumber++;
+	stepNum = "S" + stepNumber;
+	status = false;
+	errorMessage = null;
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : VERIFY HIGH LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE)
+		+ " IS ACCESSIBLE ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	LOGGER.info("STEP " + stepNumber + " : ACTION : PERFORM NSLOOKUP FOR HIGH LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE)
+		+ " ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType + ": EXECUTE COMMAND : nslookup "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE) + " "
+		+ dnsServerIp);
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : HIGH LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE)
+		+ " MUST BE ACCESSIBLE ON LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	LOGGER.info("#######################################################################################");
+	errorMessage = "UNABLE TO ACCESS THE HIGH LEVEL BLOCKED SITE "
+		+ BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE)
+		+ " IN LEVEL " + primaryLevel + " PRIMARY SERVER " + dnsServerIpType;
+	status = BroadBandConnectedClientUtils.verifySiteNsLookUpOnCnctdClient(tapEnv, deviceConnected,
+		BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE), dnsServerIp,
+		BroadBandTestConstants.DNS_SITE_BLOCKER_MAPPING.get(siteBlocker));
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : HIGH LEVEL BLOCKED SITE "
+		    + BroadBandTestConstants.RESTRICTED_SITE_MAPPING.get(BroadBandTestConstants.HIGH_LEVEL_SITE)
+		    + " IS ACCESSIBLE SUCCESSFULLY IN LEVEL" + primaryLevel + " PRIMARY SERVER " + dnsServerIpType);
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("#######################################################################################");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+   }
+   
+   /**
+    * Method to add the DNS mapping table and verify the entry in dnsmasq_servers.conf
+    * 
+    * @param device
+    *            instance of {@link Dut}
+    * @param deviceConnected
+    *            instance of {@link ConnectedClient}
+    * @param dnsServerIp
+    *            DNS server IP Address
+    * @param dnsServerIpType
+    *            DNS Server Ip Address Type(IPv4/IPv6)
+    * @param stepNumber
+    *            Step Number
+    * @param testCaseId
+    *            Test case Id
+    * @param primaryLevel
+    *            Primary level
+    * @refactor Govardhan
+    */
+   private static void addDeviceDetailsMappingInDnsServer(Dut device, Dut deviceConnected, String dnsServerIp,
+	    String dnsServerIpType, int stepNumber, String testCaseId, String primaryLevel) {
+	BroadBandResultObject resultObject = null;
+	stepNum = "S" + stepNumber;
+	status = false;
+	errorMessage = null;
+	/**
+	 * Step : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR RESPECITVE LEVEL PRIMARY SERVER DNS IP TYPE AND VERIFY THE
+	 * PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE
+	 */
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL "
+		+ primaryLevel + " PRIMARY SERVER " + dnsServerIpType
+		+ " AND VERIFY THE VERIFY THE PRESENCE OF THE DNSMASQ_SERVERS.CONF FILE IN THE DEVICE");
+	LOGGER.info("STEP " + stepNumber + " : ACTION : ADD THE DEVICE DETAILS IN MAPPING TABLE FOR LEVEL "
+		+ primaryLevel + " PRIMARY SERVER DNSIPV4 USING WEBPA PARAM :" + dnsServerIp);
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : DNS MAPPING TABLE SHOULD BE ADDED SUCCESSFULLY FOR LEVEL "
+		+ primaryLevel + " PRIMARY SERVER DNSIPV4");
+	LOGGER.info("#######################################################################################");
+	errorMessage = "ATTEMPT TO APPLY DNSOVERRIDE THROUGH DNS MAPPING TABLE FAILED FOR LEVEL " + primaryLevel
+		+ " PRIMARY SERVER DNSIPV4";
+	resultObject = BroadBandConnectedClientUtils.addDnsMappingTable(device, tapEnv, deviceConnected, dnsServerIp,
+		dnsServerIpType);
+	status = resultObject.isStatus();
+	errorMessage = resultObject.getErrorMessage();
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : DNS MAPPING TABLE ADDED SUCCESSFULLY FOR LEVEL "
+		    + primaryLevel + " PRIMARY SERVER DNSIPV4");
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("#######################################################################################");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+   }
+   
+   /**
+    * Test to verify Add support for secondary xDNS server
+    * <ol>
+    * <li>Factory reset the device for default values</li>
+    * <li>Disabled captive portal and connect to the client</li>
+    * <li>verify GET of these parameters using WEBPA if they have default values</li>
+    * <li>Enable XDNS with default settings</li>
+    * <li>Check /etc/resolv.conf contains XDNS entries</li>
+    * <li>Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to tcp dump when DNS requests
+    * in connected clients in browser.</li>
+    * <li>Set different values other than default for XDNS.set valid value for Primary and invalid value for Secondary
+    * address using dmcli/WEBPA</li>
+    * <li>Check /etc/resolv.conf contains XDNS entries</li>
+    * <li>Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to primary XDNS servers when
+    * making DNS requests in connected clients in browser for Scenario1 and check browser is accessible.</li>
+    * <li>Set different values other than default for XDNS.set invalid value for Primary and valid value for Secondary
+    * address using dmcli/WEBPA</li>
+    * <li>Check /etc/resolv.conf contains XDNS entries</li>
+    * <li>Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to secondary XDNS servers when
+    * making DNS requests in connected clients in browser for Scenario2 and check browser is accessible</li>
+    * <li>Set different values other than default for XDNS.set invalid value for Primary and invalid value for
+    * Secondary address using dmcli/WEBPA</li>
+    * <li>Check /etc/resolv.conf contains XDNS entries</li>
+    * <li>Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to tcp dump when making DNS
+    * requests in connected clients in browser for Scenario3 and check browser is not accessible</li>
+    * <li>Set Secondary IPv4 and IPv6 address to NULL</li>
+    * <li>verify only primary address in /etc/resolv.conf contains XDNS entries</li>
+    * <li>Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to primary XDNS servers when
+    * making DNS requests in connected clients in browser and check browser is accessible</li>
+    * <li>Disable XDNS</li>
+    * <li>verify resolv.conf does not contain any dnsoverride entries /etc/resolv.conf</li>
+    * <li>Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to tcpdump when making DNS
+    * requests in connected clients in browser and check browser is accessible</li>
+    * <li>Check for \"XDNS_SetParamStringValue\" log after setting secondary values in log files</li>
+    * <li>EnableXDNS and check for log string \"Enabling secondary XDNS\"</li>
+    * 
+    * @author Betel Costrow
+    * @refactor Govardhan
+    *
+    */
+   @Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+   @TestDetails(testUID = "TC-RDKB-XDNS-1006")
+   public void testToVerifySecondaryXDNSServer(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-XDNS-106";
+	String stepNum = "";
+	String errorMessage = "";
+	String response = null;
+	boolean status = false;
+	String tcpDumpWrite = null;
+	String tcpDumpRead = null;
+	String tcpDumpReadAndWrite = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-XDNS-1006");
+	LOGGER.info("TEST DESCRIPTION: Test to verify Add support for secondary xDNS server");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1.Factory reset the device for default values");
+	LOGGER.info("2.Disabled captive portal and connect to the client");
+	LOGGER.info("3.verify GET of these parameters using WEBPA if they have default values");
+	LOGGER.info("4.Enable XDNS with default settings");
+	LOGGER.info("5.Check /etc/resolv.conf contains XDNS entries");
+	LOGGER.info(
+		"6.Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent  to tcp dump when DNS requests in connected clients in browser.");
+	LOGGER.info(
+		"7.Set different values other than default for XDNS.set valid value for Primary and invalid value for Secondary address using dmcli/WEBPA");
+	LOGGER.info("8.Check /etc/resolv.conf contains XDNS entries");
+	LOGGER.info(
+		"9.Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to primary XDNS servers when making DNS requests in connected clients in browser for Scenario1 and check browser is accessible.");
+	LOGGER.info(
+		"10.Set different values other than default for XDNS.set invalid value for Primary and valid value for Secondary address using dmcli/WEBPA");
+	LOGGER.info("11.Check /etc/resolv.conf contains XDNS entries");
+	LOGGER.info(
+		"12.Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to secondary XDNS servers when making DNS requests in connected clients in browser for Scenario2 and check browser is accessible");
+	LOGGER.info(
+		"13.Set different values other than default for XDNS.set invalid value for Primary and invalid value for Secondary address using dmcli/WEBPA");
+	LOGGER.info("14.Check /etc/resolv.conf contains XDNS entries");
+	LOGGER.info(
+		"15.Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to tcp dump when making DNS requests in connected clients in browser for Scenario3 and check browser is not accessible");
+	LOGGER.info("16.Set Secondary IPv4 and IPv6 address to NULL");
+	LOGGER.info("17.verify only primary address in /etc/resolv.conf contains XDNS entries");
+	LOGGER.info(
+		"18.Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to  primary XDNS servers when making DNS requests in connected clients in browser and check browser is accessible");
+	LOGGER.info("19.Disable XDNS");
+	LOGGER.info("20.verify resolv.conf does not contain any dnsoverride entries /etc/resolv.conf");
+	LOGGER.info(
+		"21.Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to tcpdump when making DNS requests in connected clients in browser and check browser is accessible");
+	LOGGER.info("22.Check for \"XDNS_SetParamStringValue\" log after setting secondary values in log files");
+	LOGGER.info("23.EnableXDNS and check for log string \"Enabling secondary XDNS\"");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+		tcpDumpWrite = BroadBandCommandConstants.CMD_TO_WRITE_TCPDUMP_DUMMY_FILE_ATOM_DEVICE;
+		tcpDumpRead = BroadBandCommandConstants.CMD_TO_READ_TCPDUMP_DUMMY_FILE_ATOM_DEVICE;
+		tcpDumpReadAndWrite = BroadBandCommandConstants.CMD_TO_WRITE_TCPDUMP_CAPTURE_FILE_ATOM_DEVICE;
+	    } else {
+		tcpDumpWrite = BroadBandCommandConstants.CMD_TO_WRITE_TCPDUMP_DUMMY_FILE;
+		tcpDumpRead = BroadBandCommandConstants.CMD_TO_READ_TCPDUMP_DUMMY_FILE;
+		tcpDumpReadAndWrite = BroadBandCommandConstants.CMD_TO_WRITE_TCPDUMP_CAPTURE_FILE;
+	    }
+
+	    stepNum = "s1";
+	    errorMessage = "Not able to perform factory reset";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Factory reset the device for default values");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute: dmcli eRT setv Device.X_CISCO_COM_DeviceControl.FactoryReset string Router,Wifi,VoIP,Dect,MoCA ");
+	    LOGGER.info("STEP 1: EXPECTED : Device should come with Factory reset");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Successfully performed factory reset");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Unable to disable captive portal/wifi configuration and not able to connect client device";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Disabled captive portal and connect to the client");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute below steps:dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_ConfigureWiFi bool false"
+			    + "dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable bool false");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : Captive portal should get disabled and should be able to connect to client in webpage");
+	    LOGGER.info("**********************************************************************************");
+
+	    boolean disableCaptivePortal = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_CAPTIVE_PORTAL_ENABLE, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.FALSE);
+	    boolean disableWifiConfigure = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_INFO_RDK_CENTRAL_CONFIGURE_WIFI,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+	    Dut clientDevice = BroadBandConnectedClientUtils
+		    .get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
+	    status = clientDevice != null && disableCaptivePortal && disableWifiConfigure;
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfully disabled captive portal and connected to client device");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : verify GET of these parameters using WEBPA if they have default values");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute command: dmcli eRT getv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4"
+			    + "dmcli eRT getv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6"
+			    + "dmcli eRT getv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4"
+			    + "dmcli eRT getv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6");
+	    LOGGER.info("STEP 3: EXPECTED : Check values are returned without any issues");
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Default primary ipv4 dns value is mismatch";
+	    if (BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value())) {
+		errorMessage = "Default primary ipv6 dns value is mismatch";
+		if (BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6,
+			BroadbandPropertyFileHandler.getGlobalDNSIpv6Value())) {
+		    errorMessage = "Default secondary ipv4 dns value is mismatch";
+		    String secondaryIpv4 = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4);
+		    if (CommonMethods.isNull(secondaryIpv4)) {
+			errorMessage = "Default secondary ipv6 dns value is mismatch";
+			String secobdaryIpv6 = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6);
+			status = CommonMethods.isNull(secobdaryIpv6);
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : successfully verified default dns values");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Enable XDNS with default settings");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute command :dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag string Test_xdns1"
+			    + "dmcli eRT getv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag"
+			    + "dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool true"
+			    + "dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS");
+	    LOGGER.info("STEP 4: EXPECTED : Check values get set and enabled properly");
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Unable to set new tag name to device by this parameter "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG;
+	    if (BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG, BroadBandTestConstants.CONSTANT_0,
+		    BroadBandTraceConstants.XDNS_TAG_NAME)) {
+		errorMessage = "Not able to enable XDNS by using this parameter "
+			+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS;
+		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS,
+			BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : Successfully enabled XDNS with default settings.");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "dns override is not present in /etc/resolv.conf";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Check /etc/resolv.conf contains XDNS entries");
+	    LOGGER.info("STEP 5: ACTION : Execute command: cat /etc/resolv.conf");
+	    LOGGER.info(
+		    "STEP 5: EXPECTED : Check values are returned in the below format:dnsoverride 00:00:00:00:00:00 <primary ipv4 address> <primary ipv6 address> <Tag Name>dnsoverride 00:00:00:00:00:00 < secondary ipv4 address> < secondary ipv6 address>  <Tag Name>");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+			    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+				    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value())
+			    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+				    BroadbandPropertyFileHandler.getGlobalDNSIpv6Value()),
+		    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH);
+	    status = CommonMethods.isNotNull(response);
+
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Successfully verified dns override is present in /etc/resolv.conf");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "DNS packets are not received in tcp dump";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 6: DESCRIPTION : Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent  to tcp dump when DNS requests in connected clients in browser.");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute command: 1)tcpdump -i erouter0 port 53 and access webpage in the browser of connected client");
+	    LOGGER.info("STEP 6: EXPECTED : Packets shoule be sent ");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+		CommonUtils.downloadFileUsingAutoVault(device, tapEnv, BroadBandCommandConstants.FILE_PATH_TCPDUMP,
+			BroadBandCommandConstants.FOLDER_PATH_TMP);
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_PERMISSION_TO_TCPDUMP);
+	    }
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpWrite);
+	    tapEnv.executeCommandOnOneIPClients(clientDevice, BroadBandCommandConstants.CMD_PING_GOOGLE_URL);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
+	    response = tapEnv.executeCommandUsingSsh(device, tcpDumpRead);
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Successfully received packets sent from client on tcpdump");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Set different values other than default for XDNS."
+		    + "set valid value for Primary and invalid value for Secondary address using dmcli/WEBPA ");
+	    LOGGER.info(
+		    "STEP 7: ACTION : Execute command:dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string <IPv4>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string <IPv6>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string <IPv4>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string <IPv6>");
+	    LOGGER.info("STEP 7: EXPECTED : Values should get set for all the parameters.");
+	    LOGGER.info("**********************************************************************************");
+
+	    errorMessage = "Not able to change new ip for "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4;
+	    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, BroadBandTestConstants.CONSTANT_0,
+		    BroadbandPropertyFileHandler.getDNSValidIpv4Value())) {
+		errorMessage = "Not able to change new ip for "
+			+ BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6;
+		if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6,
+			BroadBandTestConstants.CONSTANT_0, BroadbandPropertyFileHandler.getDNSValidIpv6Value())) {
+		    errorMessage = "Not able to change new ip for "
+			    + BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4;
+		    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+			    BroadBandTestConstants.CONSTANT_0,
+			    BroadbandPropertyFileHandler.getDNSInvalidSecondaryIpv4Value())) {
+			errorMessage = "Not able to change new ip for "
+				+ BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6;
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+				BroadBandTestConstants.CONSTANT_0,
+				BroadbandPropertyFileHandler.getDNSInvalidSecondaryIpv6Value());
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : Successfully changed values for primary and secondary DNS IPv4,IPv6.");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    errorMessage = "New primary and secondary DNS overrides are not logged in /etc/resolv.conf";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Check /etc/resolv.conf contains XDNS entries ");
+	    LOGGER.info("STEP 8: ACTION : Execute command:cat /etc/resolv.conf");
+	    LOGGER.info("STEP 8: EXPECTED : Should have XDNS entries of the values set in scenario 1 and updated");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods
+		    .isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+				    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+					    BroadbandPropertyFileHandler.getDNSValidIpv4Value())
+				    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+					    BroadbandPropertyFileHandler.getDNSValidIpv6Value()),
+			    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH))
+		    && CommonMethods
+			    .isNotNull(
+				    BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+							    BroadbandPropertyFileHandler
+								    .getDNSInvalidSecondaryIpv4Value())
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+							    BroadbandPropertyFileHandler
+								    .getDNSInvalidSecondaryIpv6Value()),
+					    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH));
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 8: ACTUAL : Successfully verified new primary and secondary DNS override present in /etc/resolv.conf");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "Packets didin't receive from primary XDNS on tcpdump";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 9: DESCRIPTION : Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to primary XDNS servers when making DNS requests in connected clients in browser for Scenario1 and check browser is accessible.");
+	    LOGGER.info("STEP 9: ACTION : Execute command: tcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 9: EXPECTED : Packets should be sent from primary DNS");
+	    LOGGER.info("**********************************************************************************");
+
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpWrite);
+	    tapEnv.executeCommandOnOneIPClients(clientDevice, BroadBandCommandConstants.CMD_PING_GOOGLE_URL);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    status = CommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandCommandConstants.CMD_TO_GET_DNS_PRIMARY_IP_TCPDUMP);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
+
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : Successfully received a packets from primary XDNS on tcpdump.");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s10";
+	    errorMessage = "Not able to set different values for primary and secondary DNS IPv4,IPv6";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Set different values other than default for XDNS."
+		    + "set invalid value for Primary and valid value for Secondary address using dmcli/WEBPA");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Execute command:dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string <IPv4>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string <IPv6>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string <IPv4>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string <IPv6>");
+	    LOGGER.info("STEP 10: EXPECTED : Values should get set for all the parameters.");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, BroadBandTestConstants.CONSTANT_0,
+		    BroadbandPropertyFileHandler.getDNSInvalidPrimaryIpv4Value())) {
+		if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6,
+			BroadBandTestConstants.CONSTANT_0,
+			BroadbandPropertyFileHandler.getDNSInvalidPrimaryIpv6Value())) {
+		    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+			    BroadBandTestConstants.CONSTANT_0,
+			    BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value())) {
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+				BroadBandTestConstants.CONSTANT_0,
+				BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value());
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL : Successfully changed values for primary and secondary DNS IPv4,IPv6.");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s11";
+	    errorMessage = "New primary and secondary DNS overrides are not logged in /etc/resolv.conf";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Check /etc/resolv.conf contains XDNS entries");
+	    LOGGER.info("STEP 11: ACTION : Execute command:cat /etc/resolv.conftcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 11: EXPECTED : Should have XDNS entries of the values set in scenario 2 and updated");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods
+		    .isNotNull(
+			    BroadBandCommonUtils
+				    .searchLogFiles(tapEnv, device,
+					    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+							    BroadbandPropertyFileHandler
+								    .getDNSInvalidPrimaryIpv4Value())
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+							    BroadbandPropertyFileHandler
+								    .getDNSInvalidPrimaryIpv6Value()),
+					    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH))
+		    && CommonMethods
+			    .isNotNull(
+				    BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+							    BroadbandPropertyFileHandler
+								    .getDNSValidSecondaryIpv4Value())
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+							    BroadbandPropertyFileHandler
+								    .getDNSValidSecondaryIpv6Value()),
+					    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH));
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 11: ACTUAL : Successfully verified new primary and secondary DNS override present in /etc/resolv.conf");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s12";
+	    errorMessage = "Packets didin't receive from secondary XDNS on tcpdump";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 12: DESCRIPTION : Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to secondary XDNS servers when making DNS requests in connected clients in browser for Scenario2 and check browser is accessible");
+	    LOGGER.info("STEP 12: ACTION : Execute command: tcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 12: EXPECTED : Packets should be sent from secondary DNS");
+	    LOGGER.info("**********************************************************************************");
+
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpWrite);
+	    tapEnv.executeCommandOnOneIPClients(clientDevice, BroadBandCommandConstants.CMD_PING_GOOGLE_URL);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    status = CommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandCommandConstants.CMD_TO_GET_DNS_SECONDARY_IP_TCPDUMP);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
+
+	    if (status) {
+		LOGGER.info("STEP 12: ACTUAL : Successfully received a packets from secondary XDNS on tcpdump.");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s13";
+	    errorMessage = "Not able to set different values for primary and secondary DNS IPv4,IPv6";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION : Set different values other than default for XDNS."
+		    + "set invalid value for Primary and invalid value for Secondary address using dmcli/WEBPA");
+	    LOGGER.info(
+		    "STEP 13: ACTION : Execute command:dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string <IPv4>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string <IPv6>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string <IPv4>"
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string <IPv6>");
+	    LOGGER.info("STEP 13: EXPECTED : Values should get set for all the parameters.");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+		    BroadBandTestConstants.CONSTANT_0,
+		    BroadbandPropertyFileHandler.getDNSAnotherInvalidSecondaryIpv4Value())) {
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+			BroadBandTestConstants.CONSTANT_0,
+			BroadbandPropertyFileHandler.getDNSAnotherInvalidSecondaryIpv6Value());
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL : Successfully changed values for primary and secondary DNS IPv4,IPv6.");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s14";
+	    errorMessage = "New primary and secondary DNS overrides are not logged in /etc/resolv.conf";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 14: DESCRIPTION : Check /etc/resolv.conf contains XDNS entries ");
+	    LOGGER.info("STEP 14: ACTION : Execute command:cat /etc/resolv.conftcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 14: EXPECTED : Should have XDNS entries of the values set in scenario 3 and updated");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods
+		    .isNotNull(
+			    BroadBandCommonUtils
+				    .searchLogFiles(tapEnv, device,
+					    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+							    BroadbandPropertyFileHandler
+								    .getDNSInvalidPrimaryIpv4Value())
+						    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+							    BroadbandPropertyFileHandler
+								    .getDNSInvalidPrimaryIpv6Value()),
+					    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH))
+		    && CommonMethods
+			    .isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+				    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+					    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+						    BroadbandPropertyFileHandler
+							    .getDNSAnotherInvalidSecondaryIpv4Value())
+					    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+						    BroadbandPropertyFileHandler
+							    .getDNSAnotherInvalidSecondaryIpv6Value()),
+				    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH));
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 14: ACTUAL : Successfully verified new primary and secondary DNS override present in /etc/resolv.conf");
+	    } else {
+		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s15";
+	    errorMessage = "Browser is accessible on client device";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 15: DESCRIPTION : Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to tcp dump when making DNS requests in connected clients in browser for Scenario3 and check browser is not accessible");
+	    LOGGER.info("STEP 15: ACTION : Execute command: tcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 15: EXPECTED : Browser should not be accessible");
+	    LOGGER.info("**********************************************************************************");
+
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpWrite);
+	    tapEnv.executeCommandOnOneIPClients(clientDevice, BroadBandCommandConstants.CMD_PING_GOOGLE_URL);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
+	    response = tapEnv.executeCommandUsingSsh(device, tcpDumpRead);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    BroadBandResultObject internetAccessStatus = null;
+	    internetAccessStatus = BroadBandConnectedClientUtils.checkInternetConnectivityUsingCurlOrPingforIpv4OrIpv6(
+		    tapEnv, clientDevice, BroadBandTestConstants.IP_VERSION6);
+	    status = CommonMethods.isNotNull(response) && !internetAccessStatus.isStatus();
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 15: ACTUAL : Successfully verified browser is not accessible and packets are received in tcpdump.");
+	    } else {
+		LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s16";
+	    errorMessage = "Not able to set secondary IPv4 and IPv6 to null";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 16: DESCRIPTION : Set Secondary IPv4 and IPv6 address to NULL ");
+	    LOGGER.info(
+		    "STEP 16: ACTION : Execute command:dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string \"\""
+			    + "dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string \"\"");
+	    LOGGER.info("STEP 16: EXPECTED : Values should get set and only primary address should be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.DMCLI_NULL_VALUE)) {
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+			BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.DMCLI_NULL_VALUE);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 16: ACTUAL : Successfully set secondary IPv4 and IPv6 to null");
+	    } else {
+		LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s17";
+	    errorMessage = "primary DNS override is not logged in /etc/resolv.conf";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 17: DESCRIPTION : verify only primary address in /etc/resolv.conf contains XDNS entries ");
+	    LOGGER.info("STEP 17: ACTION : Execute command:cat /etc/resolv.conf");
+	    LOGGER.info("STEP 17: EXPECTED : Values should get set and only primary address should be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.DNS_OVERRIDE_VALUE
+			    .replace(BroadBandTestConstants.STRING_REPLACE_IPV4,
+				    BroadbandPropertyFileHandler.getDNSInvalidPrimaryIpv4Value())
+			    .replace(BroadBandTestConstants.STRING_REPLACE_IPV6,
+				    BroadbandPropertyFileHandler.getDNSInvalidPrimaryIpv6Value()),
+		    BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH);
+	    status = CommonMethods.isNotNull(response);
+
+	    if (status) {
+		LOGGER.info("STEP 17: ACTUAL : successfully verified primary address is present in /etc/resolv.conf");
+	    } else {
+		LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s18";
+	    errorMessage = "Packets didin't receive from primary XDNS on tcpdump";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 18: DESCRIPTION :Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to  primary XDNS servers when making DNS requests in connected clients in browser and check browser is accessible");
+	    LOGGER.info("STEP 18: ACTION : Execute command: tcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 18: EXPECTED : DNS request should sent from primary address");
+	    LOGGER.info("**********************************************************************************");
+
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpWrite);
+	    tapEnv.executeCommandOnOneIPClients(clientDevice, BroadBandCommandConstants.CMD_PING_GOOGLE_URL);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    status = CommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandCommandConstants.CMD_TO_GET_INVALID_DNS_PRIMARY_IP_TCPDUMP);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
+
+	    if (status) {
+		LOGGER.info("STEP 18: ACTUAL : Successfully received a packets from primary XDNS on tcpdump.");
+	    } else {
+		LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s19";
+	    errorMessage = "Unable to disable XDNS";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 19: DESCRIPTION : Disable XDNS");
+	    LOGGER.info(
+		    "STEP 19: ACTION : Execute command:dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool false");
+	    LOGGER.info("STEP 19: EXPECTED : DNSoverride entries should not be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.FALSE);
+
+	    if (status) {
+		LOGGER.info("STEP 19: ACTUAL : Successfully disabled ");
+	    } else {
+		LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s20";
+	    errorMessage = "resolv.conf having dns override entries";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 20: DESCRIPTION : verify resolv.conf does not contain any dnsoverride entries /etc/resolv.conf ");
+	    LOGGER.info("STEP 20: ACTION : Execute command:cat /etc/resolv.conf");
+	    LOGGER.info("STEP 20: EXPECTED : Values should get set and only primary address should be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.XDNS_TAG_NAME, BroadBandCommandConstants.FILE_RESOLV_DNSMASQ_SRC_PATH));
+
+	    if (status) {
+		LOGGER.info("STEP 20: ACTUAL : Successfully verified resolv.conf not having dns override entries");
+	    } else {
+		LOGGER.error("STEP 20: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s21";
+	    errorMessage = "DNS packets are not received on tcpdump";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 21: DESCRIPTION : Run a tcp dump on erouter0 for DNS requests, verify that DNS packets are sent to both primary and secondary XDNS servers when making DNS requests in connected clients in browser for Scenario1 and check browser is accessible");
+	    LOGGER.info("STEP 21: ACTION : Execute command: tcpdump -i erouter0 port 53");
+	    LOGGER.info("STEP 21: EXPECTED : Should have XDNS entries of the values set in scenario 1 and updated");
+	    LOGGER.info("**********************************************************************************");
+
+	    tapEnv.executeCommandUsingSsh(device, tcpDumpWrite);
+	    tapEnv.executeCommandOnOneIPClients(clientDevice, BroadBandCommandConstants.CMD_PING_GOOGLE_URL);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
+	    response = tapEnv.executeCommandUsingSsh(device, tcpDumpRead);
+	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response);
+	    tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
+
+	    if (status) {
+		LOGGER.info("STEP 21: ACTUAL : Successfully verified dns packets are received on tcpdump.");
+	    } else {
+		LOGGER.error("STEP 21: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s22";
+	    errorMessage = "XDNS_SetParamStringValue is not occur in log files";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 22: DESCRIPTION : Check for \"XDNS_SetParamStringValue\" log after setting secondary values in log files");
+	    LOGGER.info(
+		    "STEP 22: ACTION : Execute command:dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string 13.13.12.11dmcli eRT setv Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string 2621:104:a00b::6Check value:grep -i \"XDNS_SetParamStringValue\" /rdklogs/logs/*");
+	    LOGGER.info("STEP 22: EXPECTED : Log string should be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+		    BroadBandTestConstants.CONSTANT_0,
+		    BroadbandPropertyFileHandler.getDNSAnotherInvalidSecondaryIpv4Value())) {
+		if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+			BroadBandTestConstants.CONSTANT_0,
+			BroadbandPropertyFileHandler.getDNSAnotherInvalidSecondaryIpv6Value())) {
+		    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MSG_XDNS_PARAMETER_VALUE,
+			    BroadBandCommandConstants.DIRECTORY_LOGS + BroadBandTestConstants.ASTERISK));
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 22: ACTUAL : Successfully verified setparamstringvalue is present in log files.");
+	    } else {
+		LOGGER.error("STEP 22: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s23";
+	    errorMessage = "Enabling secondary XDNS log is not available in /rdklogs/logs/PAMlog.txt.0";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 23: DESCRIPTION : EnableXDNS and check for log string \"Enabling secondary XDNS\"");
+	    LOGGER.info(
+		    "STEP 23: ACTION : Execute command:dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool true"
+			    + "grep -i \"Enabling secondary XDNS\" /rdklogs/logs/PAMlog.txt.0");
+	    LOGGER.info("STEP 23: EXPECTED : Log string should be available");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.TRUE)) {
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MSG_SECONDARY_XDNS_ENABLE,
+			BroadBandTestConstants.COMMAND_NTP_LOG_FILE));
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 23: ACTUAL : Successfully verified Enabling secondary XDNS log in /rdklogs/logs/PAMlog.txt.0");
+	    } else {
+		LOGGER.error("STEP 23: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info(
+		    "POST-CONDITION : DESCRIPTION : Disable XDNS and set primary and secondary dns IPv4,IPv6 values to default");
+	    LOGGER.info(
+		    "POST-CONDITION : ACTION : Execute command:dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool false");
+	    LOGGER.info("POST-CONDITION : EXPECTED : XDNS should be disabled");
+
+	    boolean disableXDNS = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.FALSE);
+	    LOGGER.info("Is " + BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS + " changed to false "
+		    + disableXDNS);
+	    boolean primaryIpv4 = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, BroadBandTestConstants.CONSTANT_0,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv4Value());
+	    LOGGER.info("Is Primary XDNS ipv4 changed to default value " + primaryIpv4);
+	    boolean primaryIpv6 = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, BroadBandTestConstants.CONSTANT_0,
+		    BroadbandPropertyFileHandler.getGlobalDNSIpv6Value());
+	    LOGGER.info("Is Primary XDNS ipv6 changed to default value " + primaryIpv6);
+	    boolean secondaryIpv4 = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.DMCLI_NULL_VALUE);
+	    LOGGER.info("Is Secondary XDNS ipv4 changed to default value " + secondaryIpv4);
+	    boolean secondaryIpv6 = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.DMCLI_NULL_VALUE);
+	    LOGGER.info("Is Secondary XDNS ipv4 changed to default value " + secondaryIpv6);
+	    status = primaryIpv4 & primaryIpv6 & secondaryIpv4 & secondaryIpv6 & disableXDNS;
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-XDNS-1006");
+   }
 }

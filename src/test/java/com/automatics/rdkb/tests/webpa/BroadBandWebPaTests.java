@@ -28,6 +28,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
+import com.automatics.device.Device;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.enums.ProcessRestartOption;
@@ -41,6 +42,7 @@ import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.server.WhiteListServer;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
@@ -50,13 +52,16 @@ import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.cdl.BroadBandXconfCdlUtils;
 import com.automatics.rdkb.utils.cdl.CodeDownloadUtils;
 import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
+import com.automatics.rdkb.utils.parentalcontrol.BroadBandParentalControlUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWifiWhixUtils;
+import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -66,13 +71,10 @@ import com.automatics.webpa.WebPaServerResponse;
 public class BroadBandWebPaTests extends AutomaticsTestBase {
 	/**
 	 * 
-	 * This method verifies that webpa request to get value of Webpa.version
-	 * parameter gives the value of WebPA version and and configparamgen version and
-	 * it's compatibility with Firmware version
+	 * This method verifies that webpa request to get value of Webpa.
 	 * 
 	 * <ol>
 	 * <li>Step 1 : Verify retrieval of WebPA version in TR181 parameter</li>
-	 * <li>Step 2 :Verify the configparamgen version running in gateway</li>
 	 * </ol>
 	 * 
 	 * @param device Dut to be used for execution
@@ -93,17 +95,14 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 		String stepNum = null;
 		String webpaVersion = null;
 		ArrayList<String> patternMatchedStringList = new ArrayList<>();
-		String configparamgenVersion = null;
-		String currentBuild = null;
 		// Variables declaration Ends
 
 		LOGGER.info("#######################################################################################");
 		LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBPA-1003");
 		LOGGER.info(
-				"TEST DESCRIPTION: Verify the retrieval of webpa version from tr181 parameter and configparamgen version and it's compatibility with Firmware version");
+				"TEST DESCRIPTION: Verify the retrieval of webpa version from tr181 parameter");
 		LOGGER.info("TEST STEPS : ");
 		LOGGER.info("1. Verify WebPA version obtained using WebPA request.");
-		LOGGER.info("2. Verify the configparamgen version running in gateway");
 		LOGGER.info("#######################################################################################");
 		try {
 			stepNum = "S1";
@@ -128,48 +127,6 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				LOGGER.info("STEP 1: ACTUAL : WebPA request response contains WebPA version: " + webpaVersion);
 			} else {
 				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, stepNum, status, errorMessage, true);
-
-			stepNum = "S2";
-			status = false;
-			errorMessage = "Failed to get the configparamgen or current build details from the Gateway";
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 2 : DESCRIPTION : Verify the configparamgen version running in gateway");
-			LOGGER.info("STEP 2 : ACTION : Execute command: configparamgen in gateway");
-			LOGGER.info(
-					"STEP 2 : EXPECTED : Must return the configparamgen version based on build varient mentioned below :\n"
-							+ " 1. Release < 4.4                      : configparamgen Version : 2.17 \n"
-							+ "	2. Release > 4.4                      : configparamgen Version : 3.7 or higher \n"
-							+ "	3. 4.4 initial releases until 4.4p1s9 : configparamgen Version : 3.7 or higher \n"
-							+ "	4. Release 4.4p1s10 to 4.4p2s2        : configparamgen Version : 2.17 \n"
-							+ "	5. Release >=4.4p3s1                  : configparamgen Version : 3.7 or higher \n"
-							+ "	6. Stable2                            : configparamgen Version : 3.7 or higher \n"
-							+ "	7. Sprint                             : configparamgen Version : 3.7 or higher");
-			LOGGER.info("**********************************************************************************");
-			try {
-				currentBuild = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
-				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CONFIGPARAMGEN);
-				LOGGER.info("Current Build in Gateway is : " + currentBuild);
-				LOGGER.info("Response is : " + response);
-				if (CommonUtils.isNotEmptyOrNull(response) && CommonUtils.isNotEmptyOrNull(currentBuild)) {
-					configparamgenVersion = CommonMethods.patternFinder(response,
-							BroadBandTestConstants.CONFIGPARAMGEN_VERSION_PATTERN_MATCHER);
-					LOGGER.info("Configparamgen Version obtained is : " + configparamgenVersion);
-					if (CommonUtils.isNotEmptyOrNull(configparamgenVersion)) {
-						errorMessage = "configparemgen Required for build is not as expected";
-						status = BroadBandCommonUtils.verifyConfigparamgenForGivenBuild(currentBuild,
-								configparamgenVersion);
-					}
-				}
-			} catch (Exception e) {
-				LOGGER.error(errorMessage += e.getMessage());
-			}
-			if (status) {
-				LOGGER.info("STEP 2: ACTUAL : Configparamgen Version is as Expected : " + configparamgenVersion);
-			} else {
-				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
 			}
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, stepNum, status, errorMessage, true);
@@ -5985,4 +5942,557 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-WEBPA-1016");
 	}
+	
+	/**
+	 * Test to verify the wireless client connected to 5 GHz Private Wi-Fi network
+	 * is blocked for all days & for particular time period
+	 * 
+	 * <ol>
+	 * <li>PRE-CONDITION: Verify whether Private 5 GHz SSID
+	 * 'Device.WiFi.SSID.10001.Enable' is enabled using WebPA</li>
+	 * <li>STEP 1: Connect the device to 5 GHz SSID and verify connection
+	 * status</li>
+	 * <li>STEP 2: Check if the wirless connected client has an IP address from the
+	 * gateway</li>
+	 * <li>STEP 3: Getting the Wifi Mac address of Connected client having 5GHZ wifi
+	 * Capability</li>
+	 * <li>STEP 4: Verify the Managed devices is enabled via WebPA</li>
+	 * <li>STEP 5: Verify the 'Allow All' under Managed devices is set to true via
+	 * WebPA</li>
+	 * <li>STEP 6: Verify the client connected to 5 Ghz Private Wi-Fi is added to
+	 * blocked list for all days</li>
+	 * <li>STEP 7: Verify if the connected client is not having internet access via
+	 * gateway</li>
+	 * <li>STEP 8: Verify the client connected to 5 Ghz Private Wi-Fi is removed
+	 * from blocked list</li>
+	 * <li>STEP 9: Verify the Managed devices is disabled via WebPA</li>
+	 * <li>STEP 10: Verify if the connected client has internet access via
+	 * gateway</li>
+	 * <li>STEP 11: Verify the Managed devices is enabled via WebPA</li>
+	 * <li>STEP 12: Verify the 'Allow All' under Managed devices is set to true via
+	 * WebPA</li>
+	 * <li>STEP 13: Verify the client connected to 5 Ghz Private Wi-Fi is added to
+	 * blocked list for particular time period</li>
+	 * <li>STEP 14: Verify if the connected client is not having internet access via
+	 * gateway</li>
+	 * <li>STEP 15: Verify the Managed devices is disabled via WebPA</li>
+	 * <li>STEP 16: Verify if the connected ethernet client has internet access via
+	 * gateway</li>
+	 * <li>POST-CONDITION: Verify the client connected to 5 Ghz Private Wi-Fi is
+	 * removed from blocked list</li>
+	 * </ol>
+	 * 
+	 * @param device
+	 * 
+	 * @refactor yamini.s
+	 */
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.WEBPA)
+	@TestDetails(testUID = "TC-RDKB-PC-MANAGE-DEVICE-1001")
+	public void testParentalControlManageDevicesFunctionalityFor5GhzConnectedClient(Dut device) {
+
+		String testId = "TC-RDKB-PC-MANAGE-DEVICE-101";
+		String testStepNumber = "s1";
+		String errorMessage = null;
+		boolean status = false;
+		Dut connectedDeviceActivated = null; // connected device to be verified
+		String wifiMacAddress = null;
+		boolean isEnabled = false;
+		String parentalControlManageDeviceTableAddRowResponse = null;
+
+		try {
+
+			LOGGER.info("#################### STARTING TEST CASE: TC-RDKB-PC-MANAGE-DEVICE-1001 #####################");
+			LOGGER.info(
+					"TEST DESCRIPTION: Verification of Parental Control - Manage Devices Functionality - Blocking of 5 GHz Private Wi-Fi connected device for \"All Days\" and/or for \"Particular time period\"");
+
+			LOGGER.info("TEST STEPS : ");
+			LOGGER.info(
+					"PRE-CONDITION: Verify whether Private 5 GHz SSID 'Device.WiFi.SSID.10001.Enable' is enabled using WebPA");
+			LOGGER.info("1. Connect the device to 5 GHz SSID and verify connection status");
+			LOGGER.info("2. Check if the wirless connected client has an IP address from the gateway");
+			LOGGER.info("3. Getting the Wifi Mac address of Connected client having 5GHZ wifi Capability");
+			LOGGER.info("4. Verify the Managed devices is enabled via WebPA");
+			LOGGER.info("5. Verify the 'Allow All' under Managed devices is set to true via WebPA");
+			LOGGER.info("6. Verify the client connected to 5 Ghz Private Wi-Fi is added to blocked list for all days");
+			LOGGER.info("7. Verify if the connected client is not having internet access via gateway");
+			LOGGER.info("8. Verify the client connected to 5 Ghz Private Wi-Fi is removed from blocked list");
+			LOGGER.info("9. Verify the Managed devices is disabled via WebPA");
+			LOGGER.info("10. Verify if the connected client has internet access via gateway");
+			LOGGER.info("11. Verify the Managed devices is enabled via WebPA");
+			LOGGER.info("12. Verify the 'Allow All' under Managed devices is set to true via WebPA");
+			LOGGER.info(
+					"13. Verify the client connected to 5 Ghz Private Wi-Fi is added to blocked list for particular time period");
+			LOGGER.info("14. Verify if the connected client is not having internet access via gateway");
+			LOGGER.info("15. Verify the Managed devices is disabled via WebPA");
+			LOGGER.info("16. Verify if the connected ethernet client has internet access via gateway");
+			LOGGER.info(
+					"POST-CONDITION: Verify the client connected to 5 Ghz Private Wi-Fi is removed from blocked list");
+			LOGGER.info("#####################################################################################");
+
+			LOGGER.info("############################# STARTING PRE-CONFIGURATIONS #############################");
+			LOGGER.info("PRE-CONDITION: DESCRIPTION: Verify whether 5 GHz Private SSID is enabled using WebPA");
+			LOGGER.info("PRE-CONDITION: EXPECTED: 5 GHz Private Wi-Fi SSID should be enabled using WebPA");
+			status = BroadBandConnectedClientUtils.enableOrDisableRadiosForGivenSsidUsingWebPaCommand(
+					WiFiFrequencyBand.WIFI_BAND_5_GHZ, tapEnv, device, true);
+			if (!status) {
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR
+						+ "NOT ABLE TO ENABLE THE 5GHZ PRIVATE SSID ON THIS DEVICE - HENCE BLOCKING THE EXECUTION");
+			}
+			LOGGER.info("PRE-CONDITION : ACTUAL: ENABLING 5GHZ PRIVATE SSID ON THIS DEVICE IS SUCCESSFUL");
+
+			LOGGER.info("############################# COMPLETED PRE-CONFIGURATIONS #############################");
+
+			/**
+			 * Step 1: Connect the device to 5 GHz SSID and verify connection status
+			 * 
+			 */
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 1: Connect the device to 5 GHz SSID and verify connection status");
+			LOGGER.info("STEP 1: EXPECTED: Device should be connected with 5 GHz wifi network");
+			connectedDeviceActivated = BroadBandConnectedClientUtils
+					.get5GhzWiFiCapableClientDeviceAndConnectToAssociated5GhzSsid(device, tapEnv);
+			status = null != connectedDeviceActivated;
+			errorMessage = "Unable to connect to 5 GHz private Wi-Fi Network Or 5 GHz WiFi capable devices are not available";
+			if (status) {
+				LOGGER.info("GOING TO WAIT FOR 2 MINUTES AFTER CONNECTING THE WIFI CLIENT.");
+				tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+				LOGGER.info("S1 ACTUAL: Device has been connected with 5 GHz private Wi-Fi network");
+			} else {
+				LOGGER.error("S1 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 2: Check if the wireless connected client has an IP address from the
+			 * gateway
+			 *
+			 */
+			testStepNumber = "s2";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 2: Check if the wireless connected client has an IP address from the gateway");
+			LOGGER.info(
+					"STEP 2: EXPECTED: DHCP Range IP Address should be assigned to 5 GHz Wireless Connected device");
+			status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv, device,
+					connectedDeviceActivated);
+			errorMessage = "Cilent connected to 5 GHz private Wi-Fi haven't received valid IP Address from Gateway";
+			if (status) {
+				LOGGER.info(
+						"S2 ACTUAL: Client connected to 5 Ghz private Wi-Fi network has got IP Address from Gateway");
+			} else {
+				LOGGER.error("S2 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 3: Getting the Wifi Mac address of Connected client having 5GHZ wifi
+			 * Capability
+			 *
+			 */
+			testStepNumber = "s3";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 3: Getting the Wifi Mac address of Connected client having 5GHZ wifi Capability");
+			LOGGER.info("STEP 3: EXPECTED: Mac address of the Wi-Fi adapter should be retrieved successfully");
+			wifiMacAddress = ((Device) connectedDeviceActivated).getConnectedDeviceInfo().getWifiMacAddress();
+			LOGGER.info(
+					"Wifi Mac Address of the Connected client having 5GHZ Capability obtained is : " + wifiMacAddress);
+			status = CommonMethods.isNotNull(wifiMacAddress);
+			errorMessage = "Unable to retrieve the Wifi Mac address of the connected client having 5 GHz wifi Capability OR WiFi-Mac Address is not configured properly in MDS/Inventory";
+			if (status) {
+				LOGGER.info(
+						"S3 ACTUAL: Successfully retrieved the Wifi Mac address of the connected client having 5 GHz wifi Capability");
+			} else {
+				LOGGER.error("S3 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 4: Verify the Parental Control - Manage Devices is enabled via WebPA
+			 *
+			 */
+			testStepNumber = "s4";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 4: Verify the Parental Control - Manage Devices is enabled via WebPA");
+			LOGGER.info("STEP 4: EXPECTED: Parental Control - Manage Devices should be enabled via WebPA");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_MANAGED_DEVICES_FEATURE,
+					WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+			isEnabled = status;
+			errorMessage = "Parental Control - Manage Devices cannot be enabled via WebPa";
+			if (status) {
+				LOGGER.info("S4 ACTUAL: Parental Control - Manage Devices has been successfully enabled via WebPA");
+			} else {
+				LOGGER.error("S4 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 5: Verify the 'Allow All' under Parental Control - Manage Devices is set
+			 * to true via WebPA
+			 *
+			 */
+			testStepNumber = "s5";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 5: Verify the 'Allow All' under Parental Control - Manage Devices is set to true via WebPA ");
+			LOGGER.info("STEP 5: EXPECTED: Allow All should be set to true");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_ALLOW_ALL,
+					WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+			errorMessage = "'Allow All' under Parental Control - Manage Devices cannot be enable via WebPA";
+			if (status) {
+				LOGGER.info(
+						"S5 ACTUAL: 'Allow All' under Parental Control - Manage Devices has been set to 'true' via WebPA");
+			} else {
+				LOGGER.error("S5 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Step 6: Verify the client connected to 5 Ghz Private Wi-Fi is added to
+			 * blocked list for all days
+			 *
+			 */
+			testStepNumber = "s6";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 6: Verify the client connected to 5 Ghz Private Wi-Fi is added to blocked list for all days");
+			LOGGER.info(
+					"STEP 6: EXPECTED: The 5Ghz Connected client details should be added under blocked device list for all days");
+			parentalControlManageDeviceTableAddRowResponse = BroadBandParentalControlUtils
+					.addConnectedClientToBlockList(tapEnv, device,
+							BroadBandTestConstants.PARENTAL_CONTROL_MANAGE_DEVICE_RULE_TYPE,
+							BroadBandTestConstants.CONNECTION_TYPE_WIFI_5_GHZ, wifiMacAddress,
+							BroadBandTestConstants.TRUE, BroadBandTestConstants.EMPTY_STRING,
+							BroadBandTestConstants.EMPTY_STRING, BroadBandTestConstants.EMPTY_STRING);
+			errorMessage = "Null response obtained for setting Parental Control - Managed Device Rule";
+			if (CommonMethods.isNotNull(parentalControlManageDeviceTableAddRowResponse)) {
+				status = CommonUtils.patternSearchFromTargetString(parentalControlManageDeviceTableAddRowResponse,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PARENTAL_CONTROL_MANAGED_DEVICES_TABLE);
+				errorMessage = "Rule to block internet access to the client connected to 5 GHz private Wi-Fi network cannot be added";
+			}
+			if (status) {
+				LOGGER.info(
+						"S6 ACTUAL: Rule to block internet access to the client connected to 5 GHz private Wi-Fi network has been added successfully for all days");
+			} else {
+				LOGGER.error("S6 ACTUAL: " + errorMessage + " ACTUAL RESPONSE: "
+						+ parentalControlManageDeviceTableAddRowResponse);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 7: Verify if the connected client is not having internet access via
+			 * gateway
+			 *
+			 */
+			testStepNumber = "s7";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 7: Verify if the connected client is not having internet access via gateway");
+			LOGGER.info("STEP 7: EXPECTED: Ping to the destination host should fail");
+			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
+			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+			status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+					BroadBandTestConstants.PING_TO_GOOGLE);
+			errorMessage = "Internet is accessible even after adding the client to blocked list";
+			if (status) {
+				LOGGER.info(
+						"S7 ACTUAL: Ping to web failed, internet access to the client connected to 5 GHz private Wi-Fi network has been blocked");
+			} else {
+				LOGGER.error("S7 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Step 8: Verify the client connected to 5 Ghz Private Wi-Fi is removed from
+			 * blocked list
+			 *
+			 */
+			testStepNumber = "s8";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 8: Verify the client connected to 5 Ghz Private Wi-Fi is removed from blocked list");
+			LOGGER.info(
+					"STEP 8: EXPECTED: The 5Ghz Connected client details should be removed from blocked device list");
+			WebPaServerResponse deleteResponse = tapEnv.deleteTableRowUsingRestApi(device,
+					parentalControlManageDeviceTableAddRowResponse);
+			errorMessage = "Null response obtained for deleting Parental Control - Managed Device Rule";
+			if (CommonMethods.isNotNull(deleteResponse.getMessage())) {
+				status = deleteResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+				errorMessage = "Unable to remove the client connected to 5 GHz private Wi-Fi network from blocked device list";
+			}
+			if (status) {
+				LOGGER.info(
+						"S8 ACTUAL: Client connected to 5 GHz private Wi-Fi network has been successfully removed from blocked device list");
+			} else {
+				LOGGER.error("S8 ACTUAL: " + errorMessage + " ACTUAL RESPONSE: " + deleteResponse.getMessage());
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Step 9: Verify the Parental Control - Manage Devices is disabled via WebPA
+			 *
+			 */
+			testStepNumber = "s9";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 9: Verify the Parental Control - Manage Devices is disabled via WebPA");
+			LOGGER.info("STEP 9: EXPECTED: Parental Control - Manage Devices should be disabled");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_MANAGED_DEVICES_FEATURE,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+			isEnabled = !status;
+			errorMessage = "Parental Control - Manage Devices cannot be disabled via WebPa";
+			if (status) {
+				LOGGER.info("S9 ACTUAL : Parental Control - Manage Devices has been successfully disabled via WebPA");
+			} else {
+				LOGGER.error("S9 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 10: Verify if the connected client has internet access via gateway
+			 *
+			 */
+			testStepNumber = "s10";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 10: Verify if the connected client has internet access via gateway");
+			LOGGER.info("STEP 10: EXPECTED: Ping to the destination host should be successful");
+			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
+			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+					BroadBandTestConstants.PING_TO_GOOGLE);
+			errorMessage = "Internet cannot accessible even after removing the client from blocked list";
+			if (status) {
+				LOGGER.info(
+						"S10 ACTUAL: Internet can be accessible in the client connected to 5 GHz private Wi-Fi network after removing from blocked list");
+			} else {
+				LOGGER.error("S10 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Step 11: Verify the Parental Control - Manage Devices is enabled via WebPA
+			 *
+			 */
+			testStepNumber = "s11";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 11: Verify the Parental Control - Manage Devices is enabled via WebPA");
+			LOGGER.info("STEP 11: EXPECTED: Parental Control - Manage Devices should be enabled via WebPA");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_MANAGED_DEVICES_FEATURE,
+					WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+			isEnabled = status;
+			errorMessage = "Parental Control - Manage Devices cannot be enabled via WebPa";
+			if (status) {
+				LOGGER.info("S11 ACTUAL: Parental Control - Manage Devices has been successfully enabled via WebPA");
+			} else {
+				LOGGER.error("S11 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 12: Verify the 'Allow All' under Parental Control - Manage Devices is
+			 * set to true via WebPA
+			 *
+			 */
+			testStepNumber = "s12";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 12: Verify the 'Allow All' under Parental Control - Manage Devices is set to true via WebPA ");
+			LOGGER.info("STEP 12: EXPECTED: Allow All should be set to true");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_ALLOW_ALL,
+					WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+			errorMessage = "'Allow All' under Parental Control - Manage Devices cannot be enable via WebPA";
+			if (status) {
+				LOGGER.info(
+						"S12 ACTUAL: 'Allow All' under Parental Control - Manage Devices has been set to 'true' via WebPA");
+			} else {
+				LOGGER.error("S12 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Step 13: Verify the client connected to 5 Ghz Private Wi-Fi is added to
+			 * blocked list for particular time period
+			 */
+			testStepNumber = "s13";
+			status = false;
+			parentalControlManageDeviceTableAddRowResponse = null;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info(
+					"STEP 13: Verify the client connected to 5 Ghz Private Wi-Fi is added to blocked list for particular time period");
+			LOGGER.info(
+					"STEP 13: EXPECTED: The 5Ghz Connected client details should be added under blocked device list for particular time period");
+			String blockDays = BroadBandParentalControlUtils
+					.getCurrentDayToAddParentalControlRuleWhenAlwaysBlockIsDisabled(tapEnv, device);
+			errorMessage = "Null value obtained for the current day which needs to added in parental Control - Managed Device Rule. Actual value Obtained: "
+					+ blockDays;
+			if (CommonMethods.isNotNull(blockDays)) {
+				parentalControlManageDeviceTableAddRowResponse = BroadBandParentalControlUtils
+						.addConnectedClientToBlockList(tapEnv, device,
+								BroadBandTestConstants.PARENTAL_CONTROL_MANAGE_DEVICE_RULE_TYPE,
+								BroadBandTestConstants.CONNECTION_TYPE_WIFI_24_GHZ, wifiMacAddress,
+								BroadBandTestConstants.FALSE, BroadBandTestConstants.HOURS_12_AM,
+								BroadBandTestConstants.HOURS_23_59_PM, blockDays);
+				errorMessage = "Null response obtained for setting Parental Control - Managed Device Rule. Actual response: "
+						+ parentalControlManageDeviceTableAddRowResponse;
+				if (CommonMethods.isNotNull(parentalControlManageDeviceTableAddRowResponse)) {
+					status = CommonUtils.patternSearchFromTargetString(parentalControlManageDeviceTableAddRowResponse,
+							BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PARENTAL_CONTROL_MANAGED_DEVICES_TABLE);
+					errorMessage = "Rule to block internet access to the client connected to 5 GHz private Wi-Fi network cannot be added. Actual response: "
+							+ parentalControlManageDeviceTableAddRowResponse;
+				}
+			}
+			if (status) {
+				LOGGER.info(
+						"S13 ACTUAL: Rule to block internet access to the client connected to 5 GHz private Wi-Fi network has been added successfully for particular time period");
+			} else {
+				LOGGER.error("S13 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 14: Verify if the connected client is not having internet access via
+			 * gateway
+			 *
+			 */
+			testStepNumber = "s14";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 14: Verify if the connected client is not having internet access via gateway");
+			LOGGER.info("STEP 14: EXPECTED: Ping to the destination host should fail");
+			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
+			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+			status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+					BroadBandTestConstants.PING_TO_GOOGLE);
+			errorMessage = "Internet is accessible even after adding the client to blocked list";
+			if (status) {
+				LOGGER.info(
+						"S14 ACTUAL: Ping to web failed, internet access to the client connected to 5 GHz private Wi-Fi network has been blocked");
+			} else {
+				LOGGER.error("S14 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Step 15: Verify the Parental Control - Manage Devices is disabled via WebPA
+			 *
+			 */
+			testStepNumber = "s15";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 15: Verify the Parental Control - Manage Devices is disabled via WebPA");
+			LOGGER.info("STEP 15: EXPECTED: Parental Control - Manage Devices should be disabled");
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_MANAGED_DEVICES_FEATURE,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+			isEnabled = !status;
+			errorMessage = "Parental Control - Manage Devices cannot be disabled via WebPa";
+			if (status) {
+				LOGGER.info("S15 ACTUAL: Parental Control - Manage Devices has been successfully disabled via WebPA");
+			} else {
+				LOGGER.error("S15 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Step 16: Verify if the connected client has internet access via gateway
+			 *
+			 */
+			testStepNumber = "s16";
+			status = false;
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("STEP 16: Verify if the connected client has internet access via gateway");
+			LOGGER.info("STEP 16: EXPECTED: Ping to the destination host should be successful");
+			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
+			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+					BroadBandTestConstants.PING_TO_GOOGLE);
+			errorMessage = "Internet cannot accessible even after removing the client from blocked list";
+			if (status) {
+				LOGGER.info(
+						"S16 ACTUAL: Internet can be accessible in the client connected to 5 GHz private Wi-Fi network after removing from blocked list");
+			} else {
+				LOGGER.error("S16 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		} catch (Exception testException) {
+			errorMessage = testException.getMessage();
+			LOGGER.error(
+					"EXCEPTION OCCURRED WHILE BLOCKING/UNBLOCKING THE INTERNET ACCESS TO THE CLIENT CONNECTED TO 5 GHz PRIVATE WIFI NETWORK : "
+							+ errorMessage);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} finally {
+
+			if (CommonMethods.isNotNull(parentalControlManageDeviceTableAddRowResponse)
+					&& CommonUtils.patternSearchFromTargetString(parentalControlManageDeviceTableAddRowResponse,
+							BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PARENTAL_CONTROL_MANAGED_DEVICES_TABLE)) {
+				LOGGER.info("########################### STARTING POST-CONFIGURATIONS ###########################");
+				LOGGER.info(
+						"POST-CONDITION: DESCRIPTION: Verify the client connected to 5 Ghz Private Wi-Fi is removed from blocked list");
+				LOGGER.info(
+						"POST-CONDITION: EXPECTED: Client connected to 5 GHz should be removed from blocked device list");
+				WebPaServerResponse deleteResponse = tapEnv.deleteTableRowUsingRestApi(device,
+						parentalControlManageDeviceTableAddRowResponse);
+				if (!(CommonMethods.isNotNull(deleteResponse.getMessage())
+						&& deleteResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT))) {
+					LOGGER.error(
+							"POST-CONDITION FAILED: Unable to remove the client connected to 5 GHz private Wi-Fi network from blocked device list");
+				} else {
+					LOGGER.info(
+							"POST-CONDITION PASSED: Client connected to 5 GHz private Wi-Fi network has been successfully removed from blocked device list");
+				}
+				LOGGER.info("########################### COMPLETED POST-CONFIGURATIONS ###########################");
+			}
+
+			if (isEnabled) {
+				LOGGER.info("########################### STARTING POST-CONFIGURATIONS ###########################");
+				LOGGER.info(
+						"POST-CONDITION: DESCRIPTION: Verify the Parental Control - Manage Devices is disabled via WebPA");
+				LOGGER.info("POST-CONDITION: EXPECTED: Parental Control - Manage Devices should be disabled via WebPA");
+				if (!BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_PARENTAL_CONTROL_MANAGED_DEVICES_FEATURE,
+						BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE)) {
+					LOGGER.error(
+							"POST-CONDITION FAILED: Parental Control - Manage Devices cannot be disabled via WebPa");
+				} else {
+					LOGGER.info(
+							"POST-CONDITION PASSED: Parental Control - Manage Devices has been successfully disabled via WebPA");
+				}
+
+				LOGGER.info("########################### COMPLETED POST-CONFIGURATIONS ###########################");
+			}
+		}
+		
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-PC-MANAGE-DEVICE-1001");
+
+	}
+
 }

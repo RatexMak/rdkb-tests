@@ -29,6 +29,7 @@ import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.dmcli.DmcliUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 
@@ -206,4 +207,156 @@ public class BroadBandWifiATMTest extends AutomaticsTestBase {
 					true);
 		}
 	}
+
+    /**
+     * Validate AirTimeManagement by Assigning Values at APGroup Level.
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>S1) Do factory reset using webpa operation</li>
+     * <li>S2) Assigning ATM percentage at APGroup Level(100% for AP Group1 and 0% for Ap Group 2)</li>
+     * <li>Assigning ATM percentage at APGroup Level(100% for AP Group3 and 0% for Ap Group 4)</li>
+     * <li>Assigning ATM percentage at APGroup Level(100% for AP Group5 and 0% for Ap Group 6).</li>
+     * <li>S3) Verify the assigned values by dmcli Command.</li>
+     * </ol>
+     * 
+     * @param device
+     * 
+     * @author DEEPIKA S
+     * @Refactor Sruthi Santhosh
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.WIFI)
+    @TestDetails(testUID = "TC-RDKB-WIFI-ATM-1001")
+    public void testToVerifyAPGroupLevelValues(Dut device) {
+	// Variable Declaration begins
+	String stepNum = "s1";
+	String testCaseId = "TC-RDKB-WIFI-ATM-101";
+	String errorMessage = null;
+	boolean status = false;
+	boolean isFactoryReset = false;
+	String valueToBePassed = null;
+	String webPaParam = null;
+	// Variable Declaration Ends
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-ATM-1001");
+	    LOGGER.info("TEST DESCRIPTION: Validation of AirTimeManagement by Assigning Values at APGroup Level");
+	    LOGGER.info("STEP 1: Do factory reset using webpa set operation");
+	    LOGGER.info("STEP 2: Assigning ATM percentage at APGroup Level(100% for AP Group1 and 0% for Ap Group 2)"
+		    + "Assigning ATM percentage at APGroup Level(100% for AP Group3 and 0% for Ap Group 4)"
+		    + "Assigning ATM percentage at APGroup Level(100% for AP Group5 and 0% for Ap Group 6)");
+	    LOGGER.info("STEP 3: Verify the assigned values");
+	    LOGGER.info("#######################################################################################");
+	    /**
+	     * Step 1 : Factory reset the device to check default values
+	     */
+	    stepNum = "s1";
+	    status = false;
+	    errorMessage = "Factory Resetting the device failed";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Factory reset the device to check default values");
+	    LOGGER.info("STEP 1: ACTION : performing factory reset by webpa");
+	    LOGGER.info("STEP 1: EXPECTED : The device should get factory resetted by webpa");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
+	    if (status) {
+		isFactoryReset = status;
+		LOGGER.info("STEP 1: ACTUAL : Factory Reset is successful");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    /**
+	     * Step 2 : Assigning ATM percentage at APGroup Level(100% for AP Group1 and 0% for Ap Group 2)" +
+	     * "Assigning ATM percentage at APGroup Level(100% for AP Group3 and 0% for Ap Group 4)" + "Assigning ATM
+	     * percentage at APGroup Level(100% for AP Group5 and 0% for Ap Group 6)
+	     */
+	    stepNum = "s2";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Assign ATM percentage at APGroup Level");
+	    LOGGER.info("STEP 2: ACTION :Assign ATM percentage at group level using dmcli command "
+		    + BroadBandWebPaConstants.WEBPA_ATM_GROUP);
+	    LOGGER.info("STEP 2: EXPECTED : Must return the status of the executed command");
+	    LOGGER.info("**********************************************************************************");
+	    for (int iteration = BroadBandTestConstants.CONSTANT_1; iteration <= BroadBandTestConstants.CONSTANT_6; iteration++) {
+		errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(
+			" Error in assigning ATM percentage at APGroup Level", String.valueOf(iteration));
+		if (iteration % BroadBandTestConstants.CONSTANT_2 == BroadBandTestConstants.CONSTANT_0) {
+		    valueToBePassed = BroadBandTestConstants.STRING_ZERO;
+		} else {
+		    valueToBePassed = BroadBandTestConstants.STRING_VALUE_HUNDRED;
+		}
+		webPaParam = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandWebPaConstants.WEBPA_ATM_GROUP,
+			String.valueOf(iteration), BroadBandWebPaConstants.WEBPA_ATM_GROUP_PERCENTAGE);
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv, webPaParam,
+			BroadBandTestConstants.CONSTANT_2, valueToBePassed);
+		if (!status) {
+		    break;
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 2:ACTUAL : Successfully assigned ATM percentage at APGroup level");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 3 : Verify the assigned value by dmcli command
+	     */
+	    stepNum = "s3";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Verify the assigned values by dmcli Commandss");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Check the APgroup level values.Execute command:dmcli eRT getv Device.WiFi.X_RDKCENTRAL-COM_ATM.APGroup.5.AirTimePercent ");
+	    LOGGER.info("STEP 3: EXPECTED : Must return the value of the executed command.");
+	    LOGGER.info("**********************************************************************************");
+
+	    for (int iteration = BroadBandTestConstants.CONSTANT_1; iteration <= BroadBandTestConstants.CONSTANT_6; iteration++) {
+		errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer("Assigned ATM APgroup level",
+			String.valueOf(iteration), " value mismatch");
+		if (iteration % BroadBandTestConstants.CONSTANT_2 == BroadBandTestConstants.CONSTANT_0) {
+		    valueToBePassed = BroadBandTestConstants.STRING_ZERO;
+		} else {
+		    valueToBePassed = BroadBandTestConstants.STRING_VALUE_ONE_HUNDRED;
+		}
+		webPaParam = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandWebPaConstants.WEBPA_ATM_GROUP,
+			Integer.toString(iteration), BroadBandWebPaConstants.WEBPA_ATM_GROUP_PERCENTAGE);
+		status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv, webPaParam,
+			valueToBePassed);
+		if (!status) {
+		    break;
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Successfully verified APgroup level values ");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("EXCEPTION OCCURRED WHILE ASSIGNING VALUES TO AIR TIME MANAGEMENT AT APGROUP LEVEL "
+		    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    if (isFactoryReset) {
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, false,
+			BroadBandTestConstants.CONSTANT_1);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
+	LOGGER.info("COMPLETED TEST CASE: TC-RDKB-WIFI-ATM-1001");
+	LOGGER.info("#######################################################################################");
+    }
 }

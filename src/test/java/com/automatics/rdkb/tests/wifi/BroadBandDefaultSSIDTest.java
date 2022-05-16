@@ -652,7 +652,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
     @TestDetails(testUID = "TC-RDKB-DEF-SSID-5005", testDecription = "Cross-verify the Default Private Wi-Fi SSID and password retrieved from WebPA with the configurations from SNMP")
-    public void testToVerifyDefaultPrivateWiFiSsidAndPassword(Dut settop) {
+    public void testToVerifyDefaultPrivateWiFiSsidAndPassword(Dut device) {
 
 	// Variable Declaration begins
 	String testCaseId = "";
@@ -691,7 +691,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 1: EXPECTED : Default Private Wi-Fi SSID of 2.4 GHz retrieved from WebPA should be same as the value obtained from SNMP");
 	    LOGGER.info("**********************************************************************************");
-	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, device,
 		    BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ,
 		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_SSID_2_4);
 	    status = result.isStatus();
@@ -703,7 +703,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    stepNum = "S2";
 	    status = false;
@@ -716,7 +716,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 2: EXPECTED : Default Private Wi-Fi SSID of 5 GHz retrieved from WebPA should be same as the value obtained from SNMP");
 	    LOGGER.info("**********************************************************************************");
-	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, device,
 		    BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ,
 		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_SSID_5);
 	    status = result.isStatus();
@@ -728,7 +728,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    stepNum = "S3";
 	    status = false;
@@ -741,7 +741,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 3: EXPECTED : Default Private Wi-Fi password of 2.4 GHz retrieved from WebPA should be same as the value obtained from SNMP");
 	    LOGGER.info("**********************************************************************************");
-	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, device,
 		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_2_4,
 		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_PASSWORD_2_4);
 	    status = result.isStatus();
@@ -753,7 +753,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	    stepNum = "S4";
 	    status = false;
@@ -762,11 +762,11 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 4: DESCRIPTION : Cross-verify the 5 GHz Default Private Wi-Fi password retrieved from WebPA with the value retrieved from SNMP");
 	    LOGGER.info(
-		    "STEP 4: ACTION : Execute the webpa get command on the parameter \"Device.WiFi.AccessPoint.10101.Security.X_COMCAST-COM_DefaultKeyPassphrase\" and execute the SNMP get command on OID \"1.3.6.1.4.1.17270.50.2.2.3.1.1.4.10101\" and compare these passwords retrieved from two different protocols.");
+		    "STEP 4: ACTION : Execute the webpa get command on the parameter Device.WiFi.AccessPoint.10101.Security.X_COMCAST-COM_DefaultKeyPassphrase and execute the SNMP get command on OID \"1.3.6.1.4.1.17270.50.2.2.3.1.1.4.10101\" and compare these passwords retrieved from two different protocols.");
 	    LOGGER.info(
 		    "STEP 4: EXPECTED : Default Private Wi-Fi password of 5 GHz retrieved from WebPA should be same as the value obtained from SNMP");
 	    LOGGER.info("**********************************************************************************");
-	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, settop,
+	    result = BroadBandCommonUtils.executeAndCompareValuesFromWebpaAndSnmp(tapEnv, device,
 		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_PASSWORD_DEFAULT_SSID_5,
 		    BroadBandSnmpMib.DEFAULT_PRIVATE_WIFI_PASSWORD_5);
 	    status = result.isStatus();
@@ -778,12 +778,12 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
 	    }
 	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	} catch (Exception e) {
 	    errorMessage = errorMessage + e.getMessage();
 	    LOGGER.error(errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, settop, testCaseId, stepNum, status, errorMessage,
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
 		    true);
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-DEF-SSID-5005");
@@ -797,9 +797,6 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
      * <li>STEP 3:Ping the IPv6 IP of the WLAN cilent from the LAN client</li>
      * <li>STEP 4:Ping the IPv6 IP of the LAN cilent from the WLAN client</li>
      * </ol>
-     * 
-     * @author PRASANTH REDDY
-     * @refactor Rakesh
      */
     @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, groups = {
 	    TestGroup.WEBPA, TestGroup.WIFI }, dataProviderClass = AutomaticsTapApi.class)

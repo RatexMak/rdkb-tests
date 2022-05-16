@@ -180,8 +180,8 @@ public class BroadBandSnmpWareHouseTests extends AutomaticsTestBase {
      * Method to get webpa response and cross validate with corresponding snmp response.
      *
      *
-     * @param settop
-     *            , Settop box instance
+     * @param device
+     *            , Dut box instance
      * @param snmpOutput
      *            , snmp response
      * @param hasKey

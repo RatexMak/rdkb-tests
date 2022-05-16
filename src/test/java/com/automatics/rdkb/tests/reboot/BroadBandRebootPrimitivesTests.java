@@ -305,13 +305,13 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 	 *
 	 * @author Sumathi Gunasekaran
 	 * @Refactor Rakesh C N
-	 * @param settop {@link Dut}
+	 * @param device {@link Dut}
 	 * @throws Exception
 	 */
 
 	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
 	@TestDetails(testUID = "TC-RDKB-REBOOT-1011")
-	public void testToVerifyRebootReason(Dut settop) {
+	public void testToVerifyRebootReason(Dut device) {
 		// Variable declaration starts
 		String testCaseId = "TC-RDKB-REBOOT-011";
 		String errorMessage = null;
@@ -344,7 +344,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			 * STEP 1 : VERIFY DEVICE SUPPORTS A REBOOT COMMAND THAT HAS DEFAULT COMPONENTS,
 			 * REBOOT SOURCE AND DELAY
 			 */
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber,
 					BroadBandTestConstants.DEFAULT_DELAY,
 					BroadBandTelemetryConstants.LAST_REBOOT_REASON_FOR_WEBPA_REBOOT, false);
 
@@ -356,7 +356,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			webPAValueToVerify = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.DEVICE,
 					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.SOURCE,
 					BroadBandTelemetryConstants.LAST_REBOOT_REASON_FOR_WEBPA_REBOOT);
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
 					BroadBandTelemetryConstants.LAST_REBOOT_REASON_FOR_WEBPA_REBOOT, false);
 
 			/**
@@ -367,7 +367,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			webPAValueToVerify = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.DEVICE,
 					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.SOURCE,
 					BroadBandTestConstants.CSR_REBOOT_REASON);
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
 					BroadBandTestConstants.CSR_REBOOT_REASON, false);
 
 			/**
@@ -378,7 +378,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			webPAValueToVerify = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.DEVICE,
 					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.SOURCE,
 					BroadBandTestConstants.UNKNOWN_REBOOT_REASON);
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
 					BroadBandTestConstants.UNKNOWN_REBOOT_REASON, false);
 
 			/**
@@ -388,7 +388,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			stepNumber++;
 			webPAValueToVerify = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.DEVICE,
 					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.DELAY);
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber, webPAValueToVerify,
 					BroadBandTelemetryConstants.LAST_REBOOT_REASON_FOR_WEBPA_REBOOT, false);
 
 			/**
@@ -396,7 +396,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			 * WIFI AND DEFAULT REBOOT REASON
 			 */
 			stepNumber++;
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber,
 					BroadBandTestConstants.WIFI_WEBPA_REBOOT, BroadBandTraceConstants.LOG_MESSAGE_WIFI_REBOOT_MESSAGE,
 					true);
 
@@ -405,13 +405,13 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 			 * ROUTER AND DEFAULT REBOOT REASON
 			 */
 			stepNumber++;
-			executeTestStepToPerformDifferentReboot(settop, tapEnv, testCaseId, stepNumber,
+			executeTestStepToPerformDifferentReboot(device, tapEnv, testCaseId, stepNumber,
 					BroadBandTestConstants.STRING_ROUTER, BroadBandTraceConstants.LOG_MESSAGE_ROUTER_REBOOT_MESSAGE,
 					true);
 		} catch (Exception exception) {
 			errorMessage = exception.getMessage();
 			LOGGER.error("Exception Occurred while Validating Reboot Parameter:" + errorMessage);
-			CommonUtils.updateTestStatusDuringException(tapEnv, settop, testCaseId, step, status, errorMessage, true);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, status, errorMessage, true);
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-REBOOT-1011");
 	}
@@ -420,7 +420,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 	 * Test step method used to verify MoCA page greyed out status in MSO/LAN GUI
 	 * page
 	 * 
-	 * @param settop               instance of{@link Dut}
+	 * @param device               instance of{@link Dut}
 	 * @param tapEnv               instance of {@link AutomaticsTapApi}
 	 * @param testCaseId           Test case ID
 	 * @param stepNumber           Step Number
@@ -429,7 +429,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 	 * @param iswifiOrRouterReboot
 	 * 
 	 */
-	public static void executeTestStepToPerformDifferentReboot(Dut settop, AutomaticsTapApi tapEnv, String testCaseId,
+	public static void executeTestStepToPerformDifferentReboot(Dut device, AutomaticsTapApi tapEnv, String testCaseId,
 			int stepNumber, String webPASetValue, String rebootReason, boolean iswifiOrRouterReboot) {
 		/**
 		 * STEP : VERIFY DIFFERENT REBOOT REASON
@@ -450,30 +450,30 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 		LOGGER.info("**********************************************************************************");
 		errorMessage = "Failed to set value through WebPA command for parameter : Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.RPC.RebootDevice with value as "
 				+ webPASetValue;
-		if (DeviceModeHandler.isDSLDevice(settop) && webPASetValue.equals(BroadBandTestConstants.STRING_ROUTER)) {
+		if (DeviceModeHandler.isDSLDevice(device) && webPASetValue.equals(BroadBandTestConstants.STRING_ROUTER)) {
 			LOGGER.info("The device Model is DSLDevice");
 			LOGGER.info("This step is skipped as it is not applicable for DSL devices.");
-			tapEnv.updateExecutionForAllStatus(settop, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 					"This test step not applicable", false);
 		} else {
-			if (BroadBandWiFiUtils.setWebPaParams(settop, BroadBandWebPaConstants.WEBPA_PARAM_REBOOT_DEVICE,
+			if (BroadBandWiFiUtils.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_REBOOT_DEVICE,
 					webPASetValue, BroadBandTestConstants.CONSTANT_0)) {
 				if (iswifiOrRouterReboot) {
 					long startTime = System.currentTimeMillis();
 					do {
-						status = CommonUtils.isNotEmptyOrNull(BroadBandCommonUtils.searchLogFiles(tapEnv, settop,
+						status = CommonUtils.isNotEmptyOrNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
 								rebootReason, BroadBandTestConstants.COMMAND_NTP_LOG_FILE));
 					} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
 							&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
 									BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 					if (!status) {
-						status = CommonUtils.validateTraceLog(tapEnv, settop, rebootReason,
+						status = CommonUtils.validateTraceLog(tapEnv, device, rebootReason,
 								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, true);
 					}
 					errorMessage = "Failed to retrieve log message from :"
 							+ BroadBandTestConstants.COMMAND_NTP_LOG_FILE;
 				} else {
-					status = FirmwareDownloadUtils.verifyGivenRebootResonFromWebPaCommand(tapEnv, settop, rebootReason);
+					status = FirmwareDownloadUtils.verifyGivenRebootResonFromWebPaCommand(tapEnv, device, rebootReason);
 					errorMessage = "Failed to Verify Last Reboot Reason through WebPA Command for:" + rebootReason;
 				}
 			}
@@ -486,7 +486,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
 			}
 			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, false);
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 		}
 	}
 
@@ -1398,7 +1398,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 	 *
 	 * @author Sumathi Gunasekaran
 	 * @Refactor Rakesh C N, Sruthi Santhosh
-	 * @param settop {@link Dut}
+	 * @param device {@link Dut}
 	 */
 
 	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
