@@ -61,6 +61,7 @@ import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
+import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
 import com.automatics.webpa.WebPaServerResponse;
@@ -630,8 +631,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    try {
-		status = BroadBandSystemUtils.verifyDnsmasqSerivceStatusUsingSystemctl(device, tapEnv,
-			BroadBandTestConstants.SYSTEMCTL_ACTIVE_RESPONSE);
+	    	
+    	String expectedResponse = AutomaticsPropertyUtility
+			    .getProperty(BroadBandTestConstants.PROP_KEY_EXPECTED_RESPONSE);
+		status = BroadBandSystemUtils.verifyDnsmasqSerivceStatus(device, tapEnv,
+				expectedResponse);
 	    } catch (Exception e) {
 		status = false;
 		errorMessage += "." + e.getMessage();

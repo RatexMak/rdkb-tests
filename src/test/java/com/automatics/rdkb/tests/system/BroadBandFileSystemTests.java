@@ -1277,9 +1277,8 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 	    response = tapEnv.executeCommandUsingSsh(device,
 		    BroadBandTestConstants.CAT_COMMAND + BroadBandTestConstants.RESOLVE_DOT_CONF_FILE);
 
-	    status = BroadBandCommonUtils.compareAllTheMatchedPattern(response,
-		    BroadBandTestConstants.PATTERN_GET_IPV4_OR_IPV6_SERVER_ADDRESS,
-		    BroadBandTestConstants.PATTERN_GET_NAMESPACE_SERVER_ADDRESS);
+	    status = BroadBandCommonUtils.validateNameServerIP(response,
+			    BroadBandTestConstants.PATTERN_GET_NAMESPACE_SERVER_ADDRESS);
 
 	    if (status) {
 		LOGGER.info("STEP 3: ACTUAL : Value of primary DNS is of ipv4/ipv6 address");

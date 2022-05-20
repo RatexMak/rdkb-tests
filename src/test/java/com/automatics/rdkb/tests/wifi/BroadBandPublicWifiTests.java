@@ -173,29 +173,27 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 		LOGGER.info("Step 2: Enable the public on the Gateway device");
 		LOGGER.info("Step 3: Get and verify the channel selection value true for 2.4 and 5 GHz.");
 		LOGGER.info("Step 4: Connect a client to the public wifi 5 GHz SSID.");
-		LOGGER.info("Step 5: Verify wifilogin is successful in client");
 		LOGGER.info(
-				"Step 6: Verify the correct IPv4 address for client connected with 5 GHz public wifi SSID in client");
+				"Step 5: Verify the correct IPv4 address for client connected with 5 GHz public wifi SSID in client");
 		LOGGER.info(
-				"Step 7: Verify the internet connectivity in the client connected with 5 GHz public wifi ssid using ipv4 interface");
-		LOGGER.info("Step 8: Verify wifilogout is successful in client");
-		LOGGER.info("Step 9: Verify disconnecting the 5 GHz public wifi SSID");
-		LOGGER.info("Step 10: Connect the connected client in the setup to 2.4 GHz SSID and verify connection status");
-		LOGGER.info("Step 11: Verify the correct IPv4 address for client connected with 2.4 GHz SSID");
-		LOGGER.info("Step 12: Verify the correct IPv6 address for client connected with 2.4 GHz SSID");
+				"Step 6: Verify the internet connectivity in the client connected with 5 GHz public wifi ssid using ipv4 interface");
+		LOGGER.info("Step 7: Verify disconnecting the 5 GHz public wifi SSID");
+		LOGGER.info("Step 8: Connect the connected client in the setup to 2.4 GHz SSID and verify connection status");
+		LOGGER.info("Step 9: Verify the correct IPv4 address for client connected with 2.4 GHz SSID");
+		LOGGER.info("Step 10: Verify the correct IPv6 address for client connected with 2.4 GHz SSID");
 		LOGGER.info(
-				"Step 13: Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4 GHz");
+				"Step 11: Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4 GHz");
 		LOGGER.info(
-				"Step 14:Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4 GHz");
-		LOGGER.info("Step 15: Connect the connected client in the setup to 5 GHz SSID and verify connection status");
-		LOGGER.info("Step 16: Verify the correct IPv4 address for client connected with 5 GHz SSID");
-		LOGGER.info("Step 17: Verify the correct IPv6 address for client connected with 5 GHz SSID");
+				"Step 12:Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4 GHz");
+		LOGGER.info("Step 13: Connect the connected client in the setup to 5 GHz SSID and verify connection status");
+		LOGGER.info("Step 14: Verify the correct IPv4 address for client connected with 5 GHz SSID");
+		LOGGER.info("Step 15: Verify the correct IPv6 address for client connected with 5 GHz SSID");
 		LOGGER.info(
-				"Step 18: Verify whether have connectivity using that particular interface using IPV4 for client connected with 5 GHz");
+				"Step 16: Verify whether have connectivity using that particular interface using IPV4 for client connected with 5 GHz");
 		LOGGER.info(
-				"Step 19: Verify whether have connectivity using that particular interface using IPV6 for client connected with 5 GHz");
-		LOGGER.info("Step 20: Verify disconnecting the 2.4 GHz private wifi SSID");
-		LOGGER.info("Step 21: Verify disconnecting the 5 GHz private wifi SSID");
+				"Step 17: Verify whether have connectivity using that particular interface using IPV6 for client connected with 5 GHz");
+		LOGGER.info("Step 18: Verify disconnecting the 2.4 GHz private wifi SSID");
+		LOGGER.info("Step 19: Verify disconnecting the 5 GHz private wifi SSID");
 
 		LOGGER.info("Post-Condition 1 : Enable the Prefer Private Wifi");
 		LOGGER.info("Post-Condition 2 : Disable the Auto Selection Mode");
@@ -332,23 +330,23 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 						BroadBandTestConstants.BAND_5GHZ);
 
 				/**
-				 * Step 5-8 : VALITATE 5 GHZ PUBLIC WIFI INTERFACE & INTERNET CONNECTION ON
+				 * Step 5-6 : VALITATE 5 GHZ PUBLIC WIFI INTERFACE & INTERNET CONNECTION ON
 				 * CLIENT
 				 */
 				BroadBandWiFiUtils.validatePublicWifiConnectionStatus(device, testCaseId, ssidVisibleDeviceTwo,
 						stepNumber);
 
 				/**
-				 * Step 9 : VERIFY DISCONNECTING THE 5 GHZ PUBLIC WIFI SSID
+				 * Step 7 : VERIFY DISCONNECTING THE 5 GHZ PUBLIC WIFI SSID
 				 */
-				stepNumber = 9;
+				stepNumber = 7;
 				executeTestStepToConnectPublicWiFi(device, testCaseId, ssidVisibleDeviceTwo,
 						BroadBandTestConstants.BAND_5GHZ);
 			} else {
 				stepNumber = BroadBandTestConstants.CONSTANT_4;
 				while (stepNumber <= BroadBandTestConstants.CONSTANT_9) {
 					stepNum = "s" + stepNumber;
-					errorMessage = "STEP " + stepNumber + ": ACTUAL : PUBLIC WIFI NOT APPLICABLE  FOR FIBRE DEVICES";
+					errorMessage = "STEP " + stepNumber + ": ACTUAL : PUBLIC WIFI NOT APPLICABLE  FOR PACE DEVICES";
 					LOGGER.info("******************************************************************************");
 					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 							errorMessage, false);
@@ -356,7 +354,7 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 				}
 			}
 			/**
-			 * STEP 10 : CONNECT THE CLIENT INTO 2.4 GHZ PRIVATE SSID AND VERIFY CONNECTION
+			 * STEP 8 : CONNECT THE CLIENT INTO 2.4 GHZ PRIVATE SSID AND VERIFY CONNECTION
 			 * STATUS
 			 */
 			stepNumber++;
@@ -364,7 +362,7 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 					BroadBandTestConstants.BAND_2_4GHZ, stepNumber);
 
 			/**
-			 * STEP 11-14 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED
+			 * STEP 9-12 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED
 			 * WITH 2.4GHZ AND INTERNET CONNECTIVITY USING IPV4 AND IPV6 INTERFACE.
 			 */
 			stepNumber++;
@@ -372,15 +370,15 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 					stepNumber);
 
 			/**
-			 * STEP 15 : CONNECT THE CLIENT INTO 5 GHZ PRIVATE SSID AND VERIFY CONNECTION
+			 * STEP 13 : CONNECT THE CLIENT INTO 5 GHZ PRIVATE SSID AND VERIFY CONNECTION
 			 * STATUS
 			 */
-			stepNumber = 15;
+			stepNumber = 13;
 			BroadBandWiFiUtils.executeTestStepToConnectPrivateWiFi(device, testCaseId, ssidVisibleDeviceTwo,
 					BroadBandTestConstants.BAND_5GHZ, stepNumber);
 
 			/**
-			 * STEP 16-19 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED
+			 * STEP 14-17 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED
 			 * WITH 5 GHZ AND INTERNET CONNECTIVITY USING IPV4 AND IPV6 INTERFACE.
 			 */
 			stepNumber++;
@@ -388,14 +386,14 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 					stepNumber);
 
 			/**
-			 * STEP 20 : VERIFY DISCONNECTING THE CLIENT FROM 2.4 GHZ PRIVATE WIFI SSID
+			 * STEP 18 : VERIFY DISCONNECTING THE CLIENT FROM 2.4 GHZ PRIVATE WIFI SSID
 			 */
-			stepNumber = 20;
+			stepNumber = 18;
 			BroadBandWiFiUtils.executeTestStepToDisconnectPrivateWiFi(device, testCaseId, ssidVisibleDeviceOne,
 					BroadBandTestConstants.BAND_2_4GHZ, stepNumber);
 
 			/**
-			 * STEP 21 : VERIFY DISCONNECTING THE CLIENT FROM 5 GHZ PRIVATE WIFI SSID
+			 * STEP 19 : VERIFY DISCONNECTING THE CLIENT FROM 5 GHZ PRIVATE WIFI SSID
 			 */
 			stepNumber++;
 			BroadBandWiFiUtils.executeTestStepToDisconnectPrivateWiFi(device, testCaseId, ssidVisibleDeviceTwo,
