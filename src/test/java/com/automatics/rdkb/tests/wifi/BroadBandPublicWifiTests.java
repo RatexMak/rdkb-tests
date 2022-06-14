@@ -103,35 +103,33 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 	 * <li>Step 3: Get and verify the channel selection value true for 2.4 and 5
 	 * GHz.</li>
 	 * <li>Step 4: Connect a client to the public wifi 5 GHz SSID.</li>
-	 * <li>Step 5: Verify wifilogin is successful in client</li>
-	 * <li>Step 6: Verify the correct IPv4 address for client connected with 5 GHz
+	 * <li>Step 5: Verify the correct IPv4 address for client connected with 5 GHz
 	 * public wifi SSID in client</li>
-	 * <li>Step 7: Verify the internet connectivity in the client connected with 5
+	 * <li>Step 6: Verify the internet connectivity in the client connected with 5
 	 * GHz public wifi ssid using ipv4 interface</li>
-	 * <li>Step 8: Verify wifilogout is successful in client</li>
-	 * <li>Step 9: Verify disconnecting the 5 GHz public wifi SSID</li>
-	 * <li>Step 10: Connect the connected client in the setup to 2.4 GHz SSID and
+	 * <li>Step 7: Verify disconnecting the 5 GHz public wifi SSID</li>
+	 * <li>Step 8: Connect the connected client in the setup to 2.4 GHz SSID and
 	 * verify connection status</li>
-	 * <li>Step 11: Verify the correct IPv4 address for client connected with 2.4
+	 * <li>Step 9: Verify the correct IPv4 address for client connected with 2.4 GHz
+	 * SSID</li>
+	 * <li>Step 10: Verify the correct IPv6 address for client connected with 2.4
 	 * GHz SSID</li>
-	 * <li>Step 12: Verify the correct IPv6 address for client connected with 2.4
-	 * GHz SSID</li>
-	 * <li>Step 13: Verify whether have connectivity using that particular interface
+	 * <li>Step 11: Verify whether have connectivity using that particular interface
 	 * using IPV4 for client connected with 2.4 GHz</li>
-	 * <li>Step 14:Verify whether have connectivity using that particular interface
+	 * <li>Step 12:Verify whether have connectivity using that particular interface
 	 * using IPV6 for client connected with 2.4 GHz</li>
-	 * <li>Step 15: Connect the connected client in the setup to 5 GHz SSID and
+	 * <li>Step 13: Connect the connected client in the setup to 5 GHz SSID and
 	 * verify connection status</li>
-	 * <li>Step 16: Verify the correct IPv4 address for client connected with 5 GHz
+	 * <li>Step 14: Verify the correct IPv4 address for client connected with 5 GHz
 	 * SSID</li>
-	 * <li>Step 17: Verify the correct IPv6 address for client connected with 5 GHz
+	 * <li>Step 15: Verify the correct IPv6 address for client connected with 5 GHz
 	 * SSID</li>
-	 * <li>Step 18: Verify whether have connectivity using that particular interface
+	 * <li>Step 16: Verify whether have connectivity using that particular interface
 	 * using IPV4 for client connected with 5 GHz</li>
-	 * <li>Step 19: Verify whether have connectivity using that particular interface
+	 * <li>Step 17: Verify whether have connectivity using that particular interface
 	 * using IPV6 for client connected with 5 GHz</li>
-	 * <li>Step 20: Verify disconnecting the 2.4 GHz private wifi SSID</li>
-	 * <li>Step 21: Verify disconnecting the 5 GHz private wifi SSID</li>
+	 * <li>Step 18: Verify disconnecting the 2.4 GHz private wifi SSID</li>
+	 * <li>Step 19: Verify disconnecting the 5 GHz private wifi SSID</li>
 	 * <li>Post-Condition 1 : Enable the Public Wifi</li>
 	 * <li>Post-Condition 2 : Enable the Prefer Private Wifi</li>
 	 * <li>Post-Condition 3 : Disable the Auto Selection Mode</li>

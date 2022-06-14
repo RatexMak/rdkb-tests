@@ -22,19 +22,23 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants;
+import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
+import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -936,5 +940,678 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	    LOGGER.info("########################### ENDING POST CONFIGURATION ####################################");
 	}
 	LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-WIFI-TRANS-1000#####################");
+    }
+    
+    /**
+     * Verify WiFi status after disabling and enabling
+     * <ol>
+     * <li>PRE CONDITION 1: Verify whether Private SSID 2.4Ghz can be enabled using webPA.</li>
+     * <li>PRE CONDITION 2: Verify whether Private SSID 5Ghz can be enabled using webPA</li>
+     * <li>Connect to a connected client with 2.4Ghz radio ssid and Verify connection status</li>
+     * <li>Connect to a connected client with 5Ghz radio ssid and Verify connection status</li>
+     * <li>Disable Wifi Radio SSID 2.4Ghz , 5Ghz Using SNMP</li>
+     * <li>Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa</li>
+     * <li>Retrieve Radio SSID names and verify whether Networks are broadcasting in Connected client</li>
+     * <li>Enable Wifi Radio SSID 2.4Ghz , 5Ghz Using SNMP</li>
+     * <li>Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa</li>
+     * <li>Connect to a connected client with 2.4Ghz radio ssid and Verify connection status</li>
+     * <li>Verify whether Connected client got the IPv4 address</li>
+     * <li>Verify whether Connected client got the IPv6 address.</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV4</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV6</li>
+     * <li>Connect to a connected client with 5Ghz radio ssid and Verify connection status</li>
+     * <li>Verify whether Connected client got the IPv4 address</li>
+     * <li>Verify whether Connected client got the IPv6 address.</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV4</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV6</li>
+     * <li>POST-CONDITION 1:Disconnect Wifi Radio 2.4Ghz SSID from the device</li>
+     * </ol>
+     * 
+     * @refactor yamini.s
+     */
+    
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+			BroadBandTestGroup.WIFI })
+	@TestDetails(testUID = "TC-RDKB-WIFI-RESET-1001")
+    public void Test_1(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	Dut connectedClient = null;
+	// Variable Declaration Ends
+	String response = "";
+
+	testCaseId = "TC-RDKB-WIFI-RESET-101";
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-RESET-1001");
+	LOGGER.info("TEST DESCRIPTION: Verify WiFi status after disabling");
+	
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("Pre-Condition 1. Verify whether Private SSID 2.4Ghz can be enabled using webPA");
+	LOGGER.info("Pre-Condition 2. Verify whether Private SSID 5Ghz can be enabled using webPA");
+	LOGGER.info("1. Connect to a connected client with 2.4Ghz radio ssid and Verify connection status");
+	LOGGER.info("2. Connect to a connected client with 5Ghz radio ssid and Verify connection status");
+	LOGGER.info("3. Disable Wifi Radio SSID 2.4Ghz , 5Ghz Using SNMP");
+	LOGGER.info("4. Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa");
+	LOGGER.info("5. Retrieve Radio SSID names and verify whether Networks are broadcasting in Connected client");
+	LOGGER.info("6. Enable Wifi Radio SSID 2.4Ghz , 5Ghz Using SNMP");
+	LOGGER.info("7. Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa");
+	LOGGER.info("8. Connect to a connected client with 2.4Ghz radio ssid and Verify connection status");
+	LOGGER.info("9. Verify whether Connected client  got the  IPv4  address ");
+	LOGGER.info("10. Verify whether Connected client got the   IPv6 address.");
+	LOGGER.info("11. Verify whether you have connectivity using that particular interface using IPV4");
+	LOGGER.info("12. Verify whether you have connectivity using that particular interface using IPV6");
+	LOGGER.info("13. Connect to a connected client with 5Ghz radio ssid and Verify connection status");
+	LOGGER.info("14. Verify whether Connected client got the IPv4  address ");
+	LOGGER.info("15. Verify whether Connected client got the IPv6 address.");
+	LOGGER.info("16. Verify whether you have connectivity using that particular interface using IPV4");
+	LOGGER.info("17. Verify whether you have connectivity using that particular interface using IPV6");
+	LOGGER.info("Post-Condition 1. Disconnect Wifi Radio 2.4Ghz SSID from the device");
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	LOGGER.info("PRE-CONDITION STEPS");
+	BroadBandPreConditionUtils.executePreConditionToVerifyPrivateSsidIsEnabled(device, tapEnv, 1);
+	LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	
+	
+	try {
+
+
+	    stepNum = "S1";
+	    errorMessage = "Unable to retrieve connected client device";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Connect to a connected client with 2.4Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Connection establishment between Connected client -2.4Ghz should be successful");
+	    LOGGER.info("STEP 1: EXPECTED : Connection to 2.4Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+
+	    
+	    
+	    connectedClient = BroadBandConnectedClientUtils
+				.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+
+		if (null != connectedClient) {
+			status = true;
+			LOGGER.info("STEP 1:ACTUAL:Connected establishment client 1 to 2.4 private SSID is successful");
+		} else {
+			LOGGER.error("STEP 1:ACTUAL:" + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S2";
+	    errorMessage = "unable to establish connected client to 5Ghz wifi SSID";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION : Connect to a connected client with 5Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Connection establishment between Connected client -5Ghz should be successful");
+	    LOGGER.info("STEP 2: EXPECTED : Connection to 5Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandResultObject broadBandResultObject = BroadBandConnectedClientUtils
+		    .connectGivenConnectedClientToWifi(device, tapEnv, connectedClient,
+			    WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    status = broadBandResultObject.isStatus();
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Connected to 5Ghz Wifi radio SSID successfully");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S3";
+	    errorMessage = "Unable to disable wifi radio SSID 2.4Ghz and 5Ghz SSID using SNMP";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Disable Wifi Radio SSID 2.4Ghz , 5Ghz Using SNMP");
+	    LOGGER.info("STEP 3: ACTION : Execute:To Reset WiFi using SNMP");
+	    LOGGER.info("STEP 3: EXPECTED : Snmp execution should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.performEnableOrDisableWifiRadioBySnmp(tapEnv, device,
+		    BroadBandTestConstants.STRING_VALUE_TWO);
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : WIFI SSID's disabled successfully using SNMP");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S4";
+	    errorMessage = "Unable to check SSID status using webpa";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa");
+	    LOGGER.info("STEP 4: ACTION : Execute Webpa params for Wif SSID 2.4Ghz and 5Ghz");
+	    LOGGER.info("STEP 4: EXPECTED : Webpa execution should be successful");
+	    LOGGER.info("**********************************************************************************");
+
+	    String wifi2GhzStatus = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+
+	    String wifi5GhzStatus = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+
+	    if (wifi2GhzStatus.equals(BroadBandTestConstants.FALSE)
+		    && wifi5GhzStatus.equals(BroadBandTestConstants.FALSE)) {
+		status = true;
+		LOGGER.info("STEP 4: ACTUAL : Wifi radio SSID's status validated successfully");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S5";
+	    errorMessage = "Unable to verify whether networks are broadcasted or not";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 5: DESCRIPTION : Retrieve Radio SSID names and verify whether Networks are broadcasting in Connected client");
+	    LOGGER.info("STEP 5: ACTION : Execute 'netsh wlan show networks'/'sudo iw dev wlan0 scan'");
+	    LOGGER.info("STEP 5: EXPECTED : WIFI SSID's should not be visible");
+	    LOGGER.info("**********************************************************************************");
+	    String ssid2Ghz = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+		    WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    boolean visibilityStatus2Ghz = !BroadBandConnectedClientUtils
+		    .scanAndVerifyVisibleSsidFromWiFiConnectedClientDevice(connectedClient, ssid2Ghz, tapEnv);
+	    String ssid5Ghz = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+		    WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    boolean visibilityStatus5Ghz = !BroadBandConnectedClientUtils
+		    .scanAndVerifyVisibleSsidFromWiFiConnectedClientDevice(connectedClient, ssid5Ghz, tapEnv);
+	    if (visibilityStatus2Ghz && visibilityStatus5Ghz) {
+		status = true;
+		LOGGER.info("STEP 5: ACTUAL : Verified wifi broadcast successfully in connected client");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S6";
+	    errorMessage = "Unable to enable wifi radio ssid 2.4Ghz and 5Ghz using snmp";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Enable Wifi Radio SSID 2.4Ghz , 5Ghz Using SNMP");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute:To Reset WiFi using SNMP:snmpset -v2c -c community_string udp6:<<CMIP>> .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10001 i 1snmpset -v2c -c community_string udp6:<<CMIP>> .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10001 i 1");
+	    LOGGER.info("STEP 6: EXPECTED : Snmp execution should be successful ");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.performEnableOrDisableWifiRadioBySnmp(tapEnv, device,
+		    BroadBandTestConstants.STRING_VALUE_ONE);
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Wifi radio 2.4Ghz and 5Ghz enabled successfully using SNMP");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S7";
+	    errorMessage = "unable to verify wifi radio ssid status using webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa");
+	    LOGGER.info("STEP 7: ACTION : Execute webpa params for Wifi ssid 2.4Ghz and 5Ghz");
+	    LOGGER.info("STEP 7: EXPECTED : Webpa commands should be executed successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    ssid2Ghz = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+	    ssid5Ghz = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+
+	    if (ssid2Ghz.equals(BroadBandTestConstants.TRUE) && ssid5Ghz.equals(BroadBandTestConstants.TRUE)) {
+		status = true;
+		LOGGER.info("STEP 7: ACTUAL : Wifi radio status verified successfully");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S8";
+	    errorMessage = "unable to establish connection to wifi 2.4Ghz ssid";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 8: DESCRIPTION : Connect to a connected client with 2.4Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Connection establishment between Connected client -2.4Ghz should be successful");
+	    LOGGER.info("STEP 8: EXPECTED : Connection to 2.4Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+
+	    broadBandResultObject = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv,
+		    connectedClient, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    status = broadBandResultObject.isStatus();
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Wifi connection established successfully with 2.4Ghz");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    // Steps to verify connectivity status in connected client
+	    status = false;
+	    BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device,tapEnv, connectedClient, testCaseId, 9,
+		    BroadBandTestConstants.BAND_2_4GHZ);
+
+	    stepNum = "S13";
+	    errorMessage = " unable to establish Wifi connection with 5Ghz";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 13: DESCRIPTION : Connect to a connected client with 5Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 13: ACTION : Connection establishment between Connected client -5Ghz should be successful");
+	    LOGGER.info("STEP 13: EXPECTED : Connection to 5Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    broadBandResultObject = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv,
+		    connectedClient, WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    status = broadBandResultObject.isStatus();
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL :  Wifi connection established successfully with 5Ghz");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    // Steps to verify connectivity status in connected client
+	    status = false;
+	    BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device, tapEnv, connectedClient, testCaseId, 14,
+		    BroadBandTestConstants.BAND_5GHZ);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    ;
+	    BroadBandPostConditionUtils.executePostConditionToDisconnectConnectedClient(device, tapEnv, connectedClient,
+		    BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-RESET-1001");
+    }
+
+    /**
+     * Verify WiFi status after disabling
+     * <ol>
+     * <li>Connect to a connected client 1 with 2.4Ghz radio ssid and Verify connection status</li>
+     * <li>Retrieve Private IPv4 IP from client 1 and save it</li>
+     * <li>Connect to a connected client 2 with 5Ghz radio ssid and Verify connection status</li>
+     * <li>Retrieve Private IPv4 IP from client 2 and save it</li>
+     * <li>Verify FTP connection from Client 1 to Client 2</li>
+     * <li>Verify FTP connection from Client 2 to Client 1</li>
+     * <li>Reset WiFi of the device using SNMP</li>
+     * <li>Verify WiFi module restarted log from PAMlog.txt.0 file</li>
+     * <li>Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa</li>
+     * <li>Connect to a connected client 1 with 2.4Ghz radio ssid and Verify connection status</li>
+     * <li>Verify whether Connected client got the IPv4 address</li>
+     * <li>Verify whether Connected client got the IPv6 address.</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV4</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV6</li>
+     * <li>Connect to a connected client 2 with 5Ghz radio ssid and Verify connection status</li>
+     * <li>Verify whether Connected client got the IPv4 address</li>
+     * <li>Verify whether Connected client got the IPv6 address.</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV4</li>
+     * <li>Verify whether you have connectivity using that particular interface using IPV6</li>
+     * </ol>
+     * 
+     * @refactor yamini.s
+     */
+
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+			BroadBandTestGroup.WIFI })
+	@TestDetails(testUID = "TC-RDKB-WIFI-RESET-1002")
+    public void testToResetWifiUsingSnmp(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	Dut connectedClient5Ghz = null;
+	Dut connectedClient2Ghz = null;
+	// Variable Declaration Ends
+
+	testCaseId = "TC-RDKB-WIFI-RESET-102";
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-RESET-1002");
+	LOGGER.info("TEST DESCRIPTION: Test to Verify Wifi status and client connectivity status after reset");
+	
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Connect to a connected client 1 with 2.4Ghz radio ssid and Verify connection status");
+	LOGGER.info("2. Retrieve Private IPv4 IP from client 1 and save it");
+	LOGGER.info("3. Connect to a connected client 2 with 5Ghz radio ssid and Verify connection status");
+	LOGGER.info("4. Retrieve Private IPv4 IP from client 2 and save it");
+	LOGGER.info("5. Reset WiFi of the device using SNMP");
+	LOGGER.info("6. Verify WiFi module restarted log from PAMlog.txt.0 file");
+	LOGGER.info("7. Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa");
+	LOGGER.info("8. Connect to a connected client 1 with 2.4Ghz radio ssid and Verify connection status");
+	LOGGER.info("9. Verify whether Connected client  got the IPv4 address ");
+	LOGGER.info("10. Verify whether Connected client got the IPv6 address.");
+	LOGGER.info("11. Verify whether you have connectivity using that particular interface using IPV4");
+	LOGGER.info("12. Verify whether you have connectivity using that particular interface using IPV6");
+	LOGGER.info("13. Connect to a connected client 2 with 5Ghz radio ssid and Verify connection status");
+	LOGGER.info("14. Verify whether Connected client  got the IPv4 address ");
+	LOGGER.info("15. Verify whether Connected client got the IPv6 address.");
+	LOGGER.info("16. Verify whether you have connectivity using that particular interface using IPV4");
+	LOGGER.info("17. Verify whether you have connectivity using that particular interface using IPV6");
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	LOGGER.info("PRE-CONDITION STEPS");
+	LOGGER.info("PRE-CONDITION 1:DESCRIPTION: Verify whether Private SSID 2.4Ghz can be enabled using webPA");
+	LOGGER.info(
+		"PRE-CONDITION 1: ACTION : Radio SSID 2.4Ghz should be enabled successfully using webpa \"parameters\":[{\"dataType\":3,\"name\":\"Device.WiFi.SSID.10001.Enable\",\"value\":\"true\"}]}\"");
+	LOGGER.info("PRE-CONDITION 1: EXPECTED: Private SSID 2.4Ghz should be enabled successfully");
+	errorMessage = "Unable to enable 2.4Ghz private SSID using webpa";
+	status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLED_STATUS,
+		BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+		BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	if (status) {
+	    LOGGER.info("PRE-CONDITION 1: ACTUAL : Pre condition executed successfully");
+	} else {
+	    LOGGER.error("PRE-CONDITION 1: ACTUAL : Pre condition failed");
+	    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	}
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("PRE-CONDITION 2:DESCRIPTION: Verify whether Private SSID 5Ghz can be enabled using webPA");
+	LOGGER.info(
+		"PRE-CONDITION 2: ACTION : Radio SSID 5Ghz should be enabled successfully using webpa \"parameters\":[{\"dataType\":3,\"name\":\"Device.WiFi.SSID.10001.Enable\",\"value\":\"true\"}]}\"");
+	LOGGER.info("PRE-CONDITION 2: EXPECTED: Private SSID 5Ghz should be enabled successfully");
+	errorMessage = "Unable to enable 5Ghz private SSID using webpa";
+	status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS,
+		BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+		BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	if (status) {
+	    LOGGER.info("PRE-CONDITION 2: ACTUAL : Pre condition executed successfully");
+	} else {
+	    LOGGER.error("PRE-CONDITION 2: ACTUAL : Pre condition failed");
+	    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	}
+	try {
+	    stepNum = "S1";
+	    errorMessage = "Unable to retrive connected client device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Connect to a connected client 1 with 2.4Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Connection establishment between Connected client -2.4Ghz should be successful");
+	    LOGGER.info("STEP 1: EXPECTED : Connection to 2.4Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    connectedClient2Ghz = BroadBandConnectedClientUtils
+		    .get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    if (connectedClient2Ghz != null) {
+		status = true;
+		LOGGER.info("STEP 1: ACTUAL : Wifi connection to 2.4Ghz SSID established successfully");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "S2";
+	    errorMessage = "Unable to retrieve IPv4 address from connected client 1 ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Retrieve Private IPv4 IP from client 1 and save it");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Retrieve private IPV4 IP of client 1 usingLinux:ifconfig Windows: ipconfig .");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : Retrieve  private IPv4 of the device  Linux:inet <IPv4>   netmask 255.255.255.0  broadcast 10.0.0.255Windows:IPv4 Address. . . . . . . . . . . : <IPv4>");
+	    LOGGER.info("**********************************************************************************");
+	    String client2GhzIpv4Addr = BroadBandConnectedClientUtils.getIpv4AddressFromConnClient(tapEnv, device,
+		    connectedClient2Ghz);
+	    if (CommonMethods.isNotNull(client2GhzIpv4Addr)) {
+		status = true;
+		LOGGER.info("STEP 2: ACTUAL : Connected client 1 IPv4 address retrieved successfully");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "S3";
+	    errorMessage = "Unable to retrive connected client device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Connect to a connected client 2 with 5Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Connection establishment between Connected client -5Ghz should be successful");
+	    LOGGER.info("STEP 3: EXPECTED : Connection to 5Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    connectedClient5Ghz = BroadBandConnectedClientUtils.getOtherWiFiCapableClientDeviceAndConnect(device,
+		    tapEnv, connectedClient2Ghz, BroadBandTestConstants.BAND_5GHZ);
+	    if (connectedClient5Ghz != null) {
+		status = true;
+		LOGGER.info("STEP 3: ACTUAL : Wifi connection to 5Ghz SSID established successfully");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "S4";
+	    errorMessage = "Unable to retrieve IPv4 address from connected client 2";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : RETRIEVE PRIVATE IPV4 IP FROM CLIENT 2 AND SAVE IT");
+	    LOGGER.info("STEP 4: ACTION : RETRIEVE PRIVATE IPV4 IP OF CLIENT 1 IFCONFIG / IPCONFIG .");
+	    LOGGER.info("STEP 4: EXPECTED : IPV4 ADDRESS SHOULD BE RETRIEVED SUCCESSFULLY");
+	    LOGGER.info("**********************************************************************************");
+	    String client5GhzIpv4Addr = BroadBandConnectedClientUtils.getIpv4AddressFromConnClient(tapEnv, device,
+		    connectedClient5Ghz);
+	    if (CommonMethods.isNotNull(client5GhzIpv4Addr)) {
+		status = true;
+		LOGGER.info("STEP 4: ACTUAL : Connected client 2 IPv4 address retrieved successfully");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    
+	    LOGGER.info("**********************************************************************************");
+	    stepNum = "S5";
+	    errorMessage = "Unable to reset Wifi using SNMP";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Reset WiFi of the device using SNMP");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute : snmpset -v2c -c community_string udp6:<<CMIP>> .1.3.6.1.4.1.17270.50.2.1.1.1003.0 i 3 ");
+	    LOGGER.info("STEP 5: EXPECTED : Snmp execution should be successful ");
+	    LOGGER.info("**********************************************************************************");
+	    String output2Ghz = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+		    BroadBandSnmpMib.ESTB_WIFI_RESTORE_DEVICE_WITH_INDEX.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_THREE);
+	    if (output2Ghz.equals(BroadBandTestConstants.STRING_VALUE_THREE)) {
+		status = true;
+
+		LOGGER.info("STEP 5: ACTUAL : Wifi reset is successful using SNMP");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+	    stepNum = "S6";
+	    errorMessage = "Unable to verify logs in PAMlog.txt.0 file";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify WiFi module restarted log from PAMlog.txt.0 file");
+	    LOGGER.info("STEP 6: ACTION : Execute : cat /rdklogs/logs/PAMlog.txt.0 Verify latest log ");
+	    LOGGER.info("STEP 6: EXPECTED : Validation should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_WIFI_RESET_LOG_FROM_PAMLOG_FILE);
+	    String response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CAT_SAMPLE_TEXT_FILE);
+	    if (CommonMethods.isNotNull(response)) {
+		status = response.contains(BroadBandTestConstants.STRING_WIFI_MODULE_RESET_LOGS);
+		LOGGER.info("is expected logs for wifi module restart logs present in PAMlog.txt.0 file : " + status);
+		errorMessage = status ? null
+			: "Failed to get the expected restart logs for WiFi modile restart Expected logs should be "
+				+ "\"RebootDevice:WiFi is going to reboot now\" Actual response : " + response;
+		tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.REMOVE_SAMPLE_TEXT_FILE);
+	    } else {
+		errorMessage = "Obtained null response..Not abe to get Wi-Fi module restart logs from  PAMlog.txt.0";
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("Waiting for five minutes to affect changes");
+		tapEnv.waitTill(BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS);
+		LOGGER.info("STEP 6: ACTUAL : Wifi module restart logs verified successfully");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+	    stepNum = "S7";
+	    errorMessage = "Unable to verify wifi radio status of 2.4Ghz and 5Ghz using webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify Wifi Radio SSID status of 2.4Ghz and 5Ghz using webpa");
+	    LOGGER.info("STEP 7: ACTION : Execute Webpa param for wifi 2.4Ghz and 5Ghz");
+	    LOGGER.info("STEP 7: EXPECTED : Webpa execution should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    String wifi2GhzStatus = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+	    String wifi5GhzStatus = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+	    if (wifi2GhzStatus.equals(BroadBandTestConstants.TRUE)
+		    && wifi5GhzStatus.equals(BroadBandTestConstants.TRUE)) {
+		status = true;
+		LOGGER.info("STEP 7: ACTUAL : Wifi radio status validation is successful");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+	    stepNum = "S8";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 8: DESCRIPTION : Connect to a connected client 1 with 2.4Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Connection establishment between Connected client -2.4Ghz should be successful");
+	    LOGGER.info("STEP 8: EXPECTED : Connection to 2.4Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandResultObject broadBandResultObject = BroadBandConnectedClientUtils
+		    .connectGivenConnectedClientToWifi(device, tapEnv, connectedClient2Ghz,
+			    WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    if (broadBandResultObject.isStatus()) {
+		status = true;
+		LOGGER.info("STEP 8: ACTUAL : Wifi connection established successfully");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    // Test to verify connection status
+	    status = false;
+	    BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device, tapEnv, connectedClient2Ghz, testCaseId,
+		    BroadBandTestConstants.INTEGER_VALUE_11, BroadBandTestConstants.BAND_2_4GHZ);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "S13";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 13: DESCRIPTION : Connect to a connected client 2 with 5Ghz radio ssid and Verify connection status");
+	    LOGGER.info(
+		    "STEP 13: ACTION : Connection establishment between Connected client -5Ghz should be successful");
+	    LOGGER.info("STEP 13: EXPECTED : Connection to 5Ghz should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    broadBandResultObject = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv,
+		    connectedClient5Ghz, WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    if (broadBandResultObject.isStatus()) {
+		status = true;
+		LOGGER.info("STEP 13: ACTUAL : Wifi connection established successfully");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+	    // Test to verify connection status
+	    status = false;
+	    BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device, tapEnv, connectedClient5Ghz, testCaseId,
+		    BroadBandTestConstants.CONSTANT_16, BroadBandTestConstants.BAND_5GHZ);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error("Exception occure in Wifi reset test " + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    try {
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Disconnect Wifi Radio 2.4Ghz SSID from the device");
+		LOGGER.info("POST-CONDITION 1 : ACTION :Disconnect wifi radio 2.4Ghz SSID ");
+		LOGGER.info("POST-CONDITION 1 : EXPECTED : Wifi radio 2.4Ghz SSID should be disconnected successfully");
+		LOGGER.info("#######################################################################################");
+		boolean connectionStatus = false;
+
+		if (connectedClient2Ghz != null) {
+		    String ssidName = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device,
+			    tapEnv, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+		    LOGGER.info("SSIDNAME:" + ssidName);
+		    connectionStatus = ConnectedNattedClientsUtils.disconnectSSID(connectedClient2Ghz, tapEnv,
+			    ssidName);
+		}
+		LOGGER.info("POST CONDITION 1:ACTUAL: WIFI SSID 2.4GHZ Disconnect status:" + connectionStatus);
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("POST-CONDITION 2 : DESCRIPTION : Disconnect Wifi Radio 5Ghz SSID from the device");
+		LOGGER.info("POST-CONDITION 2 : ACTION :Disconnect wifi radio 5Ghz SSID ");
+		LOGGER.info("POST-CONDITION 2 : EXPECTED : Wifi radio 5Ghz SSID should be disconnected successfully");
+		LOGGER.info("#######################################################################################");
+		connectionStatus = false;
+		if (connectedClient5Ghz != null) {
+		    String ssidName = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device,
+			    tapEnv, WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+		    LOGGER.info("SSIDNAME:" + ssidName);
+		    connectionStatus = ConnectedNattedClientsUtils.disconnectSSID(connectedClient5Ghz, tapEnv,
+			    ssidName);
+		}
+		LOGGER.info("POST CONDITION 2:ACTUAL: WIFI SSID 5GHZ Disconnect status:" + connectionStatus);
+
+	    } catch (Exception e) {
+		LOGGER.error("EXCEPTION OCCURRED WHILE PERFORMING POST CONFIGURATION " + e.getMessage());
+
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-RESET-1002");
     }
 }

@@ -28,15 +28,20 @@ import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
+import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
+import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils.WifiOperatingStandard;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
@@ -663,6 +668,424 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase{
 	    throw new TestException("Device failed connectivity test using curl command");
 	}
     }
+    
+    /**
+     * 
+     * <li>1. Update wifiClient mac address using webpa</li>
+     * <li>2. Update reporting period value as 5 using webpa</li>
+     * <li>3. Update override TTL value as 900 using webpa</li>
+     * <li>4. Create WiFi debug monitor log in nvram to capture the client report</li>
+     * <li>5. Update wifiClient enable status as true using webpa</li>
+     * <li>6. Get client report from wifiMon file</li>
+     * <li>7. Verify single client report log message in wifilog</li>
+     * <li>8. Verify cloud url to upload the client report in parodus log file</li>
+     * <li>9. Factory Reset using WebPA request using value \"Router\"</li>
+     * <li>10. Verify reporting period value set to default after factory reset</li>
+     * <li>11. Verify override TTL value set to default after facotry reset</li>
+     * <li>12. Verify wifiClient enable status set to default state after factory reset</li>
+     * <li>13. Verify wificlient schema using Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Schema after factory
+     * reset</li>
+     * <li>14. Verify wifiClient mac address reset to default value after factory reset</li>
+     * 
+     * @author ArunKumar Jayachandran
+     * @refactor Said Hisham
+     */
+
+    @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+	    TestGroup.NEW_FEATURE, TestGroup.SECURITY })
+    @TestDetails(testUID = "TC-RDKB-HARVESTER-REPORT-1002")
+    public void testToVerifySingleClientHarvesterFor2GhzClient(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-HARVESTER-REPORT-1002");
+	LOGGER.info("TEST DESCRIPTION: Test to verify single client harvester report for 2.4GHz client");
+	LOGGER.info("NOTES: This test case is written as part of validating RDKB-24606");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Update wifiClient mac address using webpa");
+	LOGGER.info("2. Update reporting period value as 5 using webpa");
+	LOGGER.info("3. Update override TTL value as 900 using webpa");
+	LOGGER.info("4. Create WiFi debug monitor log in nvram to capture the client report");
+	LOGGER.info("5. Update wifiClient enable status as true using webpa");
+	LOGGER.info("6. Get client report from wifiMon file");
+	LOGGER.info("7. Verify single client report log message in wifilog");
+	LOGGER.info("8. Verify cloud url to upload the client report in parodus log file");
+	LOGGER.info("9. Factory Reset using WebPA request using value \"Router\"");
+	LOGGER.info("10. Verify reporting period value set to default after factory reset");
+	LOGGER.info("11. Verify override TTL value set to default after facotry reset");
+	LOGGER.info("12. Verify wifiClient enable status set to default state after factory reset");
+	LOGGER.info(
+		"13. Verify wificlient schema using Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Schema after factory reset");
+	LOGGER.info("14. Verify wifiClient mac address reset to default value after factory reset");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-HARVESTER-REPORT-102";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	// String to store response
+	String response = null;
+	String macAddress = null;
+	Dut clientSettop = null;
+	boolean preStatus = false;
+	// variable declaration ends
+
+	try {
+
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    LOGGER.info("PRE-CONDITION : DESCRIPTION : Get the 2.4GHz WiFi client");
+	    LOGGER.info("PRE-CONDITION : ACTION : Connect client with 2.4GHz SSID & Passphrase");
+	    LOGGER.info("PRE-CONDITION : EXPECTED : Client should connect with 2.4GHz WiFi");
+	    errorMessage = "Failed to connect the client using 2.4GHz WiFi band";
+	    clientSettop = BroadBandConnectedClientUtils
+		    .get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    preStatus = null != clientSettop;
+	    if (!preStatus) {
+		throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR
+			+ "PRE_CONDITION_FAILED: Unable to get 2.4GHz client device");
+	    }
+	    LOGGER.info("PRE-CONDITION : ACTUAL: Successfully connected to 2.4GHz wifi client device");
+	    LOGGER.info("PRE-CONFIGURATIONS : FINAL STATUS -  " + preStatus);
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+	    stepNumber = "s1";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION: Update wifiClient mac address using webpa");
+	    LOGGER.info(
+		    "STEP 1: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress data type: 0 value: <2.4GHz WiFi client mac>");
+	    LOGGER.info("STEP 1: EXPECTED: Webpa set operation should be success");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress";
+	    macAddress = ((Device) clientSettop).getConnectedDeviceInfo().getWifiMacAddress();
+	    String formattedMacAddress = macAddress;
+	    if (CommonMethods.isNotNull(macAddress)) {
+		macAddress = macAddress.replace(BroadBandTestConstants.DELIMITER_COLON,
+			BroadBandTestConstants.EMPTY_STRING);
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
+			macAddress);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL: Successfully updated client wifi mac using webpa");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s2";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION: Update reporting period value as 5 using webpa");
+	    LOGGER.info(
+		    "STEP 2: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod data type: 2 value: 5");
+	    LOGGER.info("STEP 2: EXPECTED: Webpa set operation should be success");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the reporting period value using webpa";
+	    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD, BroadBandTestConstants.CONSTANT_2,
+		    BroadBandTestConstants.STRING_5);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL: Successfully updated wifi client reporting period as 5 using webpa");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s3";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION: Update override TTL value as 900 using webpa");
+	    LOGGER.info(
+		    "STEP 3: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL data type: 2 value: 900");
+	    LOGGER.info("STEP 3: EXPECTED: Webpa set operation should be success");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL";
+	    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+		    BroadBandTestConstants.CONSTANT_2, Integer.toString(BroadBandTestConstants.CONSTANT_900));
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL: Successfully verified wifi client mac address length using webpa");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s4";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION: Create WiFi debug monitor log in nvram to capture the client report");
+	    LOGGER.info("STEP 4: ACTION: Execute command: touch /nvram/wifiMonDbg");
+	    LOGGER.info("STEP 4: EXPECTED: Should create a debug file under /nvram directory");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to create the file under /nvram directory";
+	    BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_TOUCH,
+			    BroadBandCommandConstants.FILE_WIFI_MON_DBG));
+	    status = (CommonMethods.isAtomSyncAvailable(device, tapEnv)) ? BroadBandCommonUtils
+		    .doesFileExistInAtomConsole(device, tapEnv, BroadBandCommandConstants.FILE_WIFI_MON_DBG).isStatus()
+		    : CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.FILE_WIFI_MON_DBG);
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL: Successfully created wifi monitoring debug log file under nvram directory");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s5";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION: Update wifiClient enable status as true using webpa");
+	    LOGGER.info(
+		    "STEP 5: ACTION: Execute webpa set command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Enabled  datatype: boolean value: true");
+	    LOGGER.info("STEP 5: EXPECTED: Webpa set operation should be success");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Enabled as true";
+	    status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_ENABLE, BroadBandTestConstants.CONSTANT_3,
+		    BroadBandTestConstants.TRUE);
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL: Successfully enabled wifi client using webpa");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s6";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION: Get client report from wifiMon file");
+	    LOGGER.info("STEP 6: ACTION: Execute command: grep -i wifi Destination /tmp/wifiMon");
+	    LOGGER.info("STEP 6: EXPECTED: Should get the report for configured wifi client");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the log message wifi destination for configured client";
+	    response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+		    BroadBandTraceConstants.LOG_MESSAGE_WIFI_DESTINATION, BroadBandCommandConstants.FILE_WIFI_MON,
+		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    // verify single client server url in wifi destination output
+	    if (CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.SINGLE_CLIENT_REPORT_SERVER_URL)) {
+		errorMessage = "Failed to get the log message polled station info for configured wifi client";
+		response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+			BroadBandTraceConstants.LOG_MESSAGE_POLLED_STATION_INFO,
+			BroadBandCommandConstants.FILE_WIFI_MON, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		// verify wifi client mac & vap value in polled station info output
+		status = CommonMethods.isNotNull(response)
+			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+				formattedMacAddress.toLowerCase())
+			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+				BroadBandCommonUtils.concatStringUsingStringBuffer(
+					BroadBandTestConstants.PRIVATE_VAP_COLON,
+					BroadBandTestConstants.STRING_CONSTANT_1));
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL: Successfully received the harvester logs for wifi client");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s7";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION: Verify single client report log message in wifilog");
+	    LOGGER.info("STEP 7: ACTION: Execute command: grep -i single client report /rdklogs/logs/WiFilog.txt.0");
+	    LOGGER.info("STEP 7: EXPECTED: Response should contain the log message with transaction id");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the log message in WiFilog file";
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
+		    tapEnv, BroadBandTraceConstants.LOG_MESSAGE_SINGLE_CLIENT_REPORT,
+		    BroadBandCommandConstants.LOCATION_FILE_WIFI_LOG_TXT_0,
+		    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS));
+	    if (status) {
+		LOGGER.info(
+			"STEP 7: ACTUAL: Successfully verified the single client report log message in wifi log file");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s8";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION: Verify cloud url to upload the client report in parodus log file");
+	    LOGGER.info(
+		    "STEP 8: ACTION: Execute command: grep -i raw.kestrel.reports.WifiSingleClient /rdklogs/logs/PARODUSlog.txt.0");
+	    LOGGER.info("STEP 8: EXPECTED: Response should contain the cloud url in the PARODUSlog.txt.0 file");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the log message in PARODUSlog.txt.0 file";
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTestConstants.SINGLE_CLIENT_REPORT_SERVER_URL, BroadBandCommandConstants.LOG_FILE_PARODUS,
+		    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS));
+	    if (status) {
+		LOGGER.info(
+			"STEP 8: ACTUAL: Successfully verified single wifi client report cloud url in parodus log file");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s9";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION: Factory Reset the device using WebPA request");
+	    LOGGER.info(
+		    "STEP 9: ACTION: Execute webpa set command: parameter: Device.X_CISCO_COM_DeviceControl.FactoryReset data type: 0 value: 900");
+	    LOGGER.info("STEP 9: EXPECTED: Webpa set operation should be success");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to factory reset the device or device not coming up after factory reset";
+	    status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
+	    if (status) {
+		LOGGER.info(
+			"STEP 9: ACTUAL: Successfully factory reseted the device and device came up after factory reset");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s10";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION: Verify reporting period value set to default after factory reset");
+	    LOGGER.info(
+		    "STEP 10: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod");
+	    LOGGER.info("STEP 10: EXPECTED: Should get the response as 0 after factory reset");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the response for reporting period from webpa or response is not matched with default value";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD, BroadBandTestConstants.STRING_ZERO,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 10: ACTUAL: Successfully verified wifi client reporting period value is set to 0 after factory reset");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s11";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION: Verify override TTL value set to default after facotry reset");
+	    LOGGER.info(
+		    "STEP 11: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL");
+	    LOGGER.info("STEP 11: EXPECTED: Should get the response as 0 after factory reset");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the response for override TTL from webpa or response is not matched with default value";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+		    BroadBandTestConstants.STRING_ZERO, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 11: ACTUAL: Successfully verified wifi client default override TTL value is set to 0 after factory reset");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s12";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 12: DESCRIPTION: Verify wifiClient enable status set to default state after factory reset");
+	    LOGGER.info(
+		    "STEP 12: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Enabled");
+	    LOGGER.info("STEP 12: EXPECTED: Should get the response as false after factory reset");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the response for wifi client enabled status from webpa or response is not matched with default value";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_ENABLE, BroadBandTestConstants.FALSE,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 12: ACTUAL: Successfully verified wifi client enabled status as false after factory reset");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	    stepNumber = "s13";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 13: DESCRIPTION: Verify wificlient schema using Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Schema after factory reset");
+	    LOGGER.info(
+		    "STEP 13: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Schema");
+	    LOGGER.info("STEP 13: EXPECTED: Should get the response as WifiSingleClient.avsc");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the response for wifi client schema  from webpa or response is not matched with default value";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_SCHEMA,
+		    BroadBandTestConstants.SINGLE_CLIENT_REPORT_SCHEMA, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 13: ACTUAL: Successfully verified wifi client schema value as WifiSingleClient.avsc after factory reset");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+	    
+
+	    stepNumber = "s14";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 14: DESCRIPTION: Verify wifiClient mac address reset to default value after factory reset");
+	    LOGGER.info(
+		    "STEP 14: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
+	    LOGGER.info("STEP 14: EXPECTED: The value should return 000000000000");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to get the response for wifi client mac from webpa or response is not matched with default value";
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS,
+		    BroadBandTestConstants.DEFAULT_MAC_ADDRESS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info(
+			"STEP 14: ACTUAL: Successfully verified wifi client mac address set to default value after factory reset");
+	    } else {
+		LOGGER.error("STEP 14: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+	    // ##################################################################################################//
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying single client harvester report" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    if (preStatus) {
+		BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, false,
+			BroadBandTestConstants.CONSTANT_1);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-HARVESTER-REPORT-1002");
+	// ###############################################################//
+    }
+    
 
 
 

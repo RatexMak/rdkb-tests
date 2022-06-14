@@ -45,12 +45,17 @@ import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.tests.base.BroadBandMiniDumpBaseTest;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.ResultValues;
+import com.automatics.rdkb.utils.tr69.BroadBandTr69Utils;
+import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
@@ -1414,5 +1419,237 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.debug("ENDING METHOD: verifyCrashFileDetailsInCrashPortal()");
 		return status;
 	}
+	
+	/**
+     * Test to Verify mini dump creation and upload to crash portal for the process CcspCr
+     * 
+     * @param device
+     *            The device to be used.
+     * 
+     * @author Styles Managalasseri
+     * 
+     * @refactor yamini.s
+     * 
+     */
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-GBPAD-1006")
+    public void testVerifyCrashForProcessCcspCr(Dut device) {
+	// Test case id
+	String testCaseId = "TC-RDKB-GBPAD-006";
+	String testStepNumber = "s1";
+
+	// STB Process
+	StbProcess stbProcess = StbProcess.CCSP_CR;
+	String processName = null;
+	DeviceProcess stbProcess2 = new DeviceProcess();
+
+	// Disable self heal
+
+	boolean status = false;
+	String errorMessage = null;
+
+	try {
+	    if (BroadBandWebPaUtils.getRbusModeStatus(device, tapEnv, BroadBandTestConstants.BOOLEAN_VALUE_FALSE)) {
+		tapEnv.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_SELFHEAL_PROCESS_ENABLE_STATUS,
+			BroadBandTestConstants.FALSE, WebPaDataTypes.BOOLEAN.getValue());
+		LOGGER.info("STARTING TEST CASE " + testCaseId);
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
+			+ " within the STB and verify the generated crash file is uploaded in crash portal");
+		LOGGER.info("**********************************************************************************");
+
+		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
+
+		// Enable self heal
+		tapEnv.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_SELFHEAL_PROCESS_ENABLE_STATUS,
+			BroadBandTestConstants.TRUE, WebPaDataTypes.BOOLEAN.getValue());
+	    } else {
+		errorMessage = " Rbus mode is in enabled state. so marking the steps as NA";
+		int stepNumber = 1;
+		while (stepNumber <= 5) {
+		    testStepNumber = "s" + stepNumber;
+		    errorMessage = "STEP " + stepNumber + ": " + errorMessage;
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber,
+			    ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+		    stepNumber++;
+		}
+	    }
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, testStepNumber, status,
+		    errorMessage, true);
+	}
+    }
+
+	/**
+	 * Test to Verify mini dump creation and upload to crash portal for the
+	 * process CcspTr069
+	 * 
+	 * @param Dut
+	 *            The device to be used.
+	 * 
+	 * @author Styles Managalasseri, TATA Elxsi
+	 * @refactor Alan_Bivera
+	 * 
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
+	@TestDetails(testUID = "TC-RDKB-GBPAD-1004")
+	public void testVerifyCrashForProcessCcspTr069(Dut device) {
+
+		// Test case id
+		String testCaseId = "TC-RDKB-GBPAD-004";
+
+		// STB Process
+		StbProcess stbProcess = StbProcess.CCSP_TR069;
+		DeviceProcess stbProcess2 = new DeviceProcess();
+
+	boolean tr69Status = BroadBandTr69Utils.checkAndEnableTr69Support(device, tapEnv);
+	LOGGER.info("Status of TR69 before starting the test case : " + tr69Status);
+
+		LOGGER.info("STARTING TEST CASE " + testCaseId);
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
+				+ " within the STB and verify the generated crash file is uploaded in crash portal");
+		LOGGER.info("**********************************************************************************");
+
+		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
+	}
+
+	   /**
+	     * Test to Verify mini dump creation and upload to crash portal for the process CcspHotspot
+	     * 
+	     * @param Dut
+	     *            The device to be used.
+	     * 
+	     * @author Nidhal Shamsudheen
+	     * @refactor Alan_Bivera
+	     * 
+	     */
+	    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
+	    @TestDetails(testUID = "TC-RDKB-GBPAD-1014")
+	    public void testVerifyCrashForProcessCcspHotspot(Dut device) {
+
+		// Test case id
+		String testCaseId = "TC-RDKB-GBPAD-014";
+
+		// STB Process
+		StbProcess stbProcess = StbProcess.CCSP_HOTSPOT;
+		DeviceProcess stbProcess2 = new DeviceProcess();
+		
+		int preConStepNumber = BroadBandTestConstants.CONSTANT_1;
+		boolean status = false;
+		String errorMessage = null;
+		String response = null;
+		int postConStepNumber = BroadBandTestConstants.CONSTANT_1;
+		long startTimeStamp = System.currentTimeMillis();
+
+		/**
+		 * PRE-CONDITION 1 : Enable Xfinity WiFi in the device
+		 */
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : DESCRIPTION : Enable Xfinity Wi-Fi");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber
+			+ " : ACTION : Execute WebPA set command to enable Xfinity WiFi - Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable bool true.");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : EXPECTED : Xfinity WiFi should be enabled");
+		LOGGER.info("#######################################################################################");
+
+		errorMessage = "Not able to enable Xfinity Wi-Fi";
+
+		status = BroadBandWiFiUtils.checkAndSetXfinityWifi(device, tapEnv);
+
+		if (status) {
+		    LOGGER.info("PRE-CONDITION " + preConStepNumber
+			    + " : ACTUAL : Successfully enabled Xfinity WiFi in the device");
+
+		} else {
+		    LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
+		    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION " + preConStepNumber
+			    + " : FAILED : " + errorMessage);
+		}
+		LOGGER.info("#######################################################################################");
+
+		status = false;
+		preConStepNumber++;
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : DESCRIPTION : Verify CcspHotspot process is running");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber
+			+ " : ACTION : Get PID of CcspHospot using the command - pidof CcspHotspot");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : EXPECTED : CcspHospot should be enabled");
+		LOGGER.info("#######################################################################################");
+
+		errorMessage = "CcspHotspot is not running!";
+		do {
+		    response = CommonMethods.getPidOfProcess(device, tapEnv, stbProcess.getProcessName());
+		    status = CommonMethods.isNotNull(response);
+		} while (!status
+			&& (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
+
+		if (status) {
+		    LOGGER.info("PRE-CONDITION " + preConStepNumber + " : ACTUAL : CcspHotspot is running in the device");
+		} else {
+		    LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
+		    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION " + preConStepNumber
+			    + " : FAILED : " + errorMessage);
+		}
+		LOGGER.info("#######################################################################################");
+
+		LOGGER.info("STARTING TEST CASE " + testCaseId);
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
+			+ " within the STB and verify the generated crash file is uploaded in crash portal");
+		LOGGER.info("**********************************************************************************");
+
+		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
+
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		LOGGER.info("POST-CONDITION STEPS");
+		/**
+		 * POST-CONDITION 1 : ENABLE/DISABLE THE XFINITY WIFI based on value set in rdkb.whitelist.xfinitywifivalue
+		 * property
+		 */
+		BroadBandPostConditionUtils.executePostConditionToEnableOrDisableXfinityWifiBasedOnStbProperty(device, tapEnv,
+			postConStepNumber);
+
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1014");
+
+	    }
+
+	    /**
+	     * Test to Verify mini dump creation and upload to crash portal for the process SNMP_SUBAGENT
+	     * 
+	     * @param Dut
+	     *            The device to be used.
+	     * 
+	     * @author Nidhal Shamsudheen
+	     * @refactor Alan_Bivera
+	     * 
+	     */
+	    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
+	    @TestDetails(testUID = "TC-RDKB-GBPAD-1015")
+	    public void testVerifyCrashForProcessSnmpSubagent(Dut device) {
+
+		// Test case id
+		String testCaseId = "TC-RDKB-GBPAD-015";
+
+		// STB Process
+		StbProcess stbProcess = StbProcess.SNMP_SUBAGENT;
+		DeviceProcess stbProcess2 = new DeviceProcess();
+
+		LOGGER.info("STARTING TEST CASE " + testCaseId);
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
+			+ " within the STB and verify the generated crash file is uploaded in crash portal");
+		LOGGER.info("**********************************************************************************");
+
+		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
+
+	    }
+
 
 }

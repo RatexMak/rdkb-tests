@@ -18,28 +18,41 @@
 
 package com.automatics.rdkb.tests.security;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
+import com.automatics.enums.StbProcess;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.RDKBTestConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.selfheal.BroadBandSelfHealUtils;
+import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
+import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
+import com.automatics.rdkb.utils.telemetry.BroadBandTelemetryUtils;
+import com.automatics.rdkb.utils.tr69.BroadBandTr69Utils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
+import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -1087,7 +1100,7 @@ public class BroadbandLighttpdTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP " + stepNumber
 		    + ": EXPECTED : IP Address should be retrieved from the Wireless Connected device");
 	    String ipAddressRetrievedFromClient = BroadBandConnectedClientUtils.getIpv4AddressFromConnClient(tapEnv,
-	    		device, connectedClientSettop);
+		    device, connectedClientSettop);
 	    LOGGER.info("IP ADDRESS ASSIGNED TO THE CONNECTED CLIENT FROM DHCP : " + ipAddressRetrievedFromClient);
 	    errorMessage = "Unable to retrieve the IP Address form the cilent connected to the private Wi-Fi";
 	    if (CommonMethods.isNotNull(ipAddressRetrievedFromClient)) {
@@ -1429,6 +1442,903 @@ public class BroadbandLighttpdTest extends AutomaticsTestBase {
 	    LOGGER.info("########################### COMPLETED POST-CONFIGURATIONS ###########################");
 	    LOGGER.info("ENDING TEST CASE: TC-RDKB-FIREWALL-1002");
 	}
+    }
+
+    /**
+     * 
+     * </ol>
+     * <p>
+     * Initiate CR process crash and verify process restarted status by self heal action Initiate PAM process crash and
+     * verify process restarted status by self heal action Initiate PSM process crash and verify process restarted
+     * status by self heal action Initiate TR069 process crash and verify process restarted status by self heal action
+     * </p>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * @author Gnanaprakasham S
+     * @refactor Govardhan
+     */
+
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+	    BroadBandTestGroup.SYSTEM, BroadBandTestGroup.SELF_HEAL })
+    @TestDetails(testUID = "TC-RDKB-SELF-HEAL-4001")
+    public void testVerifySelfHealActionForProcessCrash(Dut device) {
+
+	// String to store the test case status
+	boolean status = false;
+	// Test case id
+	String testId = "TC-RDKB-SELF-HEAL-401";
+	// Test step number
+	String testStepNumber = "s1";
+	// String to store the error message
+	String errorMessage = null;
+	// connected device to be verified
+	Dut connectedDeviceActivated = null;
+	String processRestartlogs = null;
+	boolean telementryStatus = false;
+	boolean isBusinessClassDevice = DeviceModeHandler.isBusinessClassDevice(device);
+	String response = null;
+	try {
+
+	    LOGGER.info("STARTING TEST CASE: " + testId);
+
+	    LOGGER.info("**************************************************************");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Test to Verify default Self Heal configuration and configuration persistence after reboot");
+	    LOGGER.info("*************************************************************************");
+
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info("STEP 1:Verify telemetry status from dcmscript.log");
+	    LOGGER.info(
+		    "STEP 2: Initiate CR process crash by using command \"kill -11 <CR process ID>\" and verify process killed status");
+	    LOGGER.info("EXPECTED: CR process must be killed ");
+	    LOGGER.info("STEP 3: Verify reboot status when CR process chrashed ");
+	    LOGGER.info("EXPECTED: Box must be rebooted due to CR process crash ");
+	    LOGGER.info(
+		    "STEP 4: Check the SelfHeal log file for the crash log after a wait period of ~15 mins. For DSL devices the CR crash is validated using WebPA");
+	    LOGGER.info("EXPECTED: CR process log must be logged in SelfHeal.txt.0 log file ");
+	    LOGGER.info("STEP 5:Verify dcmscript.log for \"CR_crash\" and verify log upload status ");
+
+	    LOGGER.info("STEP 6:Verify reboot reason in splunk logs ");
+	    LOGGER.info("STEP 7: Verify CR process is running properly after reboot initiated by CR process crash");
+	    LOGGER.info("EXPECTED: CR process must be restored due to self heal action");
+	    LOGGER.info("STEP 8:Verify whether interface got the correct IPv4  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 9:Verify whether interface got the correct IPv6  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 10: Verify whether you have connectivity using that particular interface using IPV4 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info("STEP 11: Verify whether you have connectivity using that particular interface using IPV6 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info(
+		    "STEP 12: Initiate PAM process crash by using command \"kill -11 <PAM process ID>\" and verify process killed status");
+	    LOGGER.info("EXPECTED: PAM process must be killed ");
+	    LOGGER.info("STEP 13: Check the SelfHeal log file for the crash log after a wait period of ~15 mins");
+	    LOGGER.info("EXPECTED: PAM process log must be logged in SelfHeal.txt.0 log file ");
+	    LOGGER.info(
+		    "STEP 14: Verify PAM process is restarted by self heal action and running properly after PAM process crash");
+	    LOGGER.info("EXPECTED: PAM process must be restored due to self heal action");
+	    LOGGER.info("STEP 15:Verify whether interface got the correct IPv4  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 16:Verify whether interface got the correct IPv6  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 17: Verify whether you have connectivity using that particular interface using IPV4 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info("STEP 18: Verify whether you have connectivity using that particular interface using IPV6 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info(
+		    "STEP 19: Initiate PSM process crash by using command \"kill -11 <PSM process ID>\" and verify process killed status");
+	    LOGGER.info("EXPECTED: PSM process must be killed ");
+	    LOGGER.info("STEP 20: Check the SelfHeal log file for the crash log after a wait period of ~15 mins");
+	    LOGGER.info("EXPECTED: PSM process log must be logged in SelfHeal.txt.0 log file ");
+	    LOGGER.info(
+		    "STEP 21: Verify PSM process is restarted by self heal action and running properly after PSM process crash");
+	    LOGGER.info("EXPECTED: PSM process must be restored due to self heal action");
+	    LOGGER.info("STEP 22:Verify whether interface got the correct IPv4  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 23:Verify whether interface got the correct IPv6  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 24: Verify whether you have connectivity using that particular interface using IPV4 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info("STEP 25: Verify whether you have connectivity using that particular interface using IPV6 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info(
+		    "STEP 26: Initiate CcspTr069PaSsp process crash by using command \"kill -11 <CcspTr069PaSsp process ID>\" and verify process killed status");
+	    LOGGER.info("EXPECTED: CcspTr069PaSsp process must be killed ");
+	    LOGGER.info("STEP 27: Check the SelfHeal log file for the crash log after a wait period of ~15 mins");
+	    LOGGER.info("EXPECTED: CcspTr069PaSsp process log must be logged in SelfHeal.txt.0 log file ");
+	    LOGGER.info(
+		    "STEP 28: Verify CcspTr069PaSsp process is restarted by self heal action and running properly after CcspTr069PaSsp process crash");
+	    LOGGER.info("EXPECTED: CcspTr069PaSsp process must be restored due to self heal action");
+	    LOGGER.info("STEP 29:Verify whether interface got the correct IPv4  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 30:Verify whether interface got the correct IPv6  address.");
+	    LOGGER.info("EXPECTED:Interface IP address should be shown");
+	    LOGGER.info("STEP 31: Verify whether you have connectivity using that particular interface using IPV4 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info("STEP 32: Verify whether you have connectivity using that particular interface using IPV6 ");
+	    LOGGER.info("EXPECTED: Connectivity check should return status as 200");
+
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    LOGGER.info("#############################################################");
+	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : Reboot the device ");
+	    LOGGER.info("PRE-CONDITION 1 : ACTION : SSH to device and execute command \"reboot\"");
+	    LOGGER.info("PRE-CONDITION 1 : EXPECTED : Device should go to reboot succesfully and should up online");
+	    LOGGER.info("#############################################################");
+	    status = BroadBandWiFiUtils.setWebPaParams(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_CONTROL_DEVICE_REBOOT, BroadBandTestConstants.DEVICE,
+		    BroadBandTestConstants.CONSTANT_0)
+		    && BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1 : ACTUAL : Device has gone for reboot succesfully and online");
+	    } else {
+		LOGGER.error("PRE-CONDITION 1 : ACTUAL : Failed to reboot");
+		throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	    }
+	    // As SNMP is not supported for DSL devices
+	    if (!DeviceModeHandler.isDSLDevice(device)) {
+		tapEnv.waitTill(BroadBandTestConstants.FIVE_MINUTES);
+		LOGGER.info("waiting for Five minutes after reboot");
+		BroadBandPreConditionUtils.executePreConditionForVerifySnmpProcessUp(device, tapEnv,
+			BroadBandTestConstants.CONSTANT_2);
+	    }
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+	    // As a pre condition tail the logs continuously from SelfHeal.txt.0 log file to get crash logs
+
+	    status = BroadBandSelfHealUtils.executePreconditionForSelfHealTestScenario(device, tapEnv);
+	    if (!status) {
+		LOGGER.error("Failed to set pre condition for self heal test cases " + testId);
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+	    }
+
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv) || DeviceModeHandler.isBusinessClassDevice(device)) {
+
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandTestConstants.COMMAND_TO_GET_SELF_HEAL_LOGS_FOR_PROCESS_CRASH);
+
+		processRestartlogs = BroadBandTestConstants.CR_PROCESS_CRASH_TELEMETRY_LOGS;
+	    } else {
+
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandTestConstants.COMMAND_TO_GET_SYSTEMD_LOGS_FOR_PROCESS_CRASH);
+	    }
+
+	    testStepNumber = "S1";
+	    errorMessage = "Unable to verify Logs from dcmscript.log";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify telemetry status from dcmscript.log");
+	    LOGGER.info(
+		    "STEP 1: ACTION : SSH to device and execute command \"cat /rdklogs/logs/dcmscript.log And verify \"sendHttpRequestToServer returned 0\"");
+	    LOGGER.info("STEP 1: EXPECTED : Status should be verified successfully in log");
+	    LOGGER.info("**********************************************************************************");
+	    long startTime = System.currentTimeMillis();
+	    boolean isTelemetry2Enabled = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_TELEMETRY_2_0_ENABLE, BroadBandTestConstants.TRUE,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+	    if (!isTelemetry2Enabled) {
+		do {
+		    LOGGER.info("Waiting for device to verify telemetry status");
+		    String rebootReasonTelemetryMarker = tapEnv.executeCommandUsingSsh(device,
+			    BroadBandTelemetryConstants.DCMSCRIPT_LOG_FILE_LOGS_FOLDER);
+		    if (CommonMethods.isNotNull(rebootReasonTelemetryMarker)) {
+			status = CommonUtils.patternSearchFromTargetString(rebootReasonTelemetryMarker,
+				BroadBandTestConstants.TELEMETRY_STATUS_STRING);
+		    }
+		} while (!status
+			&& (System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+	    } else {
+		do {
+		    response = tapEnv.executeCommandUsingSsh(device,
+			    BroadBandTestConstants.CMD_GET_REPORT_SENT_SUCCESS_MESSAGE_FROM_LOGS);
+		    status = CommonMethods.isNotNull(response)
+			    && response.contains(BroadBandTestConstants.STRING_REPORT_SENT);
+		} while (!status
+			&& (System.currentTimeMillis() - startTime) < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    }
+	    if (status) {
+		telementryStatus = true;
+		LOGGER.info("STEP 1: ACTUAL : Verified telemetry status successfully");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE);
+	    if (BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+		    BroadBandTestConstants.FALSE, response)) {
+		/**
+		 * Get CR process ID using command ps | grep CcspCrSsp Kill CR process kill -11 <CR process ID>
+		 * 
+		 */
+		testStepNumber = "S2";
+		status = false;
+		LOGGER.info(
+			"************************************************************************************************");
+		LOGGER.info(
+			"STEP 2: DESCRIPTION: Initiate CR process crash by using command \"kill -11 <CR process ID>\" and verify process killed status");
+		LOGGER.info(
+			"STEP 2: ACTION: Execute command \"kill -11 <CR process ID>\" then verify process killed status ");
+		LOGGER.info("STEP 2: EXPECTED: CR process must be killed ");
+		LOGGER.info(
+			"************************************************************************************************");
+
+		try {
+		    /**
+		     * Initiate CR process crash and verify reboot status initiated by self heal action self heal action
+		     * will take approximately 15 minutes to initiate reboot
+		     *
+		     */
+		    errorMessage = "Not able to kill the CR process using command \"kill -11 <CR process ID>\" ";
+		    status = BroadBandSelfHealUtils.initiateProcessCrashAndVerifyProcessRestartedStatus(device, tapEnv,
+			    StbProcess.CCSP_CR);
+		    if (status) {
+			LOGGER.info("CR PROCESS RESTARTED STATUS USING KILL -11 COMMAND : " + status);
+		    } else {
+			LOGGER.error(errorMessage);
+		    }
+
+		} catch (Exception exception) {
+		    errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		    LOGGER.error(errorMessage);
+
+		}
+		LOGGER.info("STEP 2: ACTUAL : "
+			+ (status ? "SUCCESSFULLY INITIATED CR PROCESS CRASH AND VERIFIED PROCESS RESTARTED STATUS !!!"
+				: errorMessage));
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		testStepNumber = "s3";
+		status = false;
+
+		LOGGER.info(
+			"************************************************************************************************");
+		LOGGER.info("STEP 3: DESCRIPTION: Verify reboot status when CR process crashed ");
+		LOGGER.info("STEP 3: ACTION: verify reboot status ~20 mins after CR process crash ");
+		LOGGER.info("STEP 3: EXPECTED: Box must be rebooted due to CR process crash ");
+		LOGGER.info(
+			"************************************************************************************************");
+
+		try {
+		    errorMessage = "Self Heal action is not rebooting device after CR process crash";
+		    /**
+		     * Verify whether the device is rebooted or not by self heal action Device must be in reboot state
+		     */
+		    status = BroadBandCommonUtils.verifyRebootStatusAfterSpecificWaitTime(device, tapEnv,
+			    "CR Process crash", RDKBTestConstants.TWENTY_MINUTES_IN_MILLIS);
+		    if (!status) {
+			LOGGER.error(errorMessage);
+		    }
+
+		} catch (Exception exception) {
+		    errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		    LOGGER.error(errorMessage);
+		}
+		LOGGER.info("STEP 3: ACTUAL: "
+			+ (status ? "SUCCESSFULLY VERIFIED BOX IS REBOOTED DUE TO CR PROCESS CRASH!!!" : errorMessage));
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		testStepNumber = "s4";
+		status = false;
+		LOGGER.info(
+			"************************************************************************************************");
+		LOGGER.info(
+			"STEP 4: DESCRIPTION: Check the SelfHeal log file for the crash log after a wait period of ~15 mins. For DSL devices-"
+				+ "verify the crash log using WEBPA ");
+		LOGGER.info(
+			"STEP 4: ACTION: Execute command cat /rdklogs/logs/SelfHeal.txt.0 and verify process crash logs. For DSL devices "
+				+ "verify the crash log by executing WEBPA command-X_RDKCENTRAL-COM_LastRebootReason ");
+		LOGGER.info(
+			"STEP 4: EXPECTED: CR process log must be logged in SelfHeal.txt.0 log file . For DSL devices the response from webpa should contain value as \"CR_crash\"");
+		LOGGER.info(
+			"************************************************************************************************");
+		startTime = System.currentTimeMillis();
+		try {
+		    if (DeviceModeHandler.isDSLDevice(device)) {
+			errorMessage = "SelfHeal action is not logging information about CR process crash in Webpa result/SelfHeal.txt.0 file";
+
+			do {
+			    status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+				    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_LAST_REBOOT_REASON,
+				    BroadBandTestConstants.STRING_CR_CRASH);
+			} while (!status
+				&& (System.currentTimeMillis()
+					- startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
+				&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+		    } else {
+			/**
+			 * Verify process crash logs and reboot logs in SelfHeal.txt.0 log file for CR process
+			 */
+			status = BroadBandSelfHealUtils.verifyProcessCrashLogsInSelfHealLogFile(device, tapEnv,
+				BroadBandTestConstants.CR_PROCESS_CRASH_TELEMETRY_LOGS, StbProcess.CCSP_CR);
+		    }
+		    LOGGER.info("STEP 4: ACTUAL: "
+			    + (status ? "SUCCESSFULLY VERIFIED PROCESS FOR CR PROCESS CRASH!!!" : errorMessage));
+		} catch (Exception exception) {
+		    errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		    LOGGER.error(errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		testStepNumber = "S5";
+		errorMessage = telementryStatus ? "Unable to verify Logs from dcmscript.log"
+			: "Logs not populated due to telemetry check failure";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info(
+			"STEP 5: DESCRIPTION : Verify dcmscript.log for \"CR_crash\" and verify log upload status ");
+		LOGGER.info(
+			"STEP 5: ACTION : SSH to device and execute command \"cat /rdklogs/logs/dcmscript.log And verify \"reboot_reason\" and \"HTTP RESPONSE CODE : 200\"");
+		LOGGER.info("STEP 5: EXPECTED : CR_crash should be available in Logs dcmscript.log");
+		LOGGER.info("**********************************************************************************");
+
+		errorMessage = "Unable to find CR_crash from dcmscript.log";
+
+		if (!isTelemetry2Enabled) {
+		    // Variable to hold the startTime for polling
+		    long starttime = System.currentTimeMillis();
+		    long maxTime = RDKBTestConstants.SIX_MINUTE_IN_MILLIS;
+
+		    while ((System.currentTimeMillis() - starttime) < maxTime) {
+
+			JSONObject telemetryPayloadData = BroadBandTelemetryUtils.getPayLoadDataAsJson(tapEnv, device,
+				BroadBandTelemetryConstants.TELEMETRY_STRING_WEBPA_REBOOT, true);
+			if (null != telemetryPayloadData) {
+			    response = BroadBandTelemetryUtils.getPayloadParameterValue(telemetryPayloadData,
+				    BroadBandTelemetryConstants.TELEMETRY_STRING_WEBPA_REBOOT);
+			    LOGGER.info("response is" + response);
+			    status = CommonMethods.isNotNull(response) && BroadBandCommonUtils.compareValues(
+				    BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+				    BroadBandTestConstants.STRING_CR_CRASH, response.trim());
+
+			}
+			if (!status) {
+			    String rebootReasonTelemetryMarker = tapEnv.executeCommandUsingSsh(device,
+				    BroadBandTelemetryConstants.CMD_GREP_REBOOT_REASON_WEBPA_LOG);
+			    if (CommonMethods.isNotNull(rebootReasonTelemetryMarker)) {
+				status = rebootReasonTelemetryMarker
+					.contains(BroadBandTestConstants.REBOOT_REASON_CRASH);
+			    } else {
+
+				status = false;
+			    }
+			}
+		    }
+		    if (status) {
+			LOGGER.info("STEP 5: ACTUAL : Successfully verified dcmscript.log for CR_crash");
+		    } else {
+			LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+		    }
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		} else {
+		    LOGGER.info("STEP 5 IS NOT APPLICABLE IF TELEMETRY 2 IS ENABLED");
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+			    errorMessage, false);
+		}
+		testStepNumber = "S6";
+		errorMessage = telementryStatus ? "Unable to validate logs from splunk."
+			: "Logs not populated due to telemetry check failure";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 6: DESCRIPTION : Verify reboot reason in splunk logs .");
+		LOGGER.info(
+			"STEP 6: ACTION : Check splunk server hosted at with Wan Mac[Erouter MAC]URL https://spl-br-36e.idk.cable.comcast.com/en-US/app/search Or 96.114.67.23:8089");
+		LOGGER.info("STEP 6: EXPECTED : CR_crash should be available in splunk logs");
+		LOGGER.info("**********************************************************************************");
+		List<String> verifySplunkLog = new ArrayList<>();
+		verifySplunkLog.add(BroadBandTestConstants.STRING_CR_CRASH);
+		long starttime = System.currentTimeMillis();
+		do {
+		    LOGGER.info("Waiting for device to verify telemetry status");
+		    status = BroadBandTelemetryUtils.verifyTelemetryDataPayLoadFromSplunk(device, tapEnv,
+			    verifySplunkLog);
+		} while (!status
+			&& (System.currentTimeMillis() - starttime) < BroadBandTestConstants.TWENTY_MINUTES_IN_MILLIS
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS));
+
+		if (status) {
+		    LOGGER.info("STEP 6: ACTUAL :Successfully verified splunk logs for CR_crash");
+		} else {
+		    LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		LOGGER.info("**********************************************************************************");
+
+		/**
+		 * Verify CR process is running properly after reboot due to CR process crash
+		 */
+		testStepNumber = "S7";
+		status = false;
+		LOGGER.info(
+			"************************************************************************************************");
+		LOGGER.info(
+			"STEP 7: DESCRIPTION: Verify CR process is running properly after reboot initiated by CR process crash");
+		LOGGER.info("STEP 7: ACTION: Execute command ps | grep CcspCrSsp and verify process running status");
+		LOGGER.info("STEP 7: EXPECTED: CR process must be restored due to self heal action");
+		LOGGER.info(
+			"************************************************************************************************");
+
+		try {
+
+		    errorMessage = "CR proces is not resrated after reboot initiate by self heal action";
+		    /**
+		     * Verify whether process is restarted or not by self heal action it must be restarted after process
+		     * crash
+		     */
+		    status = BroadBandSelfHealUtils.verifyProcessRestartedStatusAfterProcessCrash(device, tapEnv,
+			    StbProcess.CCSP_CR);
+
+		} catch (Exception exception) {
+		    errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		    LOGGER.error(errorMessage);
+
+		}
+		LOGGER.info("STEP 7: ACTUAL: "
+			+ (status ? "SUCCESSFULLY VERIFIED CR PROCESS RESTARTED STATUS AFTER REBOOT!!!"
+				: errorMessage));
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		/**
+		 * Verify whether connected client devices having proper ip address and connectivity
+		 */
+		connectedDeviceActivated = BroadBandConnectedClientUtils
+			.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+		BroadBandConnectedClientUtils.checkIpAddressAndConnectivity(device, tapEnv, connectedDeviceActivated,
+			testId, new String[] { "s8", "s9", "s10", "S11" });
+	    } else {
+		for (int naCount = 2; naCount <= 11; naCount++) {
+		    tapEnv.updateExecutionForAllStatus(device, testId, "s" + naCount, ExecutionStatus.NOT_APPLICABLE,
+			    "Step is not applicable if device is in rbus mode", false);
+		}
+	    }
+	    /**
+	     * As a pre condition tail the logs continuously from SelfHeal.txt.0 log file to get crash logs
+	     */
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv) || DeviceModeHandler.isBusinessClassDevice(device)) {
+
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandTestConstants.COMMAND_TO_GET_SELF_HEAL_LOGS_FOR_PROCESS_CRASH);
+
+		processRestartlogs = BroadBandTestConstants.PAM_PROCESS_CRASH_TELEMETRY_LOGS;
+	    } else {
+		processRestartlogs = "Stopping/Restarting CcspPandMSsp";
+	    }
+
+	    testStepNumber = "s12";
+	    status = false;
+
+	    /**
+	     * Get PAM process ID using command ps | grep CcspPandMSsp Kill PAM process kill -11 <PAM process ID>
+	     * 
+	     */
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info(
+		    "STEP 12: DESCRIPTION: Initiate PAM process crash by using command \"kill -11 <PAM process ID>\" and verify process killed status");
+	    LOGGER.info(
+		    "STEP 12: ACTION: Execute command \"kill -11 <PAM process ID>\" then verify process killed status ");
+	    LOGGER.info("STEP 12: EXPECTED: PAM process must be killed ");
+	    LOGGER.info(
+		    "************************************************************************************************");
+
+	    try {
+		errorMessage = "Not able to kill the PAM process using command \"kill -11 <PAM process ID>\" ";
+		/**
+		 * Initiate PAM process crash and verify restarted status initiated by self heal action self heal action
+		 * will take approximately 15 minutes to restart PAM process
+		 *
+		 */
+		status = BroadBandSelfHealUtils.initiateProcessCrashAndVerifyProcessRestartedStatus(device, tapEnv,
+			StbProcess.PANDM);
+		if (status) {
+		    LOGGER.info("PAM PROCESS RESTARTED STATUS USING KILL -11 COMMAND : " + status);
+		} else {
+		    LOGGER.error(errorMessage);
+		}
+
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+
+	    }
+	    LOGGER.info("STEP 12: ACTUAL: "
+		    + (status ? "SUCCESSFULLY INITIATED PAM PROCESS CRASH AND VERIFIED PROCESS RESTARTED STATUS !!!"
+			    : errorMessage));
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    testStepNumber = "s13";
+	    status = false;
+
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info(
+		    "STEP 13: DESCRIPTION: Check the SelfHeal log file for the crash log after a wait period of ~15 mins");
+	    LOGGER.info(
+		    "STEP 13: ACTION: Execute command cat /rdklogs/logs/SelfHeal.txt.0 and verify process crash logs ");
+	    LOGGER.info("STEP 13: EXPECTED: PAM process log must be logged in SelfHeal.txt.0 log file ");
+	    LOGGER.info(
+		    "************************************************************************************************");
+
+	    try {
+		errorMessage = "SelfHeal action is not logging information about PAM process crash in SelfHeal.txt.0 file ";
+		/**
+		 * Verify process crash logs and reboot logs in SelfHeal.txt.0 log file for PAM process
+		 */
+		status = BroadBandSelfHealUtils.verifyProcessCrashLogsInSelfHealLogFile(device, tapEnv,
+			processRestartlogs, StbProcess.PANDM);
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    LOGGER.info("STEP 13: ACTUAL: " + (status
+		    ? "SUCCESSFULLY VERIFIED PROCESS CRASH LOGS IN SELFHEAL.TXT.0 LOG FILE FOR PAM PROCESS CRASH!!!"
+		    : errorMessage));
+
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    testStepNumber = "s14";
+	    status = false;
+
+	    /**
+	     * Verify PAM process is restarted by self heal action and running properly after PAM process crash
+	     */
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info(
+		    "STEP 13: DESCRIPTION: Verify PAM process is restarted by self heal action and running properly after PAM process crash");
+	    LOGGER.info("STEP 13: ACTION: Execute command ps | grep CcspPandMSsp and verify process running status");
+	    LOGGER.info("STEP 13: EXPECTED: PAM process must be restored due to self heal action");
+	    LOGGER.info(
+		    "************************************************************************************************");
+
+	    try {
+
+		errorMessage = "PAM proces is not restarted after process crash by self heal action";
+		/**
+		 * Verify whether process is restarted or not by self heal action it must be restarted after process
+		 * crash
+		 */
+		status = BroadBandSelfHealUtils.verifyProcessRestartedStatusAfterProcessCrash(device, tapEnv,
+			StbProcess.PANDM);
+
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+
+	    }
+	    LOGGER.info("STEP 13: ACTUAL: " + (status
+		    ? "SUCCESSFULLY VERIFIED PAM PROCESS RESTARTED BY SELF HEAL ACTION AFTER PAM PROCESS CRASH!!!"
+		    : errorMessage));
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    /**
+	     * Verify whether connected client devices having proper ip address and connectivity
+	     */
+	    connectedDeviceActivated = BroadBandConnectedClientUtils
+		    .get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    BroadBandConnectedClientUtils.checkIpAddressAndConnectivity(device, tapEnv, connectedDeviceActivated,
+		    testId, new String[] { "s15", "s16", "s17", "S18" });
+
+	    /**
+	     * As a pre condition tail the logs continuously from SelfHeal.txt.0 log file to get crash logs
+	     */
+
+	    // tapEnv.executeCommandUsingSsh(settop,
+	    // BroadBandTestConstants.COMMAND_TO_GET_SELF_HEAL_LOGS_FOR_PROCESS_CRASH);
+
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv) || DeviceModeHandler.isBusinessClassDevice(device)) {
+
+		tapEnv.executeCommandUsingSsh(device,
+			BroadBandTestConstants.COMMAND_TO_GET_SELF_HEAL_LOGS_FOR_PROCESS_CRASH);
+
+		processRestartlogs = BroadBandTestConstants.PSM_PROCESS_CRASH_TELEMETRY_LOGS;
+	    } else {
+		processRestartlogs = "Stopping/Restarting PsmSsp";
+	    }
+
+	    testStepNumber = "s19";
+	    status = false;
+
+	    /**
+	     * Get PSM process ID using command ps | grep Psm Kill PSM process kill -11 <Psm process ID>
+	     * 
+	     */
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info(
+		    "STEP 19: DESCRIPTION: Initiate PSM process crash by using command \"kill -11 <PSM process ID>\" and verify process killed status");
+	    LOGGER.info(
+		    "STEP 19: ACTION: Execute command \"kill -11 <PSM process ID>\" then verify process killed status ");
+	    LOGGER.info("STEP 19: EXPECTED: PSM process must be killed ");
+	    LOGGER.info(
+		    "************************************************************************************************");
+
+	    try {
+		errorMessage = "Not able to kill the Psm process using command \"kill -11 <Psm process ID>\" ";
+		/**
+		 * Initiate CR process crash and verify restart status initiated by self heal action self heal action
+		 * will take approximately 15 minutes to restart process
+		 *
+		 */
+		status = BroadBandSelfHealUtils.initiateProcessCrashAndVerifyProcessRestartedStatus(device, tapEnv,
+			StbProcess.CCSP_PSM);
+		if (status) {
+		    LOGGER.info("Psm PROCESS RESTARTED STATUS USING KILL -11 COMMAND : " + status);
+		} else {
+		    LOGGER.error(errorMessage);
+		}
+
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+
+	    }
+	    LOGGER.info("STEP 19: ACTUAL: "
+		    + (status ? "SUCCESSFULLY INITIATED Psm PROCESS CRASH AND VERIFIED PROCESS RESTARTED STATUS !!!"
+			    : errorMessage));
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    testStepNumber = "s20";
+	    status = false;
+
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info(
+		    "STEP 20: DESCRIPTION: Check the SelfHeal log file for the crash log after a wait period of ~15 mins");
+	    LOGGER.info(
+		    "STEP 20: ACTION: Execute command cat /rdklogs/logs/SelfHeal.txt.0 and verify process crash logs ");
+	    LOGGER.info("STEP 20: EXPECTED: PSM process log must be logged in SelfHeal.txt.0 log file ");
+	    LOGGER.info(
+		    "************************************************************************************************");
+
+	    try {
+		errorMessage = "SelfHeal action is not logging information about Psm process crash in SelfHeal.txt.0 file ";
+		/**
+		 * Verify process crash logs in SelfHeal.txt.0 log file for CR process
+		 */
+		status = BroadBandSelfHealUtils.verifyProcessCrashLogsInSelfHealLogFile(device, tapEnv,
+			processRestartlogs, StbProcess.CCSP_PSM);
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+
+	    LOGGER.info("STEP 20: ACTUAL: " + (status
+		    ? "SUCCESSFULLY VERIFIED PROCESS CRASH LOGS IN SELFHEAL.TXT.0 LOG FILE FOR Psm PROCESS CRASH!!!"
+		    : errorMessage));
+
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    testStepNumber = "s21";
+	    status = false;
+
+	    /**
+	     * Verify Psm process is restarted by self heal action and running properly after Psm process crash
+	     */
+	    LOGGER.info(
+		    "************************************************************************************************");
+	    LOGGER.info(
+		    "STEP 21: DESCRIPTION: Verify PSM process is restarted by self heal action and running properly after PSM process crash");
+	    LOGGER.info("STEP 21: ACTION: Execute command ps | grep PsmSsp and verify process running status");
+	    LOGGER.info("STEP 21: EXPECTED: PSM process must be restored due to self heal action");
+	    LOGGER.info(
+		    "************************************************************************************************");
+
+	    try {
+
+		errorMessage = "PSM proces is not restarted after process crash by self heal action";
+		/**
+		 * Verify whether process is restarted or not by self heal action it must be restarted after process
+		 * crash
+		 */
+		status = BroadBandSelfHealUtils.verifyProcessRestartedStatusAfterProcessCrash(device, tapEnv,
+			StbProcess.CCSP_PSM);
+
+	    } catch (Exception exception) {
+		errorMessage = "Exception occurred during execution : " + exception.getMessage();
+		LOGGER.error(errorMessage);
+
+	    }
+	    LOGGER.info("STEP 21: ACTUAL: " + (status
+		    ? "SUCCESSFULLY VERIFIED Psm PROCESS RESTARTED BY SELF HEAL ACTION AFTER PSM PROCESS CRASH!!!"
+		    : errorMessage));
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    /**
+	     * Verify whether connected client devices having proper ip address and connectivity
+	     */
+	    connectedDeviceActivated = BroadBandConnectedClientUtils
+		    .get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    BroadBandConnectedClientUtils.checkIpAddressAndConnectivity(device, tapEnv, connectedDeviceActivated,
+		    testId, new String[] { "s22", "s23", "s24", "s25" });
+
+	    /**
+	     * As a pre condition tail the logs continuously from SelfHeal.txt.0 log file to get crash logs
+	     */
+	    if (!isBusinessClassDevice) {
+		if (!DeviceModeHandler.isDSLDevice(device)) {
+		    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+
+			tapEnv.executeCommandUsingSsh(device,
+				BroadBandTestConstants.COMMAND_TO_GET_SELF_HEAL_LOGS_FOR_PROCESS_CRASH);
+
+			processRestartlogs = BroadBandTestConstants.TR069_PROCESS_CRASH_TELEMETRY_LOGS;
+		    } else {
+			processRestartlogs = "Stopping/Restarting CcspTr069PaSsp";
+		    }
+
+		    boolean tr69Status = BroadBandTr69Utils.checkAndEnableTr69Support(device, tapEnv);
+		    LOGGER.info("Status of TR69 before starting the TR69 step : " + tr69Status);
+		    testStepNumber = "s26";
+		    status = false;
+
+		    /**
+		     * Get TR069 process ID using command ps | grep CcspTr069PaSsp Kill TR069 process kill -11 <TR069
+		     * process ID>
+		     * 
+		     */
+		    LOGGER.info(
+			    "************************************************************************************************");
+		    LOGGER.info(
+			    "STEP 26: DESCRIPTION: Initiate CcspTr069PaSsp process crash by using command \"kill -11 <CcspTr069PaSsp process ID>\" and verify process killed status");
+		    LOGGER.info(
+			    "STEP 26: ACTION: Execute command \"kill -11 <CcspTr069PaSsp process ID>\" then verify process killed status ");
+		    LOGGER.info("STEP 26: EXPECTED: CcspTr069PaSsp process must be killed ");
+		    LOGGER.info(
+			    "************************************************************************************************");
+
+		    try {
+			errorMessage = "Not able to kill the TR069 process using command \"kill -11 <TR069 process ID>\" ";
+			/**
+			 * Initiate TR069 process crash and verify restarted status initiated by self heal action self
+			 * heal action will take approximately 15 minutes to restart
+			 *
+			 */
+			status = BroadBandSelfHealUtils.initiateProcessCrashAndVerifyProcessRestartedStatus(device,
+				tapEnv, StbProcess.CCSP_TR069);
+			if (status) {
+			    LOGGER.info("TR069 PROCESS RESTARTED STATUS USING KILL -11 COMMAND : " + status);
+			} else {
+			    LOGGER.error(errorMessage);
+			}
+
+		    } catch (Exception exception) {
+			errorMessage = "Exception occurred during execution : " + exception.getMessage();
+			LOGGER.error(errorMessage);
+
+		    }
+		    LOGGER.info("STEP 26: ACTUAL: " + (status
+			    ? "SUCCESSFULLY INITIATED TR069 PROCESS CRASH AND VERIFIED PROCESS RESTARTED STATUS !!!"
+			    : errorMessage));
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		    testStepNumber = "s27";
+		    status = false;
+
+		    LOGGER.info(
+			    "************************************************************************************************");
+		    LOGGER.info(
+			    "STEP 27: DESCRIPTION: Check the SelfHeal log file for the crash log after a wait period of ~15 mins");
+		    LOGGER.info(
+			    "STEP 27: ACTION: Execute command cat /rdklogs/logs/SelfHeal.txt.0 and verify process crash logs ");
+		    LOGGER.info(
+			    "STEP 27: EXPECTED: CcspTr069PaSsp process log must be logged in SelfHeal.txt.0 log file ");
+		    LOGGER.info(
+			    "************************************************************************************************");
+
+		    try {
+			errorMessage = "SelfHeal action is not logging information about TR069 process crash in SelfHeal.txt.0 file ";
+			/**
+			 * Verify process crash logs and reboot logs in SelfHeal.txt.0 log file for CR process
+			 */
+			status = BroadBandSelfHealUtils.verifyProcessCrashLogsInSelfHealLogFile(device, tapEnv,
+				processRestartlogs, StbProcess.CCSP_TR069);
+		    } catch (Exception exception) {
+			errorMessage = "Exception occurred during execution : " + exception.getMessage();
+			LOGGER.error(errorMessage);
+		    }
+
+		    LOGGER.info("STEP 27: ACTUAL: " + (status
+			    ? "SUCCESSFULLY VERIFIED PROCESS CRASH LOGS IN SELFHEAL.TXT.0 LOG FILE FOR TR069 PROCESS CRASH!!!"
+			    : errorMessage));
+
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		    testStepNumber = "s28";
+		    status = false;
+
+		    /**
+		     * Verify TR069 process is restarted by self heal action and running properly after TR069 process
+		     * crash
+		     */
+		    LOGGER.info(
+			    "************************************************************************************************");
+		    LOGGER.info(
+			    "STEP 28: DESCRIPTION: Verify CcspTr069PaSsp process is restarted by self heal action and running properly after CcspTr069PaSsp process crash");
+		    LOGGER.info(
+			    "STEP 28: ACTION: Execute command ps | grep CcspTr069PaSsp and verify process running status");
+		    LOGGER.info("STEP 28: EXPECTED: CcspTr069PaSsp process must be restored due to self heal action");
+		    LOGGER.info(
+			    "************************************************************************************************");
+		    try {
+
+			errorMessage = "TR069 proces is not restarted after process crash by self heal action";
+			/**
+			 * Verify whether process is restarted or not by self heal action it must be restarted after
+			 * process crash
+			 */
+			status = BroadBandSelfHealUtils.verifyProcessRestartedStatusAfterProcessCrash(device, tapEnv,
+				StbProcess.CCSP_TR069);
+
+		    } catch (Exception exception) {
+			errorMessage = "Exception occurred during execution : " + exception.getMessage();
+			LOGGER.error(errorMessage);
+
+		    }
+		    LOGGER.info("STEP 28: ACTUAL: "
+			    + (status ? "SUCCESSFULLY VERIFIED TR069 PROCESS RESTARTED STATUS AFTER REBOOT!!!"
+				    : errorMessage));
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		} else {
+		    // The steps are not applicable for DSL devices . So Updating s26-s28 as NOT Applicable
+		    errorMessage = "TR069 is not applicable for DSL devices.";
+		    LOGGER.error(errorMessage);
+		    for (int i = 26; i <= 28; i++) {
+			LOGGER.info("TR069 is not applicable for DSL devices");
+			tapEnv.updateExecutionForAllStatus(device, testId, "s".concat(String.valueOf(i)),
+				ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+		    }
+		}
+		/**
+		 * Verify whether connected client devices having proper ip address and connectivity
+		 */
+		connectedDeviceActivated = BroadBandConnectedClientUtils
+			.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+		BroadBandConnectedClientUtils.checkIpAddressAndConnectivity(device, tapEnv, connectedDeviceActivated,
+			testId, new String[] { "s29", "s30", "s31", "s32" });
+	    } else {
+		int stepNumber = 26;
+		while (stepNumber <= 32) {
+		    testStepNumber = "s" + stepNumber;
+		    LOGGER.error("STEP " + stepNumber + ": ACTUAL : Test step not applicable for " + device.getModel());
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+			    errorMessage, false);
+		    stepNumber++;
+		}
+	    }
+
+	} catch (Exception exception) {
+	    errorMessage = "Exception occurred during execution : " + exception.getMessage();
+	    LOGGER.error(errorMessage);
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+	} finally {
+	    tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.REMOVE_SAMPLE_TEXT_FILE);
+	    // Set resource usage computing value to default value 15.
+	    BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+		    BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_VALUE_FIFTEEN);
+	}
+	LOGGER.info("ENDING TEST CASE: " + testId);
     }
 
 }

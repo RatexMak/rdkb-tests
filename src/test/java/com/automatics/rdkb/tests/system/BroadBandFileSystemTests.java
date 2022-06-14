@@ -1270,15 +1270,14 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 3: DESCRIPTION : Verify whether Ipv4/ipv6 value has been updated in resolv.conf");
 	    LOGGER.info("STEP 3: ACTION : Execute command:cat /etc/resolv.conf");
-	    LOGGER.info(
-		    "STEP 3: EXPECTED : Value of all the nameserver should be of ipv4/ipv6 address ");
+	    LOGGER.info("STEP 3: EXPECTED : Value of all the nameserver should be of ipv4/ipv6 address ");
 	    LOGGER.info("**********************************************************************************");
 
 	    response = tapEnv.executeCommandUsingSsh(device,
 		    BroadBandTestConstants.CAT_COMMAND + BroadBandTestConstants.RESOLVE_DOT_CONF_FILE);
 
 	    status = BroadBandCommonUtils.validateNameServerIP(response,
-			    BroadBandTestConstants.PATTERN_GET_NAMESPACE_SERVER_ADDRESS);
+		    BroadBandTestConstants.PATTERN_GET_NAMESPACE_SERVER_ADDRESS);
 
 	    if (status) {
 		LOGGER.info("STEP 3: ACTUAL : Value of primary DNS is of ipv4/ipv6 address");
@@ -1887,7 +1886,7 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-RM-MODULE-1002");
 	// ###############################################################//
     }
-    
+
     /**
      * Verify removal of SoundKernel, mtp-tools, libsven
      *

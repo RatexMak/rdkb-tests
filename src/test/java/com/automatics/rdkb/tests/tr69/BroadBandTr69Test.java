@@ -13255,7 +13255,382 @@ public class BroadBandTr69Test extends AutomaticsTestBase {
 	tapEnv.updateExecutionStatus(device, testId, step, status, message, false);
 	
     }
-    
+ 
+    /**
+     * 
+     * This method Validates Naming convention for TR69 parameters
+     * 
+     * <ol>
+     * <li>stepNumber 1: Execute get Parameter on Device.DeviceInfo.</li>
+     * <li>stepNumber 2: Validate the Naming convention for the child objects of Device.DeviceInfo.</li>
+     * <li>stepNumber 3: Execute get Parameter on Device.WiFi.</li>
+     * <li>stepNumber 4: Validate the Naming convention for the child objects of Device.WiFi.</li>
+     * <li>stepNumber 5: Execute get Parameter on Device.MoCA.</li>
+     * <li>stepNumber 6: Validate the Naming convention for the child objects of Device.MoCA.</li>
+     * <li>stepNumber 7: Execute get Parameter on Device.IP.</li>
+     * <li>stepNumber 8: Validate the Naming convention for the child objects of Device.IP.</li>
+     * <li>stepNumber 9: Execute get Parameter on Device.Hosts.</li>
+     * <li>stepNumber 10: Validate the Naming convention for the child objects of Device.Hosts.</li>
+     * </ol>
+     * 
+     * @author Sathurya Ravi
+     * @refactor Govardhan
+     * @param device
+     *            Dut to be used for execution
+     */
 
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+	    BroadBandTestGroup.WIFI, BroadBandTestGroup.TR69 })
+    @TestDetails(testUID = "TC-RDKB-TR69-1011")
 
+    public void testValidateTR69NamingConvention(Dut device) {
+
+	// stores the test result
+	boolean status = false;
+	// stores the test case id
+	String testId = "TC-RDKB-TR69-011";
+	// stores the error message
+	String errorMessage = null;
+	// stores the stepNumber
+	String stepNumber = null;
+	// stores message
+	String message = "";
+	// stores parameter list values
+	List<Parameter> parameterList = new ArrayList<Parameter>();
+	// stores Faulty parameter list
+	List<Parameter> faultyParameterList = new ArrayList<Parameter>();
+
+	List<String> get_param = new ArrayList<String>();
+
+	try {
+
+	    /*
+	     * stepNumber 1: Execute get Parameter on Device.DeviceInfo.
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info("stepNumber 1: DESCRIPTION: Execute get Parameter on Device.DeviceInfo. ");
+	    LOGGER.info("stepNumber 1: ACTION: Execute get Parameter on Device.DeviceInfo. to get the child objects ");
+	    LOGGER.info("stepNumber 1: EXPECTED: The get Parameter should return response wihtout any errors ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s1";
+	    status = false;
+
+	    errorMessage = "Get Parameter on Device.DeviceInfo. is not successful. The operation has returned error";
+	    parameterList = tapEnv.getTr69ParameterNamebyPath(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_DEVICEINFO);
+	    status = parameterList != null && parameterList.size() > 0;
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, true);
+
+	    /*
+	     * stepNumber 2: Validate the Naming convention for the child objects of Device.DeviceInfo.
+	     * 
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info(
+		    "stepNumber 2: DESCRIPTION: Validate the Naming convention for the child objects of Device.DeviceInfo. ");
+	    LOGGER.info(
+		    "stepNumber 2: ACTION: Get Parameter Name using parameterList.getName() and validate for the following prefixes "
+			    + BroadbandPropertyFileHandler.getNamingConventionForTR69());
+	    LOGGER.info("stepNumber 2: EXPECTED: The parameter Names should be as per convention ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s2";
+	    status = false;
+
+	    errorMessage = "The Parameter names are not as expected. The parameters of Device.DeviceInfo.  with defect are as follows:";
+
+	    faultyParameterList = BroadBandTr69Utils.validateNamingConvention(parameterList);
+
+	    // Checking the faulty parameter list and printing the faulty
+	    // parameters if any
+
+	    if (faultyParameterList.size() > 0) {
+
+		LOGGER.info(
+			"*****************************************************************************************************************************************************************");
+		LOGGER.info("Following are the Parameters with wrong Naming Convention");
+
+		for (int i = 0; i < faultyParameterList.size(); i++) {
+		    message = " " + (i + 1) + ". " + faultyParameterList.get(i).getParamName();
+		    LOGGER.info(message);
+		    errorMessage = errorMessage.concat("\n " + message);
+		}
+		LOGGER.info(
+			"******************************************************************************************************************************************************************");
+	    } else {
+		status = true;
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, false);
+
+	    /*
+	     * stepNumber 3: Execute get Parameter on Device.WiFi.
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info("stepNumber 3: DESCRIPTION: Execute get Parameter on Device.WiFi. ");
+	    LOGGER.info("stepNumber 3: ACTION: Execute get Parameter on Device.WiFi. to get the child objects ");
+	    LOGGER.info("stepNumber 3: EXPECTED: The get Parameter should return response wihtout any errors ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s3";
+	    status = false;
+
+	    errorMessage = "Get Parameter on Device.WiFi. is not successful. The operation has returned error";
+
+	    parameterList = tapEnv.getTr69ParameterNamebyPath(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI);
+	    status = parameterList != null && parameterList.size() > 0;
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, true);
+
+	    /*
+	     * stepNumber 4: Validate the Naming convention for the child objects of Device.WiFi.
+	     * 
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info(
+		    "stepNumber 4: DESCRIPTION: Validate the Naming convention for the child objects of Device.WiFi. ");
+	    LOGGER.info(
+		    "stepNumber 4: ACTION: Get Parameter Name using parameterList.getName() and validate for the following prefixes "
+			    + BroadbandPropertyFileHandler.getNamingConventionForTR69());
+	    LOGGER.info("stepNumber 4: EXPECTED: The parameter Names should be as per convention ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s4";
+	    status = false;
+	    errorMessage = "The Parameter names are not as expected. The parameters of Device.WiFi. with defect are as follows:";
+	    faultyParameterList = BroadBandTr69Utils.validateNamingConvention(parameterList);
+
+	    // Checking the faulty parameter list and printing the faulty
+	    // parameters if any
+
+	    if (faultyParameterList.size() > 0) {
+
+		LOGGER.info(
+			"*****************************************************************************************************************************************************************");
+		LOGGER.info("Following are the Parameters with wrong Naming Convention");
+
+		for (int i = 0; i < faultyParameterList.size(); i++) {
+		    message = " " + (i + 1) + ". " + faultyParameterList.get(i).getParamName();
+		    LOGGER.info(message);
+		    errorMessage = errorMessage.concat("\n " + message);
+		}
+		LOGGER.info(
+			"******************************************************************************************************************************************************************");
+	    } else {
+		status = true;
+	    }
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, false);
+
+	    /*
+	     * stepNumber 5: Execute get Parameter on Device.MoCA.
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info("stepNumber 5: DESCRIPTION: Execute get Parameter on Device.MoCA. ");
+	    LOGGER.info("stepNumber 5: ACTION: Execute get Parameter on Device.MoCA. to get the child objects ");
+	    LOGGER.info("stepNumber 5: EXPECTED: The get Parameter should return response wihtout any errors ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s5";
+	    status = false;
+
+	    errorMessage = "Get Parameter on Device.MoCA. is not successful. The operation has returned error";
+
+	    parameterList = tapEnv.getTr69ParameterNamebyPath(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_MOCA);
+	    status = parameterList != null && parameterList.size() > 0;
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, true);
+
+	    /*
+	     * stepNumber 6: Validate the Naming convention for the child objects of Device.MoCA.
+	     * 
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info(
+		    "stepNumber 6: DESCRIPTION: Validate the Naming convention for the child objects of Device.MoCA. ");
+	    LOGGER.info(
+		    "stepNumber 6: ACTION: Get Parameter Name using parameterList.getName() and validate for the following prefixes "
+			    + BroadbandPropertyFileHandler.getNamingConventionForTR69());
+	    LOGGER.info("stepNumber 6: EXPECTED: The parameter Names should be as per convention ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s6";
+	    status = false;
+	    errorMessage = "The Parameter names are not as expected. The parameters of Device.MoCA. with defect are as follows:";
+	    faultyParameterList = BroadBandTr69Utils.validateNamingConvention(parameterList);
+
+	    // Checking the faulty parameter list and printing the faulty
+	    // parameters if any
+
+	    if (faultyParameterList.size() > 0) {
+
+		LOGGER.info(
+			"*****************************************************************************************************************************************************************");
+		LOGGER.info("Following are the Parameters with wrong Naming Convention");
+
+		for (int i = 0; i < faultyParameterList.size(); i++) {
+		    LOGGER.info(" " + (i + 1) + ". " + faultyParameterList.get(i).getParamName());
+		    errorMessage = errorMessage
+			    .concat("\n " + i + 1 + ". " + faultyParameterList.get(i).getParamName());
+		    message = " " + (i + 1) + ". " + faultyParameterList.get(i).getParamName();
+		    LOGGER.info(message);
+		    errorMessage = errorMessage.concat("\n " + message);
+		}
+		LOGGER.info(
+			"******************************************************************************************************************************************************************");
+	    } else {
+		status = true;
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, false);
+
+	    /*
+	     * stepNumber 7: Execute get Parameter on Device.IP.
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info("stepNumber 7: DESCRIPTION: Execute get Parameter on Device.IP. ");
+	    LOGGER.info("stepNumber 7: ACTION: Execute get Parameter on Device.IP. to get the child objects ");
+	    LOGGER.info("stepNumber 7: EXPECTED: The get Parameter should return response wihtout any errors ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s7";
+	    status = false;
+
+	    errorMessage = "Get Parameter on Device.IP. is not successful. The operation has returned error";
+
+	    parameterList = tapEnv.getTr69ParameterNamebyPath(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_IP);
+	    status = parameterList != null && parameterList.size() > 0;
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, true);
+
+	    /*
+	     * stepNumber 8: Validate the Naming convention for the child objects of Device.IP.
+	     * 
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info(
+		    "stepNumber 8: DESCRIPTION: Validate the Naming convention for the child objects of Device.IP. ");
+	    LOGGER.info(
+		    "stepNumber 8: ACTION: Get Parameter Name using parameterList.getName() and validate for the following prefixes "
+			    + BroadbandPropertyFileHandler.getNamingConventionForTR69());
+	    LOGGER.info("stepNumber 8: EXPECTED: The parameter Names should be as per convention ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s8";
+	    status = false;
+	    errorMessage = "The Parameter names are not as expected. The parameters of Device.IP. with defect are as follows:";
+	    faultyParameterList = BroadBandTr69Utils.validateNamingConvention(parameterList);
+	    // Checking the faulty parameter list and printing the faulty
+	    // parameters if any
+
+	    if (faultyParameterList.size() > 0) {
+		LOGGER.info(
+			"*****************************************************************************************************************************************************************");
+		LOGGER.info("Following are the Parameters with wrong Naming Convention");
+
+		for (int i = 0; i < faultyParameterList.size(); i++) {
+		    message = " " + (i + 1) + ". " + faultyParameterList.get(i).getParamName();
+		    LOGGER.info(message);
+		    errorMessage = errorMessage.concat("\n " + message);
+		}
+		LOGGER.info(
+			"******************************************************************************************************************************************************************");
+	    } else {
+		status = true;
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, false);
+
+	    /*
+	     * stepNumber 9: Execute get Parameter on Device.Hosts.
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info("stepNumber 9: DESCRIPTION: Execute get Parameter on Device.Hosts. ");
+	    LOGGER.info("stepNumber 9: ACTION: Execute get Parameter on Device.Hosts. to get the child objects ");
+	    LOGGER.info("stepNumber 9: EXPECTED: The get Parameter should return response wihtout any errors ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s9";
+	    status = false;
+
+	    errorMessage = "Get Parameter on Device.Hosts. is not successful. The operation has returned error";
+	    parameterList = tapEnv.getTr69ParameterNamebyPath(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_HOSTS);
+	    status = parameterList != null && parameterList.size() > 0;
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, true);
+
+	    /*
+	     * stepNumber 10: Validate the Naming convention for the child objects of Device.Hosts.
+	     * 
+	     */
+
+	    LOGGER.info(
+		    "*****************************************************************************************************************************************************************");
+	    LOGGER.info(
+		    "stepNumber 10: DESCRIPTION: Validate the Naming convention for the child objects of Device.Hosts. ");
+	    LOGGER.info(
+		    "stepNumber 10: ACTION: Get Parameter Name using parameterList.getName() and validate for the following prefixes "
+			    + BroadbandPropertyFileHandler.getNamingConventionForTR69());
+	    LOGGER.info("stepNumber 10: EXPECTED: The parameter Names should be as per convention ");
+	    LOGGER.info(
+		    "******************************************************************************************************************************************************************");
+
+	    stepNumber = "s10";
+	    status = false;
+
+	    errorMessage = "The Parameter names are not as expected. The parameters of Device.Hosts. with defect are as follows:";
+	    faultyParameterList = BroadBandTr69Utils.validateNamingConvention(parameterList);
+	    // Checking the faulty parameter list and printing the faulty
+	    // parameters if any
+	    if (faultyParameterList.size() > 0) {
+		LOGGER.info(
+			"*****************************************************************************************************************************************************************");
+		LOGGER.info("Following are the Parameters with wrong Naming Convention");
+		for (int i = 0; i < faultyParameterList.size(); i++) {
+		    message = " " + (i + 1) + ". " + faultyParameterList.get(i).getParamName();
+		    LOGGER.info(message);
+		    errorMessage = errorMessage.concat("\n " + message);
+		}
+		LOGGER.info(
+			"******************************************************************************************************************************************************************");
+	    } else {
+		status = true;
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testId, stepNumber, status, errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    status = false;
+	    LOGGER.error("Exception occured while validating Naming Convention for TR69 parameters " + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, stepNumber, status, errorMessage, true);
+	}
+    }
 }

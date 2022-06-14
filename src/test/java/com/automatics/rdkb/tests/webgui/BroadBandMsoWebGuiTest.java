@@ -75,8 +75,6 @@ import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
 import com.automatics.webpa.WebPaServerResponse;
-import com.automatics.utils.AutomaticsPropertyUtility;
-import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 
 /**
  * Test class with test case for validating web ui based tests
@@ -1272,7 +1270,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
      * <li>STEP 1: Configure band steering per radio using SNMP object rdkbRgDot11BandSteeringBSTable -
      * .1.3.6.1.4.1.17270.50.2.2.8.4.Check if Utilization threshold, RSSI threshold, PHYRate threshold can be
      * individually configured for both radios and both SSIDs.</li>
-     * <li>STEP 2:Enable xfinityWifi for both radios using commands</li>
+     * <li>STEP 2:Enable publicWifi for both radios using commands</li>
      * <li>STEP 3:Configure the gateway to have same private ssid for both radios</li>
      * <li>STEP 4:Execute a CURL COMMAND to change the
      * Device.WiFi.X_RDKCENTRAL-COM_BandSteering.BandSetting.1.IdleInactiveTime object to 11</li>
@@ -1327,7 +1325,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("*************************************************************************");
 
 	    LOGGER.info("STEP 1: DESCRIPTION : Enable  band steering using SNMP from gateway device  ");
-	    LOGGER.info("STEP 2: DESCRIPTION : Enable xfinityWifi for both radios using commands    ");
+	    LOGGER.info("STEP 2: DESCRIPTION : Enable public Wifi for both radios using commands    ");
 	    LOGGER.info("STEP 3: DESCRIPTION : Configure the gateway to have same private ssid  for both radios  ");
 	    LOGGER.info(
 		    "STEP 4: DESCRIPTION : Execute a CURL COMMAND to change the Device.WiFi.X_RDKCENTRAL-COM_BandSteering.BandSetting.1.IdleInactiveTime object to 11");
@@ -1377,8 +1375,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    testStepNumber = "s2";
 	    status = false;
 	    LOGGER.info("******************************************************");
-	    LOGGER.info("STEP 2: DESCRIPTION : Enable xfinityWifi for both radios using commands    ");
-	    LOGGER.info("STEP 2: ACTION      : Enable xfinityWifi for both radios using webpa commands ");
+	    LOGGER.info("STEP 2: DESCRIPTION : Enable public Wifi for both radios using commands    ");
+	    LOGGER.info("STEP 2: ACTION      : Enable public Wifi for both radios using webpa commands ");
 	    LOGGER.info("STEP 2: EXPECTED    :Configuration should be successful.");
 	    LOGGER.info("******************************************************");
 	    errorMessage = "Failed to enable public wifi for both radios";
@@ -3395,9 +3393,6 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    factoryResetStatus = true;
 	    // boolean variable to store the status
 	    status = false;
-	    String defaultPartner = null;
-	    String currentPartnerIdName = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
-			    BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
 	    
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP :  " + stepNumber
@@ -3407,7 +3402,9 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("STEP :  " + stepNumber
 		    + " : EXPECTED: Webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable should return true");
 	    LOGGER.info("**********************************************************************************");
-
+	    String currentPartnerIdName = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+	    		BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
+	    
 	    if (!DeviceModeHandler.isDSLDevice(device)) {
 
 		// Error message
@@ -3426,11 +3423,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 		}
 		LOGGER.info("**********************************************************************************");
 		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, factoryResetStatus, errorMessage, true);
-	    } else if (defaultPartner.equalsIgnoreCase(AutomaticsPropertyUtility
-			    .getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SPECIFIC_PARTNER_ID_ONE))
-		    || defaultPartner.equalsIgnoreCase(AutomaticsPropertyUtility
-				    .getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SPECIFIC_PARTNER_ID_TWO))) {
-		errorMessage = "This step is not applicable for Specific Syndication Partner";
+	    } else if (BroadBandCommonUtils.verifySpecificSyndicationPartnerAvailability(currentPartnerIdName)) {
+		errorMessage = "This step is not applicable for Syndication Partner-COX and SHAW";
 		LOGGER.info("STEP " + stepNumber + " - ACTUAL: " + errorMessage);
 		LOGGER.info("**********************************************************************************");
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
@@ -5310,4 +5304,330 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, valueToSet);
     }
 
+    /**
+     * Test to validate the private 24/5ghz_Verify BSSID remains same after Factory Reset
+     * 
+     * <li>1. Execute the command to get 2.4 GHz private bssid from gateway</li>
+     * <li>2. Execute webpa query to get 2.4 GHz private bssid via webpa</li>
+     * <li>3. Execute the command to get 5 GHz private bssid from gateway</li>
+     * <li>4. Execute webpa query to get 5 GHz private bssid via webpa</li>
+     * <li>5. Perform factory reset on the unit via WebPa</li>
+     * <li>6. Execute the command to get 2.4 GHz private bssid from gateway</li>
+     * <li>7. Execute webpa query to get 2.4 GHz private bssid via webpa</li>
+     * <li>8. Execute the command to get 5 GHz private bssid from gateway</li>
+     * <li>9. Execute webpa query to get 5 GHz private bssid via webpa</li>
+     * <li>10. Validate if arm console is accessible</li>
+     * 
+     * @param device
+     *            Instance {@link Dut}
+     * 
+     * @author Sathurya_R
+     * @Refactor Rakesh C N
+     * 
+     */
+
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+	    BroadBandTestGroup.SYSTEM })
+    @TestDetails(testUID = "TC-RDKB-BSSID-PERSIST-1001")
+    public void testVerifyBssidPersistFactoryReset(Dut device) {
+
+	// Variable declaration begins
+	String testCaseId = "";
+	String stepNum = null;
+	int stepNumber = 1;
+	String errorMessage = "";
+	boolean status = false;
+	String response = null;
+	// Variable declaration ends
+
+	testCaseId = "TC-RDKB-BSSID-PERSIST-001";
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-BSSID-PERSIST-1001");
+	LOGGER.info("TEST DESCRIPTION: Validate the private 24/5ghz_Verify BSSID remains same after Factory Reset");
+
+	LOGGER.info("TEST STEPS : ");
+
+	LOGGER.info("1. Execute the command to get 2.4 GHz private bssid from gateway ");
+	LOGGER.info("2. Execute webpa query to get 2.4 GHz private bssid via webpa ");
+	LOGGER.info("3. Execute the command to get 5 GHz private bssid from gateway ");
+	LOGGER.info("4. Execute webpa query to get 5 GHz private bssid via webpa ");
+	LOGGER.info("5. Perform factory reset on the unit via WebPa ");
+	LOGGER.info("6. Execute the command to get 2.4 GHz private bssid from gateway ");
+	LOGGER.info("7. Execute webpa query to get 2.4 GHz private bssid via webpa ");
+	LOGGER.info("8. Execute the command to get 5 GHz private bssid from gateway ");
+	LOGGER.info("9. Execute webpa query to get 5 GHz private bssid via webpa ");
+	LOGGER.info("10. Validate if arm console is accessible ");
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to execute the command was not successful";
+	    status = false;
+	    String bssid_device = null;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute the command to get 2.4 GHz private bssid from gateway   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the command 'iwconfig ath0 |iwconfig wifi2_0 |wl -i wl0 status' to get bssid from gateway  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED:  Valid BSSID should be returned ");
+	    LOGGER.info("#####################################################################################");
+
+	    bssid_device = BroadBandWiFiUtils.getBssidFromGateway(device, tapEnv, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    status = CommonMethods.isNotNull(bssid_device) && CommonMethods.isMacValid(bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+	    }
+
+	    LOGGER.info("#####################################################################################");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "The wifi bssid from device and webpa does not match";
+	    String bssid_webpa = null;
+	    String bssidBeforeReboot24 = null;
+
+	    status = false;
+	    LOGGER.info("****************************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute webpa query to get 2.4 GHz private bssid via webpa   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the webpa for the object 'Device.WiFi.SSID.10001.BSSID'  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Valid BSSID should be returned ");
+	    LOGGER.info("****************************************************************************************");
+
+	    bssid_webpa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_BSSID_FOR_2_4GHZ);
+	    status = CommonMethods.isNotNull(bssid_webpa) && BroadBandCommonUtils
+		    .compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON, bssid_webpa, bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The wifi bssid from device and webpa match");
+		bssidBeforeReboot24 = bssid_device;
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Device: " + bssid_device
+			+ " Webpa: " + bssid_webpa);
+	    }
+
+	    LOGGER.info("****************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to execute the command was not successful";
+	    status = false;
+	    bssid_device = null;
+	    LOGGER.info("****************************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute the command to get 5 GHz private bssid from gateway   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the command 'iwconfig ath1 |iwconfig wifi0_0 |wl -i wl1 status' to get bssid from gateway  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED:  Valid BSSID should be returned ");
+	    LOGGER.info("****************************************************************************************");
+
+	    bssid_device = BroadBandWiFiUtils.getBssidFromGateway(device, tapEnv, WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    status = CommonMethods.isNotNull(bssid_device) && CommonMethods.isMacValid(bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+	    }
+
+	    LOGGER.info("****************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "The wifi bssid from device and webpa does not match";
+	    bssid_webpa = null;
+	    String bssidBeforeReboot5 = null;
+
+	    status = false;
+	    LOGGER.info("****************************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute webpa query to get 5 GHz private bssid via webpa   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the webpa for the object 'Device.WiFi.SSID.10101.BSSID'  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Valid BSSID should be returned ");
+	    LOGGER.info("****************************************************************************************");
+
+	    bssid_webpa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_BSSID_FOR_5GHZ);
+	    status = CommonMethods.isNotNull(bssid_webpa) && BroadBandCommonUtils
+		    .compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON, bssid_webpa, bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The wifi bssid from device and webpa match");
+		bssidBeforeReboot5 = bssid_device;
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Device: " + bssid_device
+			+ " Webpa: " + bssid_webpa);
+	    }
+
+	    LOGGER.info("****************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to perform factory reset via webpa has failed";
+	    status = false;
+	    LOGGER.info("****************************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Perform factory reset on the unit via WebPa ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : a) Execute WebPa SET command on the object Device.X_CISCO_COM_DeviceControl.FactoryReset ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : The parameter should get set successfully and return a 200 success response");
+	    LOGGER.info("****************************************************************************************");
+
+	    status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : Attempt to factory reset via WEBPA is successfull!");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to execute the command was not successful";
+	    status = false;
+	    bssid_device = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute the command to get 2.4 GHz private bssid from gateway   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the command 'iwconfig ath0 |iwconfig wifi2_0 |wl -i wl0 status' to get bssid from gateway  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED:  Valid BSSID should be returned ");
+	    LOGGER.info("**********************************************************************************");
+
+	    bssid_device = BroadBandWiFiUtils.getBssidFromGateway(device, tapEnv, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    status = CommonMethods.isNotNull(bssid_device) && CommonMethods.isMacValid(bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "The wifi bssid from device and webpa does not match";
+	    bssid_webpa = null;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute webpa query to get 2.4 GHz private bssid via webpa   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the webpa for the object 'Device.WiFi.SSID.10001.BSSID'  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Valid BSSID should be returned ");
+	    LOGGER.info("**********************************************************************************");
+
+	    bssid_webpa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_BSSID_FOR_2_4GHZ);
+	    status = CommonMethods.isNotNull(bssid_webpa)
+		    && BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON, bssid_webpa,
+			    bssid_device)
+		    && BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+			    bssidBeforeReboot24, bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The wifi bssid from device ,webpa and pre-reboot match");
+		bssidBeforeReboot24 = bssid_device;
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Device: " + bssid_device
+			+ " Webpa: " + bssid_webpa + " before factory reset: " + bssidBeforeReboot24);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Attempt to execute the command was not successful";
+	    status = false;
+	    bssid_device = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute the command to get 5 GHz private bssid from gateway   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the command 'iwconfig ath1 |iwconfig wifi0_0 |wl -i wl1 status' to get bssid from gateway  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED:  Valid BSSID should be returned ");
+	    LOGGER.info("**********************************************************************************");
+
+	    bssid_device = BroadBandWiFiUtils.getBssidFromGateway(device, tapEnv, WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    status = CommonMethods.isNotNull(bssid_device) && CommonMethods.isMacValid(bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "The wifi bssid from device and webpa does not match";
+	    bssid_webpa = null;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Execute webpa query to get 5 GHz private bssid via webpa   ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the webpa for the object 'Device.WiFi.SSID.10101.BSSID'  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Valid BSSID should be returned ");
+	    LOGGER.info("**********************************************************************************");
+
+	    bssid_webpa = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_BSSID_FOR_5GHZ);
+	    status = CommonMethods.isNotNull(bssid_webpa)
+		    && BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON, bssid_webpa,
+			    bssid_device)
+		    && BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+			    bssidBeforeReboot5, bssid_device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The wifi bssid from device ,webpa and pre-reboot match");
+		bssidBeforeReboot5 = bssid_device;
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Device: " + bssid_device
+			+ " Webpa: " + bssid_webpa + " before factory reset: " + bssidBeforeReboot5);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    ++stepNumber;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "The arm console is not accessible";
+	    bssid_webpa = null;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Validate if arm console is accessible ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION:  Execute the command sudo stbsshv6 <ecm_ip> 'echo test_connection' from jump server  ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: The arm console should be accessible");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isSTBAccessible(device);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : The arm console is accessible");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	}
+    }
 }

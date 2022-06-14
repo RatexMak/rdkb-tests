@@ -631,11 +631,10 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    try {
-	    	
-    	String expectedResponse = AutomaticsPropertyUtility
-			    .getProperty(BroadBandTestConstants.PROP_KEY_EXPECTED_RESPONSE);
-		status = BroadBandSystemUtils.verifyDnsmasqSerivceStatus(device, tapEnv,
-				expectedResponse);
+	    	String expectedResponse = AutomaticsPropertyUtility
+				    .getProperty(BroadBandTestConstants.PROP_KEY_EXPECTED_RESPONSE);
+			status = BroadBandSystemUtils.verifyDnsmasqSerivceStatus(device, tapEnv,
+					expectedResponse);
 	    } catch (Exception e) {
 		status = false;
 		errorMessage += "." + e.getMessage();
@@ -5391,5 +5390,88 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.error("Exception occurred during execution : " + exception.getMessage());
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 	}
+    }
+    
+    /**
+     * Validate if RDKB SSH client is not accessible via WAN.
+     * <ol>
+     * <li>Verify WEBPA command to get the WANIPV6 of the Client is Successful.</li>
+     * <li>Validate if we are able to SSH to the WAN IP using the Jump server</li>
+     * </ol>
+     * 
+     * @param settop
+     *            {@link Settop}
+     * @author Joseph M
+     * @refactor Alan_Bivera
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+    @TestDetails(testUID = "TC-RDKB-SYSTEM-9008")
+
+    public void testToVerifySshForWanIp(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SYSTEM-908";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	String wanIpv6Address = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-9008");
+	LOGGER.info("TEST DESCRIPTION: Validate if Comcast RDKB SSH client is not accessible via WAN.");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify WEBPA command to get the WANIPV6 of the Client is Successful.");
+	LOGGER.info("2. Validate if we are  able to SSH to the WAN IP using the Jump server ");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    stepNum = "S1";
+	    errorMessage = "Unable to get the WAN IPV6 Address Using the WEBPA Parameter.-" + wanIpv6Address;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify WEBPA command to get the WANIPV6 of the Client is Successful. ");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute the Below Command:curl -X GET -H \"Authorization: Bearer <SAT TOKEN>\" -H \"content-type:application/json\" -H \"X-Webpa-Atomic:true\" -k -i <url:port>/api/v2/device/mac:<MAC Address>/config?names=Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : WebPA get should be successful and WANIPV6 should be Retrieved succesfully.");
+	    LOGGER.info("**********************************************************************************");
+	    wanIpv6Address = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+	    LOGGER.info("Wan Ipv6 Address is = " + wanIpv6Address);
+	    status = CommonMethods.isNotNull(wanIpv6Address) && CommonMethods.isIpv6Address(wanIpv6Address);
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : WanIpv6 Address should be retrieved successfully");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "S2";
+	    errorMessage = "SSH client is accessible via WAN IP. ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION : Validate if we are  able to SSH to the WAN IP using the Jump server ");
+	    LOGGER.info("STEP 2: ACTION : SSH to the wanip of the device using the jump server");
+	    LOGGER.info("STEP 2: EXPECTED : SSH client must not accessible via WAN IP. ");
+	    LOGGER.info("**********************************************************************************");
+	    status = !BroadBandCommonUtils.executeSshCommandOnJumpServer(tapEnv, device, wanIpv6Address);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : SSH client is not accessible via WAN IP");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-9008");
     }
 }

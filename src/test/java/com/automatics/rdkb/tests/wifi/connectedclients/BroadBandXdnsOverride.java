@@ -34,7 +34,6 @@ import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
-import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -53,7 +52,6 @@ import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
-import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
 
 public class BroadBandXdnsOverride extends AutomaticsTestBase {
@@ -684,19 +682,19 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		"STEP 9 : Verify Captive portal status of the router after factory reset and connect the client device to the SSID after reactivating the router.");
 
 	LOGGER.info(
-		"STEP 10 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
+		"STEP 10 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4 : 00.00.00.00, DnsIPv6 : 2001:558:feed::7510");
 	LOGGER.info(
 		"STEP 11 : Verify xdns override at client mac Level by validating the domain name of the site : <site> after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 12 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
+		"STEP 12 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z, DnsIPv4 : 255.255.255.0, DnsIPv6 : 2001:558:feed::7510");
 	LOGGER.info(
 		"STEP 13 : Verify xdns override at client mac Level by validating the domain name of the site : <site> after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 14 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
+		"STEP 14 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4 : 10.0.0.0, DnsIPv6 : 2001:558:feed::7510");
 	LOGGER.info(
 		"STEP 15 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 16 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
+		"STEP 16 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table ");
 	LOGGER.info(
 		"STEP 17 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
@@ -708,7 +706,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	LOGGER.info(
 		"STEP 21 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
-		"STEP 22 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
+		"STEP 22 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table ");
 	LOGGER.info(
 		"STEP 23 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 	LOGGER.info(
@@ -974,10 +972,10 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    status = CommonMethods.isNotNull(response)
 		    && CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.TRUE);
 	    // Error message
-	    errorMessage = "Unable get the 2.4GHz private SSID status on this XB Device.";
+	    errorMessage = "Unable get the 2.4GHz private SSID status on this Device.";
 	    if (!status) {
 		// Error message
-		errorMessage = "Unable to Enable the 2.4GHz private SSID on this XB Device.";
+		errorMessage = "Unable to Enable the 2.4GHz private SSID on this Device.";
 		status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLE,
 			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE,
@@ -1006,10 +1004,10 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    status = CommonMethods.isNotNull(response)
 		    && CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.TRUE);
 	    // Error message
-	    errorMessage = "Unable get the 5GHz private SSID status on this XB Device.";
+	    errorMessage = "Unable get the 5GHz private SSID status on this Device.";
 	    if (!status) {
 		// Error message
-		errorMessage = "Unable to Enable the 5GHz private SSID on this XB Device.";
+		errorMessage = "Unable to Enable the 5GHz private SSID on this Device.";
 		status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS,
 			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE,
@@ -1759,7 +1757,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
      * <li>EXPECTED: Connected client should be able to access the site : 'www.google.com'
      *
      * STEP 4 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values
-     * MacAddress : Wi-Fi MacAddress of the connected client
+     * MacAddress : Wi-Fi MacAddress of the connected client 
      * <li>EXPECTED: dnsmasq_servers.conf file should exist and DNS mapping table should be added successfully.
      *
      * STEP 5 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net on
@@ -2006,16 +2004,13 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    stepNumber = "s12";
 	    // boolean variable to store the status
 	    status = false;
-	    String defaultPartner = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
-		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
-	    if (!defaultPartner.equalsIgnoreCase(AutomaticsPropertyUtility
-			    .getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SPECIFIC_PARTNER_ID_ONE))
-		    || !defaultPartner.equalsIgnoreCase(AutomaticsPropertyUtility
-				    .getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SPECIFIC_PARTNER_ID_TWO))) {
+	    String currentPartnerIdName = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+	    		BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
+	    if (!BroadBandCommonUtils.verifySpecificSyndicationPartnerAvailability(currentPartnerIdName)) {
 		verifyCaptivePrtlModeToReactivateRtrAndConnctClient(device, connectedClientSettop, testCaseId,
 			stepNumber);
 	    } else {
-		errorMessage = "This step is not applicable for Syndication Partner-COX and SHAW";
+		errorMessage = "This step is not applicable for few  Specific Syndication Partners";
 		LOGGER.info("STEP " + stepNumber + " - ACTUAL: " + errorMessage);
 		LOGGER.info("**********************************************************************************");
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,

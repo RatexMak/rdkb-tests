@@ -33,6 +33,7 @@ import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -4420,4 +4421,475 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 		}
 		LOGGER.info("ENDING TEST CASE: " + testId);
 	}
+
+	/**
+	 * Test to verify single client harvester report configurations
+	 * 
+	 * <li>1. Verify wifi client schema name is readonly access</li>
+	 * <li>2. Verify wifi client schema id is readonly access</li>
+	 * <li>3. Verify wifiClient mac address length using webpa</li>
+	 * <li>4. Update wifiClient mac address using webpa</li>
+	 * <li>5. Update override TTL value as 901 using webpa</li>
+	 * <li>6. Update reporting period value as 70 using webpa. Applicable values are
+	 * 1,5,15,30,60,300,900,1800,3600,10800,21600,43200,86400 (in seconds)</li>
+	 * <li>7. Update Reporting Period as 5 and override TTL value as 15 using
+	 * webpa</li>
+	 * <li>8. Update wifiClient enable status as true using webpa</li>
+	 * <li>9. Verify override TTL value reset to 0 after expiry of 15 seconds using
+	 * webpa for polled duration of 30 seconds</li>
+	 * <li>10. Update override TTL value to maximum limit as 900 using webpa</li>
+	 * <li>11. Update reporting period value as 3600 using webpa</li>
+	 * <li>12. Reboot the device to verify persistance of value</li>
+	 * <li>13. Verify reporting period value is persist after reboot</li>
+	 * <li>14. Verify override TTL value reset to 0 after reboot</li>
+	 * <li>15. Verify wifiClient enable status persist after reboot</li>
+	 * <li>16. Verify wifiClient mac address value persist after reboot</li>
+	 * <li>17. Update reporting period value as 0 using webpa</li>
+	 * 
+	 * @author ArunKumar Jayachandran
+	 * 
+	 * @Refactor Sruthi Santhosh
+	 */
+
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+			TestGroup.NEW_FEATURE, TestGroup.SECURITY })
+	@TestDetails(testUID = "TC-RDKB-HARVESTER-REPORT-1001")
+	public void testToVerifySingleClientHarvesterConfig(Dut device) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-HARVESTER-REPORT-1001");
+		LOGGER.info("TEST DESCRIPTION: Test to verify single client harvester report configuration");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify wifi client schema name is readonly access");
+		LOGGER.info("2. Verify wifi client schema id is readonly access");
+		LOGGER.info("3. Verify wifiClient mac address length using webpa");
+		LOGGER.info("4. Update wifiClient mac address using webpa");
+		LOGGER.info("5. Update override TTL value as 901 using webpa");
+		LOGGER.info(
+				"6. Update reporting period value as 70 using webpa. Applicable values are 1,5,15,30,60,300,900,1800,3600,10800,21600,43200,86400 (in seconds)");
+		LOGGER.info("7. Update Reporting Period as 5 and override TTL value as 15 using webpa");
+		LOGGER.info("8. Update wifiClient enable status as true using webpa");
+		LOGGER.info(
+				"9. Verify override TTL value reset to 0 after expiry of 15 seconds using webpa for polled duration of 30 seconds");
+		LOGGER.info("10. Update override TTL value to maximum limit as 900 using webpa");
+		LOGGER.info("11. Update reporting period value as 3600 using webpa");
+		LOGGER.info("12. Reboot the device to verify persistance of value");
+		LOGGER.info("13. Verify reporting period value is persist after reboot");
+		LOGGER.info("14. Verify override TTL value reset to 0 after reboot");
+		LOGGER.info("15. Verify wifiClient enable status persist after reboot");
+		LOGGER.info("16. Verify wifiClient mac address value persist after reboot");
+		LOGGER.info("17. Update reporting period value as 0 using webpa");
+		LOGGER.info("#######################################################################################");
+
+		// variable declaration begins
+		// Status of test script verification
+		boolean status = false;
+		// Test case id
+		String testCaseId = "TC-RDKB-HARVESTER-REPORT-101";
+		// Test step number
+		String stepNumber = "s1";
+		// String to store error message
+		String errorMessage = null;
+		// String to store response
+		String response = null;
+		int reportingPeriod = BroadBandTestConstants.CONSTANT_0;
+		int overrideTTL = BroadBandTestConstants.CONSTANT_0;
+		int waitTime = BroadBandTestConstants.CONSTANT_0;
+		// variable declaration ends
+
+		try {
+
+			stepNumber = "s1";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION: Verify wifi client schema name is readonly access");
+			LOGGER.info(
+					"STEP 1: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Schema data type: 0 value: SingleClient.avsc");
+			LOGGER.info("STEP 1: EXPECTED: Webpa set operation should be failed");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "WifiClient schema name having write access";
+			status = !BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_SCHEMA, BroadBandTestConstants.CONSTANT_0,
+					BroadBandTestConstants.INCORRECT_SCHEMA_NAME);
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL: Successfully verified wifi client schema is readonly access");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s2";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION: Verify wifi client schema id is readonly access");
+			LOGGER.info(
+					"STEP 2: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.SchemaID data type: 0 value: TestString");
+			LOGGER.info("STEP 2: EXPECTED: Webpa set operation should be failed");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "WifiClient schema id having write access";
+			status = !BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_SCHEMA_ID, BroadBandTestConstants.CONSTANT_0,
+					BroadBandTestConstants.TEST_SSID_PASSWORD);
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL: Successfully verified wifi client schema id is readonly access");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s3";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION: Verify wifiClient mac address length using webpa");
+			LOGGER.info(
+					"STEP 3: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
+			LOGGER.info(
+					"STEP 3: EXPECTED: Should get the response for webpa parameter and response should be of length 12");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to get the response for webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress";
+			response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS);
+			status = CommonMethods.isNotNull(response)
+					&& response.trim().length() == BroadBandTestConstants.CONSTANT_12;
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL: Successfully verified wifi client mac address length using webpa");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s4";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION: Update wifiClient mac address using webpa");
+			LOGGER.info(
+					"STEP 4: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress data type: 0 value: 449160dc0ae8");
+			LOGGER.info("STEP 4: EXPECTED: Webpa set operation should be success");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress";
+
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
+					tapEnv.getStbMacIdForIpDeviceWithoutColon(device));
+
+			if (status) {
+				LOGGER.info(
+						"STEP 4: ACTUAL: Successfully updated the wifi client mac address using webpa set operation");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s5";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION: Update override TTL value as 901 using webpa");
+			LOGGER.info(
+					"STEP 5: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL data type: 2 value: 901");
+			LOGGER.info("STEP 5: EXPECTED: Webpa set operation should be failed");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Successfully updated the override TTL value above maximum value";
+			status = !BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+					BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_CONSTANT_901);
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL: Successfully verified maximum value of override TTL value is 900");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s6";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info(
+					"STEP 6: DESCRIPTION: Update reporting period value as 70 using webpa. Applicable values are 1,5,15,30,60,300,900,1800,3600,10800,21600,43200,86400 (in seconds)");
+			LOGGER.info(
+					"STEP 6: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod data type: 2 value: 70");
+			LOGGER.info("STEP 6: EXPECTED: Webpa set operation should be failed");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Successfully updated the reporting period value using webpa";
+			status = !BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.STRING_VALUE_70);
+			if (status) {
+				LOGGER.info(
+						"STEP 6: ACTUAL: Successfully verified wifi client reporting period is not set to invalid value");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s7";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION: Update Reporting Period as 5 and override TTL value as 15 using webpa");
+			LOGGER.info(
+					"STEP 7: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod datatype: 2 value : 5 and  parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL data type: 2 value: 15");
+			LOGGER.info("STEP 7: EXPECTED: Webpa set operation should be success");
+			LOGGER.info("******************************************************************************");
+
+			try {
+				errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod";
+				status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD,
+						BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_VALUE_5);
+				if (status) {
+					errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL";
+					status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+							BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_CONSTANT_15);
+				}
+				reportingPeriod = Integer.parseInt(tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD));
+				overrideTTL = Integer.parseInt(tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL));
+				// calculation
+				// (ReportingPeriod * ((OverrideTTL / ReportingPeriod) + 1)) time.
+
+				waitTime = (reportingPeriod * ((overrideTTL / reportingPeriod) + 1));
+				LOGGER.info("WaitTime " + waitTime);
+			} catch (Exception e) {
+				LOGGER.error("Exception occured during execution " + e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 7: ACTUAL: Successfully updated the wifi client Reporting Period and default override ttl value");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL: " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			// ##################################################################################################//
+
+			stepNumber = "s8";
+			status = false;
+
+			// ##################################################################################################//
+
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION: Update wifiClient enable status as true using webpa");
+			LOGGER.info(
+					"STEP 8: ACTION: Execute webpa set command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Enabled datatype: boolean value: true");
+			LOGGER.info("STEP 8: EXPECTED: Webpa set operation should be success");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Enabled";
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_ENABLE, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.TRUE);
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL: Successfully updated the wifi client enabled status as true");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			stepNumber = "s9";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION: Verify override TTL value reset to 0 after expiry of 15 seconds using webpa for polled duration of 30 seconds");
+			LOGGER.info(
+					"STEP 9: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL");
+			LOGGER.info("STEP 9: EXPECTED: Webpa response become 0 after expiry of override TTL value");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Override TTL value not resetting to 0";
+
+			long waitTimeInMilliSeconds = waitTime * 1000 + BroadBandTestConstants.TEN_SECOND_IN_MILLIS;
+			LOGGER.info("Going to wait time for " + waitTimeInMilliSeconds + " Milliseconds");
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+					BroadBandTestConstants.STRING_ZERO, waitTimeInMilliSeconds,
+					BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+			if (status) {
+				LOGGER.info(
+						"STEP 9: ACTUAL: Successfully verified wifi client override TTL value reset to 0 after expiry of TTL value from 15");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s10";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION: Update override TTL value to maximum limit as 900 using webpa");
+			LOGGER.info(
+					"STEP 10: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL data type: 2 value: 900");
+			LOGGER.info("STEP 10: EXPECTED: Webpa set operation should be success");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL";
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+					BroadBandTestConstants.CONSTANT_2, Integer.toString(BroadBandTestConstants.CONSTANT_900));
+			if (status) {
+				LOGGER.info("STEP 10: ACTUAL: Successfully updated override TTL value to maximum limit as 900");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s11";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 11: DESCRIPTION: Update reporting period value as 3600 using webpa");
+			LOGGER.info(
+					"STEP 11: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod data type: 2 value: 3600");
+			LOGGER.info("STEP 11: EXPECTED: Webpa set operation should be success");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod";
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.STRING_CONSTANT_3600);
+			if (status) {
+				LOGGER.info("STEP 11: ACTUAL: Successfully updated wifi client reporting period value as 3600");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s12";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 12: DESCRIPTION: Reboot the device to verify persistance of value");
+			LOGGER.info("STEP 12: ACTION: Execute command: /bin/reboot");
+			LOGGER.info("STEP 12: EXPECTED: Device should be SSHable after reboot");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to reboot the device or unable to SSH after reboot";
+			status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+			if (status) {
+				LOGGER.info("STEP 12: ACTUAL: Successfully rebooted the device and able to SSH after reboot");
+			} else {
+				LOGGER.error("STEP 12: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+			// ##################################################################################################//
+
+			stepNumber = "s13";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 13: DESCRIPTION: Verify reporting period value is persist after reboot");
+			LOGGER.info(
+					"STEP 13: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod");
+			LOGGER.info("STEP 13: EXPECTED: Should get the response as 3600 after reboot");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to get the response for webpa parameter or value is not persistent after reboot";
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD,
+					BroadBandTestConstants.STRING_CONSTANT_3600, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 13: ACTUAL: Successfully verified reporting period value is persistent after reboot");
+			} else {
+				LOGGER.error("STEP 13: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s14";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 14: DESCRIPTION: Verify override TTL value reset to 0 after reboot");
+			LOGGER.info(
+					"STEP 14: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Default.OverrideTTL");
+			LOGGER.info("STEP 14: EXPECTED: should get the response as 0 after reboot");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to get the response for webpa parameter or value is persistent after reboot";
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFI_CLIENT_DEFAULT_OVERRIDE_TTL,
+					BroadBandTestConstants.STRING_ZERO, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 14: ACTUAL: Successfully verified override TTL value reset to 0 after reboot");
+			} else {
+				LOGGER.error("STEP 14: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s15";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 15: DESCRIPTION: Verify wifiClient enable status persist after reboot");
+			LOGGER.info(
+					"STEP 15: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.Enabled");
+			LOGGER.info("STEP 15: EXPECTED: Should get the response as true after reboot");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to get the response for webpa parameter or value is not persistent after reboot";
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_ENABLE, BroadBandTestConstants.TRUE,
+					BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info(
+						"STEP 15: ACTUAL: Successfully verified wifi client enabled status is persistent after reboot");
+			} else {
+				LOGGER.error("STEP 15: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s16";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 16: DESCRIPTION: Verify wifiClient mac address value persist after reboot");
+			LOGGER.info(
+					"STEP 16: ACTION: Execute webpa get command: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
+			LOGGER.info("STEP 16: EXPECTED: Should get the response as client mac address");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to get the response for webpa parameter or value is not persistent after reboot";
+
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS,
+					tapEnv.getStbMacIdForIpDeviceWithoutColon(device), BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+			if (status) {
+				LOGGER.info(
+						"STEP 16: ACTUAL: Successfully verified wifi client mac address is persistent after reboot");
+			} else {
+				LOGGER.error("STEP 16: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+			stepNumber = "s17";
+			status = false;
+			LOGGER.info("******************************************************************************");
+			LOGGER.info("STEP 17: DESCRIPTION: Update reporting period value as 0 using webpa");
+			LOGGER.info(
+					"STEP 17: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod data type: 2 value: 0");
+			LOGGER.info("STEP 17: EXPECTED: Webpa set operation should be success");
+			LOGGER.info("******************************************************************************");
+			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.ReportingPeriod";
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_REPORTING_PERIOD, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.STRING_ZERO, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 17: ACTUAL: Successfully updated the reporting period value as 0");
+			} else {
+				LOGGER.error("STEP 17: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+			// ##################################################################################################//
+
+		} catch (Exception exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error(
+					"Exception Occurred while Verifying single client harvester report configuration" + errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+					false);
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-HARVESTER-REPORT-1001");
+		// ###############################################################//
+	}
+
 }

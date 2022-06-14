@@ -1733,4 +1733,5 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 		    LOGGER.info("################### ENDING TEST CASE : TC-RDKB-BRIDGE-MODE-1002 #########################");
 		}
 	    }
+	    
 }

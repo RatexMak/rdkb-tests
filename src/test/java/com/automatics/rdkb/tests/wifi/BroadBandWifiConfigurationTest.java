@@ -135,7 +135,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 	@Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
 	@TestDetails(testUID = "TC-RDKB-WIFI-KEY-PHARSE-5001")
 	public void testToVerifyClientConnectivity2_4GhzWifiPassphraseChange(Dut device) {
-		String testId = "TC-XB-WIFI-KEY-PHARSE-501";
+		String testId = "TC-RDKB-WIFI-KEY-PHARSE-501";
 		stepNumber = 1;
 		preConStepNumber = 1;
 		postConStepNumber = 1;
@@ -6857,5 +6857,917 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-SECTY-WPA2-5002");
   }
+  
+  /**
+   * 
+   * Test Case : Verify WG supports Open Security mode for 2.4 &5 GHZ frequency band.
+   *
+   * <p>
+   * STEPS:
+   * </p>
+   * <ol>
+   * <li>PRE-CONDITION 1 : VERIFY 2.4 GHZ PRIVATE SSID ENABLED</li>
+   * <li>PRE-CONDITION 2 : VERIFY 5 GHZ PRIVATE SSID ENABLED</li>
+   * <li>PRE-CONDITION 3 : GET THE DEFAULT VALUE FOR OPERATING STANDARD 2.4 GHZ</li>
+   * <li>PRE-CONDITION 4 : GET THE DEFAULT VALUE FOR OPERATING STANDARD 5 GHZ</li>
+   * <li>Step 1 : Set and verify the value of operational transmission rate of the 2.4 GHz with operating standard as
+   * b/g/n</li>
+   * <li>Step 2 : Set and verify the security mode as "none" for 2.4 GHz SSID</li>
+   * <li>Step 3 : Set and verify the value of operational transmission rate of the 5GHz with operating standard as
+   * a/n/ac</li>
+   * <li>Step 4 : Set and verify the security mode as "none" for 5 GHz SSID</li>
+   * <li>Step 5 : Connect the connected client in the setup to 2.4 GHz SSID and verify connection status</li>
+   * <li>Step 6 : Verify the correct IPv4 address for client connected with 2.4 GHz SSID</li>
+   * <li>Step 7 : Verify the correct IPv6 address for client connected with 2.4 GHz SSID</li>
+   * <li>Step 8 : Verify whether have connectivity using that particular interface using IPV4 for client connected
+   * with 2.4 GHz</li>
+   * <li>Step 9 : Verify whether have connectivity using that particular interface using IPV6 for client connected
+   * with 2.4 GHz</li>
+   * <li>Step 10 : Connect the connected client in the setup to 5 GHz SSID and verify connection status</li>
+   * <li>Step 11 : Verify the correct IPv4 address for client connected with 5 GHz SSID</li>
+   * <li>Step 12 : Verify the correct IPv6 address for client connected with 5 GHz SSID</li>
+   * <li>Step 13 : Verify whether have connectivity using that particular interface using IPV4 for client connected
+   * with 5 GHz</li>
+   * <li>Step 14 : Verify whether have connectivity using that particular interface using IPV6 for client connected
+   * with 5 GHz</li>
+   * <li>Step 15 : Verify disconnecting the 2.4 GHz SSID</li>
+   * <li>Step 16 : Verify disconnecting the 5 GHz SSID</li>
+   * </ol>
+   * 
+   * @param device
+   *            {@link Dut}
+   * 
+   * @author Muthukumar
+   * @refactor Alan_Bivera
+   *
+   */
+  @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+  @TestDetails(testUID = "TC-RDKB-WIFI-CC-OPEN-5001")
+  public void testToVerifyWiFiConnSecurityModeOpen(Dut device) {
+	String testId = "TC-RDKB-WIFI-CC-OPEN-501";
+	String step = null;
+	String errorMessage = null;
+	boolean status = false;
+	Dut deviceConnectedWith2Ghz = null;
+	Dut deviceConnectedWith5Ghz = null;
+	boolean isSecModeChanged2Ghz = false;
+	boolean isSecModeChanged5Ghz = false;
+	stepNumber = 1;
+	preConStepNumber = 0;
+	postConStepNumber = 0;
+	step = "S" + stepNumber;
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-CC-OPEN-5001");
+	    LOGGER.info("TEST DESCRIPTION: Verify WG supports Open Security mode for 2.4 &5 GHZ frequency band.");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info(
+		    " 1 : Set and verify  the value of operational transmission rate of the 2.4 GHz with operating standard as b/g/n");
+	    LOGGER.info(" 2 : Set and verify  the security mode as 'none' for 2.4 GHz SSID");
+	    LOGGER.info(
+		    " 3 : Set and verify  the value of operational transmission rate of the 5GHz with operating standard as a/n/ac");
+	    LOGGER.info(" 4 : Set and verify  the security mode as 'none' for 5 GHz SSID");
+	    LOGGER.info(
+		    " 5 : Connect  the connected client  in the setup to 2.4 GHz SSID and verify connection status");
+	    LOGGER.info(" 6 : Verify  the correct IPv4  address for client connected with 2.4 GHz SSID ");
+	    LOGGER.info(" 7 : Verify  the correct IPv6  address for client connected with 2.4 GHz SSID ");
+	    LOGGER.info(
+		    " 8 : Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4 GHz ");
+	    LOGGER.info(
+		    " 9 : Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4 GHz ");
+	    LOGGER.info(" 10 : Connect the connected client  in the setup to 5 GHz SSID and verify connection status");
+	    LOGGER.info(" 11 : Verify  the correct IPv4  address for client connected with 5 GHz SSID ");
+	    LOGGER.info(" 12 : Verify  the correct IPv6  address for client connected with 5 GHz SSID ");
+	    LOGGER.info(
+		    " 13 : Verify whether have connectivity using that particular interface using IPV4 for client connected with 5 GHz ");
+	    LOGGER.info(
+		    " 14 : Verify whether have connectivity using that particular interface using IPV6 for client connected with 5 GHz ");
+	    LOGGER.info(" 15 : Verify disconnecting the 2.4 GHz SSID");
+	    LOGGER.info(" 16 : Verify disconnecting the 5 GHz SSID");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS:");
+	    executePreConditionToVerifyPrivateSsidIsEnabled(device);
+	    executePreConditionToGetDefaultOperStandard(device);
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * Step 1 : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 2.4 GHZ WITH OPERATING STANDARD
+	     * AS b/g/n
+	     */
+
+	    errorMessage = null;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 2.4 GHZ WITH OPERATING STANDARD AS b/g/n.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO b/g/n");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET OPERATING STANDARD AS b/g/n.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+		    WebPaDataTypes.STRING.getValue(),
+		    WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode());
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS b/g/n.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 2 : SET AND VERIFY THE SECURITY MODE "OPEN" FOR 2.4 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION : SET AND VERIFY  THE SECURITY MODE 'OPEN' FOR 2.4 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : SET AND VERIFY THE SECURITY MODE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PRIVATE_SECURITY_MODEENABLED);
+
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : SECURITY MODE MUST SET TO 'OPEN' FOR 2.4 GHZ SSID");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET THE SECURITY MODE TO 'OPEN' FOR 2.4 GHZ SSID.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PRIVATE_SECURITY_MODEENABLED,
+		    WebPaDataTypes.STRING.getValue(), BroadBandTestConstants.SECURITY_MODE_NONE);
+	    if (status) {
+		isSecModeChanged2Ghz = true;
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY CHANGED THE SECURITY MODE TO 'OPEN' FOR 2.4 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 3 : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 5 GHZ WITH OPERATING STANDARD
+	     * AS a/n/ac
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 5 GHZ WITH OPERATING STANDARD AS a/n/ac.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO a/n/ac");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET OPERATING STANDARD AS a/n/ac.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+		    WebPaDataTypes.STRING.getValue(),
+		    WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getOperatingmode());
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS a/n/ac.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 4 : SET AND VERIFY THE SECURITY MODE "NONE" FOR 5 GHZ SSID
+	     * 
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION : SET AND VERIFY  THE SECURITY MODE 'OPEN' FOR 5 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : SET AND VERIFY THE SECURITY MODE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PRIVATE_SECURITY_MODEENABLED);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : SECURITY MODE MUST SET TO 'OPEN' FOR 5 GHZ SSID");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET THE SECURITY MODE TO 'OPEN' FOR 5 GHZ SSID.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PRIVATE_SECURITY_MODEENABLED,
+		    WebPaDataTypes.STRING.getValue(), BroadBandTestConstants.SECURITY_MODE_NONE);
+	    if (status) {
+		isSecModeChanged5Ghz = true;
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY CHANGED THE SECURITY MODE TO 'OPEN' FOR 5 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 5 : VERIFY CONNECTING THE WIFI CLIENT IN THE SETUP TO THE 2.4GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : VERIFY CONNECTING THE WIFI CLIENT INTO 2.4GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : CONNECT THE WI-FI CLIENT WITH 2.4GHz SSID AND PASSWORD");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE CONNECTION MUST BE SUCCESSFUL FOR 2.4 GHZ SSID");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "UNABLE TO CONNECT THE CONNECTED CLIENT WITH 2.4 GHZ SSID";
+	    try {
+		deviceConnectedWith2Ghz = BroadBandConnectedClientUtils
+			.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    } catch (TestException exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    status = (deviceConnectedWith2Ghz != null);
+	    if (status) {
+		LOGGER.info(
+			"STEP :  " + stepNumber + " : ACTUAL: CONNECTED THE WIFI CLIENT TO 2.4GHz SSID SUCCESSFULLY");
+	    } else {
+		LOGGER.error("STEP :  " + stepNumber + " : ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	    /**
+	     * SETP : 6-9
+	     */
+	    verifyIpv4AndIpV6ConnectionInterface(device, testId, deviceConnectedWith2Ghz,
+		    BroadBandTestConstants.BAND_2_4GHZ);
+	    /**
+	     * Step 10: VERIFY CONNECTING THE WIFI CLIENT IN THE SETUP TO THE 5 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : VERIFY CONNECTING THE WIFI CLIENT INTO 5 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : CONNECT THE WI-FI CLIENT WITH 5 GHz SSID AND PASSWORD");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE CONNECTION MUST BE SUCCESSFUL FOR 5 GHZ SSID");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "UNABLE TO CONNECT THE CONNECTED CLIENT WITH 5 GHZ SSID";
+	    try {
+		deviceConnectedWith5Ghz = BroadBandConnectedClientUtils.getOtherWiFiCapableClientDeviceAndConnect(
+			device, tapEnv, deviceConnectedWith2Ghz, BroadBandTestConstants.BAND_5GHZ);
+		status = (null != deviceConnectedWith5Ghz);
+	    } catch (TestException exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : SUCCESSFYLLY CONNECTED THE CLIENT WITH 5 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	    /**
+	     * SETP 11-14 :
+	     */
+	    verifyIpv4AndIpV6ConnectionInterface(device, testId, deviceConnectedWith5Ghz,
+		    BroadBandTestConstants.BAND_5GHZ);
+
+	    /**
+	     * Step 15: VERIFY DISCONNECTING THE WIFI CLIENT FROM THE GATEWAY DEVICE FOR 2.4 GHZ
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : DESCRIPTION : VERIFY DISCONNECTING THE WI-FI CLIENT CONNECTED WITH 2.4GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber + " : ACTION : DISCONNECT THE WI-FI CLIENT CONNECTED WITH 2.4GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : EXPECTED: THE CLIENT MUST BE DISCONNECTED FROM 2.4GHz SSID SUCCESSFULLY");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABEL TO DISCONNECT THE CLIENT CONNECTED WITH 2.4GHZ SSID";
+	    status = ConnectedNattedClientsUtils.disconnectSSID(deviceConnectedWith2Ghz, tapEnv,
+		    BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+			    WiFiFrequencyBand.WIFI_BAND_2_GHZ));
+	    if (status) {
+		deviceConnectedWith2Ghz = null;
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY DISCONNECTED THE CLIENT CONNECTED WITH 2.4GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 16: VERIFY DISCONNECTING THE WIFI CLIENT FROM THE GATEWAY DEVICE FOR 5 GHZ.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : DESCRIPTION : VERIFY DISCONNECTING THE WI-FI CLIENT CONNECTED WITH 5GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber + " : ACTION : DISCONNECT THE WI-FI CLIENT CONNECTED WITH 5GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : EXPECTED: THE CLIENT MUST BE DISCONNECTED FROM 5GHz SSID SUCCESSFULLY");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABEL TO DISCONNECT THE CLIENT CONNECTED WITH 5GHZ SSID";
+	    status = ConnectedNattedClientsUtils.disconnectSSID(deviceConnectedWith5Ghz, tapEnv,
+		    BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+			    WiFiFrequencyBand.WIFI_BAND_5_GHZ));
+	    if (status) {
+		deviceConnectedWith5Ghz = null;
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY DISCONNECTED THE CLIENT CONNECTED WITH 5GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("#######################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error(
+		    "EXCEPTION OCCURRED WHILE VALIDATING THE WG SUPPORTS OPEN SECURITY MODE FOR 2.4 &5 GHZ FREQUENCY BAND : "
+			    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, step, status, errorMessage, true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS:");
+	    executePostConditionToSetDefaultOperStandard(device);
+	    executePostConditionToSetSecurityModeWPA2Personal(device, isSecModeChanged2Ghz, isSecModeChanged5Ghz);
+	    executePostConditionToDisconnectClients(device, deviceConnectedWith2Ghz, deviceConnectedWith5Ghz);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-CC-OPEN-5001");
+	LOGGER.info("#######################################################################################");
+  }
+
+  /**
+   *
+   * Test Case : Verify WG supports WAP2(AES) Security mode for 2.4 &5 GHZ frequency band with valid & invalid key
+   * passpharse.
+   *
+   * <p>
+   * STEPS:
+   * </p>
+   * <ol>
+   * <li>PRE-CONDITION 1 : VERIFY 2.4 GHZ PRIVATE SSID ENABLED</li>
+   * <li>PRE-CONDITION 2 : VERIFY 5 GHZ PRIVATE SSID ENABLED</li>
+   * <li>PRE-CONDITION 3 : GET THE DEFAULT VALUE FOR OPERATING STANDARD 2.4 GHZ</li>
+   * <li>PRE-CONDITION 4 : GET THE DEFAULT VALUE FOR OPERATING STANDARD 5 GHZ</li>
+   * <li>Step 1 : Set and verify the value of operational transmission rate of the 2.4 GHz with operating standard as
+   * b/g/n</li>
+   * <li>Step 2 : Set and verify the security mode "WPA2-Personal" for 2.4 GHz SSID</li>
+   * <li>Step 3 : Set and verify the security encryption method as "AES" for 2.4 GHz SSID</li>
+   * <li>Step 4 : Set and verify the value of operational transmission rate of the 5GHz with operating standard as
+   * a/n/ac</li>
+   * <li>Step 5 : Set and verify the security mode "WPA2-Personal" for 5 GHz SSID</li>
+   * <li>Step 6 : Set and verify the security encryption method as "AES" for 5 GHz SSID</li>
+   * <li>Step 7 : Connect the connected client in the setup to 2.4 GHz SSID with valid key passpharse and verify
+   * connection status</li>
+   * <li>Step 8 : Verify the correct IPv4 address for client connected with 2.4 GHz SSID</li>
+   * <li>Step 9 : Verify the correct IPv6 address for client connected with 2.4 GHz SSID</li>
+   * <li>Step 10 : Verify whether have connectivity using that particular interface using IPV4 for client connected
+   * with 2.4 GHz</li>
+   * <li>Step 11 : Verify whether have connectivity using that particular interface using IPV6 for client connected
+   * with 2.4 GHz</li>
+   * <li>Step 12 : Connect the connected client in the setup to 5 GHz SSID with valid key passpharse and verify
+   * connection status</li>
+   * <li>Step 13 : Verify the correct IPv4 address for client connected with 5 GHz SSID</li>
+   * <li>Step 14 : Verify the correct IPv6 address for client connected with 5 GHz SSID</li>
+   * <li>Step 15 : Verify whether have connectivity using that particular interface using IPV4 for client connected
+   * with 5 GHz</li>
+   * <li>Step 16 : Verify whether have connectivity using that particular interface using IPV6 for client connected
+   * with 5 GHz</li>
+   * <li>Step 17 : Verify disconnecting the 2.4 GHz SSID</li>
+   * <li>Step 18 : Verify disconnecting the 5 GHz SSID</li>
+   * <li>Step 19 : Connect the connected client in the setup to 2.4 GHz SSID with invalid key passpharse and verify
+   * connection status</li>
+   * <li>Step 20 : Verify whether have connectivity using that particular interface using IPV4/IPV6</li>
+   * <li>Step 21 : Connect the connected client in the setup to 5 GHz SSID with invalid key passpharse and verify
+   * connection status</li>
+   * <li>Step 22 : Verify whether have connectivity using that particular interface using IPV4/IPV6</li>
+   * </ol>
+   * 
+   * @param Dut
+   *            {@link device}
+   * 
+   * @author Muthukumar
+   * @refactor Alan_Bivera
+   *
+   */
+  @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+  @TestDetails(testUID = "TC-RDKB-WIFI-CC-WPA2-5001")
+  public void testToVerifyWiFiConnSecurityModeWAP2(Dut device) {
+	String testId = "TC-RDKB-WIFI-CC-WPA2-501";
+	String step = null;
+	String errorMessage = null;
+	boolean status = false;
+	Dut deviceConnectedWith2Ghz = null;
+	Dut deviceConnectedWith5Ghz = null;
+	BroadBandResultObject result = null;
+	WifiOperatingStandard defaultOperatingStandard = null;
+	stepNumber = 1;
+	preConStepNumber = 0;
+	postConStepNumber = 0;
+	step = "S" + stepNumber;
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-CC-WPA2-5001");
+	    LOGGER.info("TEST DESCRIPTION: Verify WG supports Open Security mode for 2.4 &5 GHZ frequency band.");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info(
+		    " 1 : Set and verify  the value of operational transmission rate of the 2.4 GHz with operating standard as b/g/n");
+	    LOGGER.info(" 2 : Set and verify  the security mode 'WPA2-Personal' for 2.4 GHz SSID");
+	    LOGGER.info(" 3 : Set and verify  the security encryption method as 'AES' for 2.4 GHz SSID");
+	    LOGGER.info(
+		    " 4 : Set and verify  the value of operational transmission rate of the 5GHz with operating standard as a/n/ac");
+	    LOGGER.info(" 5 : Set and verify  the security mode 'WPA2-Personal' for 5 GHz SSID");
+	    LOGGER.info(" 6 : Set and verify  the security encryption method as 'AES' for 5 GHz SSID");
+	    LOGGER.info(
+		    " 7 : Connect  the connected client  in the setup to 2.4 GHz SSID with valid key passpharse and verify connection status");
+	    LOGGER.info(" 8 : Verify  the correct IPv4  address for client connected with 2.4 GHz SSID ");
+	    LOGGER.info(" 9 : Verify  the correct IPv6  address for client connected with 2.4 GHz SSID ");
+	    LOGGER.info(
+		    " 10 : Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4 GHz ");
+	    LOGGER.info(
+		    " 11 : Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4 GHz ");
+	    LOGGER.info(
+		    " 12 : Connect  the connected client  in the setup to 5 GHz SSID  with valid key passpharse and verify connection status");
+	    LOGGER.info(" 13 : Verify  the correct IPv4  address for client connected with 5 GHz SSID ");
+	    LOGGER.info(" 14 : Verify  the correct IPv6  address for client connected with 5 GHz SSID ");
+	    LOGGER.info(
+		    " 15 : Verify whether have connectivity using that particular interface using IPV4 for client connected with 5 GHz ");
+	    LOGGER.info(
+		    " 16 : Verify whether have connectivity using that particular interface using IPV6 for client connected with 5 GHz ");
+	    LOGGER.info(" 17 : Verify disconnecting the 2.4 GHz SSID ");
+	    LOGGER.info(" 18 : Verify disconnecting the 5 GHz SSID ");
+	    LOGGER.info(
+		    " 19 : Connect  the connected client  in the setup to 2.4 GHz SSID with invalid key passpharse and verify connection status ");
+	    LOGGER.info(" 20 : Verify whether have connectivity using that particular interface using IPV4/IPV6 ");
+	    LOGGER.info(
+		    " 21 : Connect  the connected client  in the setup to 5 GHz SSID with invalid key passpharse and verify connection status ");
+	    LOGGER.info(" 22 : Verify whether have connectivity using that particular interface using IPV4/IPV6 ");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS:");
+	    executePreConditionToVerifyPrivateSsidIsEnabled(device);
+	    executePreConditionToGetDefaultOperStandard(device);
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * Step 1 : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 2.4 GHZ WITH OPERATING STANDARD
+	     * AS b/g/n
+	     */
+	    errorMessage = null;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 2.4 GHZ WITH OPERATING STANDARD AS b/g/n.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO b/g/n");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET OPERATING STANDARD AS b/g/n.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+		    WebPaDataTypes.STRING.getValue(),
+		    WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode());
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS b/g/n.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 2 : SET AND VERIFY THE SECURITY MODE WPA2-Personal" FOR 2.4 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY  THE SECURITY MODE 'WPA2-Personal' FOR 2.4 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : SET AND VERIFY THE SECURITY MODE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PRIVATE_SECURITY_MODEENABLED);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : SECURITY MODE MUST SET TO 'WPA2-Personal' FOR 2.4 GHZ SSID");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET THE SECURITY MODE TO 'WPA2-Personal' FOR 2.4 GHZ SSID.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PRIVATE_SECURITY_MODEENABLED,
+		    WebPaDataTypes.STRING.getValue(), BroadBandTestConstants.SECURITY_MODE_WPA2_PERSONAL);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY CHANGED THE SECURITY MODE TO 'WPA2-Personal' FOR 2.4 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 3 : SET AND VERIFY THE SECURITY ENCRYPTION METHOD AS "AES" FOR 2.4 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY THE SECURITY ENCRYPTION METHOD AS 'AES' FOR 2.4 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : SET AND VERIFY  THE SECURITY ENCRYPTION METHOD AS AES FOR 2.4GHz SSID USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_FOR_ENCRYPTIONMETHOD_IN_2GHZ_PRIVATE_WIFI);
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : SECURITY ENCRYPTION METHOD MUST SET TO 'AES' FOR 2.4 GHZ SSID");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET THE SECURITY ENCRYPTION METHOD TO 'AES' FOR 2.4 GHZ SSID.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_ENCRYPTIONMETHOD_IN_2GHZ_PRIVATE_WIFI,
+		    WebPaDataTypes.STRING.getValue(),
+		    BroadBandConnectedClientTestConstants.SECURITY_ENCRYPTION_METHOD_AES);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY CHANGED THE SECURITY ENCRYPTION METHOD TO 'AES' FOR 2.4 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 4 : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 5 GHZ WITH OPERATING STANDARD
+	     * AS a/n/ac
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE OF THE 5 GHZ WITH OPERATING STANDARD AS a/n/ac.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : SET AND VERIFY THE VALUE OF OPERATIONAL TRANSMISSION RATE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO a/n/ac");
+	    LOGGER.info("#######################################################################################");
+	    defaultOperatingStandard = CommonMethods.isAtomSyncAvailable(device, tapEnv)
+		    || (CommonMethods.isAtomSyncAvailable(device, tapEnv)
+			    && DeviceModeHandler.isBusinessClassDevice(device))
+				    ? WifiOperatingStandard.OPERATING_STANDARD_A_N
+				    : WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
+	    errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + defaultOperatingStandard.getOperatingmode();
+
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+		    WebPaDataTypes.STRING.getValue(), defaultOperatingStandard.getOperatingmode());
+
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS a/n/ac.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 5 : SET AND VERIFY THE SECURITY MODE "WPA2-Personal" FOR 5 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY  THE SECURITY MODE 'WPA2-Personal' FOR 5 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : SET AND VERIFY THE SECURITY MODE USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PRIVATE_SECURITY_MODEENABLED);
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : SECURITY MODE MUST SET TO 'WPA2-Personal' FOR 5 GHZ SSID");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET THE SECURITY MODE TO 'WPA2-Personal' FOR 5 GHZ SSID.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PRIVATE_SECURITY_MODEENABLED,
+		    WebPaDataTypes.STRING.getValue(), BroadBandTestConstants.SECURITY_MODE_WPA2_PERSONAL);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY CHANGED THE SECURITY MODE TO 'WPA2-Personal' FOR 5 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 6 : SET AND VERIFY THE SECURITY ENCRYPTION METHOD AS "AES" FOR 5 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : SET AND VERIFY THE SECURITY ENCRYPTION METHOD AS 'AES' FOR 5 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : SET AND VERIFY  THE SECURITY ENCRYPTION METHOD AS AES FOR 5GHz SSID USING WEBPA PARAM "
+		    + BroadBandWebPaConstants.WEBPA_PARAM_FOR_ENCRYPTIONMETHOD_IN_5GHZ_PRIVATE_WIFI);
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : SECURITY ENCRYPTION METHOD MUST SET TO 'AES' FOR 5 GHZ SSID");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABLE TO SET THE SECURITY ENCRYPTION METHOD TO 'AES' FOR 5 GHZ SSID.";
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_ENCRYPTIONMETHOD_IN_5GHZ_PRIVATE_WIFI,
+		    WebPaDataTypes.STRING.getValue(),
+		    BroadBandConnectedClientTestConstants.SECURITY_ENCRYPTION_METHOD_AES);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY CHANGED THE SECURITY ENCRYPTION METHOD TO 'AES' FOR 5 GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 7 : VERIFY CONNECTING THE WIFI CLIENT IN THE SETUP TO THE 2.4GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : VERIFY CONNECTING THE WIFI CLIENT INTO 2.4GHZ SSID AND VALID PASSWORD");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTION : CONNECT THE WI-FI CLIENT WITH 2.4GHz SSID AND VALID PASSWORD");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : THE CONNECTION MUST BE SUCCESSFUL FOR 2.4 GHZ SSID AND VALID PASSWORD");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "UNABLE TO CONNECT THE CONNECTED CLIENT WITH 2.4 GHZ SSID USING VALID PASSWORD";
+	    try {
+		deviceConnectedWith2Ghz = BroadBandConnectedClientUtils
+			.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+	    } catch (TestException exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    status = (deviceConnectedWith2Ghz != null);
+	    if (status) {
+		LOGGER.info("STEP :  " + stepNumber
+			+ " : ACTUAL: CLIENT CONNECTED SUCCESSFULLYTHE TO 2.4GHz SSID USING VALID PASSWORD ");
+	    } else {
+		LOGGER.error("STEP :  " + stepNumber + " : ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	    /**
+	     * SETP : 8-11
+	     */
+	    verifyIpv4AndIpV6ConnectionInterface(device, testId, deviceConnectedWith2Ghz,
+		    BroadBandTestConstants.BAND_2_4GHZ);
+	    /**
+	     * Step 12: VERIFY CONNECTING THE WIFI CLIENT IN THE SETUP TO THE 5 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : VERIFY CONNECTING THE WIFI CLIENT INTO 5 GHZ SSID AND VALID PASSWORD");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : CONNECT THE WI-FI CLIENT WITH 5 GHz SSID AND PASSWORD AND VALID PASSWORD");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : THE CONNECTION MUST BE SUCCESSFUL FOR 5 GHZ SSID AND VALID PASSWORD");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "UNABLE TO CONNECT THE CONNECTED CLIENT WITH 5 GHZ SSID USING VALID PASSWORD";
+	    try {
+		deviceConnectedWith5Ghz = BroadBandConnectedClientUtils.getOtherWiFiCapableClientDeviceAndConnect(
+			device, tapEnv, deviceConnectedWith2Ghz, BroadBandTestConstants.BAND_5GHZ);
+		status = (null != deviceConnectedWith5Ghz);
+	    } catch (TestException exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : CLIENT CONNECTED SUCCESSFULLYTHE TO 5GHz SSID USING VALID PASSWORD.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	    /**
+	     * SETP 13-16 :
+	     */
+	    verifyIpv4AndIpV6ConnectionInterface(device, testId, deviceConnectedWith5Ghz,
+		    BroadBandTestConstants.BAND_5GHZ);
+
+	    /**
+	     * Step 17: VERIFY DISCONNECTING THE WIFI CLIENT FROM THE GATEWAY DEVICE FOR 2.4 GHZ
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : DESCRIPTION : VERIFY DISCONNECTING THE WI-FI CLIENT CONNECTED WITH 2.4GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber + " : ACTION : DISCONNECT THE WI-FI CLIENT CONNECTED WITH 2.4GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : EXPECTED: THE CLIENT MUST BE DISCONNECTED FROM 2.4GHz SSID SUCCESSFULLY");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABEL TO DISCONNECT THE CLIENT CONNECTED WITH 2.4GHZ SSID";
+	    status = ConnectedNattedClientsUtils.disconnectSSID(deviceConnectedWith2Ghz, tapEnv,
+		    BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+			    WiFiFrequencyBand.WIFI_BAND_2_GHZ));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY DISCONNECTED THE CLIENT CONNECTED WITH 2.4GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 18: VERIFY DISCONNECTING THE WIFI CLIENT FROM THE GATEWAY DEVICE FOR 5 GHZ.
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : DESCRIPTION : VERIFY DISCONNECTING THE WI-FI CLIENT CONNECTED WITH 5GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber + " : ACTION : DISCONNECT THE WI-FI CLIENT CONNECTED WITH 5GHz SSID");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : EXPECTED: THE CLIENT MUST BE DISCONNECTED FROM 5GHz SSID SUCCESSFULLY");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "UNABEL TO DISCONNECT THE CLIENT CONNECTED WITH 5GHZ SSID";
+	    status = ConnectedNattedClientsUtils.disconnectSSID(deviceConnectedWith5Ghz, tapEnv,
+		    BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+			    WiFiFrequencyBand.WIFI_BAND_5_GHZ));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : SUCCESSFULLY DISCONNECTED THE CLIENT CONNECTED WITH 5GHZ SSID.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 19 : CONNECT THE CONNECTED CLIENT IN THE SETUP TO 2.4 GHZ SSID WITH INVALID KEY PASSPHARSE AND
+	     * VERIFY CONNECTION STATUS
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : CONNECT  THE CONNECTED CLIENT  IN THE SETUP TO 2.4 GHZ SSID WITH INVALID KEY PASSPHARSE AND VERIFY CONNECTION STATUS");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTION : CONNECT THE WI-FI CLIENT WITH 2.4GHz SSID AND INVALID PASSWORD");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : THE CONNECTION MUST NOT BE SUCCESSFUL FOR 2.4 GHZ SSID  AND INVALID PASSWORD");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "CONNECTION SUCCESSFUL FOR 2.4 GHZ SSID WITH INVALID PASSWORD";
+	    String ssid = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+		    WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+	    if (CommonMethods.isNotNull(ssid)) {
+		status = !ConnectedNattedClientsUtils.connectToSSID(deviceConnectedWith2Ghz, tapEnv, ssid,
+			BroadBandTestConstants.INVALID_WIFI_PASSWORD);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : CONNECTION FAILED FOR FOR 2.4 GHZ SSID WITH INVALID PASSWORD .");
+	    } else {
+		deviceConnectedWith2Ghz = null;
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	    /**
+	     * Step 20 : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 2.4 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 2.4 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : EXECUTE COMMAND : curl --connect-timeout 20 -v https://www.facebook.com");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 2.4 GHZ SSID";
+	    try {
+		result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, deviceConnectedWith2Ghz,
+			BroadBandTestConstants.URL_HTTP_FACEBOOK);
+		status = result.isStatus();
+		errorMessage = result.getErrorMessage();
+	    } catch (Exception exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL .");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+	    /**
+	     * Step 21 : CONNECT THE CONNECTED CLIENT IN THE SETUP TO 5 GHZ SSID WITH INVALID KEY PASSPHARSE AND VERIFY
+	     * CONNECTION STATUS
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : CONNECT  THE CONNECTED CLIENT  IN THE SETUP TO 5 GHZ SSID WITH INVALID KEY PASSPHARSE AND VERIFY CONNECTION STATUS");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTION : CONNECT THE WI-FI CLIENT WITH 5GHz SSID AND INVALID PASSWORD");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : THE CONNECTION MUST NOT BE SUCCESSFUL FOR 5 GHZ SSID  AND INVALID PASSWORD");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "CONNECTION SUCCESSFUL FOR 5 GHZ SSID WITH INVALID PASSWORD";
+	    ssid = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+		    WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+	    if (CommonMethods.isNotNull(ssid)) {
+		status = !ConnectedNattedClientsUtils.connectToSSID(deviceConnectedWith5Ghz, tapEnv, ssid,
+			BroadBandTestConstants.INVALID_WIFI_PASSWORD);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : CONNECTION FAILED FOR FOR 5 GHZ SSID WITH INVALID PASSWORD .");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	    /**
+	     * Step 22 : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 5 GHZ SSID
+	     */
+	    stepNumber++;
+	    step = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 5 GHZ SSID");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : EXECUTE COMMAND : curl --connect-timeout 20 -v https://www.facebook.com");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL ");
+	    LOGGER.info("#####################################################################################");
+	    errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 5 GHZ SSID";
+	    try {
+		result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, deviceConnectedWith5Ghz,
+			BroadBandTestConstants.URL_HTTP_FACEBOOK);
+		status = result.isStatus();
+		errorMessage = result.getErrorMessage();
+	    } catch (Exception exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL .");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error(
+		    "EXCEPTION OCCURRED WHILE VALIDATING THE WG SUPPORTS WAP2(AES) SECURITY MODE FOR 2.4 & 5 GHZ FREQUENCY BAND WITH VALID & INVALID KEY PASSPHARSE : "
+			    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, step, status, errorMessage, true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS:");
+	    executePostConditionToSetDefaultOperStandard(device);
+	    executePostConditionToDisconnectClients(device, deviceConnectedWith2Ghz, deviceConnectedWith5Ghz);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-CC-WPA2-5001");
+	LOGGER.info("#######################################################################################");
+  }
+
 
 }

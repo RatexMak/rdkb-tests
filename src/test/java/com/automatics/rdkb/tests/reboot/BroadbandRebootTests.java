@@ -18,6 +18,8 @@
 
 package com.automatics.rdkb.tests.reboot;
 
+import java.util.Date;
+
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -3202,5 +3204,92 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
     }
 
+    /**
+     * Test case is created as part of Coverage Improvement based on the RDKB-4008 [Performance] Add
+     * Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime TR-181 object
+     *
+     * Test Case # 1: Verify Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime TR-181 parameter
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>STEP 1: Verify BootTime using TR-181 Parameter(Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime)</li>
+     * </ol>
+     *
+     * @author Sumathi Gunasekaran
+	 * @refactor Athira
+     * 
+     * @param device
+     *            {@link Dut}
+     */
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, groups = {
+	    BroadBandTestGroup.BOOT_UP })
+    @TestDetails(testUID = "TC-RDKB-REBOOT-5002")
+    public void verifyDeviceBootTimeUsingTR181(Dut device) {
+	String testCaseId = "TC-RDKB-REBOOT-502";
+	String stepNumber = "s1";
+	boolean status = false;
+	String errorMessage = null;
+	String response = null;
+	long startTime = BroadBandTestConstants.CONSTANT_0;
+	try {
+	    LOGGER.info("### Pre-Condition ### Going to reboot the device.");
+	    if (!CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
+		errorMessage = "Unable to reboot the device successfully.";
+		LOGGER.error(errorMessage);
+		throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+	    }
 
+
+	    LOGGER.info("*************************************************************************************");
+	    LOGGER.info(
+		    "Step:1 Execute the webpa command to get BootTime (Device.DeviceInfo.X_RDKCENTRAL-COM_BootTime)");
+	    LOGGER.info(
+		    "Expected: The Curl command should get executed successfully and The BootTime value should be equal to difference between the currentTime and UpTime(In Milliseconds).");
+	    LOGGER.info("*************************************************************************************");
+
+	    // WebPa command to get the upTime
+	    startTime = System.currentTimeMillis();
+	    String upTime;
+	    do {
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		LOGGER.info("Wait 1 Minute for accessing WebPA");
+		upTime = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_UPTIME);
+		errorMessage = "Unable to get uptime from device using WebPA request with parameter: "
+			+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_UPTIME;
+	    } while (CommonMethods.isNull(upTime)
+		    && (System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS);
+	    LOGGER.info("Uptime value from device is: " + upTime);
+	    // retrieving the uptime of the device and current time. Difference
+	    // between these two will give expected boottime
+	    if (CommonMethods.isNotNull(upTime)) {
+		long expectedBootTime = (new Date().getTime() / BroadBandTestConstants.ONE_SECOND_IN_MILLIS)
+			- Long.valueOf(upTime.trim());
+		LOGGER.info("Expected Boot Time is: " + expectedBootTime);
+		LOGGER.info("Executing webpa command to get the BootTime");
+
+		// webpa command to get the bootTime parameter
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_BOOTTIME);
+		LOGGER.info("Boot time value from device through WebPA request is: " + response);
+		errorMessage = "Failed to get response through WebPA for BootTime parameter "
+			+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_BOOTTIME + ". WebPA response -" + response;
+		if (CommonMethods.isNotNull(response)) {
+		    status = ((expectedBootTime - Long.valueOf(response.trim()) >= BroadBandTestConstants.CONSTANT_0)
+			    && (expectedBootTime - Long.valueOf(response.trim()) < BroadBandTestConstants.CONSTANT_5));
+		    errorMessage = "Actual and Expected bootTime is not equal";
+		    LOGGER.info("Actual: " + (status ? "Actual and Expected bootTime is equal." : errorMessage));
+		}
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while validating the Boot Time parameter through webpa:" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    true);
+	}
+
+    }
 }
