@@ -73,7 +73,6 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
     /**
      * 
      * This method verifies that webpa request to get value of Webpa.version parameter gives the value of WebPA version
-     * and and configparamgen version and it's compatibility with Firmware version
      * 
      * <ol>
      * <li>Step 1 : Verify retrieval of WebPA version in TR181 parameter</li>
@@ -103,7 +102,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	LOGGER.info("#######################################################################################");
 	LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBPA-1003");
 	LOGGER.info(
-		"TEST DESCRIPTION: Verify the retrieval of webpa version from tr181 parameter and configparamgen version and it's compatibility with Firmware version");
+		"TEST DESCRIPTION: Verify the retrieval of webpa version from tr181 parameter");
 	LOGGER.info("TEST STEPS : ");
 	LOGGER.info("1. Verify WebPA version obtained using WebPA request.");
 	LOGGER.info("#######################################################################################");
