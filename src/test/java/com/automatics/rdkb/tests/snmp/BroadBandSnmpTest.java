@@ -2381,11 +2381,15 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			deviceStatusResponse = BroadBandWebPaUtils.getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv,
 					parametersArray);
 
-			List<String> securityNumberlist = Collections
-					.unmodifiableList(Arrays.asList(BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_1,
-							BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_2,
-							BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_3,
-							BroadBandTestConstants.SNMPV3_DH_KICK_START_SECURITY_NUMBER_4));
+			List<String> securityNumberlist = Collections.unmodifiableList(Arrays.asList(
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_1),
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_2),
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_3),
+					AutomaticsPropertyUtility.getProperty(
+							BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_4)));
 
 			validation = true;
 
@@ -4389,7 +4393,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
+					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 			if (status) {
 				LOGGER.info(
 						"STEP 1: ACTUAL : AAA server Primary IP address (IPv4 ) for 2.4GHz is configured successfully.");
@@ -4411,7 +4416,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_SECONDARY_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
+					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 			if (status) {
 				LOGGER.info(
 						"STEP 2: ACTUAL : AAA server Secondary IP address (IPv4 ) for 2.4GHz is configured successfully.");
@@ -4432,7 +4438,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
+					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 			if (status) {
 				LOGGER.info(
 						"STEP 3: ACTUAL : AAA server Primary IP address (IPv4 ) for 5GHz is configured successfully.");
@@ -4454,7 +4461,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_SECONDARY_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.RADIUS_SERVER_IPADDR);
+					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
+					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 
 			if (status) {
 				LOGGER.info(
@@ -7386,11 +7394,10 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	 * <li>Verify retrieving the configuration of bssid MAC for 5Ghz webpa</li>
 	 * </ol>
 	 * 
-     * @param device
-     *            {@link Dut}
-     * 
-     * @author Joseph M
-     * @refactor Athira
+	 * @param device {@link Dut}
+	 * 
+	 * @author Joseph M
+	 * @refactor Athira
 	 */
 	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
 	@TestDetails(testUID = "TC-RDKB-WiFi-SNMP-1031")

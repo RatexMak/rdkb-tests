@@ -5399,8 +5399,8 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
      * <li>Validate if we are able to SSH to the WAN IP using the Jump server</li>
      * </ol>
      * 
-     * @param settop
-     *            {@link Settop}
+     * @param device
+     *            {@link Dut}
      * @author Joseph M
      * @refactor Alan_Bivera
      */
@@ -5457,12 +5457,36 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 2: ACTION : SSH to the wanip of the device using the jump server");
 	    LOGGER.info("STEP 2: EXPECTED : SSH client must not accessible via WAN IP. ");
 	    LOGGER.info("**********************************************************************************");
-	    status = !BroadBandCommonUtils.executeSshCommandOnJumpServer(tapEnv, device, wanIpv6Address);
+	    
+	    String ipAddress = device.getHostIpAddress();
+	    LOGGER.info("the default ip address is :"+ipAddress);
+	    
+	    String ip4Address = device.getHostIp4Address(); 
+	    LOGGER.info("the default ipv4 address is :"+ip4Address);
+	    
+	    String ip6Address = device.getHostIp6Address();    
+	    device.setHostIp4Address(null);    
+	    device.setHostIp6Address(wanIpv6Address);    
+	    ipAddress = device.getHostIpAddress();
+	    
+	    device.setHostIpAddress(wanIpv6Address);
+	    LOGGER.info("the new HostIP address :"+device.getHostIpAddress());
+	    
+	    String response = tapEnv.executeCommandUsingSsh(device,"echo test_connection");
+	    
+	    LOGGER.info("response of the command execution :"+response);
+	    if(response.isEmpty())
+	    	status = true;   		
 	    if (status) {
 		LOGGER.info("STEP 2: ACTUAL : SSH client is not accessible via WAN IP");
 	    } else {
 		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
 	    }
+	    device.setHostIp4Address(ip4Address);
+	    LOGGER.info("the  ipv4 address set after execution :"+device.getHostIp4Address());
+	    device.setHostIpAddress(ipAddress);
+	    LOGGER.info("the  HostIP address set after execution :"+device.getHostIpAddress());
+	    
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 	    LOGGER.info("**********************************************************************************");
 

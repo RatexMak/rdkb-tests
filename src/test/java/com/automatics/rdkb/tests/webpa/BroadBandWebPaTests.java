@@ -68,6 +68,7 @@ import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
 import com.automatics.webpa.WebPaServerResponse;
+import com.automatics.utils.AutomaticsPropertyUtility;
 
 public class BroadBandWebPaTests extends AutomaticsTestBase {
     /**
@@ -623,7 +624,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    status = false;
 	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, WebPaDataTypes.STRING.getValue(),
-		    BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE, BroadBandTestConstants.THREE_MINUTES,
+		    AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE), BroadBandTestConstants.THREE_MINUTES,
 		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    // Error message
 	    errorMessage = "Failed to set Global DNS IPv4 value to using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4'";
@@ -645,7 +647,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    status = false;
 	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-		    BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE, BroadBandTestConstants.THREE_MINUTES,
+		    AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE), BroadBandTestConstants.THREE_MINUTES,
 		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    // Error message
 	    errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
@@ -1944,7 +1947,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    List<WebPaParameter> webPaParameters = BroadBandWebPaUtils.getListOfWebpaParametersToEnableOrDisableXdns(
 		    BroadBandTestConstants.TRUE, BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
-		    BroadBandTestConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY);
+		    AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY));
 	    resultObject = BroadBandWebPaUtils.executeSetAndGetOnMultipleWebPaGetParams(device, tapEnv,
 		    webPaParameters);
 	    status = resultObject.isStatus();
@@ -2042,8 +2046,10 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    try {
 		List<WebPaParameter> webPaParameters = BroadBandWebPaUtils
 			.getListOfWebpaParametersToEnableOrDisableXdns(BroadBandTestConstants.FALSE,
-				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE,
-				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE);
+					AutomaticsPropertyUtility
+					.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
+					AutomaticsPropertyUtility
+					.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE));
 		resultObject = BroadBandWebPaUtils.executeSetAndGetOnMultipleWebPaGetParams(device, tapEnv,
 			webPaParameters);
 		status = resultObject.isStatus();
@@ -3978,9 +3984,10 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 		    "STEP 4: ACTION : Execute the Webpa Set Command for parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
 	    LOGGER.info("STEP 4: EXPECTED : Device WifiClient.MacAddress Value should be set successfully via Webpa.");
 	    LOGGER.info("**********************************************************************************");
-	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
-		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
-		    BroadBandTestConstants.WIFI_CLIENT_MAC_ADDRESS_WIFICLIENT);
+		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
+				AutomaticsPropertyUtility
+				.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT));
 	    if (status) {
 		LOGGER.info("STEP 4: ACTUAL : Setting WifiClient.MacAddress value is successful via Webpa.");
 	    } else {
@@ -4111,7 +4118,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
-		    BroadBandTestConstants.WIFI_CLIENT_MAC_ADDRESS_WIFICLIENT);
+		    AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT));
 	    if (status) {
 		LOGGER.info("STEP 10: ACTUAL : Setting WifiClient.MacAddress value is successful via Webpa.");
 	    } else {
@@ -4130,7 +4138,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 11: EXPECTED : All WifiClient Parameters values should be persistent after reboot.");
 	    LOGGER.info("**********************************************************************************");
 	    String[] expectedValues = new String[] { BroadBandTestConstants.TRUE, BroadBandTestConstants.STRING_30,
-		    BroadBandTestConstants.WIFI_CLIENT_MAC_ADDRESS_WIFICLIENT,
+	    		AutomaticsPropertyUtility
+	    		.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT),
 		    BroadBandTestConstants.WIFICLIENT_SCHEMA_TYPE };
 	    if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
 		status = BroadBandWebPaUtils.verifyWiFiClientDataModelPersistence(device, tapEnv, parameters,

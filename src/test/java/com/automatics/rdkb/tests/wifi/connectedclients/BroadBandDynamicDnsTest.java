@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
@@ -30,6 +31,7 @@ import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
+import com.automatics.utils.AutomaticsPropertyUtility;
 
 public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 
@@ -247,7 +249,8 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 		LOGGER.info("#######################################################################################");
 		errorMessage = "FAILED TO VERIFY NSLOOKUP";
 		status = BroadBandCommonUtils.executeAndVerifyNsLookUpCommandInConnectedClient(deviceConnected, tapEnv,
-				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE,
+				AutomaticsPropertyUtility
+				.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
 				BroadBandTestConstants.NS_LOOKUP_GLOBAL_DNS_RESPONSE);
 		if (status) {
 			LOGGER.info("STEP " + stepNumber + ": ACTUAL : OBTAINED EXPECTED RESULT SUCCESSFULLY.EXPECTED RESULT : "

@@ -39,6 +39,7 @@ import com.automatics.rdkb.TestCategory;
 import com.automatics.rdkb.constants.BroadBandCdlConstants;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants.BAND_STEERING_PARAM;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
@@ -75,6 +76,7 @@ import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
 import com.automatics.webpa.WebPaServerResponse;
+import com.automatics.utils.AutomaticsPropertyUtility;
 
 /**
  * Test class with test case for validating web ui based tests
@@ -3180,7 +3182,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 
 	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, WebPaDataTypes.STRING.getValue(),
-		    AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
+		    AutomaticsTapApi.getSTBPropsValue(AutomaticsPropertyUtility
+		    		.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE)),
 		    AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 
 	    // Error message
@@ -3204,7 +3207,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("#######################################################################################");
 	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-		    AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
+		    AutomaticsTapApi.getSTBPropsValue(AutomaticsPropertyUtility
+		    		.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE)),
 		    AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    // Error message
 	    errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";

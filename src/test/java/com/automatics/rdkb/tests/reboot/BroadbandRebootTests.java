@@ -31,6 +31,7 @@ import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -50,6 +51,7 @@ import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
 import com.automatics.utils.xconf.XConfUtils;
+import com.automatics.utils.AutomaticsPropertyUtility;
 
 public class BroadbandRebootTests extends AutomaticsTestBase {
 
@@ -431,7 +433,8 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		errorMessage = "Wifi Blaster PlanID Parameter is not set";
 		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 			BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_PLANID, BroadBandTestConstants.CONSTANT_0,
-			BroadBandTestConstants.STRING_BLASTER_PLANID, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+			AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_BLASTER_PLANID), BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
 		if (status) {
 		    LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster PlanID Parameter is set");
 		} else {
@@ -508,7 +511,8 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 			(BroadBandWebPaConstants.WEBPA_PARAM_FOR_BLASTER_DESTMAC.replace(
 				BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_VALUE_ONE)),
-			BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_BLASTER_DESTMAC,
+			BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_BLASTER_DESTMAC),
 			BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
 		if (status) {
 		    LOGGER.info("STEP " + stepNumber + ": ACTUAL: Wifi Blaster DestMac Parameter is set");

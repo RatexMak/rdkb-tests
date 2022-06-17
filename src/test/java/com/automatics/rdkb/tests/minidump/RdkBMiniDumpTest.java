@@ -42,6 +42,7 @@ import com.automatics.providers.crashanalysis.SettopCrashUtils;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -299,9 +300,11 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		if (!result) {
 		    errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(
 			    "Upload string contains new crash failover upload url: ",
-			    BroadBandTestConstants.RDKB_CRASH_FAILOVER_UPLOAD_URL);
+			    AutomaticsPropertyUtility
+				.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RDKB_CRASH_FAILOVER_UPLOAD_URL));
 		    result = !CommonMethods.patternMatcher(response,
-			    BroadBandTestConstants.RDKB_CRASH_FAILOVER_UPLOAD_URL);
+		    		AutomaticsPropertyUtility
+		    		.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RDKB_CRASH_FAILOVER_UPLOAD_URL));
 		}
 	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS && !result
 		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));

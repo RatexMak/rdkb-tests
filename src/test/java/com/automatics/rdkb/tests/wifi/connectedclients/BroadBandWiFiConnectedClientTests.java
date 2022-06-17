@@ -39,6 +39,7 @@ import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
@@ -68,6 +69,7 @@ import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
 import com.automatics.webpa.WebPaServerResponse;
+import com.automatics.utils.AutomaticsPropertyUtility;
 
 public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 
@@ -9331,13 +9333,17 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 					"STEP 11 : ACTION:Execute Webpa Set command for DHCP Min address,Max Address and Lease time with values");
 			LOGGER.info("STEP 11 : EXPECTED:Webpa set request should be successful with status code 200");
 			LOGGER.info("##########################################################################");
-			errorMessage = "Failed to change DHCP ending address 10.0.0.3 with webpa request";
+			errorMessage = "Failed to change DHCP ending address with webpa request";
 			if (DeviceModeHandler.isBusinessClassDevice(device)) {
-				setDhcpMinValue = BroadBandTestConstants.STRING_DHCP_MIN_ADDRESS_BUSSI;
-				setDhcpMaxValue = BroadBandTestConstants.STRING_DHCP_MAX_ADDRESS_BUSSI;
+				setDhcpMinValue = AutomaticsPropertyUtility
+						.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_STRING_DHCP_MIN_ADDRESS_BUSSI);
+				setDhcpMaxValue = AutomaticsPropertyUtility
+						.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_STRING_DHCP_MAX_ADDRESS_BUSSI);
 			} else {
-				setDhcpMinValue = BroadBandTestConstants.STRING_DHCP_MIN_ADDRESS;
-				setDhcpMaxValue = BroadBandTestConstants.STRING_DHCP_MAX_ADDRESS;
+				setDhcpMinValue = AutomaticsPropertyUtility
+						.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_STRING_DHCP_MIN_ADDRESS);
+				setDhcpMaxValue = AutomaticsPropertyUtility
+						.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_STRING_DHCP_MAX_ADDRESS);
 			}
 
 			Boolean status1 = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
