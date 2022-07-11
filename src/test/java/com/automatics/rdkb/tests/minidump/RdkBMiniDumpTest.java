@@ -62,445 +62,454 @@ import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
 
 public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
-	
+
 	/** Default interface to retrieve estb mac */
 	private static final String DEFAULT_INTERFACE_NAME_TO_RETRIEVE_ESTB_MAC_ADDRESS = "erouter0";
 
-    /**
-     * This method is written to add mini dumps to S3 amazon locations' .This method tests the generation of minidump
-     * when Ccsp process is killed and verifies the minidump upload to: 1.Amazon S3 server with correct S3 Amazon
-     * Signing Url 2. Crash portal as fail over mechanism with incorrect S3 Amazon Signing Url
-     * 
-     * <ol>
-     * <li>Step 1: Obtain Pid of CcspPandMSsp process.</li>
-     * <li>Step 2: Create a file /nvram/coredump.properties and override the S3_AMAZON_SIGNING_URL</li>
-     * <li>Step 3: Kill CcspPandMSsp process and verify it has started again.</li>
-     * <li>Step 4: Poll and check core_log.txt for upload failed and retry log messages</li>
-     * <li>Step 5: Poll and check for fail over mechanism log message is not present in core_log.txt. If Fail over
-     * mechanism fails, need to check for that log message is not present</li>
-     * <li>Step 6: Verify minidump is not uploaded to new Failover servers</li>
-     * <li>Step 7: Check if minidump folder has been cleaned up and the log messages present.</li>
-     * <li>Step 8: Remove /nvram/coredump.properties file</li>
-     * <li>Step 9: Obtain Pid of CcspPandMSsp process.</li>
-     * <li>Step 10: Kill CcspPandMSsp process and verify it has started again.</li>
-     * <li>Step 11: Poll and check for S3 Amazon upload success log message in core_log.txt</li>
-     * <li>Step 12: Check if minidump folder has been cleaned up and the log messages present.</li>
-     * </ol>
-     * 
-     * @author Ashwin Sankarasubramanian
-     * @refactor Said Hisham
-     * 
-     * @param device
-     *            device to be used for execution
-     * 
-     */
-    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
-	    BroadBandTestGroup.NEW_FEATURE, BroadBandTestGroup.SYSTEM })
-    @TestDetails(testUID = "TC-RDKB-SYSTEM-1026")
-    public void testVerifyAmazonS3Upload(Dut device) {
+	/**
+	 * This method is written to add mini dumps to S3 amazon locations' .This method
+	 * tests the generation of minidump when Ccsp process is killed and verifies the
+	 * minidump upload to: 1.Amazon S3 server with correct S3 Amazon Signing Url 2.
+	 * Crash portal as fail over mechanism with incorrect S3 Amazon Signing Url
+	 * 
+	 * <ol>
+	 * <li>Step 1: Obtain Pid of CcspPandMSsp process.</li>
+	 * <li>Step 2: Create a file /nvram/coredump.properties and override the
+	 * S3_AMAZON_SIGNING_URL</li>
+	 * <li>Step 3: Kill CcspPandMSsp process and verify it has started again.</li>
+	 * <li>Step 4: Poll and check core_log.txt for upload failed and retry log
+	 * messages</li>
+	 * <li>Step 5: Poll and check for fail over mechanism log message is not present
+	 * in core_log.txt. If Fail over mechanism fails, need to check for that log
+	 * message is not present</li>
+	 * <li>Step 6: Verify minidump is not uploaded to new Failover servers</li>
+	 * <li>Step 7: Check if minidump folder has been cleaned up and the log messages
+	 * present.</li>
+	 * <li>Step 8: Remove /nvram/coredump.properties file</li>
+	 * <li>Step 9: Obtain Pid of CcspPandMSsp process.</li>
+	 * <li>Step 10: Kill CcspPandMSsp process and verify it has started again.</li>
+	 * <li>Step 11: Poll and check for S3 Amazon upload success log message in
+	 * core_log.txt</li>
+	 * <li>Step 12: Check if minidump folder has been cleaned up and the log
+	 * messages present.</li>
+	 * </ol>
+	 * 
+	 * @author Ashwin Sankarasubramanian
+	 * @refactor Said Hisham
+	 * 
+	 * @param device device to be used for execution
+	 * 
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+			BroadBandTestGroup.NEW_FEATURE, BroadBandTestGroup.SYSTEM })
+	@TestDetails(testUID = "TC-RDKB-SYSTEM-1026")
+	public void testVerifyAmazonS3Upload(Dut device) {
 
-	// stores the test result
-	boolean result = false;
-	// stores the test case id
-	String testId = "TC-RDKB-SYSTEM-026";
-	// stores the error message
-	String errorMessage = null;
-	// stores the command response
-	String response = null;
-	// stores the test step number
-	String step = "s1";
-	// stores the Result values response
-	ResultValues resValues = new ResultValues();
-	// stores the message list to be passed as parameter
-	List<String> messageList = new ArrayList<String>();
-	// stores the start time for poll duration
-	long startTime = 0;
+		// stores the test result
+		boolean result = false;
+		// stores the test case id
+		String testId = "TC-RDKB-SYSTEM-026";
+		// stores the error message
+		String errorMessage = null;
+		// stores the command response
+		String response = null;
+		// stores the test step number
+		String step = "s1";
+		// stores the Result values response
+		ResultValues resValues = new ResultValues();
+		// stores the message list to be passed as parameter
+		List<String> messageList = new ArrayList<String>();
+		// stores the start time for poll duration
+		long startTime = 0;
 
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-1026");
-	LOGGER.info("TEST DESCRIPTION: verify minidump upload to S3/crash portal");
-	LOGGER.info("TEST STEPS : ");
-	LOGGER.info("1. Obtain Pid of CcspPandMSsp process.");
-	LOGGER.info("2. Create a file /nvram/coredump.properties and override the S3_AMAZON_SIGNING_URL");
-	LOGGER.info("3. Kill CcspPandMSsp process and verify it has started again.");
-	LOGGER.info("4. Poll and check core_log.txt for upload failed and retry log messages ");
-	LOGGER.info(
-		"5. Poll and check for fail over mechanism log message not present in core_log.txt. If Fail over mechanism fails,need to check for that log message is not present");
-	LOGGER.info("6. Verify minidump is not uploaded to new Failover servers.");
-	LOGGER.info("7. Check if minidump folder has been cleaned up and the log messages present");
-	LOGGER.info("8. Remove /nvram/coredump.properties file");
-	LOGGER.info("9. Obtain Pid of CcspPandMSsp process.");
-	LOGGER.info("10. Kill CcspPandMSsp process and verify it has started again.");
-	LOGGER.info("11. Poll and check for S3 Amazon upload success log message in core_log.txt");
-	LOGGER.info("12. Check if minidump folder has been cleaned up and the log messages present");
-	LOGGER.info("#######################################################################################");
-	try {
-
-	    /*
-	     * Step 1: Obtain Pid of CcspPandMSsp process.
-	     */
-	    errorMessage = "Unable to obtain the pid for CcspPandMSsp";
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 1:DESCRIPTION: Obtain Pid of CcspPandMSsp process.");
-	    LOGGER.info("STEP 1:ACTION: Execute command:pidof CcspPandMSsp");
-	    LOGGER.info("STEP 1:EXPECTED - Pid of CcspPandMSsp process is obtained");
-	    LOGGER.info("*****************************************************************************************");
-	    response = CommonMethods.getPidOfProcess(device, tapEnv, StbProcess.PANDM.getProcessName());
-	    result = CommonMethods.isNotNull(response);
-	    if (result) {
-		LOGGER.info("STEP 1: ACTUAL :Pid of CcspPandMSsp process is obtained");
-	    } else {
-		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
-
-	    /*
-	     * Step 2: Create a file /nvram/coredump.properties and override the S3_AMAZON_SIGNING_URL
-	     */
-	    step = "s2";
-	    errorMessage = "Unable to create file /nvram/coredump.properties with incorrect url";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info(
-		    "STEP 2:DESCRIPTION:  Create a file /nvram/coredump.properties and override the S3_AMAZON_SIGNING_URL.");
-	    LOGGER.info(
-		    "STEP 2:ACTION: Execute command: echo 'S3_AMAZON_SIGNING_URL=http://test' > /nvram/coredump.properties");
-	    LOGGER.info("STEP 2:EXPECTED - File is created with incorrect S3 Amazon Signing Url");
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_AMAZON_URL_OVERRIDE);
-	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.PROP_KEY_AMAZON_URL,
-		    BroadBandCommandConstants.FILE_NVRAM_COREDUMP_PROPERTIES);
-	    result = CommonMethods.isNotNull(response);
-	    if (result) {
-		LOGGER.info("STEP 2: ACTUAL :File is created with incorrect S3 Amazon Signing Url");
-	    } else {
-		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
-
-	    /*
-	     * Step 3: Kill CcspPandMSsp process and verify it has started again.
-	     */
-	    step = "s3";
-	    errorMessage = "Unable to kill and verify CcspPandMSsp restarted with new pid";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 3:DESCRIPTION: Kill CcspPandMSsp and verify it has started again.");
-	    LOGGER.info("STEP 3:ACTION: Execute command:kill -11 <pid_of_ccsp_process>.");
-	    LOGGER.info("STEP 3:EXPECTED - CcspPandMSsp has been killed and started with new pid");
-	    LOGGER.info("*****************************************************************************************");
-	    result = CommonMethods.restartProcess(device, tapEnv, ProcessRestartOption.KILL_11,
-		    StbProcess.PANDM.getProcessName());
-	    if (result) {
-		LOGGER.info("STEP 3: ACTUAL :CcspPandMSsp has been killed and started with new pid");
-	    } else {
-		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
-
-	    /*
-	     * Step 4: Poll and check core_log.txt for upload failed and retry log messages
-	     */
-	    step = "s4";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 4:DESCRIPTION: Poll and check core_log.txt for upload failed and retry log messages.");
-	    LOGGER.info(
-		    "STEP 4:ACTION: Execute commands:grep -i 'S3 Amazon Upload Failed' /rdklogs/logs/core_log.txt,grep -i 'Retry' /rdklogs/logs/core_log.txt");
-	    LOGGER.info("STEP 4:EXPECTED - S3 Upload failed and Retry log messages present");
-	    LOGGER.info("*****************************************************************************************");
-	    messageList.clear();
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_AMAZON_UPLOAD_FAILED);
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_AMAZON_UPLOAD_RETRY);
-	    startTime = System.currentTimeMillis();
-	    do {
-		resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
-			CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
-		result = resValues.isResult();
-		errorMessage = resValues.getMessage();
-		if (result) {
-		    break;
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-	    if (result) {
-		LOGGER.info("STEP 4: ACTUAL :S3 Upload failed and Retry log messages present");
-	    } else {
-		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
-
-	    /*
-	     * Step 5: Poll and check for fail over mechanism log message in core_log.txt. If Fail over mechanism fails,
-	     * need to check for that log message.
-	     */
-	    step = "s5";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info(
-		    "STEP 5:DESCRIPTION: Poll and check for fail over mechanism log message in core_log.txt. If Fail over mechanism fails, need to check for that log message is not present");
-	    LOGGER.info(
-		    "STEP 5:ACTION: Execute command: to search for logs-Fail Over Mechanism: CURL minidump to crashportal,Fail Over Mechanism for minidump : Failed..! in /rdklogs/logs/core_log.txt ");
-	    LOGGER.info(
-		    "STEP 5:EXPECTED - Fail over mechansism log messages should not present in /rdklogs/logs/core_log.txt");
-	    LOGGER.info("*****************************************************************************************");
-	    messageList.clear();
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_FAIL_OVER_UPLOAD);
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CRASH_PORTAL_SUCCESS_UPLOAD);
-	    startTime = System.currentTimeMillis();
-	    errorMessage = "Fail over mechanism log messages is present in  /rdklogs/logs/core_log.txt";
-	    do {
-		resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
-			CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
-		result = !resValues.isResult();
-		if (!result) {
-		    messageList.remove(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CRASH_PORTAL_SUCCESS_UPLOAD);
-		    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_FAIL_OVER_FAILED);
-		    resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
-			    CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
-		    result = !resValues.isResult();
-		}
-		if (result) {
-		    break;
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-	    if (result) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-1026");
+		LOGGER.info("TEST DESCRIPTION: verify minidump upload to S3/crash portal");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Obtain Pid of CcspPandMSsp process.");
+		LOGGER.info("2. Create a file /nvram/coredump.properties and override the S3_AMAZON_SIGNING_URL");
+		LOGGER.info("3. Kill CcspPandMSsp process and verify it has started again.");
+		LOGGER.info("4. Poll and check core_log.txt for upload failed and retry log messages ");
 		LOGGER.info(
-			"STEP 5: ACTUAL :Fail over mechansism log messages is not present in /rdklogs/logs/core_log.txt");
-	    } else {
-		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+				"5. Poll and check for fail over mechanism log message not present in core_log.txt. If Fail over mechanism fails,need to check for that log message is not present");
+		LOGGER.info("6. Verify minidump is not uploaded to new Failover servers.");
+		LOGGER.info("7. Check if minidump folder has been cleaned up and the log messages present");
+		LOGGER.info("8. Remove /nvram/coredump.properties file");
+		LOGGER.info("9. Obtain Pid of CcspPandMSsp process.");
+		LOGGER.info("10. Kill CcspPandMSsp process and verify it has started again.");
+		LOGGER.info("11. Poll and check for S3 Amazon upload success log message in core_log.txt");
+		LOGGER.info("12. Check if minidump folder has been cleaned up and the log messages present");
+		LOGGER.info("#######################################################################################");
+		try {
 
-	    /*
-	     * Step 6: Verify minidump is uploaded to new Failover servers by checking for upload log string in
-	     * core_log.txt file
-	     */
-	    step = "s6";
-	    errorMessage = "Upload string log message present";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 6:DESCRIPTION: Verify minidump is not uploaded to new Failover servers.");
-	    LOGGER.info("STEP 6:ACTION: Execute command:grep -i 'Upload string' /rdklogs/logs/core_log.txt.");
-	    LOGGER.info("STEP 6:EXPECTED - The upload string in core_log should not contain new failover upload url");
-	    LOGGER.info("*****************************************************************************************");
-	    startTime = System.currentTimeMillis();
-	    errorMessage = BroadBandCommonUtils
-		    .concatStringUsingStringBuffer("Upload string contains new crash failover upload url");
-	    do {
-		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-			BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_STRING, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
-		result = CommonMethods.isNull(response);
-		if (!result) {
-		    errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(
-			    "Upload string contains new crash failover upload url: ",
-			    AutomaticsPropertyUtility
-				.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RDKB_CRASH_FAILOVER_UPLOAD_URL));
-		    result = !CommonMethods.patternMatcher(response,
-		    		AutomaticsPropertyUtility
-		    		.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RDKB_CRASH_FAILOVER_UPLOAD_URL));
+			/*
+			 * Step 1: Obtain Pid of CcspPandMSsp process.
+			 */
+			errorMessage = "Unable to obtain the pid for CcspPandMSsp";
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 1:DESCRIPTION: Obtain Pid of CcspPandMSsp process.");
+			LOGGER.info("STEP 1:ACTION: Execute command:pidof CcspPandMSsp");
+			LOGGER.info("STEP 1:EXPECTED - Pid of CcspPandMSsp process is obtained");
+			LOGGER.info("*****************************************************************************************");
+			response = CommonMethods.getPidOfProcess(device, tapEnv, StbProcess.PANDM.getProcessName());
+			result = CommonMethods.isNotNull(response);
+			if (result) {
+				LOGGER.info("STEP 1: ACTUAL :Pid of CcspPandMSsp process is obtained");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
+
+			/*
+			 * Step 2: Create a file /nvram/coredump.properties and override the
+			 * S3_AMAZON_SIGNING_URL
+			 */
+			step = "s2";
+			errorMessage = "Unable to create file /nvram/coredump.properties with incorrect url";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info(
+					"STEP 2:DESCRIPTION:  Create a file /nvram/coredump.properties and override the S3_AMAZON_SIGNING_URL.");
+			LOGGER.info(
+					"STEP 2:ACTION: Execute command: echo 'S3_AMAZON_SIGNING_URL=http://test' > /nvram/coredump.properties");
+			LOGGER.info("STEP 2:EXPECTED - File is created with incorrect S3 Amazon Signing Url");
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_AMAZON_URL_OVERRIDE);
+			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.PROP_KEY_AMAZON_URL,
+					BroadBandCommandConstants.FILE_NVRAM_COREDUMP_PROPERTIES);
+			result = CommonMethods.isNotNull(response);
+			if (result) {
+				LOGGER.info("STEP 2: ACTUAL :File is created with incorrect S3 Amazon Signing Url");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
+
+			/*
+			 * Step 3: Kill CcspPandMSsp process and verify it has started again.
+			 */
+			step = "s3";
+			errorMessage = "Unable to kill and verify CcspPandMSsp restarted with new pid";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 3:DESCRIPTION: Kill CcspPandMSsp and verify it has started again.");
+			LOGGER.info("STEP 3:ACTION: Execute command:kill -11 <pid_of_ccsp_process>.");
+			LOGGER.info("STEP 3:EXPECTED - CcspPandMSsp has been killed and started with new pid");
+			LOGGER.info("*****************************************************************************************");
+			result = CommonMethods.restartProcess(device, tapEnv, ProcessRestartOption.KILL_11,
+					StbProcess.PANDM.getProcessName());
+			if (result) {
+				LOGGER.info("STEP 3: ACTUAL :CcspPandMSsp has been killed and started with new pid");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
+
+			/*
+			 * Step 4: Poll and check core_log.txt for upload failed and retry log messages
+			 */
+			step = "s4";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 4:DESCRIPTION: Poll and check core_log.txt for upload failed and retry log messages.");
+			LOGGER.info(
+					"STEP 4:ACTION: Execute commands:grep -i 'S3 Amazon Upload Failed' /rdklogs/logs/core_log.txt,grep -i 'Retry' /rdklogs/logs/core_log.txt");
+			LOGGER.info("STEP 4:EXPECTED - S3 Upload failed and Retry log messages present");
+			LOGGER.info("*****************************************************************************************");
+			messageList.clear();
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_AMAZON_UPLOAD_FAILED);
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_AMAZON_UPLOAD_RETRY);
+			startTime = System.currentTimeMillis();
+			do {
+				resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
+						CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
+				result = resValues.isResult();
+				errorMessage = resValues.getMessage();
+				if (result) {
+					break;
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (result) {
+				LOGGER.info("STEP 4: ACTUAL :S3 Upload failed and Retry log messages present");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+
+			/*
+			 * Step 5: Poll and check for fail over mechanism log message in core_log.txt.
+			 * If Fail over mechanism fails, need to check for that log message.
+			 */
+			step = "s5";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info(
+					"STEP 5:DESCRIPTION: Poll and check for fail over mechanism log message in core_log.txt. If Fail over mechanism fails, need to check for that log message is not present");
+			LOGGER.info(
+					"STEP 5:ACTION: Execute command: to search for logs-Fail Over Mechanism: CURL minidump to crashportal,Fail Over Mechanism for minidump : Failed..! in /rdklogs/logs/core_log.txt ");
+			LOGGER.info(
+					"STEP 5:EXPECTED - Fail over mechansism log messages should not present in /rdklogs/logs/core_log.txt");
+			LOGGER.info("*****************************************************************************************");
+			messageList.clear();
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_FAIL_OVER_UPLOAD);
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CRASH_PORTAL_SUCCESS_UPLOAD);
+			startTime = System.currentTimeMillis();
+			errorMessage = "Fail over mechanism log messages is present in  /rdklogs/logs/core_log.txt";
+			do {
+				resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
+						CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
+				result = !resValues.isResult();
+				if (!result) {
+					messageList.remove(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CRASH_PORTAL_SUCCESS_UPLOAD);
+					messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_FAIL_OVER_FAILED);
+					resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
+							CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
+					result = !resValues.isResult();
+				}
+				if (result) {
+					break;
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (result) {
+				LOGGER.info(
+						"STEP 5: ACTUAL :Fail over mechansism log messages is not present in /rdklogs/logs/core_log.txt");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+
+			/*
+			 * Step 6: Verify minidump is uploaded to new Failover servers by checking for
+			 * upload log string in core_log.txt file
+			 */
+			step = "s6";
+			errorMessage = "Upload string log message present";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 6:DESCRIPTION: Verify minidump is not uploaded to new Failover servers.");
+			LOGGER.info("STEP 6:ACTION: Execute command:grep -i 'Upload string' /rdklogs/logs/core_log.txt.");
+			LOGGER.info("STEP 6:EXPECTED - The upload string in core_log should not contain new failover upload url");
+			LOGGER.info("*****************************************************************************************");
+			startTime = System.currentTimeMillis();
+			errorMessage = BroadBandCommonUtils
+					.concatStringUsingStringBuffer("Upload string contains new crash failover upload url");
+			do {
+				response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_STRING, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
+				result = CommonMethods.isNull(response);
+				if (!result) {
+					errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(
+							"Upload string contains new crash failover upload url: ",
+							AutomaticsPropertyUtility.getProperty(
+									BroadBandPropertyKeyConstants.PROP_KEY_RDKB_CRASH_FAILOVER_UPLOAD_URL));
+					result = !CommonMethods.patternMatcher(response, AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RDKB_CRASH_FAILOVER_UPLOAD_URL));
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS && !result
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+			if (result) {
+				LOGGER.info("STEP 6: ACTUAL : The upload string in core_log does not contains new failover upload url");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+
+			/*
+			 * Step 7: Check if minidump folder has been cleaned up and the log messages
+			 * present.
+			 */
+			step = "s7";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info(
+					"STEP 7:DESCRIPTION: Check if minidump folder has been cleaned up and the log messages present.");
+			LOGGER.info(
+					"STEP 7:ACTION: Execute commands:grep -i 'Cleanup minidump directory /minidumps' /rdklogs/logs/core_log.txt.");
+			LOGGER.info("STEP 7:EXPECTED - The minidump folder is empty and log messages are present");
+			LOGGER.info("*****************************************************************************************");
+			messageList.clear();
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CLEANUP_DIRECTORY);
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_WORKING_DIR_EMPTY);
+			startTime = System.currentTimeMillis();
+			do {
+				resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
+						CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
+				errorMessage = resValues.getMessage();
+				result = resValues.isResult();
+				if (result) {
+					break;
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (result) {
+				LOGGER.info("STEP 7: ACTUAL : The minidump folder is empty and log messages are present");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+
+			/*
+			 * Step 8: Remove /nvram/coredump.properties file
+			 */
+			step = "s8";
+			errorMessage = "File was not removed successfully";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 8:DESCRIPTION: Remove /nvram/coredump.properties file.");
+			LOGGER.info("STEP 8:ACTION: Execute command:rm /nvram/coredump.properties.");
+			LOGGER.info("STEP 8:EXPECTED - File /nvram/coredump.properties does not exist");
+			LOGGER.info("*****************************************************************************************");
+
+			result = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
+					BroadBandCommandConstants.FILE_NVRAM_COREDUMP_PROPERTIES);
+			if (result) {
+				LOGGER.info("STEP 8: ACTUAL : File /nvram/coredump.properties does not exist");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
+
+			/*
+			 * Step 9: Obtain Pid of CcspPandMSsp process.
+			 */
+			step = "s9";
+			errorMessage = "Unable to obtain the pid for CcspPandMSsp";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 9:DESCRIPTION: Obtain Pid of CcspPandMSsp process.");
+			LOGGER.info("STEP 9:ACTION: Execute command:pidof CcspPandMSsp,echo > /rdklogs/logs/core_log.txt.");
+			LOGGER.info("STEP 9:EXPECTED - Pid of CcspPandMSsp process is obtained");
+			LOGGER.info("*****************************************************************************************");
+
+			// Clearing core_log file to avoid false pass since we're checking
+			// same messages again
+			LOGGER.info("Clearing core_log file:");
+			CommonUtils.clearLogFile(tapEnv, device, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
+			response = CommonMethods.getPidOfProcess(device, tapEnv, StbProcess.PANDM.getProcessName());
+			result = CommonMethods.isNotNull(response);
+			// Restarting PAM process for devices without auto restart
+			if (!result) {
+				LOGGER.info("Restarting PandM process:");
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_START_PANDM_PROCESS);
+				response = CommonMethods.getPidOfProcess(device, tapEnv, StbProcess.PANDM.getProcessName());
+				result = CommonMethods.isNotNull(response);
+			}
+			if (result) {
+				LOGGER.info("STEP 9: ACTUAL : Pid of CcspPandMSsp process is obtained");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
+
+			/*
+			 * Step 10: Kill CcspPandMSsp process and verify it has started again.
+			 */
+			step = "s10";
+			errorMessage = "Unable to kill and verify CcspPandMSsp restarted with new pid";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info("STEP 10:DESCRIPTION: Kill CcspPandMSsp process and verify it has started again.");
+			LOGGER.info("STEP 10:ACTION: Execute command:kill -11 <pid_of_ccsp_process>");
+			LOGGER.info("STEP 10:EXPECTED - CcspPandMSsp has been killed and started with new pid");
+			LOGGER.info("*****************************************************************************************");
+			result = CommonMethods.restartProcess(device, tapEnv, ProcessRestartOption.KILL_11,
+					StbProcess.PANDM.getProcessName());
+			if (result) {
+				LOGGER.info("STEP 10: ACTUAL : CcspPandMSsp has been killed and started with new pid");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
+
+			/*
+			 * Step 11: Poll and check for S3 Amazon upload success log message in
+			 * core_log.txt
+			 */
+			step = "s11";
+			errorMessage = "Unable to find S3 Amazon upload success log message";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info(
+					"STEP 11:DESCRIPTION: Poll and check for S3 Amazon upload success log message in core_log.txt.");
+			LOGGER.info(
+					"STEP 11:ACTION: Execute command:grep -i 'S3 minidump Upload is successful with TLS1.2' /rdklogs/logs/core_log.txt.");
+			LOGGER.info("STEP 11:EXPECTED -S3 Amazon upload success log message is present");
+			LOGGER.info("*****************************************************************************************");
+
+			startTime = System.currentTimeMillis();
+			do {
+				response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_AMAZON_UPLOAD_SUCCESS,
+						CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
+				result = CommonMethods.isNotNull(response);
+				if (result) {
+					break;
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (result) {
+				LOGGER.info("STEP 11: ACTUAL : S3 Amazon upload success log message is present");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+
+			/*
+			 * Step 12: Check if minidump folder has been cleaned up and the log messages
+			 * present.
+			 */
+			step = "s12";
+			result = false;
+			LOGGER.info("*****************************************************************************************");
+			LOGGER.info(
+					"STEP 12:DESCRIPTION: Check if minidump folder has been cleaned up and the log messages present.");
+			LOGGER.info(
+					"STEP 12:ACTION: Execute commands:grep -i 'Cleanup minidump directory /minidumps' /rdklogs/logs/core_log.txt.");
+			LOGGER.info("STEP 12:EXPECTED -The minidump folder is empty and log messages are present");
+			LOGGER.info("*****************************************************************************************");
+			messageList.clear();
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CLEANUP_DIRECTORY);
+			messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_WORKING_DIR_EMPTY);
+			startTime = System.currentTimeMillis();
+			do {
+				resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
+						CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
+				errorMessage = resValues.getMessage();
+				result = resValues.isResult();
+				if (result) {
+					break;
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (result) {
+				LOGGER.info("STEP 12: ACTUAL : The minidump folder is empty and log messages are present");
+			} else {
+				LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("*****************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
+
+		} catch (Exception exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error("Exception occured while validating minidump upload to S3/crash portal");
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, step, result, errorMessage, true);
 		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS && !result
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
-	    if (result) {
-		LOGGER.info("STEP 6: ACTUAL : The upload string in core_log does not contains new failover upload url");
-	    } else {
-		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
-
-	    /*
-	     * Step 7: Check if minidump folder has been cleaned up and the log messages present.
-	     */
-	    step = "s7";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info(
-		    "STEP 7:DESCRIPTION: Check if minidump folder has been cleaned up and the log messages present.");
-	    LOGGER.info(
-		    "STEP 7:ACTION: Execute commands:grep -i 'Cleanup minidump directory /minidumps' /rdklogs/logs/core_log.txt.");
-	    LOGGER.info("STEP 7:EXPECTED - The minidump folder is empty and log messages are present");
-	    LOGGER.info("*****************************************************************************************");
-	    messageList.clear();
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CLEANUP_DIRECTORY);
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_WORKING_DIR_EMPTY);
-	    startTime = System.currentTimeMillis();
-	    do {
-		resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
-			CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
-		errorMessage = resValues.getMessage();
-		result = resValues.isResult();
-		if (result) {
-		    break;
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-	    if (result) {
-		LOGGER.info("STEP 7: ACTUAL : The minidump folder is empty and log messages are present");
-	    } else {
-		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
-
-	    /*
-	     * Step 8: Remove /nvram/coredump.properties file
-	     */
-	    step = "s8";
-	    errorMessage = "File was not removed successfully";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 8:DESCRIPTION: Remove /nvram/coredump.properties file.");
-	    LOGGER.info("STEP 8:ACTION: Execute command:rm /nvram/coredump.properties.");
-	    LOGGER.info("STEP 8:EXPECTED - File /nvram/coredump.properties does not exist");
-	    LOGGER.info("*****************************************************************************************");
-
-	    result = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
-		    BroadBandCommandConstants.FILE_NVRAM_COREDUMP_PROPERTIES);
-	    if (result) {
-		LOGGER.info("STEP 8: ACTUAL : File /nvram/coredump.properties does not exist");
-	    } else {
-		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
-
-	    /*
-	     * Step 9: Obtain Pid of CcspPandMSsp process.
-	     */
-	    step = "s9";
-	    errorMessage = "Unable to obtain the pid for CcspPandMSsp";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 9:DESCRIPTION: Obtain Pid of CcspPandMSsp process.");
-	    LOGGER.info("STEP 9:ACTION: Execute command:pidof CcspPandMSsp,echo > /rdklogs/logs/core_log.txt.");
-	    LOGGER.info("STEP 9:EXPECTED - Pid of CcspPandMSsp process is obtained");
-	    LOGGER.info("*****************************************************************************************");
-
-	    // Clearing core_log file to avoid false pass since we're checking
-	    // same messages again
-	    LOGGER.info("Clearing core_log file:");
-	    CommonUtils.clearLogFile(tapEnv, device, CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
-	    response = CommonMethods.getPidOfProcess(device, tapEnv, StbProcess.PANDM.getProcessName());
-	    result = CommonMethods.isNotNull(response);
-	    // Restarting PAM process for devices without auto restart
-	    if (!result) {
-		LOGGER.info("Restarting PandM process:");
-		tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_START_PANDM_PROCESS);
-		response = CommonMethods.getPidOfProcess(device, tapEnv, StbProcess.PANDM.getProcessName());
-		result = CommonMethods.isNotNull(response);
-	    }
-	    if (result) {
-		LOGGER.info("STEP 9: ACTUAL : Pid of CcspPandMSsp process is obtained");
-	    } else {
-		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
-
-	    /*
-	     * Step 10: Kill CcspPandMSsp process and verify it has started again.
-	     */
-	    step = "s10";
-	    errorMessage = "Unable to kill and verify CcspPandMSsp restarted with new pid";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info("STEP 10:DESCRIPTION: Kill CcspPandMSsp process and verify it has started again.");
-	    LOGGER.info("STEP 10:ACTION: Execute command:kill -11 <pid_of_ccsp_process>");
-	    LOGGER.info("STEP 10:EXPECTED - CcspPandMSsp has been killed and started with new pid");
-	    LOGGER.info("*****************************************************************************************");
-	    result = CommonMethods.restartProcess(device, tapEnv, ProcessRestartOption.KILL_11,
-		    StbProcess.PANDM.getProcessName());
-	    if (result) {
-		LOGGER.info("STEP 10: ACTUAL : CcspPandMSsp has been killed and started with new pid");
-	    } else {
-		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, true);
-
-	    /*
-	     * Step 11: Poll and check for S3 Amazon upload success log message in core_log.txt
-	     */
-	    step = "s11";
-	    errorMessage = "Unable to find S3 Amazon upload success log message";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info(
-		    "STEP 11:DESCRIPTION: Poll and check for S3 Amazon upload success log message in core_log.txt.");
-	    LOGGER.info(
-		    "STEP 11:ACTION: Execute command:grep -i 'S3 minidump Upload is successful with TLS1.2' /rdklogs/logs/core_log.txt.");
-	    LOGGER.info("STEP 11:EXPECTED -S3 Amazon upload success log message is present");
-	    LOGGER.info("*****************************************************************************************");
-
-	    startTime = System.currentTimeMillis();
-	    do {
-		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-			BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_AMAZON_UPLOAD_SUCCESS,
-			CrashConstants.LOG_FILE_FOR_CRASHES_RDKB);
-		result = CommonMethods.isNotNull(response);
-		if (result) {
-		    break;
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-	    if (result) {
-		LOGGER.info("STEP 11: ACTUAL : S3 Amazon upload success log message is present");
-	    } else {
-		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
-
-	    /*
-	     * Step 12: Check if minidump folder has been cleaned up and the log messages present.
-	     */
-	    step = "s12";
-	    result = false;
-	    LOGGER.info("*****************************************************************************************");
-	    LOGGER.info(
-		    "STEP 12:DESCRIPTION: Check if minidump folder has been cleaned up and the log messages present.");
-	    LOGGER.info(
-		    "STEP 12:ACTION: Execute commands:grep -i 'Cleanup minidump directory /minidumps' /rdklogs/logs/core_log.txt.");
-	    LOGGER.info("STEP 12:EXPECTED -The minidump folder is empty and log messages are present");
-	    LOGGER.info("*****************************************************************************************");
-	    messageList.clear();
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_CLEANUP_DIRECTORY);
-	    messageList.add(BroadBandTraceConstants.LOG_MESSAGE_MINIDUMP_WORKING_DIR_EMPTY);
-	    startTime = System.currentTimeMillis();
-	    do {
-		resValues = BroadBandCommonUtils.checkFileForPatterns(device, tapEnv, messageList,
-			CrashConstants.LOG_FILE_FOR_CRASHES_RDKB, true);
-		errorMessage = resValues.getMessage();
-		result = resValues.isResult();
-		if (result) {
-		    break;
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-	    if (result) {
-		LOGGER.info("STEP 12: ACTUAL : The minidump folder is empty and log messages are present");
-	    } else {
-		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("*****************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, step, result, errorMessage, false);
-
-	} catch (Exception exception) {
-	    errorMessage = exception.getMessage();
-	    LOGGER.error("Exception occured while validating minidump upload to S3/crash portal");
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, step, result, errorMessage, true);
 	}
-    }
-    
-    /**
+
+	/**
 	 * Test to Verify mini dump creation and upload to crash portal for the process
 	 * PandM
 	 * 
@@ -530,16 +539,16 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("**********************************************************************************");
 
 		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
-		
+
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1001");
 		LOGGER.info("#######################################################################################");
 	}
+
 	/**
-	 * Test to Verify mini dump creation and upload to crash portal for the
-	 * process CcspPsm
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * CcspPsm
 	 * 
-	 * @param device
-	 *            The device to be used.
+	 * @param device The device to be used.
 	 * 
 	 * @author Styles Managalasseri
 	 * @refactor yamini.s
@@ -555,7 +564,6 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		StbProcess stbProcess = StbProcess.CCSP_PSM;
 		String processName = null;
 		DeviceProcess stbProcess2 = new DeviceProcess();
-		
 
 		LOGGER.info("STARTING TEST CASE " + testCaseId);
 		LOGGER.info("**********************************************************************************");
@@ -564,16 +572,16 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("**********************************************************************************");
 
 		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
-		
+
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1005");
 		LOGGER.info("#######################################################################################");
 	}
+
 	/**
-	 * Test to Verify mini dump creation and upload to crash portal for the
-	 * process webpa
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * webpa
 	 * 
-	 * @param device
-	 *            The device to be used.
+	 * @param device The device to be used.
 	 * 
 	 * @author Styles Managalasseri
 	 * @refactor yamini.s
@@ -593,13 +601,12 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1007");
 		LOGGER.info("#######################################################################################");
 	}
-	
+
 	/**
-	 * Test to Verify mini dump creation and upload to crash portal for the
-	 * process CcspWifiAgent
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * CcspWifiAgent
 	 * 
-	 * @param device
-	 *            The device to be used.
+	 * @param device The device to be used.
 	 * 
 	 * @author Styles Managalasseri
 	 * @refactor yamini.s
@@ -615,17 +622,16 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		DeviceProcess stbProcess2 = new DeviceProcess();
 		LOGGER.info("#######################################################################################");
 		LOGGER.info("STARTING TEST CASE: TC-RDKB-GBPAD-1008");
-		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId,stbProcess2 );
+		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1008");
 		LOGGER.info("#######################################################################################");
 	}
-	
+
 	/**
-	 * Test to Verify mini dump creation and upload to crash portal for the
-	 * process meshAgent
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * meshAgent
 	 * 
-	 * @param device
-	 *            The device to be used.
+	 * @param device The device to be used.
 	 * 
 	 * @author Styles Managalasseri
 	 * @refactor yamini.s
@@ -642,7 +648,6 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		String processName = null;
 		DeviceProcess stbProcess2 = new DeviceProcess();
 
-
 		LOGGER.info("STARTING TEST CASE " + testCaseId);
 		LOGGER.info("**********************************************************************************");
 		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
@@ -650,18 +655,17 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("**********************************************************************************");
 
 		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
-		
+
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1011");
 		LOGGER.info("#######################################################################################");
 
 	}
 
 	/**
-	 * Test to Verify mini dump creation and upload to crash portal for the
-	 * process parodus
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * parodus
 	 * 
-	 * @param device
-	 *            The device to be used.
+	 * @param device The device to be used.
 	 * 
 	 * @author Ashwin sankara
 	 * @refactor yamini.s
@@ -684,13 +688,13 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 				+ " within the STB and verify the generated crash file is uploaded in crash portal");
 		LOGGER.info("**********************************************************************************");
 
-		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId,stbProcess2 );
-		
+		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
+
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1012");
 		LOGGER.info("#######################################################################################");
 
 	}
-	
+
 	/**
 	 * /** Method to generate crash for given process within the STB and verify the
 	 * process in STB
@@ -1336,8 +1340,6 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		String regexForMacAddress = "HWaddr\\s*(" + BroadBandTestConstants.REG_EX_MAC_ADDRESS_FORMAT + ")";
 		String regexForMacAddressInRdkV = "(" + BroadBandTestConstants.REG_EX_MAC_ADDRESS_FORMAT + ")";
 
-		
-
 		if (SupportedModelHandler.isRDKB(device)) {
 			// by default the interface name is erouter0
 			response = tapApi.executeCommandUsingSsh(device,
@@ -1422,75 +1424,74 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.debug("ENDING METHOD: verifyCrashFileDetailsInCrashPortal()");
 		return status;
 	}
-	
-	/**
-     * Test to Verify mini dump creation and upload to crash portal for the process CcspCr
-     * 
-     * @param device
-     *            The device to be used.
-     * 
-     * @author Styles Managalasseri
-     * 
-     * @refactor yamini.s
-     * 
-     */
-    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
-    @TestDetails(testUID = "TC-RDKB-GBPAD-1006")
-    public void testVerifyCrashForProcessCcspCr(Dut device) {
-	// Test case id
-	String testCaseId = "TC-RDKB-GBPAD-006";
-	String testStepNumber = "s1";
-
-	// STB Process
-	StbProcess stbProcess = StbProcess.CCSP_CR;
-	String processName = null;
-	DeviceProcess stbProcess2 = new DeviceProcess();
-
-	// Disable self heal
-
-	boolean status = false;
-	String errorMessage = null;
-
-	try {
-	    if (BroadBandWebPaUtils.getRbusModeStatus(device, tapEnv, BroadBandTestConstants.BOOLEAN_VALUE_FALSE)) {
-		tapEnv.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_SELFHEAL_PROCESS_ENABLE_STATUS,
-			BroadBandTestConstants.FALSE, WebPaDataTypes.BOOLEAN.getValue());
-		LOGGER.info("STARTING TEST CASE " + testCaseId);
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
-			+ " within the STB and verify the generated crash file is uploaded in crash portal");
-		LOGGER.info("**********************************************************************************");
-
-		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
-
-		// Enable self heal
-		tapEnv.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_SELFHEAL_PROCESS_ENABLE_STATUS,
-			BroadBandTestConstants.TRUE, WebPaDataTypes.BOOLEAN.getValue());
-	    } else {
-		errorMessage = " Rbus mode is in enabled state. so marking the steps as NA";
-		int stepNumber = 1;
-		while (stepNumber <= 5) {
-		    testStepNumber = "s" + stepNumber;
-		    errorMessage = "STEP " + stepNumber + ": " + errorMessage;
-		    LOGGER.info("**********************************************************************************");
-		    tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber,
-			    ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
-		    stepNumber++;
-		}
-	    }
-	} catch (Exception exception) {
-	    errorMessage = exception.getMessage();
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, testStepNumber, status,
-		    errorMessage, true);
-	}
-    }
 
 	/**
-	 * Test to Verify mini dump creation and upload to crash portal for the
-	 * process CcspTr069
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * CcspCr
 	 * 
-	 * @param Dut
-	 *            The device to be used.
+	 * @param device The device to be used.
+	 * 
+	 * @author Styles Managalasseri
+	 * 
+	 * @refactor yamini.s
+	 * 
+	 */
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-GBPAD-1006")
+	public void testVerifyCrashForProcessCcspCr(Dut device) {
+		// Test case id
+		String testCaseId = "TC-RDKB-GBPAD-006";
+		String testStepNumber = "s1";
+
+		// STB Process
+		StbProcess stbProcess = StbProcess.CCSP_CR;
+		String processName = null;
+		DeviceProcess stbProcess2 = new DeviceProcess();
+
+		// Disable self heal
+
+		boolean status = false;
+		String errorMessage = null;
+
+		try {
+			if (BroadBandWebPaUtils.getRbusModeStatus(device, tapEnv, BroadBandTestConstants.BOOLEAN_VALUE_FALSE)) {
+				tapEnv.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_SELFHEAL_PROCESS_ENABLE_STATUS,
+						BroadBandTestConstants.FALSE, WebPaDataTypes.BOOLEAN.getValue());
+				LOGGER.info("STARTING TEST CASE " + testCaseId);
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
+						+ " within the STB and verify the generated crash file is uploaded in crash portal");
+				LOGGER.info("**********************************************************************************");
+
+				generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
+
+				// Enable self heal
+				tapEnv.setWebPaParams(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_SELFHEAL_PROCESS_ENABLE_STATUS,
+						BroadBandTestConstants.TRUE, WebPaDataTypes.BOOLEAN.getValue());
+			} else {
+				errorMessage = " Rbus mode is in enabled state. so marking the steps as NA";
+				int stepNumber = 1;
+				while (stepNumber <= 5) {
+					testStepNumber = "s" + stepNumber;
+					errorMessage = "STEP " + stepNumber + ": " + errorMessage;
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber,
+							ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+					stepNumber++;
+				}
+			}
+		} catch (Exception exception) {
+			errorMessage = exception.getMessage();
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, testStepNumber, status,
+					errorMessage, true);
+		}
+	}
+
+	/**
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * CcspTr069
+	 * 
+	 * @param Dut The device to be used.
 	 * 
 	 * @author Styles Managalasseri, TATA Elxsi
 	 * @refactor Alan_Bivera
@@ -1507,8 +1508,8 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		StbProcess stbProcess = StbProcess.CCSP_TR069;
 		DeviceProcess stbProcess2 = new DeviceProcess();
 
-	boolean tr69Status = BroadBandTr69Utils.checkAndEnableTr69Support(device, tapEnv);
-	LOGGER.info("Status of TR69 before starting the test case : " + tr69Status);
+		boolean tr69Status = BroadBandTr69Utils.checkAndEnableTr69Support(device, tapEnv);
+		LOGGER.info("Status of TR69 before starting the test case : " + tr69Status);
 
 		LOGGER.info("STARTING TEST CASE " + testCaseId);
 		LOGGER.info("**********************************************************************************");
@@ -1519,19 +1520,19 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
 	}
 
-	   /**
-	     * Test to Verify mini dump creation and upload to crash portal for the process CcspHotspot
-	     * 
-	     * @param Dut
-	     *            The device to be used.
-	     * 
-	     * @author Nidhal Shamsudheen
-	     * @refactor Alan_Bivera
-	     * 
-	     */
-	    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
-	    @TestDetails(testUID = "TC-RDKB-GBPAD-1014")
-	    public void testVerifyCrashForProcessCcspHotspot(Dut device) {
+	/**
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * CcspHotspot
+	 * 
+	 * @param Dut The device to be used.
+	 * 
+	 * @author Nidhal Shamsudheen
+	 * @refactor Alan_Bivera
+	 * 
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
+	@TestDetails(testUID = "TC-RDKB-GBPAD-1014")
+	public void testVerifyCrashForProcessCcspHotspot(Dut device) {
 
 		// Test case id
 		String testCaseId = "TC-RDKB-GBPAD-014";
@@ -1539,7 +1540,7 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		// STB Process
 		StbProcess stbProcess = StbProcess.CCSP_HOTSPOT;
 		DeviceProcess stbProcess2 = new DeviceProcess();
-		
+
 		int preConStepNumber = BroadBandTestConstants.CONSTANT_1;
 		boolean status = false;
 		String errorMessage = null;
@@ -1548,28 +1549,28 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		long startTimeStamp = System.currentTimeMillis();
 
 		/**
-		 * PRE-CONDITION 1 : Enable Xfinity WiFi in the device
+		 * PRE-CONDITION 1 : Enable Public WiFi in the device
 		 */
 
 		LOGGER.info("#######################################################################################");
-		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : DESCRIPTION : Enable Xfinity Wi-Fi");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : DESCRIPTION : Enable Public Wi-Fi");
 		LOGGER.info("PRE-CONDITION " + preConStepNumber
-			+ " : ACTION : Execute WebPA set command to enable Xfinity WiFi - Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable bool true.");
-		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : EXPECTED : Xfinity WiFi should be enabled");
+				+ " : ACTION : Execute WebPA set command to enable Public WiFi - Device.DeviceInfo.X_COMCAST_COM_PublicwifiEnable bool true.");
+		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : EXPECTED : Public WiFi should be enabled");
 		LOGGER.info("#######################################################################################");
 
-		errorMessage = "Not able to enable Xfinity Wi-Fi";
+		errorMessage = "Not able to enable Public Wi-Fi";
 
-		status = BroadBandWiFiUtils.checkAndSetXfinityWifi(device, tapEnv);
+		status = BroadBandWiFiUtils.checkAndSetPublicWifi(device, tapEnv);
 
 		if (status) {
-		    LOGGER.info("PRE-CONDITION " + preConStepNumber
-			    + " : ACTUAL : Successfully enabled Xfinity WiFi in the device");
+			LOGGER.info("PRE-CONDITION " + preConStepNumber
+					+ " : ACTUAL : Successfully enabled Public WiFi in the device");
 
 		} else {
-		    LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
-		    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION " + preConStepNumber
-			    + " : FAILED : " + errorMessage);
+			LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
+			throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION " + preConStepNumber
+					+ " : FAILED : " + errorMessage);
 		}
 		LOGGER.info("#######################################################################################");
 
@@ -1579,31 +1580,31 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("#######################################################################################");
 		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : DESCRIPTION : Verify CcspHotspot process is running");
 		LOGGER.info("PRE-CONDITION " + preConStepNumber
-			+ " : ACTION : Get PID of CcspHospot using the command - pidof CcspHotspot");
+				+ " : ACTION : Get PID of CcspHospot using the command - pidof CcspHotspot");
 		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : EXPECTED : CcspHospot should be enabled");
 		LOGGER.info("#######################################################################################");
 
 		errorMessage = "CcspHotspot is not running!";
 		do {
-		    response = CommonMethods.getPidOfProcess(device, tapEnv, stbProcess.getProcessName());
-		    status = CommonMethods.isNotNull(response);
+			response = CommonMethods.getPidOfProcess(device, tapEnv, stbProcess.getProcessName());
+			status = CommonMethods.isNotNull(response);
 		} while (!status
-			&& (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
-			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
+				&& (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+				&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
 
 		if (status) {
-		    LOGGER.info("PRE-CONDITION " + preConStepNumber + " : ACTUAL : CcspHotspot is running in the device");
+			LOGGER.info("PRE-CONDITION " + preConStepNumber + " : ACTUAL : CcspHotspot is running in the device");
 		} else {
-		    LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
-		    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION " + preConStepNumber
-			    + " : FAILED : " + errorMessage);
+			LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);
+			throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION " + preConStepNumber
+					+ " : FAILED : " + errorMessage);
 		}
 		LOGGER.info("#######################################################################################");
 
 		LOGGER.info("STARTING TEST CASE " + testCaseId);
 		LOGGER.info("**********************************************************************************");
 		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
-			+ " within the STB and verify the generated crash file is uploaded in crash portal");
+				+ " within the STB and verify the generated crash file is uploaded in crash portal");
 		LOGGER.info("**********************************************************************************");
 
 		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
@@ -1611,31 +1612,31 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
 		LOGGER.info("POST-CONDITION STEPS");
 		/**
-		 * POST-CONDITION 1 : ENABLE/DISABLE THE XFINITY WIFI based on value set in rdkb.whitelist.xfinitywifivalue
-		 * property
+		 * POST-CONDITION 1 : ENABLE/DISABLE THE PUBLIC WIFI based on value set in
+		 * rdkb.whitelist.Publicwifivalue property
 		 */
-		BroadBandPostConditionUtils.executePostConditionToEnableOrDisableXfinityWifiBasedOnStbProperty(device, tapEnv,
-			postConStepNumber);
+		BroadBandPostConditionUtils.executePostConditionToEnableOrDisablePublicWifiBasedOnStbProperty(device, tapEnv,
+				postConStepNumber);
 
 		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
 
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-GBPAD-1014");
 
-	    }
+	}
 
-	    /**
-	     * Test to Verify mini dump creation and upload to crash portal for the process SNMP_SUBAGENT
-	     * 
-	     * @param Dut
-	     *            The device to be used.
-	     * 
-	     * @author Nidhal Shamsudheen
-	     * @refactor Alan_Bivera
-	     * 
-	     */
-	    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
-	    @TestDetails(testUID = "TC-RDKB-GBPAD-1015")
-	    public void testVerifyCrashForProcessSnmpSubagent(Dut device) {
+	/**
+	 * Test to Verify mini dump creation and upload to crash portal for the process
+	 * SNMP_SUBAGENT
+	 * 
+	 * @param Dut The device to be used.
+	 * 
+	 * @author Nidhal Shamsudheen
+	 * @refactor Alan_Bivera
+	 * 
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
+	@TestDetails(testUID = "TC-RDKB-GBPAD-1015")
+	public void testVerifyCrashForProcessSnmpSubagent(Dut device) {
 
 		// Test case id
 		String testCaseId = "TC-RDKB-GBPAD-015";
@@ -1647,12 +1648,11 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		LOGGER.info("STARTING TEST CASE " + testCaseId);
 		LOGGER.info("**********************************************************************************");
 		LOGGER.info("Generate crash by restarting the process " + stbProcess.getProcessName()
-			+ " within the STB and verify the generated crash file is uploaded in crash portal");
+				+ " within the STB and verify the generated crash file is uploaded in crash portal");
 		LOGGER.info("**********************************************************************************");
 
 		generateCrashAndVerify(device, stbProcess, CrashType.MINIDUMP, testCaseId, stbProcess2);
 
-	    }
-
+	}
 
 }

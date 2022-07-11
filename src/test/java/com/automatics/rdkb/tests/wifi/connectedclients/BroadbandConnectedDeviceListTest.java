@@ -28,6 +28,7 @@ import com.automatics.device.Dut;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandParentalControlParameter;
 import com.automatics.rdkb.BroadBandResultObject;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
@@ -1732,6 +1733,155 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 		    LOGGER.info("################### ENDING POST-CONFIGURATIONS #########################");
 		    LOGGER.info("################### ENDING TEST CASE : TC-RDKB-BRIDGE-MODE-1002 #########################");
 		}
+	    }
+	    
+
+	    /**
+	     * This test case is to Verify the DHCP Lan client
+	     * 
+	     * 
+	     * <ol>
+	     * <li>STEP 1: Verify the client connected to ethernet has IP Address assigned from DHCP.</li>
+	     * 
+	     * <li>STEP 2: Verify whether interface got the correct IPv6 address.</li>
+	     * 
+	     * <li>STEP 3 :Verify whether you have connectivity using that particular interface using IPV4</li>
+	     * 
+	     * <li>STEP 4 :Verify whether you have connectivity using that particular interface using IPV6</li>
+	     * 
+	     * </ol>
+	     * 
+	     * @param device
+	     *            Dut to be used
+	     * @author Joseph_Maduram
+	     * @refactor Said Hisham
+	     */
+
+	    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, groups = {
+		    TestGroup.WEBPA, TestGroup.WIFI }, dataProviderClass = AutomaticsTapApi.class)
+	    @TestDetails(testUID = "TC-RDKB-DHCP-LANCLIENT-1001")
+	    public void testToVerifyDhcpLanClient(Dut device) {
+		// String to store the test case status
+		boolean status = false;
+		// Test case id
+		String testId = "TC-RDKB-DHCP-LANCLIENT-101";
+		// Test step number
+		String testStepNumber = "s1";
+		// String to store the error message
+		String errorMessage = null;
+		Dut connectedClientSettop = null;
+		BroadBandResultObject result = null; // stores test result and error
+		try {
+		    LOGGER.info("#######################################################################################");
+		    LOGGER.info("STARTING TEST CASE: TC-RDKB-DHCP-LANCLIENT-1001");
+		    LOGGER.info("TEST DESCRIPTION:Verify whether the connected client to the ethernet got the IP address");
+		    LOGGER.info("#######################################################################################");
+
+		    /**
+		     * Step 1: Verify the client connected to ethernet has IP Address assigned from DHCP
+		     *
+		     */
+		    testStepNumber = "s1";
+		    status = false;
+		    LOGGER.info("#####################################################################################");
+		    LOGGER.info(
+			    "STEP 1: DESCRIPTION : Verify the client connected to ethernet has IP Address assigned from DHCP");
+		    LOGGER.info(
+			    "STEP 1: ACTION : Client connected to ethernet from gateway should receive valid IP Address in DHCP range");
+		    LOGGER.info("STEP 1: EXPECTED: Client connected to LAN should be assigned with IP address from gateway");
+		    LOGGER.info("#####################################################################################");
+		    connectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+		    errorMessage = "Unable to connect to Ethernet client";
+		    if (null != connectedClientSettop) {
+			status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
+				device, connectedClientSettop);
+			errorMessage = "Client connected to ethernet haven't receieve valid IP Address from Gateway";
+		    }
+		    if (status) {
+			LOGGER.info(
+				"S1 ACTUAL: Client connected to ethernet from gateway has received valid IP Address in DHCP range");
+		    } else {
+			LOGGER.error("S1 ACTUAL: " + errorMessage);
+		    }
+		    LOGGER.info("#####################################################################################");
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+		    /**
+		     * STEP 2:Verify whether interface got the correct IPv6 address.
+		     * 
+		     */
+		    LOGGER.info("#####################################################################################");
+		    LOGGER.info("STEP 2: DESCRIPTION : Verify whether interface  got the correct IPv6  address.");
+		    LOGGER.info("STEP 2: ACTION : Connected client should get the IPV6 Interface");
+		    LOGGER.info("STEP 2: EXPECTED:Interface IPv6 address should  be shown");
+		    LOGGER.info("#####################################################################################");
+		    testStepNumber = "s2";
+		    status = false;
+		    errorMessage = "interface  didnt got the correct IPV6 address";
+		    result = BroadBandConnectedClientUtils
+			    .verifyIpv6AddressOfEthInterfaceConnectedWithBroadbandDevice(connectedClientSettop, tapEnv);
+		    status = result.isStatus();
+		    errorMessage = result.getErrorMessage();
+		    if (status) {
+			LOGGER.info("S2 ACTUAL :Interface  got the correct IPv6 address");
+		    } else {
+			LOGGER.error("S2 ACTUAL: " + errorMessage);
+		    }
+		    LOGGER.info("#####################################################################################");
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		    /**
+		     * STEP 3:Verify whether you have connectivity using that particular interface using IPV4.
+		     * 
+		     */
+		    LOGGER.info("#####################################################################################");
+		    LOGGER.info("STEP 3: Verify whether there is  connectivity using that particular interface using IPV4 ");
+		    LOGGER.info("STEP 3: ACTION : connectivity for Ipv4 interface should be successful");
+		    LOGGER.info("STEP 3: EXPECTED: Connectivity check should return status as 200");
+		    LOGGER.info("#####################################################################################");
+		    testStepNumber = "s3";
+		    status = false;
+		    result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
+			    connectedClientSettop, BroadBandTestConstants.URL_HTTPS_FACEBOOK,
+			    BroadBandTestConstants.IP_VERSION4);
+		    status = result.isStatus();
+		    errorMessage = result.getErrorMessage();
+		    if (status) {
+			LOGGER.info("S3 ACTUAL: connectivity successful using ipv4 interface");
+		    } else {
+			LOGGER.error("S3 ACTUAL: " + errorMessage);
+		    }
+		    LOGGER.info("#####################################################################################");
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+		    /**
+		     * STEP 4:Verify whether there is connectivity using that particular interface using IPV6.
+		     * 
+		     */
+		    LOGGER.info("#####################################################################################");
+		    LOGGER.info("STEP 4: Verify whether you have connectivity using that particular interface using IPV6");
+		    LOGGER.info("STEP 4: ACTION : connectivity for Ipv6 interface should be successful");
+		    LOGGER.info("STEP 4:EXPECTED: Connectivity check should return status as 200");
+		    LOGGER.info("#####################################################################################");
+		    status = false;
+		    testStepNumber = "s4";
+		    result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
+			    connectedClientSettop, BroadBandTestConstants.URL_HTTPS_FACEBOOK,
+			    BroadBandTestConstants.IP_VERSION6);
+		    status = result.isStatus();
+		    errorMessage = result.getErrorMessage();
+		    if (status) {
+			LOGGER.info("S4 ACTUAL: connectivity successful using ipv6 interface");
+		    } else {
+			LOGGER.error("S4 ACTUAL: " + errorMessage);
+		    }
+		    LOGGER.info("#####################################################################################");
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		} catch (Exception exception) {
+		    LOGGER.error("Exception occured during execution !!!!" + exception.getMessage());
+		    tapEnv.updateExecutionStatus(device, testId, testStepNumber, false, errorMessage, true);
+		}
+		LOGGER.info("ENDING TESTCASE :TC-RDKB-DHCP-LANCLIENT-1001");
 	    }
 	    
 }

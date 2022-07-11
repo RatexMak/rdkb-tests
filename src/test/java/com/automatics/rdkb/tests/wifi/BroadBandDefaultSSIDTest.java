@@ -1323,7 +1323,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	LOGGER.info("PRE-CONDITION STEPS");
 	LOGGER.info("PRE-CONDITION 1:DESCRIPTION: Verify whether Private SSID 2.4Ghz can be enabled using webPA");
 	LOGGER.info(
-		"PRE-CONDITION 1: ACTION : Radio SSID 2.4Ghz should be enabled successfully using webpa \"parameters\":[{\"dataType\":3,\"name\":\"Device.WiFi.SSID.10001.Enable\",\"value\":\"true\"}]}\"");
+		"PRE-CONDITION 1: ACTION : Radio SSID 2.4Ghz should be enabled successfully using webpa parameter Device.WiFi.SSID.10001.Enable to set to true");
 	LOGGER.info("PRE-CONDITION 1: EXPECTED: Private SSID 2.4Ghz should be enabled successfully");
 	errorMessage = "Unable to enable 2.4Ghz private SSID using webpa";
 	status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
@@ -1339,7 +1339,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	LOGGER.info("PRE-CONDITION 2:DESCRIPTION: Verify whether Private SSID 5Ghz can be enabled using webPA");
 	LOGGER.info(
-		"PRE-CONDITION 2: ACTION : Radio SSID 5Ghz should be enabled successfully using webpa \"parameters\":[{\"dataType\":3,\"name\":\"Device.WiFi.SSID.10001.Enable\",\"value\":\"true\"}]}\"");
+		"PRE-CONDITION 2: ACTION : Radio SSID 5Ghz should be enabled successfully using webpa parameter Device.WiFi.SSID.10001.Enable to value true");
 	LOGGER.info("PRE-CONDITION 2: EXPECTED: Private SSID 5Ghz should be enabled successfully");
 	errorMessage = "Unable to enable 5Ghz private SSID using webpa";
 	status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,

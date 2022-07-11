@@ -429,9 +429,9 @@ public class BroadBandPublicWifiTests extends AutomaticsTestBase {
 				LOGGER.info(
 						"POST-CONDITION : DESCRIPTION : 1.Verify by default, Channel Selection mode should be set to false.2.Disable public wifi using Webpa.");
 				LOGGER.info(
-						"POST-CONDITION : ACTION : Check the mode using the below dmcli commands for both 2.4GHz and 5GHz Wireless radios. curl -4 -k -H \"Authorization: Bearer <Token>\" -X PATCH <WEBPA URL>/device/mac:<ECM_MAC>/config -d \"{\"parameters\":[{\"dataType\":3, \"name\":\"Device.WiFi.Radio.10000.AutoChannelEnabl\",\"value\":\"false\"}]}\"curl -4 -k -H \"Authorization: Bearer <Token>\" -X PATCH <WEBPA URL>/device/mac:<ECM_MAC>/config -d \"{\"parameters\":[{\"dataType\":3, \"name\":\"Device.WiFi.Radio.10100.AutoChannelEnable\",\"value\":\"false\"}]}\"Execute webpa :curl -4 -k -H \"Authorization: Bearer <Token>\" -X PATCH <WEBPA URL>/device/mac:<ECM_MAC>/config -d \"{\"parameters\":[{\"dataType\":3, \"name\":\"Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable\",\"value\":\"false\"}]}\" ");
+						"POST-CONDITION : ACTION : Check the mode using the below dmcli commands for both 2.4GHz and 5GHz Wireless radios. ");
 				LOGGER.info(
-						"POST-CONDITION : EXPECTED : Channel Selection mode should be set to Automatic. The output of the command should be as below, Expected Output:{\"parameters\":[{\"name\":\"Device.WiFi.Radio.10000.AutoChannelEnable\",\"value\":\"false\",\"dataType\":3,\"parameterCount\":1,\"message\":\"Success\"}],\"statusCode\":200}{\"parameters\":[{\"name\":\"Device.WiFi.Radio.10100.AutoChannelEnable\",\"value\":\"false\",\"dataType\":3,\"parameterCount\":1,\"message\":\"Success\"}],\"statusCode\":200}It must return value as FALSEExpected output:{\"parameters\":[{\"name\":\"Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable\",\"value\":\"false\",\"dataType\":3,\"parameterCount\":1,\"message\":\"Success\"}],\"statusCode\":200}");
+						"POST-CONDITION : EXPECTED : Channel Selection mode should be set to Automatic.");
 				LOGGER.info("#######################################################################################");
 				webPaParameters.clear();
 				WebPaParameter autoChannel2Ghz = BroadBandWebPaUtils.setAndReturnWebPaParameterObject(

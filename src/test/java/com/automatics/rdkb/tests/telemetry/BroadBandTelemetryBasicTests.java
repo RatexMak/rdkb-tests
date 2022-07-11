@@ -2903,5 +2903,4 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-1003");
 		LOGGER.info("#######################################################################################");
 	}
-
 }

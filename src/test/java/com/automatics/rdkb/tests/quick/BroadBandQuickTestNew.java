@@ -140,7 +140,7 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 
 	    if (CommonMethods.isNotNull(response)) {
 		response = CommonMethods.patternFinder(response,
-			BroadBandTestConstants.PATTERN_GET_XFINITY_WIFI_STATUS_FROM_RFC_CONFIG);
+			BroadBandTestConstants.PATTERN_GET_PUBLIC_WIFI_STATUS_FROM_RFC_CONFIG);
 		if (CommonMethods.isNotNull(response)) {
 			rfcEffectOnPublicWifi = Boolean.parseBoolean(response.trim());
 		    LOGGER.info("Public WiFi status in RFC configuration : " + rfcEffectOnPublicWifi);
@@ -207,20 +207,20 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 		step = "s1";
 		errorMessage = BroadBandTestConstants.BUILD_NOT_AVAILABLE.replace("<buildImageName>", buildImageName);
 		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP 1: DESCRIPTION : Verification of requested firmware version in DAC15 CDL server");
+		LOGGER.info("STEP 1: DESCRIPTION : Verification of requested firmware version in CDL server");
 		LOGGER.info(
-			"STEP 1: ACTION :  Perform HTTP GET operation using DAC15 Server URL and confirm HTTP Status 200/201 received.\r\t"
+			"STEP 1: ACTION :  Perform HTTP GET operation using CDL Server URL and confirm HTTP Status 200/201 received.\r\t"
 				+ "E.g : curl -fLgo <Image server URL>/<firmware_file_name.bin>");
-		LOGGER.info("STEP 1: EXPECTED :  Requested firmware version should be available in DAC15 CDL server");
+		LOGGER.info("STEP 1: EXPECTED :  Requested firmware version should be available in CDL server");
 		LOGGER.info("**********************************************************************************");
 		status = tapEnv.isImageAvailableInCDL(device, ImageUpgradeMechanism.XCONF, currentFirmwareVersion);
 
 		if (status) {
 		    LOGGER.info("STEP 1 : ACTUAL : Build '" + buildImageName
-			    + "' is available in dac15/prod cdl server(s), proceeding with code download");
+			    + "' is available in cdl server(s), proceeding with code download");
 		} else {
 		    errorMessage = "Build '" + buildImageName
-			    + "' is not available in both dac15 and prod cdl server(s), please check the jenkins status in rdkportal whether is success and build is uploaded to cdl servers";
+			    + "' is not available in cdl server(s), please check the jenkins status in rdkportal whether is success and build is uploaded to cdl servers";
 		    LOGGER.error("STEP 1 : ACTUAL : " + errorMessage);
 		}
 

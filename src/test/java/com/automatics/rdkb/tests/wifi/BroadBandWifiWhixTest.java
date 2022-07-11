@@ -184,8 +184,8 @@ public class BroadBandWifiWhixTest extends AutomaticsTestBase {
 		    + "tr181. Device.X_COMCAST-COM_GRE.Tunnel.1.DSCPMarkPolicy int 44"
 		    + "tr181. Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint string <BroadBandTestConstants.PRIMARY_REMOTE_ENDPOINT>"
 		    + "tr181. Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint string <BroadBandTestConstants.SECONDARY_REMOTE_ENDPOINT>"
-		    + "tr181. Device.WiFi.SSID.5.SSID string <BroadBandTestConstants.PUBLIC_WIFI_SSID_2>"
-		    + "tr181. Device.WiFi.SSID.6.SSID string <BroadBandTestConstants.PUBLIC_WIFI_SSID_5>"
+		    + "tr181. Device.WiFi.SSID.5.SSID string <PUBLIC_WIFI_SSID_2>"
+		    + "tr181. Device.WiFi.SSID.6.SSID string <PUBLIC_WIFI_SSID_5>"
 		    + "tr181. Device.WiFi.SSID.5.Enable bool true" + "tr181. Device.WiFi.SSID.6.Enable bool true");
 	    LOGGER.info("STEP " + stepNumber + ": EXPECTED: Open Public Hotspot should be enabled");
 	    LOGGER.info("****************************************************************");

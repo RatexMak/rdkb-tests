@@ -2381,15 +2381,15 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			deviceStatusResponse = BroadBandWebPaUtils.getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv,
 					parametersArray);
 
-			List<String> securityNumberlist = Collections.unmodifiableList(Arrays.asList(
-					AutomaticsPropertyUtility
+			List<String> securityNumberlist = Collections
+					.unmodifiableList(Arrays.asList(AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_1),
-					AutomaticsPropertyUtility
+							AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_2),
-					AutomaticsPropertyUtility
+							AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_3),
-					AutomaticsPropertyUtility.getProperty(
-							BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_4)));
+							AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_4)));
 
 			validation = true;
 
@@ -2860,7 +2860,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			webPaResponse = tapEnv.executeWebPaCommand(device,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4GHZ_SECURED_XFINITY);
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4GHZ_SECURED_PUBLICWIFI);
 			status = CommonMethods.isNotNull(webPaResponse);
 			if (status) {
 
@@ -2884,7 +2884,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			webPaResponse = tapEnv.executeWebPaCommand(device,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5GHZ_SECURED_XFINITY);
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5GHZ_SECURED_PUBLICWIFI);
 			status = CommonMethods.isNotNull(webPaResponse);
 			if (status) {
 
@@ -2909,6 +2909,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	 * Test to verify enabling/disabling bridge mode through SNMP v3 is successful
 	 * 
 	 * <ol>
+	 * <li>PRE CONDITION 1: Disable codebig first enable using webpa</li>
 	 * <li>STEP 1: Enable SNMPv3 support using RFC</li>
 	 * <li>STEP 2: Verify SNMPv3 support parameter is enabled in dcmrfc.log
 	 * file</li>
@@ -3009,7 +3010,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("#######################################################################################");
 			LOGGER.info("STARTING TEST CASE :TC-RDKB-SNMP-1012");
 			LOGGER.info("TEST DESCRIPTION: Test to Verify enabling/disabling parameters through SNMP v3 is successful");
-
+			LOGGER.info("PRE CONDITION 1: Disable codebig first enable using webpa");
 			LOGGER.info("STEP 1: Enable SNMPv3 support using RFC");
 			LOGGER.info("STEP 2: Verify SNMPv3 support parameter is enabled in dcmrfc.log file");
 			LOGGER.info("STEP 3: Verify SNMPv3 support is enabled using webpa");
@@ -4071,7 +4072,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 
 			if (isPublicWifiEnabled) {
 				postCondition++;
-				BroadBandPostConditionUtils.executePostConditionToDisableXfinityWifi(device, tapEnv, postCondition);
+				BroadBandPostConditionUtils.executePostConditionToDisablePublicWifi(device, tapEnv, postCondition);
 			}
 
 		}
@@ -4923,7 +4924,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 					"STEP 10 : Validate before reboot Device led logs in Backup SecConsole.txt.0 and PAMlog.txt.0 In nvram");
 			LOGGER.info("POST-CONDITION 1: Reactivate the Device");
 			LOGGER.info("POST-CONDITION 2: Delete Temporary Files in given path");
-			LOGGER.info("POST-CONDITION 3: VERIFY THE XFINITYWIFI STATUS IS ENABLED");
+			LOGGER.info("POST-CONDITION 3: VERIFY THE PUBLICWIFI STATUS IS ENABLED");
 			LOGGER.info("#######################################################################################");
 
 			String snmpOutput = null; // stores SNMP output
@@ -7035,10 +7036,10 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 					"STEP " + stepNumber + ": EXPECTED : The following response should be received. \"OutOfService\"");
 			LOGGER.info("**********************************************************************************");
 			ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));
 			LOGGER.info("5GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
 			status = CommonMethods.isNotNull(ssidNameFromWebPa)
-					&& ssidNameFromWebPa.equals(BroadBandTestConstants.PUBLIC_WIFI_SSID_5);
+					&& ssidNameFromWebPa.equals(AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));
 
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : The 5 GHz SSID for public wifi is as expected");
@@ -7394,10 +7395,11 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	 * <li>Verify retrieving the configuration of bssid MAC for 5Ghz webpa</li>
 	 * </ol>
 	 * 
-	 * @param device {@link Dut}
-	 * 
-	 * @author Joseph M
-	 * @refactor Athira
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Joseph M
+     * @refactor Athira
 	 */
 	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
 	@TestDetails(testUID = "TC-RDKB-WiFi-SNMP-1031")
@@ -8136,7 +8138,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 24: DESCRIPTION : Verify  retrieving the configuration of WAN MAC address using WEBPA parameter(Device.DeviceInfo.X_COMCAST-COM_WAN_MAC).");
 			LOGGER.info(
-					"STEP 24: ACTION : Execute the WEBPA get Command with parameter Device.DeviceInfo.X_COMCAST-COM_WAN_MAC");
+					"STEP 24: ACTION : Execute the WEBPA Command  with parameter Device.DeviceInfo.X_COMCAST-COM_WAN_MAC");
 			LOGGER.info(
 					"STEP 24: EXPECTED : Expected output should be as below,IF-MIB::ifPhysAddress.1 = STRING: 10:56:11:a2:17:40");
 			LOGGER.info("**********************************************************************************");

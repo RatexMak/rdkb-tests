@@ -54,6 +54,7 @@ import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
@@ -1841,7 +1842,7 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
      * @param device
      *            Dut instance
      * 
-     * @author prashant.mishra12
+     * @author prashant mishra
      * @refactored Said Hisham
      * 
      */
@@ -2465,7 +2466,7 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
      * @param device
      *            Dut instance
      * 
-     * @author prashant.mishra12
+     * @author prashant mishra
      * @refactor yamini.s
      */
     @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
@@ -2823,6 +2824,677 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
 
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-WH-SNMP-1006");
+    }
+
+    /**
+     *
+     * Test Case : Improved testing sequences for RDK-B WIFI warehouse
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>Step 1: Perform reboot on the device</li>
+     * <li>Step 2: Verify device is up</li>
+     * <li>Step 3: Perform factory reset on the device</li>
+     * <li>Step 4: Verify device is up</li>
+     * <li>Step 5: Validate default Mac Address and password length after factory reset</li>
+     * <li>Step 6: Verify all wifi's are on</li>
+     * <li>Step 7: Modify the default ssid's to custom ssid's</li>
+     * <li>Step 8: Disable RDKB-SSID's</li>
+     * <li>Step 9: Perform reboot on the device</li>
+     * <li>Step 10: Verify device is up</li>
+     * <li>Step 11: Verify all wifi's are off</li>
+     * <li>Step 12: Verify 2.4 Ghz radio is enabled</li>
+     * <li>Step 13: Verify 2.4 Ghz ssid is enabled</li>
+     * <li>Step 14: Verify 2.4 Ghz ssid and password</li>
+     * <li>Step 15: Verify 5 Ghz radio is enabled</li>
+     * <li>Step 16: Verify 5 Ghz ssid is enabled</li>
+     * <li>Step 17: Verify 5 Ghz ssid and password</li>
+     * <li>Step 18: Enable RDKB-SSID's</li>
+     * <li>Step 19: Perform wifi reset on the device</li>
+     * <li>Post Condition:Reativate the device using SNMP</li>
+     * </ol>
+     * 
+     * @param device
+     *            Dut instance
+     * 
+     * @author Muthukumar
+     * @refactor Govardhan
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-WH-FR-RS-5001")
+    public void testToVerifyRdkbWareHouseSequence(Dut device) {
+	// Variable declaration starts
+	String testCaseId = "TC-RDKB-WH-FR-RS-501";
+	String stepNum = "S1";
+	String errorMessage = null;
+	boolean status = false;
+	// Variable declaration ends
+	String ssidFor2Ghz = null;
+	String ssidFor5Ghz = null;
+	String passwordFor2Ghz = null;
+	String passwordFor5Ghz = null;
+	String response = null;
+	boolean isResetDone = false;
+	String snmpCommandOutput = null;
+
+	LOGGER.info("##########################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WH-FR-RS-5001");
+	LOGGER.info("TEST DESCRIPTION: Improved testing sequences for RDK-B WIFI warehouse");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("Step 1: Perform reboot on the device");
+	LOGGER.info("Step 2: Verify device is up");
+	LOGGER.info("Step 3: Perform factory reset on the device");
+	LOGGER.info("Step 4: Verify device is up");
+	LOGGER.info("Step 5: Validate default Mac Address and password length after factory reset");
+	LOGGER.info("Step 6: Verify all wifi's are on");
+	LOGGER.info("Step 7: Modify the default ssid's to custom ssid's");
+	LOGGER.info("Step 8: Disable RDKB-SSID's");
+	LOGGER.info("Step 9: Perform reboot on the device");
+	LOGGER.info("Step 10: Verify device is up");
+	LOGGER.info("Step 11: Verify all wifi's are off");
+	LOGGER.info("Step 12: Verify 2.4 Ghz radio is enabled");
+	LOGGER.info("Step 13: Verify 2.4 Ghz ssid is enabled");
+	LOGGER.info("Step 14: Verify 2.4 Ghz ssid and password");
+	LOGGER.info("Step 15: Verify 5 Ghz radio is enabled");
+	LOGGER.info("Step 16: Verify 5 Ghz ssid is enabled");
+	LOGGER.info("Step 17: Verify 5 Ghz ssid and password");
+	LOGGER.info("Step 18: Enable RDKB-SSID's");
+	LOGGER.info("Step 19: Perform wifi reset on the device");
+	LOGGER.info("Post Condition:Reativate the device using SNMP");
+	LOGGER.info("########################### STARTING SNMP OID : WEBPA PARAMETER ###########################");
+	LOGGER.info(BroadBandCommonUtils.concatStringUsingStringBuffer(
+		BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_2_4_GHZ.getName(), "=>",
+		BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_2_4_GHZ.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+		BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_2_4_GHZ.getTableIndex())
+		+ "=>"
+		+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+			BroadBandTestConstants.TR181_NODE_REF,
+			BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_2_4_GHZ.getTableIndex()));
+	LOGGER.info(BroadBandCommonUtils.concatStringUsingStringBuffer(
+		BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_5_GHZ.getName(), "=>",
+		BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_5_GHZ.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+		BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_5_GHZ.getTableIndex())
+		+ "=>"
+		+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+			BroadBandTestConstants.TR181_NODE_REF,
+			BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_5_GHZ.getTableIndex()));
+	LOGGER.info(BroadBandCommonUtils.concatStringUsingStringBuffer(
+		BroadBandSnmpMib.HOME_SECURITY_2_4_SSID_STATUS.getName(), "=>",
+		BroadBandSnmpMib.HOME_SECURITY_2_4_SSID_STATUS.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+		BroadBandSnmpMib.HOME_SECURITY_2_4_SSID_STATUS.getTableIndex())
+		+ "=>"
+		+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+			BroadBandTestConstants.TR181_NODE_REF,
+			BroadBandSnmpMib.HOME_SECURITY_2_4_SSID_STATUS.getTableIndex()));
+	LOGGER.info(BroadBandCommonUtils.concatStringUsingStringBuffer(
+		BroadBandSnmpMib.HOME_SECURITY_5_SSID_STATUS.getName(), "=>",
+		BroadBandSnmpMib.HOME_SECURITY_5_SSID_STATUS.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+		BroadBandSnmpMib.HOME_SECURITY_5_SSID_STATUS.getTableIndex())
+		+ "=>"
+		+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+			BroadBandTestConstants.TR181_NODE_REF,
+			BroadBandSnmpMib.HOME_SECURITY_5_SSID_STATUS.getTableIndex()));
+	LOGGER.info(
+		BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandSnmpMib.HOT_SPOT_2_4_SSID_STATUS.getName(),
+			"=>", BroadBandSnmpMib.HOT_SPOT_2_4_SSID_STATUS.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+			BroadBandSnmpMib.HOT_SPOT_2_4_SSID_STATUS.getTableIndex())
+			+ "=>"
+			+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+				BroadBandTestConstants.TR181_NODE_REF,
+				BroadBandSnmpMib.HOT_SPOT_2_4_SSID_STATUS.getTableIndex()));
+	LOGGER.info(
+		BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandSnmpMib.HOT_SPOT_5_SSID_STATUS.getName(),
+			"=>", BroadBandSnmpMib.HOT_SPOT_5_SSID_STATUS.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+			BroadBandSnmpMib.HOT_SPOT_5_SSID_STATUS.getTableIndex())
+			+ "=>"
+			+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+				BroadBandTestConstants.TR181_NODE_REF,
+				BroadBandSnmpMib.HOT_SPOT_5_SSID_STATUS.getTableIndex()));
+	LOGGER.info(BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandSnmpMib.LNF_2_4_SSID_STATUS.getName(),
+		"=>", BroadBandSnmpMib.LNF_2_4_SSID_STATUS.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+		BroadBandSnmpMib.LNF_2_4_SSID_STATUS.getTableIndex()) + "=>"
+		+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+			BroadBandTestConstants.TR181_NODE_REF, BroadBandSnmpMib.LNF_2_4_SSID_STATUS.getTableIndex()));
+	LOGGER.info(BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandSnmpMib.LNF_5_SSID_STATUS.getName(),
+		"=>", BroadBandSnmpMib.LNF_5_SSID_STATUS.getOid(), BroadBandTestConstants.DOT_OPERATOR,
+		BroadBandSnmpMib.LNF_5_SSID_STATUS.getTableIndex()) + "=>"
+		+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_ENABLE.replace(
+			BroadBandTestConstants.TR181_NODE_REF, BroadBandSnmpMib.LNF_5_SSID_STATUS.getTableIndex()));
+
+	LOGGER.info("########################### STARTING SNMP OID : WEBPA PARAMETER ###########################");
+	LOGGER.info("##########################################################################");
+	try {
+	    /**
+	     * STEP 1 : PERFORM REBOOT ON THE DEVICE
+	     */
+	    stepNum = "S1";
+	    errorMessage = "Failed to Perform device reboot";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Perform reboot on the device");
+	    LOGGER.info("STEP 1: ACTION : Execute command : /sbin/reboot");
+	    LOGGER.info("STEP 1: EXPECTED : device should be powered on");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.rebootUsingCmdAndWaitForStbAccessibleUsingSnmp(device, tapEnv);
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL :Device rebooted successfully");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 2 : VERIFY SYSTEM UP TIME
+	     */
+	    stepNum = "S2";
+	    errorMessage = "Failed to get the system up time";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify system up time");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute snmp get command with uid 1.3.6.1.2.1.1.3.0");
+	    LOGGER.info("STEP 2: EXPECTED : Must return the system up time");
+	    LOGGER.info("**********************************************************************************");
+	    snmpCommandOutput = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ESTB_SYS_UP_TIME.getOid());
+	    status = BroadBandSnmpUtils.hasNoSNMPErrorOnResponse(tapEnv, device, snmpCommandOutput)
+		    && CommonMethods.patternMatcher(snmpCommandOutput, BroadBandTestConstants.SYS_UP_TIME_INSTANCE);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfully verified device is Up");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 3 : PERFORM FACTORY RESET ON THE DEVICE
+	     */
+	    stepNum = "S3";
+	    errorMessage = "Failed to perform factory reset";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Perform factory reset on the device");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute snmp set command using uid 1.3.6.1.4.1.17270.50.2.1.1.1002.0 i 1");
+	    LOGGER.info("STEP 3: EXPECTED : Device must go for factory reset");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.performResetUsingSnmp(tapEnv, device,
+		    BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+	    if (status) {
+		isResetDone = status;
+		LOGGER.info("STEP 3: ACTUAL : Factory reset performed successfully using SNMP");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 4 : VERIFY SYSTEM UP TIME
+	     */
+	    stepNum = "S4";
+	    errorMessage = "Failed to get the system up time";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify system up time");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute snmp get command using uid 1.3.6.1.2.1.1.3.0");
+	    LOGGER.info("STEP 4: EXPECTED : Must return the system up time");
+	    LOGGER.info("**********************************************************************************");
+	    snmpCommandOutput = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ESTB_SYS_UP_TIME.getOid());
+	    status = BroadBandSnmpUtils.hasNoSNMPErrorOnResponse(tapEnv, device, snmpCommandOutput)
+		    && CommonMethods.patternMatcher(snmpCommandOutput, BroadBandTestConstants.SYS_UP_TIME_INSTANCE);
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : Successfully verified device is Up");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 5 : VALIDATE DEFAULT MAC ADDRESS AND PASSWORD LENGTH AFTER FACTORY RESET
+	     */
+	    stepNum = "S5";
+	    errorMessage = "Failed to validate default ssid's and password length after factory reset";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Validate default wifi ssid's and password length after factory reset");
+	    LOGGER.info("STEP 5: ACTION : Exeucte Snmp Command \n"
+		    + "1. Verify the 2.4 SSID snmp get using 1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10001 \n"
+		    + "2. Verify the 5 SSID snmp get using 1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101 \n"
+		    + "3. Verify the 2.4 Password snmp get using 1.3.6.1.4.1.17270.50.2.2.3.3.1.3.10001 \n"
+		    + "4. Verify the 5 Password snmp get using 1.3.6.1.4.1.17270.50.2.2.3.3.1.3.10101");
+	    LOGGER.info("STEP 5: EXPECTED : Must return the default SSID and password length");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.verifyDefaultSsidAndPasswordUsingSnmp(tapEnv, device);
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Successfully verified the default ssid's and password length");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 6 : VERIFY ALL WIFI'S ARE ON
+	     */
+	    stepNum = "S6";
+	    errorMessage = "Failed to verify the wifi status";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify all wifi's are on");
+	    LOGGER.info("STEP 6: ACTION : Exeucte Snmp Command:\n"
+		    + "snmp get using using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10001\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10002\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10004\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10006\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10101\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10102\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10104\n"
+		    + "snmp get using uid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10106");
+	    LOGGER.info("STEP 6: EXPECTED : Must return the value as 1");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.setOrVerifyAllSsidStatusUsingSnmp(tapEnv, device,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.BOOLEAN_VALUE_FALSE, true);
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Successfully verified the all wifi status its return 1");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 7 : MODIFY THE DEFAULT SSID'S TO CUSTOM SSID'S
+	     */
+	    stepNum = "S7";
+	    errorMessage = "Failed to modify the SSID's";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Modify the default ssid's to custom ssid's");
+	    LOGGER.info("STEP 7: ACTION : Execute Snmp Command to modify default ssid");
+	    LOGGER.info("STEP 7: EXPECTED : Must set the custom ssid's");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.setAndVerifyTheCustomSsidAndPassword(tapEnv, device);
+	    if (status) {
+		ssidFor2Ghz = BroadBandSnmpUtils.getSsidUsingSnmp(tapEnv, device, BroadBandTestConstants.BAND_2_4GHZ);
+		LOGGER.info("Customized SSID for 2.4 GHz :" + ssidFor2Ghz);
+		ssidFor5Ghz = BroadBandSnmpUtils.getSsidUsingSnmp(tapEnv, device, BroadBandTestConstants.BAND_5GHZ);
+		LOGGER.info("Customized SSID for 5 GHz :" + ssidFor5Ghz);
+		passwordFor2Ghz = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+			BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_WIRELESSPASS.getOid(),
+			BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_WIRELESSPASS.getTableIndex());
+		LOGGER.info("Customized Password for 2.4 GHz :" + passwordFor2Ghz);
+		passwordFor5Ghz = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+			BroadBandSnmpMib.ECM_PRIVATE_WIFI_5_WIRELESSPASS.getOid(),
+			BroadBandSnmpMib.ECM_PRIVATE_WIFI_5_WIRELESSPASS.getTableIndex());
+		LOGGER.info("Customized Password for 5 GHz :" + passwordFor5Ghz);
+		LOGGER.info("STEP 7: ACTUAL : Successfully modified the deafut ssid's to custom ssid's");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 8 : DISABLE RDKB-SSID'S
+	     */
+	    stepNum = "S8";
+	    errorMessage = "Failed to disable RDKB-SSID";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Disable RDKB-SSID's");
+	    LOGGER.info("STEP 8: ACTION : Execute Snmp Command Disable RDKB-SSID's ");
+	    LOGGER.info("STEP 8: EXPECTED : Must disable the RDKB-SSID's");
+	    LOGGER.info("**********************************************************************************");
+	    if (BroadBandSnmpUtils.setOrVerifyAllSsidStatusUsingSnmp(tapEnv, device,
+		    BroadBandTestConstants.STRING_CONSTANT_2, BroadBandTestConstants.BOOLEAN_VALUE_TRUE, false)) {
+		errorMessage = "Failed to disable RDKB-SSID via SNMP set is success,But Failed to verify the set value";
+		status = BroadBandSnmpUtils.setOrVerifyAllSsidStatusUsingSnmp(tapEnv, device,
+			BroadBandTestConstants.STRING_CONSTANT_2, BroadBandTestConstants.BOOLEAN_VALUE_FALSE, false);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Successfully disabled the RDKB-SSID's");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 9 : PERFORM REBOOT ON THE DEVICE
+	     */
+	    stepNum = "S9";
+	    errorMessage = "Failed to reboot the device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Perform reboot on the device");
+	    LOGGER.info("STEP 9: ACTION : Execute command : /sbin/reboot");
+	    LOGGER.info("STEP 9: EXPECTED : device should be powered on");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.rebootUsingCmdAndWaitForStbAccessibleUsingSnmp(device, tapEnv);
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL :Device rebooted successfully");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 10 : VERIFY SYSTEM UP TIME
+	     */
+	    stepNum = "S10";
+	    errorMessage = "Failed to get the system up time";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Verify system up time");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Execute snmp command snmpget using OID 1.3.6.1.2.1.1");
+	    LOGGER.info("STEP 10: EXPECTED : Must return the system up time");
+	    LOGGER.info("**********************************************************************************");
+	    snmpCommandOutput = BroadBandSnmpUtils.executeSnmpWalkOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ESTB_SYS_UP_TIME.getOid());
+	    status = BroadBandSnmpUtils.hasNoSNMPErrorOnResponse(tapEnv, device, snmpCommandOutput)
+		    && CommonMethods.patternMatcher(snmpCommandOutput, BroadBandTestConstants.SYS_UP_TIME_INSTANCE);
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL : Successfully verified the system uptime");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 11 : VERIFY ALL WIFI'S ARE OFF
+	     */
+	    stepNum = "S11";
+	    errorMessage = "Failed to verify the wifi status";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Verify all wifi's are off");
+	    LOGGER.info("STEP 11: ACTION : Exeucte Snmp Commands to verify all wifi's are off");
+	    LOGGER.info("STEP 11: EXPECTED : Must return the value as 2");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandSnmpUtils.setOrVerifyAllSsidStatusUsingSnmp(tapEnv, device,
+		    BroadBandTestConstants.STRING_CONSTANT_2, BroadBandTestConstants.BOOLEAN_VALUE_FALSE, false);
+	    if (status) {
+		LOGGER.info("STEP 11: ACTUAL : Successfully verified the all wifi status and its return 2");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 12 : VERIFY 2.4 GHZ RADIO IS ENABLED
+	     */
+	    stepNum = "S12";
+	    errorMessage = "Failed to verify 2.4 Ghz radio is enabled";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 12: DESCRIPTION : Verify 2.4 Ghz radio is enabled");
+	    LOGGER.info(
+		    "STEP 12: ACTION : Execute Snmp Command snmpget using OID 1.3.6.1.4.1.17270.50.2.2.6.1.1.1.10000");
+	    LOGGER.info("STEP 12: EXPECTED : Must return the output as 3");
+	    LOGGER.info("**********************************************************************************");
+	    String mibWithOutIndex = BroadBandSnmpMib.ECM_WIFI_2_4_SSID_RADIO_STATUS_ENABLE.getOid()
+		    .substring(BroadBandTestConstants.CONSTANT_1, BroadBandSnmpMib.ECM_WIFI_2_4_SSID_RADIO_STATUS_ENABLE
+			    .getOid().lastIndexOf(BroadBandTestConstants.DOT_OPERATOR));
+	    String tableIndex = BroadBandSnmpMib.ECM_WIFI_2_4_SSID_RADIO_STATUS_ENABLE.getOid()
+		    .substring(BroadBandSnmpMib.ECM_WIFI_2_4_SSID_RADIO_STATUS_ENABLE.getOid()
+			    .lastIndexOf(BroadBandTestConstants.DOT_OPERATOR) + BroadBandTestConstants.CONSTANT_1);
+	    long startTime = System.currentTimeMillis();
+	    do {
+		status = BroadBandSnmpUtils.performSnmpGetOnRdkDevicesAndVerify(tapEnv, device, mibWithOutIndex,
+			tableIndex, BroadBandTestConstants.STRING_VALUE_THREE);
+	    } while (!status && (System.currentTimeMillis() - startTime) < BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP 12: ACTUAL : Successfully verified the 2.4 Ghz radio status");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 13 : VERIFY 2.4 GHZ SSID IS ENABLED
+	     */
+	    stepNum = "S13";
+	    errorMessage = "Failed to verify 2.4 Ghz ssid enabled status";
+
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION : Verify 2.4 Ghz ssid  is enabled");
+	    LOGGER.info("STEP 13: ACTION : Execute Snmp Command \n"
+		    + "snmp get using oid .1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10001 \n"
+		    + "	snmp set using oid.1.3.6.1.4.1.17270.50.2.2.2.1.1.2.10001 i 1");
+	    LOGGER.info("STEP 13: EXPECTED : 2.4 GHz ssid must be enabled");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandSnmpUtils.executeSnmpSetWithTableIndexOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_2_4_GHZ.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_2_4_GHZ.getTableIndex());
+	    status = CommonMethods.isNotNull(response)
+		    && response.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_1);
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL : Successfully verified 2.4 Ghz ssid status");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 14 : VERIFY 2.4 GHZ SSID AND PASSWORD
+	     */
+	    stepNum = "S14";
+	    errorMessage = "Failed to verify 2.4 Ghz ssid and password";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 14: DESCRIPTION : Verify 2.4 Ghz ssid and password");
+	    LOGGER.info("STEP 14: ACTION : Execute Snmp Command to verify 2.4 Ghz ssid and password");
+	    LOGGER.info("STEP 14: EXPECTED : Must return the 2.4 GHz ssid and password");
+	    LOGGER.info("**********************************************************************************");
+	    mibWithOutIndex = BroadBandSnmpMib.ECM_WIFI_SSID_2_4.getOid().substring(BroadBandTestConstants.CONSTANT_1,
+		    BroadBandSnmpMib.ECM_WIFI_SSID_2_4.getOid().lastIndexOf(BroadBandTestConstants.DOT_OPERATOR));
+	    tableIndex = BroadBandSnmpMib.ECM_WIFI_SSID_2_4.getOid().substring(
+		    BroadBandSnmpMib.ECM_WIFI_SSID_2_4.getOid().lastIndexOf(BroadBandTestConstants.DOT_OPERATOR)
+			    + BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("Customized SSID for 2.4 GHz :" + ssidFor2Ghz);
+	    LOGGER.info("Customized Password for 2.4 GHz :" + passwordFor2Ghz);
+	    status = BroadBandSnmpUtils.performSnmpGetOnRdkDevicesAndVerify(tapEnv, device, mibWithOutIndex, tableIndex,
+		    ssidFor2Ghz)
+		    && BroadBandSnmpUtils.performSnmpGetOnRdkDevicesAndVerify(tapEnv, device,
+			    BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_WIRELESSPASS.getOid(),
+			    BroadBandSnmpMib.ECM_PRIVATE_WIFI_2_4_WIRELESSPASS.getTableIndex(), passwordFor2Ghz);
+	    if (status) {
+		LOGGER.info("STEP 14: ACTUAL : Successfully verified the 2.4 Ghz ssid and password");
+	    } else {
+		LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 15 : VERIFY 5 GHZ RADIO IS ENABLED
+	     */
+	    stepNum = "S15";
+	    errorMessage = "Failed to verify 5 Ghz radio is enabled";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 15: DESCRIPTION : Verify 5 Ghz radio is enabled");
+	    LOGGER.info(
+		    "STEP 15: ACTION : Execute Snmp Command snmp get using OID 1.3.6.1.4.1.17270.50.2.2.6.1.1.1.10100");
+	    LOGGER.info("STEP 15: EXPECTED : Must return the output as 3");
+	    LOGGER.info("**********************************************************************************");
+	    mibWithOutIndex = BroadBandSnmpMib.ECM_WIFI_5_SSID_RADIO_STATUS_ENABLE.getOid()
+		    .substring(BroadBandTestConstants.CONSTANT_1, BroadBandSnmpMib.ECM_WIFI_5_SSID_RADIO_STATUS_ENABLE
+			    .getOid().lastIndexOf(BroadBandTestConstants.DOT_OPERATOR));
+	    tableIndex = BroadBandSnmpMib.ECM_WIFI_5_SSID_RADIO_STATUS_ENABLE.getOid()
+		    .substring(BroadBandSnmpMib.ECM_WIFI_5_SSID_RADIO_STATUS_ENABLE.getOid()
+			    .lastIndexOf(BroadBandTestConstants.DOT_OPERATOR) + BroadBandTestConstants.CONSTANT_1);
+	    status = BroadBandSnmpUtils.performSnmpGetOnRdkDevicesAndVerify(tapEnv, device, mibWithOutIndex, tableIndex,
+		    BroadBandTestConstants.STRING_VALUE_THREE);
+	    if (status) {
+		LOGGER.info("STEP 15: ACTUAL : Successfully verified the 5 Ghz radio status");
+	    } else {
+		LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 16 : VERIFY 5 GHZ SSID IS ENABLED
+	     */
+	    stepNum = "S16";
+	    errorMessage = "Failed to verify 5 Ghz ssid enabled status";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 16: DESCRIPTION : Verify 5 Ghz ssid  is enabled");
+	    LOGGER.info("STEP 16: ACTION : Execute Snmp Command to check 5 Ghz ssid  is enabled");
+	    LOGGER.info("STEP 16: EXPECTED : 2.4 GHz ssid must be enabled");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandSnmpUtils.executeSnmpSetWithTableIndexOnRdkDevices(tapEnv, device,
+		    BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_5_GHZ.getOid(), SnmpDataType.INTEGER,
+		    BroadBandTestConstants.STRING_CONSTANT_1,
+		    BroadBandSnmpMib.ECM_STATUS_PRIVATE_WIFI_5_GHZ.getTableIndex());
+	    status = CommonMethods.isNotNull(response)
+		    && response.equalsIgnoreCase(BroadBandTestConstants.STRING_CONSTANT_1);
+	    if (status) {
+		LOGGER.info("STEP 16: ACTUAL : Successfully verified 5 Ghz ssid status");
+	    } else {
+		LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 17 : VERIFY 5 GHZ SSID AND PASSWORD
+	     */
+	    stepNum = "S17";
+	    errorMessage = "Failed to verify 5 Ghz ssid  and password";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 17: DESCRIPTION : Verify 5 Ghz ssid and password");
+	    LOGGER.info("STEP 17: ACTION : Execute Snmp Command: to verify 5GHz SSID and password");
+	    LOGGER.info("**********************************************************************************");
+	    mibWithOutIndex = BroadBandSnmpMib.ECM_WIFI_SSID_5.getOid().substring(BroadBandTestConstants.CONSTANT_1,
+		    BroadBandSnmpMib.ECM_WIFI_SSID_5.getOid().lastIndexOf(BroadBandTestConstants.DOT_OPERATOR));
+	    tableIndex = BroadBandSnmpMib.ECM_WIFI_SSID_5.getOid().substring(
+		    BroadBandSnmpMib.ECM_WIFI_SSID_5.getOid().lastIndexOf(BroadBandTestConstants.DOT_OPERATOR)
+			    + BroadBandTestConstants.CONSTANT_1);
+	    LOGGER.info("Customized SSID for 5 GHz :" + ssidFor5Ghz);
+	    LOGGER.info("Customized Password for 5 GHz :" + passwordFor5Ghz);
+	    status = BroadBandSnmpUtils.performSnmpGetOnRdkDevicesAndVerify(tapEnv, device, mibWithOutIndex, tableIndex,
+		    ssidFor5Ghz)
+		    && BroadBandSnmpUtils.performSnmpGetOnRdkDevicesAndVerify(tapEnv, device,
+			    BroadBandSnmpMib.ECM_PRIVATE_WIFI_5_WIRELESSPASS.getOid(),
+			    BroadBandSnmpMib.ECM_PRIVATE_WIFI_5_WIRELESSPASS.getTableIndex(), passwordFor5Ghz);
+	    if (status) {
+		LOGGER.info("STEP 17: ACTUAL : Successfully verified the 5 Ghz ssid and password");
+	    } else {
+		LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 18 : Enable RDKB-SSID's
+	     */
+	    stepNum = "S18";
+	    errorMessage = "Failed to Enable RDKB-SSID";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 18: DESCRIPTION : Enable RDKB-SSID's");
+	    LOGGER.info("STEP 18: ACTION : Execute Snmp Command to enable RDKB-SSID's ");
+	    LOGGER.info("STEP 18: EXPECTED : Must enable the RDKB-SSID\"s");
+	    LOGGER.info("**********************************************************************************");
+	    if (BroadBandSnmpUtils.setOrVerifyAllSsidStatusUsingSnmp(tapEnv, device,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.BOOLEAN_VALUE_TRUE, false)) {
+		errorMessage = "Failed to enable RDKB-SSID via SNMP set is success,But Failed to verify the set value";
+		status = BroadBandSnmpUtils.setOrVerifyAllSsidStatusUsingSnmp(tapEnv, device,
+			BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.BOOLEAN_VALUE_FALSE, false);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 18: ACTUAL : Successfully enabled the RDKB-SSID's");
+	    } else {
+		LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 19 : PERFORM WIFI RESET ON THE DEVICE
+	     */
+	    stepNum = "S19";
+	    errorMessage = "Failed to perform wifi reset";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 19: DESCRIPTION : Perform wifi reset on the device");
+	    LOGGER.info(
+		    "STEP 19: ACTION : Execute snmp command snmp set using OID 1.3.6.1.4.1.17270.50.2.1.1.1002.");
+	    LOGGER.info("STEP 19: EXPECTED : Device must go for wif reset");
+	    LOGGER.info("**********************************************************************************");
+	    if (BroadBandSnmpUtils.performResetUsingSnmp(tapEnv, device, BroadBandTestConstants.BOOLEAN_VALUE_FALSE)) {
+		errorMessage = "Failed to verify default SSID's and Password after wifi reset";
+		startTime = System.currentTimeMillis();
+		do {
+		    status = BroadBandSnmpUtils.verifyDefaultSsidAndPasswordUsingSnmp(tapEnv, device);
+		} while (!status
+			&& (System.currentTimeMillis() - startTime) < BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS
+			&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    }
+	    if (status) {
+		LOGGER.info("STEP 19: ACTUAL : Wifi reset preformed successfully");
+	    } else {
+		LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    if (isResetDone) {
+		status = false;
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("POST-CONDITION : DESCRIPTION : Reativate the device using SNMP");
+		LOGGER.info("POST-CONDITION : ACTION : Execute Snmp Command reativate the device using SNMP");
+		LOGGER.info("POST-CONDITION : EXPECTED : Reactivation should be successful ");
+		LOGGER.info("#######################################################################################");
+		try {
+		    BroadBandWiFiUtils.reactivateDeviceUsingSnmp(tapEnv, device);
+		    BroadBandSnmpUtils.executeSnmpSetWithTableIndexOnRdkDevices(tapEnv, device,
+			    BroadBandSnmpMib.WIFI_APPLY_SETTINGS.getOid(), SnmpDataType.INTEGER,
+			    BroadBandTestConstants.STRING_VALUE_ONE, BroadBandTestConstants.STRING_ZERO);
+		    LOGGER.info("Waiting for 90 seconds after applying all WiFi settings.");
+		    tapEnv.waitTill(BroadBandTestConstants.NINETY_SECOND_IN_MILLIS);
+		    status = true;
+		} catch (Exception e) {
+		    errorMessage = e.getMessage();
+		}
+		if (status) {
+		    LOGGER.info("POST-CONDITION : ACTUAL : Device reactivated successfully using SNMP");
+		} else {
+		    LOGGER.error("POST-CONDITION : ACTUAL : Failed to reactivate the device using SNMP");
+		}
+		LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WH-FR-RS-5001");
     }
 
 }

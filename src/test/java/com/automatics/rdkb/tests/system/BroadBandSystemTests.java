@@ -41,6 +41,7 @@ import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandConnectedClientTestConstants;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
@@ -5399,8 +5400,8 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
      * <li>Validate if we are able to SSH to the WAN IP using the Jump server</li>
      * </ol>
      * 
-     * @param device
-     *            {@link Dut}
+     * @param settop
+     *            {@link Settop}
      * @author Joseph M
      * @refactor Alan_Bivera
      */
@@ -5457,36 +5458,12 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 2: ACTION : SSH to the wanip of the device using the jump server");
 	    LOGGER.info("STEP 2: EXPECTED : SSH client must not accessible via WAN IP. ");
 	    LOGGER.info("**********************************************************************************");
-	    
-	    String ipAddress = device.getHostIpAddress();
-	    LOGGER.info("the default ip address is :"+ipAddress);
-	    
-	    String ip4Address = device.getHostIp4Address(); 
-	    LOGGER.info("the default ipv4 address is :"+ip4Address);
-	    
-	    String ip6Address = device.getHostIp6Address();    
-	    device.setHostIp4Address(null);    
-	    device.setHostIp6Address(wanIpv6Address);    
-	    ipAddress = device.getHostIpAddress();
-	    
-	    device.setHostIpAddress(wanIpv6Address);
-	    LOGGER.info("the new HostIP address :"+device.getHostIpAddress());
-	    
-	    String response = tapEnv.executeCommandUsingSsh(device,"echo test_connection");
-	    
-	    LOGGER.info("response of the command execution :"+response);
-	    if(response.isEmpty())
-	    	status = true;   		
+	    status = !BroadBandCommonUtils.executeSshCommandOnJumpServer(tapEnv, device, wanIpv6Address);
 	    if (status) {
 		LOGGER.info("STEP 2: ACTUAL : SSH client is not accessible via WAN IP");
 	    } else {
 		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
 	    }
-	    device.setHostIp4Address(ip4Address);
-	    LOGGER.info("the  ipv4 address set after execution :"+device.getHostIp4Address());
-	    device.setHostIpAddress(ipAddress);
-	    LOGGER.info("the  HostIP address set after execution :"+device.getHostIpAddress());
-	    
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 	    LOGGER.info("**********************************************************************************");
 
@@ -5498,4 +5475,133 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-9008");
     }
+    
+	/**
+	 * Verify accessibilty for ARM to Atom SSH.
+	 * <ol>
+	 * <li>Verify Atom console is accessible from ARM console</li>
+	 * <li>Verify CR process running status in atom console from ARM console</li>
+	 * </ol>
+	 * 
+	 * @author Gnanaprakasham
+	 * @refactor Athira
+	 * 
+	 * @param device {@link Dut}
+	 * 
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-SYSTEM-1029")
+
+	public void verifyaccessibilityFromArmConsoleToAtomConsole(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-SYSTEM-129";
+		String stepNum = null;
+		String errorMessage = null;
+		boolean status = false;
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-1029");
+		LOGGER.info("TEST DESCRIPTION: Verify accessibilty for ARM to Atom SSH");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify Atom console is accessible from ARM console");
+		LOGGER.info("2. Verify CR process running status in atom console from ARM console");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+
+			stepNum = "S1";
+			errorMessage = "Not able to access atom console from ARM console";
+			status = false;
+			String ipAddress = null;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Verify Atom console is accessible from ARM console");
+			LOGGER.info("STEP 1: ACTION : Execute the below command to verify access status");
+			LOGGER.info("STEP 1: EXPECTED : Atom console should be accessible from ARM console.");
+			LOGGER.info("**********************************************************************************");
+
+			// Atom console IP obtained from property file for specific devices
+			try {
+
+				ipAddress = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+						BroadBandTestConstants.ATOM_CONSOLE_IP_SPECIFIC_DEVICES);
+			} catch (Exception e) {
+
+				LOGGER.info("No device specific value found, test case is not appicable for the Platform");
+			}
+			if (CommonMethods.isNotNull(ipAddress)) {
+				String[] commands = { AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.CMD_TOACCESS_ATOMCONSOLEFROMARM),
+						AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.CMD_TOACCESS_ATOMCONSOLEFROMARM).replace("<ip address>", ipAddress)
+								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + BroadBandTestConstants.CMD_ECHO
+								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + "\""
+								+ BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY + "\"" };
+
+				BroadBandResultObject broadBandResultObject = verifyAccessLogsFromArmConsole(device, tapEnv, commands,
+						BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY, "atom");
+
+				status = broadBandResultObject.isStatus();
+				errorMessage = broadBandResultObject.getErrorMessage();
+
+				if (status) {
+					LOGGER.info("STEP 1: ACTUAL : SUCCESSFULLY VERIFIED ATOM CONSOLE IS ACCESSSIBLE FROM ARM CONSOLE");
+				} else {
+					LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+				stepNum = "S2";
+				errorMessage = "Failed to verify CR process running status via ARM to atom connection";
+				status = false;
+
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 2: DESCRIPTION : Verify CR process running status in atom console from ARM console");
+				LOGGER.info("STEP 2: ACTION : Execute the command atond verify access status ");
+				LOGGER.info(
+						"STEP 2: EXPECTED : CR process must be running and response should contains CR process pid id");
+				LOGGER.info("**********************************************************************************");
+
+				commands[1] = commands[1].replace(
+						BroadBandTestConstants.CMD_ECHO + BroadBandTestConstants.SINGLE_SPACE_CHARACTER + "\""
+								+ BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY + "\"",
+						BroadBandTestConstants.PS_COMMAND_FOR_CCSP_PROCESS);
+
+				broadBandResultObject = verifyAccessLogsFromArmConsole(device, tapEnv, commands,
+						BroadBandTestConstants.CCSP_COMPONENT_LIST_ATOM.get(1),
+						BroadBandTestConstants.STRING_ATOM_CONSOLE);
+
+				status = broadBandResultObject.isStatus();
+				errorMessage = broadBandResultObject.getErrorMessage();
+
+				if (status) {
+					LOGGER.info(
+							"STEP 2: ACTUAL : SUCCESSFULLY VERIFIED CR PROCESS RUNNING STATUS IN ATOM CONSOLE FROM ARM CONSOLE");
+				} else {
+					LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+				}
+
+				LOGGER.info("**********************************************************************************");
+
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, broadBandResultObject.isStatus(),
+						broadBandResultObject.getErrorMessage(), true);
+			} else {
+				status = false;
+				errorMessage = "The test case is not appicable for the Platform";
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, false, errorMessage, true);
+			}
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-1029");
+	}
 }

@@ -34,6 +34,7 @@ import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
@@ -433,7 +434,7 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
 	    LOGGER.info("5GHz Public SSID name retrieved using WebPa = " + ssidNameFromWebPa);
 	    status = CommonMethods.isNotNull(ssidNameFromWebPa)
-		    && ssidNameFromWebPa.equalsIgnoreCase(BroadBandTestConstants.PUBLIC_WIFI_SSID_5);
+		    && ssidNameFromWebPa.equalsIgnoreCase(AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));
 	    errorMessage = "Invalid/Incorrect 5GHz Public SSID name retrieved for Param 'Device.WiFi.SSID.10103.SSID' using WebPA command. Value retreived is:"
 		    + ssidNameFromWebPa;
 	    LOGGER.info("S1 ACTUAL : " + (status
@@ -684,7 +685,7 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PUBLIC_SSID);
 	    LOGGER.info("2.4GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
 	    status = CommonMethods.isNotNull(ssidNameFromWebPa)
-		    && ssidNameFromWebPa.equalsIgnoreCase(BroadBandTestConstants.PUBLIC_WIFI_SSID_2);
+		    && ssidNameFromWebPa.equalsIgnoreCase(AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_2));
 	    errorMessage = "Invalid/Incorrect 2.4GHz Public SSID name retrieved for Param 'Device.WiFi.SSID.10003.SSID' using WebPA command. Value retried is:"
 		    + ssidNameFromWebPa;
 

@@ -1020,8 +1020,8 @@ public class BroadBandWifiSsidBroadcastStatusTest extends AutomaticsTestBase {
 	    if (status) {
 		errorMessage = "Certificate files are not available in RPI device /etc/wpa_supplicant/certs";
 		command = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_SUDO,
-			BroadBandCommandConstants.CMD_MV, BroadBandCommandConstants.FILE_XI5_CLIENT_KEY,
-			BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.FILE_XI5_CLIENT_CERT,
+			BroadBandCommandConstants.CMD_MV, BroadBandCommandConstants.FILE_VIDEO_CLIENT_KEY,
+			BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.FILE_VIDEO_CLIENT_CERT,
 			BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.FILE_CA_CHAIN_CERT,
 			BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandCommandConstants.PATH_CERTIFICATE);
 		tapEnv.executeCommandOnOneIPClients(raspberryPi, command);
@@ -1031,9 +1031,9 @@ public class BroadBandWifiSsidBroadcastStatusTest extends AutomaticsTestBase {
 		response = tapEnv.executeCommandOnOneIPClients(raspberryPi, command);
 		status = CommonMethods.isNotNull(response)
 			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandCommandConstants.FILE_XI5_CLIENT_KEY)
+				BroadBandCommandConstants.FILE_VIDEO_CLIENT_KEY)
 			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandCommandConstants.FILE_XI5_CLIENT_CERT)
+				BroadBandCommandConstants.FILE_VIDEO_CLIENT_CERT)
 			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
 				BroadBandCommandConstants.FILE_CA_CHAIN_CERT);
 	    }

@@ -1047,7 +1047,7 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 12:DESCRIPTION: Verify updated maxSubsytemResetCount using WebPA param \"Device.SelfHeal.X_RDKCENTRAL-COM_MaxResetCount\"");
 			LOGGER.info(
-					"STEP 12:ACTION: Execute command curl 'https://<url:port>/api/v2/device/mac:<MAC>/config?names=Device.SelfHeal.X_RDKCENTRAL-COM_MaxResetCount' -H 'AuThorization: Bearer <XXX SAT TOKEN XXXX>' then verify response");
+					"STEP 12:ACTION: Execute command to update maxSubsytemResetCount then verify response");
 			LOGGER.info(
 					"STEP 12:EXPECTED: maxSubsytemResetCount configurations must be retrieved successfully and should be same as step 10");
 			LOGGER.info(
@@ -4565,7 +4565,7 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info("******************************************************************************");
 			LOGGER.info("STEP 4: DESCRIPTION: Update wifiClient mac address using webpa");
 			LOGGER.info(
-					"STEP 4: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress data type: 0 value: 449160dc0ae8");
+					"STEP 4: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress data type: 0 value: "+tapEnv.getStbMacIdForIpDeviceWithoutColon(device));
 			LOGGER.info("STEP 4: EXPECTED: Webpa set operation should be success");
 			LOGGER.info("******************************************************************************");
 			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress";

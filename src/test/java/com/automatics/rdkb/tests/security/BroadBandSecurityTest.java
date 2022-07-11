@@ -48,6 +48,7 @@ import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.ResultValues;
 import com.automatics.rdkb.utils.tr69.BroadBandTr69Utils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -1057,7 +1058,7 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			if (CommonMethods.isNotNull(response)) {
 				response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_SERVER_TAG);
 				status = CommonMethods.isNotNull(response)
-						&& response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_SERVER_TAG);
+						&& response.equalsIgnoreCase(AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_CONSTANT_SERVER_TAG));
 			}
 			if (status) {
 				LOGGER.info("STEP 1: ACTUAL :Successfully Verified server tag in lighttpd conf file ");
@@ -1523,6 +1524,8 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 	 * <li>Set and verify
 	 * Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable to
 	 * True.</li>
+	 * <li>Set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable to
+	 * FALSE</li>
 	 * <li>Set and verify
 	 * Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True</li>
 	 * <li>Verify the Verify log message PRIVACY_PROTECTION_ACTIVATED in
@@ -1561,12 +1564,13 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 		LOGGER.info("1. Verify the value of Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable as True.");
 		LOGGER.info(
 				"2. Set and verify Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable to True. ");
-		LOGGER.info("3. Set and verify Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True");
-		LOGGER.info("4. Verify the Verify log message PRIVACY_PROTECTION_ACTIVATED in agent.txt");
-		LOGGER.info("5. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
-		LOGGER.info("6. Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False");
-		LOGGER.info("7. Verify the Verify log message PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
-		LOGGER.info("8. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
+		LOGGER.info("3. Set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable to FALSE");
+		LOGGER.info("4. Set and verify Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True");
+		LOGGER.info("5. Verify the Verify log message PRIVACY_PROTECTION_ACTIVATED in agent.txt");
+		LOGGER.info("6. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
+		LOGGER.info("7. Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False");
+		LOGGER.info("8. Verify the Verify log message PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
+		LOGGER.info("9. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
 
 		LOGGER.info("#######################################################################################");
 
@@ -1575,15 +1579,41 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			executeCommonPreConditionSteps(device, tapEnv, testCaseId);
 
 			stepNum = "s3";
+			errorMessage = "Parameter value is not set & retrieved as false";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 3: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable to FALSE");
+			LOGGER.info(
+					"STEP 3: ACTION : Execute the following command: curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:7894B4F3F778/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable\",\"value\":\"false\"}]}\"");
+			LOGGER.info("STEP 3: EXPECTED : Parameter value should be set & retrieved as false");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_CODEBIG_FIRST_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+					BroadBandTestConstants.FALSE);
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Successfully verifed that Parameter value is retrieved as FALSE");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s4";
 			errorMessage = "Parameter value is not set & retrieved as True";
 			status = false;
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 3: DESCRIPTION : Set and verify Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True");
+					"STEP 4: DESCRIPTION : Set and verify Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True");
 			LOGGER.info(
-					"STEP 3: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"true\"}]}\"");
-			LOGGER.info("STEP 3: EXPECTED : Parameter value should be set & retrieved as True");
+					"STEP 4: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"true\"}]}\"");
+			LOGGER.info("STEP 4: EXPECTED : Parameter value should be set & retrieved as True");
 			LOGGER.info("**********************************************************************************");
 
 			if ((CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOG_FILE_AGENT))
@@ -1595,39 +1625,12 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			}
 
 			if (status) {
-				LOGGER.info("STEP 3: ACTUAL : Successfully verifed that Parameter value is retrieved as True");
-			} else {
-				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-			}
-
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-			LOGGER.info("**********************************************************************************");
-
-			stepNum = "s4";
-			errorMessage = "Failed to retrieve the log message";
-			status = false;
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info(
-					"STEP 4: DESCRIPTION : Verify the Verify log message PRIVACY_PROTECTION_ACTIVATED in agent.txt");
-			LOGGER.info(
-					"STEP 4: ACTION : Execute the following command:grep -i PRIVACY_PROTECTION_ACTIVATED /rdklogs/logs/agent.txt");
-			LOGGER.info("STEP 4: EXPECTED : log message should be retrieved successfully");
-			LOGGER.info("**********************************************************************************");
-
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_ACTIVATED,
-					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-
-			if (status) {
-				LOGGER.info("STEP 4: ACTUAL : Successfully verifed the log message");
+				LOGGER.info("STEP 4: ACTUAL : Successfully verifed that Parameter value is retrieved as True");
 			} else {
 				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
 			}
 
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			LOGGER.info("**********************************************************************************");
 
@@ -1637,15 +1640,15 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 5: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
+					"STEP 5: DESCRIPTION : Verify the Verify log message PRIVACY_PROTECTION_ACTIVATED in agent.txt");
 			LOGGER.info(
-					"STEP 5: ACTION : Execute the following command:grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+					"STEP 5: ACTION : Execute the following command:grep -i PRIVACY_PROTECTION_ACTIVATED /rdklogs/logs/agent.txt");
 			LOGGER.info("STEP 5: EXPECTED : log message should be retrieved successfully");
 			LOGGER.info("**********************************************************************************");
 
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
-					tapEnv, BroadBandWebPaConstants.WEBPA_PARAM_PRIVACY_PROTECTION_ACTIVATE,
-					BroadBandCommandConstants.LOG_FILE_WEBPA, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_ACTIVATED,
+					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 
 			if (status) {
@@ -1659,15 +1662,42 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			stepNum = "s6";
+			errorMessage = "Failed to retrieve the log message";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 6: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
+			LOGGER.info(
+					"STEP 6: ACTION : Execute the following command:grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+			LOGGER.info("STEP 6: EXPECTED : log message should be retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
+					tapEnv, BroadBandWebPaConstants.WEBPA_PARAM_PRIVACY_PROTECTION_ACTIVATE,
+					BroadBandCommandConstants.LOG_FILE_WEBPA, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : Successfully verifed the log message");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s7";
 			errorMessage = "Parameter value is not set & retrieved as False";
 			status = false;
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 6: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False");
+					"STEP 7: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False");
 			LOGGER.info(
-					"STEP 6: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"false\"}]}\"");
-			LOGGER.info("STEP 6: EXPECTED : Parameter value should be set & retrieved as False");
+					"STEP 7: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"false\"}]}\"");
+			LOGGER.info("STEP 7: EXPECTED : Parameter value should be set & retrieved as False");
 			LOGGER.info("**********************************************************************************");
 
 			if ((CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOG_FILE_AGENT))
@@ -1678,39 +1708,12 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			}
 
 			if (status) {
-				LOGGER.info("STEP 6: ACTUAL : Successfully verifed that Parameter value is retrieved as FALSE");
-			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-			}
-
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-			LOGGER.info("**********************************************************************************");
-
-			stepNum = "s7";
-			errorMessage = "Failed to retrieve the log message";
-			status = false;
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info(
-					"STEP 7: DESCRIPTION : Verify the Verify log message PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
-			LOGGER.info(
-					"STEP 7: ACTION : Execute the following command:grep -i PRIVACY_PROTECTION_DEACTIVATED /rdklogs/logs/agent.txt");
-			LOGGER.info("STEP 7: EXPECTED : log message should be retrieved successfully");
-			LOGGER.info("**********************************************************************************");
-
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_DEACTIVATED,
-					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-
-			if (status) {
-				LOGGER.info("STEP 7: ACTUAL : Successfully verifed the log message");
+				LOGGER.info("STEP 7: ACTUAL : Successfully verifed that Parameter value is retrieved as FALSE");
 			} else {
 				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
 			}
 
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			LOGGER.info("**********************************************************************************");
 
@@ -1720,10 +1723,37 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 8: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
+					"STEP 8: DESCRIPTION : Verify the Verify log message PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
 			LOGGER.info(
-					"STEP 8: ACTION : Execute the following command:grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+					"STEP 8: ACTION : Execute the following command:grep -i PRIVACY_PROTECTION_DEACTIVATED /rdklogs/logs/agent.txt");
 			LOGGER.info("STEP 8: EXPECTED : log message should be retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_DEACTIVATED,
+					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Successfully verifed the log message");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s9";
+			errorMessage = "Failed to retrieve the log message";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
+			LOGGER.info(
+					"STEP 9: ACTION : Execute the following command:grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+			LOGGER.info("STEP 9: EXPECTED : log message should be retrieved successfully");
 			LOGGER.info("**********************************************************************************");
 
 			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
@@ -1732,9 +1762,9 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 
 			if (status) {
-				LOGGER.info("STEP 8: ACTUAL : Successfully verifed the log message");
+				LOGGER.info("STEP 9: ACTUAL : Successfully verifed the log message");
 			} else {
-				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
 			}
 
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
@@ -1761,6 +1791,8 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 	 * <li>Set and verify
 	 * Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable to
 	 * True.</li>
+	 * <li>Set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable to
+	 * FALSE</li>
 	 * <li>Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to
 	 * True.</li>
 	 * <li>Verify log message PRIVACY_PROTECTION_ACTIVATED in agent.txt</li>
@@ -1797,12 +1829,13 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 		LOGGER.info("1. Verify the value of Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable as True.");
 		LOGGER.info(
 				"2. Set and verify Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable to True. ");
-		LOGGER.info("3. Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True. ");
-		LOGGER.info("4. Verify log message  PRIVACY_PROTECTION_ACTIVATED in agent.txt");
-		LOGGER.info("5. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
-		LOGGER.info("6. Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False.");
-		LOGGER.info("7. Verify log message  PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
-		LOGGER.info("8. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
+		LOGGER.info("3. Set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable to FALSE");
+		LOGGER.info("4. Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True. ");
+		LOGGER.info("5. Verify log message  PRIVACY_PROTECTION_ACTIVATED in agent.txt");
+		LOGGER.info("6. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
+		LOGGER.info("7. Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False.");
+		LOGGER.info("8. Verify log message  PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
+		LOGGER.info("9. Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
 
 		LOGGER.info("#######################################################################################");
 
@@ -1811,15 +1844,41 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			executeCommonPreConditionSteps(device, tapEnv, testCaseId);
 
 			stepNum = "s3";
+			errorMessage = "Parameter value is not set & retrieved as false";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 3: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable to FALSE");
+			LOGGER.info(
+					"STEP 3: ACTION : Execute the following command: curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:7894B4F3F778/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.CodeBigFirst.Enable\",\"value\":\"false\"}]}\"");
+			LOGGER.info("STEP 3: EXPECTED : Parameter value should be set & retrieved as false");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_CODEBIG_FIRST_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+					BroadBandTestConstants.FALSE);
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Successfully verifed that Parameter value is retrieved as FALSE");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s4";
 			errorMessage = "Parameter value is not set & retrieved as True";
 			status = false;
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 3: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True. ");
+					"STEP 4: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to True. ");
 			LOGGER.info(
-					"STEP 3: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"true\"}]}\"");
-			LOGGER.info("STEP 3: EXPECTED : Parameter value should be set & retrieved as True");
+					"STEP 4: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"true\"}]}\"");
+			LOGGER.info("STEP 4: EXPECTED : Parameter value should be set & retrieved as True");
 			LOGGER.info("**********************************************************************************");
 
 			if ((CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOG_FILE_AGENT))
@@ -1831,38 +1890,12 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			}
 
 			if (status) {
-				LOGGER.info("STEP 3: ACTUAL : Successfully verifed that Parameter value is retrieved as True");
-			} else {
-				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-			}
-
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-			LOGGER.info("**********************************************************************************");
-
-			stepNum = "s4";
-			errorMessage = "Failed to retrieve the log message";
-			status = false;
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 4: DESCRIPTION : Verify log message  PRIVACY_PROTECTION_ACTIVATED in agent.txt");
-			LOGGER.info(
-					"STEP 5: ACTION : Execute the following command:grep -i PRIVACY_PROTECTION_ACTIVATED /rdklogs/logs/agent.txt");
-			LOGGER.info("STEP 4: EXPECTED : log message should be retrieved successfully");
-			LOGGER.info("**********************************************************************************");
-
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_ACTIVATED,
-					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-
-			if (status) {
-				LOGGER.info("STEP 4: ACTUAL : Successfully verifed the log message");
+				LOGGER.info("STEP 4: ACTUAL : Successfully verifed that Parameter value is retrieved as True");
 			} else {
 				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
 			}
 
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			LOGGER.info("**********************************************************************************");
 
@@ -1871,16 +1904,15 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			status = false;
 
 			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Verify log message  PRIVACY_PROTECTION_ACTIVATED in agent.txt");
 			LOGGER.info(
-					"STEP 5: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
-			LOGGER.info(
-					"STEP 5: ACTION : Execute the following command:grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+					"STEP 5: ACTION : Execute the following command:grep -i PRIVACY_PROTECTION_ACTIVATED /rdklogs/logs/agent.txt");
 			LOGGER.info("STEP 5: EXPECTED : log message should be retrieved successfully");
 			LOGGER.info("**********************************************************************************");
 
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
-					tapEnv, BroadBandWebPaConstants.WEBPA_PARAM_PRIVACY_PROTECTION_ACTIVATE,
-					BroadBandCommandConstants.LOG_FILE_WEBPA, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_ACTIVATED,
+					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 
 			if (status) {
@@ -1894,15 +1926,42 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			stepNum = "s6";
+			errorMessage = "Failed to retrieve the log message";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 6: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to TRUE");
+			LOGGER.info(
+					"STEP 6: ACTION : Execute the following command:grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+			LOGGER.info("STEP 6: EXPECTED : log message should be retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
+					tapEnv, BroadBandWebPaConstants.WEBPA_PARAM_PRIVACY_PROTECTION_ACTIVATE,
+					BroadBandCommandConstants.LOG_FILE_WEBPA, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : Successfully verifed the log message");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s7";
 			errorMessage = "Parameter value is not set & retrieved as false";
 			status = false;
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 6: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False.");
+					"STEP 7: DESCRIPTION : Set Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate to False.");
 			LOGGER.info(
-					"STEP 6: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"false\"}]}\"");
-			LOGGER.info("STEP 6: EXPECTED : Parameter value should be set & retrieved as false");
+					"STEP 7: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\" Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\",\"value\":\"false\"}]}\"");
+			LOGGER.info("STEP 7: EXPECTED : Parameter value should be set & retrieved as false");
 			LOGGER.info("**********************************************************************************");
 
 			if ((CommonUtils.clearLogFile(tapEnv, device, BroadBandCommandConstants.LOG_FILE_AGENT))
@@ -1914,38 +1973,12 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			}
 
 			if (status) {
-				LOGGER.info("STEP 6: ACTUAL : Successfully verifed that Parameter value is retrieved as FALSE");
-			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-			}
-
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-			LOGGER.info("**********************************************************************************");
-
-			stepNum = "s7";
-			errorMessage = "Failed to retrieve the log message";
-			status = false;
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 7: DESCRIPTION : Verify log message  PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
-			LOGGER.info(
-					"STEP 7: ACTION : Execute the following command: grep -i PRIVACY_PROTECTION_DEACTIVATED /rdklogs/logs/agent.txt");
-			LOGGER.info("STEP 7: EXPECTED : log message should be retrieved successfully");
-			LOGGER.info("**********************************************************************************");
-
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_DEACTIVATED,
-					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-
-			if (status) {
-				LOGGER.info("STEP 7: ACTUAL : Successfully verifed the log message");
+				LOGGER.info("STEP 7: ACTUAL : Successfully verifed that Parameter value is retrieved as FALSE");
 			} else {
 				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
 			}
 
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			LOGGER.info("**********************************************************************************");
 
@@ -1954,11 +1987,37 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 			status = false;
 
 			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Verify log message  PRIVACY_PROTECTION_DEACTIVATED in agent.txt");
 			LOGGER.info(
-					"STEP 8: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
-			LOGGER.info(
-					"STEP 8: ACTION : Execute the following command: grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+					"STEP 8: ACTION : Execute the following command: grep -i PRIVACY_PROTECTION_DEACTIVATED /rdklogs/logs/agent.txt");
 			LOGGER.info("STEP 8: EXPECTED : log message should be retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					BroadBandTestConstants.STRING_PRIVACY_PROTECTION_DEACTIVATED,
+					BroadBandCommandConstants.LOG_FILE_AGENT, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Successfully verifed the log message");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s9";
+			errorMessage = "Failed to retrieve the log message";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION : Verify the WebPA Sync notifications log for PrivacyProtection.Activate to FALSE");
+			LOGGER.info(
+					"STEP 9: ACTION : Execute the following command: grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_PrivacyProtection.Activate\" /rdklogs/logs/WEBPAlog.txt.0");
+			LOGGER.info("STEP 9: EXPECTED : log message should be retrieved successfully");
 			LOGGER.info("**********************************************************************************");
 
 			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device,
@@ -1967,9 +2026,9 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 
 			if (status) {
-				LOGGER.info("STEP 8: ACTUAL : Successfully verifed the log message");
+				LOGGER.info("STEP 9: ACTUAL : Successfully verifed the log message");
 			} else {
-				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
 			}
 
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
@@ -4655,5 +4714,486 @@ public class BroadBandSecurityTest extends AutomaticsTestBase {
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-SEC-RM-SENS-INFO-5001");
 	}
+	
+
+    /**
+     * Verify syscfg parameters after removing unencrypted /nvram/syscfg.db
+     * <ol>
+     * <li>Enable Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram via Webpa</li>
+     * <li>Verify whether syscfg.db is not available in /nvram</li>
+     * <li>Verify whether syscfg.db is available in /tmp,and/opt/secure/data</li>
+     * <li>Verify syscfg show output comes from the content of /opt/secure/data/syscfg.db</li>
+     * <li>Update and verify syscfg show output comes from the content of /opt/secure/data/syscfg.db for persistence
+     * check</li>
+     * <li>Verify the persistence of values after reboot/li>
+     * <li>Verify whether "Syscfg stored in /opt/secure/data/syscfg.db" log message is available in Consolelog.txt.0 or
+     * ArmConsolelog.txt.0</li>
+     * <li>Verify whether /nvram/syscfg.db is not available</li>
+     * <li>Update and verify syscfg show output comes from the content of /opt/secure/data/syscfg.db for persistence
+     * check</li>
+     * <li>Factory reset the device to check default values</li>
+     * <li>Verify whether syscfg.db is available in /tmp and /opt/secure/data after FR</li>
+     * <li>Verify the persistence of values after Factory reset</li>
+     *
+     * @param device
+     *            {@link Dut}
+     * @author Leela Krishnama Naidu Andela
+     * @refactor Said Hisham
+     *           </ol>
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-SYSCFG-1001")
+    public void testToVerifySyscfgParametersUnderEncryptedMount(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SYSCFG-101";
+	int stepNumber = BroadBandTestConstants.CONSTANT_1;
+	String stepNum = null;
+	String errorMessage = null;
+	boolean status = false;
+	/** Command to check SNMPV3 support using syscfg */
+	String cmdSyscfgShowSnmpv3Support = BroadBandCommonUtils.concatStringUsingStringBuffer(
+		BroadBandCommandConstants.CMD_SYSCFG_SHOW, BroadBandTestConstants.SYMBOL_PIPE_WITH_SPACES,
+		BroadBandTestConstants.GREP_COMMAND, BroadBandTestConstants.STRING_SNMP_V3SUPPORT);
+
+	/** Command to check firewall_level6 using syscfg */
+	String cmdSyscfgShowFirewallLevelv6 = BroadBandCommonUtils.concatStringUsingStringBuffer(
+		BroadBandCommandConstants.CMD_SYSCFG_SHOW, BroadBandTestConstants.SYMBOL_PIPE_WITH_SPACES,
+		BroadBandTestConstants.GREP_COMMAND, BroadBandTestConstants.STRING_FIREWALL_LEVEL_V6);
+
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSCFG-1001");
+	LOGGER.info("TEST DESCRIPTION: Verify syscfg parameters after removing unencrypted /nvram/syscfg.db");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Enable Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram via Webpa");
+	LOGGER.info("2. Verify whether syscfg.db is not available in /nvram");
+	LOGGER.info("3. Verify whether syscfg.db is available in /tmp and /opt/secure/data");
+	LOGGER.info("4. Verify syscfg show output comes from the content of /opt/secure/data/syscfg.db");
+	LOGGER.info(
+		"5. Update and verify syscfg show output comes from the content of /opt/secure/data/syscfg.db for persistence check");
+	LOGGER.info("6. Verify the persistence of values after reboot");
+	LOGGER.info(
+		"7. Verify whether \"Syscfg stored in /opt/secure/data/syscfg.db\" log message is available in Consolelog.txt.0 or ArmConsolelog.txt.0 when UpdateNvram is false");
+	LOGGER.info("8. Verify whether /nvram/syscfg.db is not available when UpdateNvram is false");
+	LOGGER.info(
+		"9. Update and verify syscfg show output comes from the content of /opt/secure/data/syscfg.db for persistence check ");
+	LOGGER.info("10.Factory reset the device to check default values");
+	LOGGER.info("11. Verify whether syscfg.db is available in /tmp and /opt/secure/data after FR");
+	LOGGER.info("12. Verify the persistence of values after Factory reset");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram enabled via Webpa";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Enable Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram via Webpa");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute the following command: 1. curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/api/v2/device/mac:<MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram\",\"value\":\"true\"}]}\"2. /sbin/reboot3. curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA URL>/api/v2/device/mac:<ECM_MAC>/config?names=dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram should be enabled via Webpa");
+	    LOGGER.info("**********************************************************************************");
+	    status = !BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_SYSCFG_UPDATE_NVRAM, WebPaDataTypes.BOOLEAN.getValue(),
+		    BroadBandTestConstants.TRUE);
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SysCfg.UpdateNvram is not enabled via Webpa");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 2 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "syscfg.db is not available in  /opt/secure/data";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Verify whether syscfg.db is available in /tmp and /opt/secure/data");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following command: ls -ltr /tmp/syscfg.db  /opt/secure/data/syscfg.db");
+	    LOGGER.info("STEP " + stepNum + ": EXPECTED : syscfg.db should be available in /tmp and /opt/secure/data");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG)) {
+		LOGGER.info(BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG + " is available");
+		errorMessage = "Failed to verify the syscfg.db file in the /tmp folder.";
+		status = CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_TMP_SYSCFG);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum + ": ACTUAL : syscfg.db is available in /tmp and /opt/secure/data");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 3 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "syscfg.db is  available in /nvram";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify whether syscfg.db is not available in /nvram ");
+	    LOGGER.info("STEP " + stepNum + ": ACTION : Execute the following command: ls -ltr  /nvram/syscfg.db");
+	    LOGGER.info("STEP " + stepNum + ": EXPECTED : syscfg.db should not be available in /nvram ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = !CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SYSCFG);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum + ": ACTUAL : syscfg.db is not available in  /nvram ");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 4 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "\"syscfg show\" output is not same as the content of /opt/secure/data/syscfg.db";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Verify \"syscfg show\" output comes from the content of /opt/secure/data/syscfg.db");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following command: 1. syscfg show | grep -i V3Support 2. grep -i V3Support /opt/secure/data/syscfg.db ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED : \"syscfg show\" should come from the content of /opt/secure/data/syscfg.db");
+	    LOGGER.info("**********************************************************************************");
+
+	    /* compare syscfg show output with the content of syscfg.db file */
+	    status = compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv, cmdSyscfgShowSnmpv3Support,
+		    BroadBandTestConstants.STRING_SNMP_V3SUPPORT)
+		    && compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv, cmdSyscfgShowFirewallLevelv6,
+			    BroadBandTestConstants.STRING_FIREWALL_LEVEL_V6);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : \"syscfg show\" output is same as the content of /opt/secure/data/syscfg.db");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 5 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "After updating, \"syscfg show\" output is not same as the content of /opt/secure/data/syscfg.db";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Update and verify \"syscfg show\" output comes from the content of /opt/secure/data/syscfg.db for persistence check");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following commands: 1. syscfg set V3Support false; syscfg commit 2. syscfg set firewall_levelv6 Custom; syscfg commit  "
+		    + "3. syscfg show | grep -i V3Support 4. grep -i V3Support /opt/secure/data/syscfg.db  5. syscfg show | grep -i firewall_level 6. grep -i firewall_level /opt/secure/data/syscfg.db ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED : After updating, \"syscfg show\" output should come from the content of /opt/secure/data/syscfg.db");
+	    LOGGER.info("**********************************************************************************");
+
+	    /* update V3Support to false */
+	    if (CommonMethods.isNull(
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_CONFIG_DISABLEV3SUPPORT))) {
+		/* update firewall_levelv6 to Custom */
+		errorMessage = "Failed to execute the command"
+			+ BroadBandCommandConstants.CMD_TO_SET_FIREWALL_LEVEL_V6_TO_CUSTOM;
+		if (CommonMethods.isNull(tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_TO_SET_FIREWALL_LEVEL_V6_TO_CUSTOM))) {
+
+		    status = compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv,
+			    cmdSyscfgShowSnmpv3Support, BroadBandTestConstants.STRING_SNMP_V3SUPPORT)
+			    && compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv,
+				    cmdSyscfgShowFirewallLevelv6, BroadBandTestConstants.STRING_FIREWALL_LEVEL_V6);
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : After updating, \"syscfg show\" output is same as the content of /opt/secure/data/syscfg.db");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 6 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to reboot the device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify the persistence of values after reboot");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following command: 1. reboot 2. ls -ltr /tmp/syscfg.db  /opt/secure/data/syscfg.db /nvram/syscfg.db 3. syscfg show | grep -i firewall_level");
+	    LOGGER.info("STEP " + stepNum + ": EXPECTED : updated values should persist after reboot");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
+		errorMessage = "Failed to verify the syscfg.db file in the  /tmp, /opt/secure/data folder.";
+		if (!CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SYSCFG)
+			&& CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG)
+			&& CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_TMP_SYSCFG)) {
+		    errorMessage = "Failed to verify updated values does not persist after reboot";
+		    status = verifyUupdatedValuesPersistInSyscfgDbFile(device, tapEnv, cmdSyscfgShowFirewallLevelv6,
+			    BroadBandTestConstants.FIREWALL_CUSTOM_SECURITY);
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNum + ": ACTUAL : updated values persist after reboot");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 7 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "\"Syscfg stored in /opt/secure/data/syscfg.db\" log message is not available in Consolelog.txt.0 or ArmConsolelog.txt.0";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Verify whether \"Syscfg stored in /opt/secure/data/syscfg.db\" log message is available in Consolelog.txt.0 or ArmConsolelog.txt.0 when UpdateNvram is false");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following command: 1. grep -i  \"Syscfg stored in /opt/secure/data/syscfg.db\" /rdklogs/logs/Consolelog.txt.02. 	grep -i  \"Syscfg stored in /opt/secure/data/syscfg.db\" /rdklogs/logs/ArmConsolelog.txt.0");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED : \"Syscfg stored in /opt/secure/data/syscfg.db\" log message should be available in Consolelog.txt.0 or ArmConsolelog.txt.0");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_SYSCFG_STORED_IN_OPT_SECURE_DATA,
+		    (CommonMethods.isAtomSyncAvailable(device, tapEnv) ? BroadBandCommandConstants.FILE_ARMCONSOLELOG
+			    : BroadBandCommandConstants.FILE_CONSOLELOG),
+		    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : \"Syscfg stored in /opt/secure/data/syscfg.db\" log message is available in Consolelog.txt.0 or ArmConsolelog.txt.0");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 8 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = " /nvram/syscfg.db is available after reboot";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Verify whether /nvram/syscfg.db is not available after reboot");
+	    LOGGER.info("STEP " + stepNum + ": ACTION : Execute the following command: 	ls -ltr /nvram/syscfg.db");
+	    LOGGER.info("STEP " + stepNum + ": EXPECTED :  /nvram/syscfg.db should not be available after reboot");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = !CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SYSCFG);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNum + ": ACTUAL : /nvram/syscfg.db is not available when UpdateNvram is false");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 9 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "After updating, \"syscfg show\" output is not same as the content of /opt/secure/data/syscfg.db";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Update and verify \"syscfg show\" output comes from the content of /opt/secure/data/syscfg.db for persistence check");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following commands: 1. syscfg set V3Support True; syscfg commit 2. syscfg set firewall_levelv6 High; syscfg commit  "
+		    + "3. syscfg show | grep -i V3Support 4. grep -i V3Support /opt/secure/data/syscfg.db  5. syscfg show | grep -i firewall_level 6. grep -i firewall_level /opt/secure/data/syscfg.db ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED : After updating, \"syscfg show\" output should come from the content of /opt/secure/data/syscfg.db");
+	    LOGGER.info("**********************************************************************************");
+
+	    /* update V3Support to true */
+	    if (CommonMethods.isNull(
+		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_CONFIG_ENABLEV3SUPPORT))) {
+		/* update firewall_levelv6 to high */
+		errorMessage = "Failed to execute the command"
+			+ BroadBandCommandConstants.CMD_TO_SET_FIREWALL_LEVEL_V6_TO_HIGH;
+		if (CommonMethods.isNull(tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_TO_SET_FIREWALL_LEVEL_V6_TO_HIGH))) {
+
+		    status = compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv,
+			    cmdSyscfgShowSnmpv3Support, BroadBandTestConstants.STRING_SNMP_V3SUPPORT)
+			    && compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv,
+				    cmdSyscfgShowFirewallLevelv6, BroadBandTestConstants.STRING_FIREWALL_LEVEL_V6);
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : After updating, \"syscfg show\" output is same as the content of /opt/secure/data/syscfg.db");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 10 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to do factory reset";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Factory reset the device to check default values");
+	    LOGGER.info("STEP " + stepNum + ": ACTION : Performing factory reset by webpa");
+	    LOGGER.info("STEP " + stepNum + ": EXPECTED : The device should get factory resetted by webpa");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
+	    if (status) {
+
+		LOGGER.info("STEP " + stepNum + ": ACTUAL : Successfully Factory Reset Device");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 11 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "syscfg.db is not available in /tmpand /opt/secure/data after FR";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Verify whether syscfg.db is available in /tmp and /opt/secure/data after FR");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following command: ls -ltr /tmp/syscfg.db  /opt/secure/data/syscfg.db");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED : syscfg.db should be available in /tmp and /opt/secure/data after factory reset");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG)) {
+		LOGGER.info(BroadBandCommandConstants.LOG_FILE_SECURE_SYSCFG + " is available");
+		errorMessage = "Failed to verify the syscfg.db file in the /tmp folder.";
+		status = CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_TMP_SYSCFG);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : syscfg.db is available in /tmp and /opt/secure/data after Factory reset");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    /** step 12 **/
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = " syscfg.db was under /nvram/ folder after FR";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNum
+		    + ": DESCRIPTION : Verify \"syscfg show\" output comes from the content of /opt/secure/data/syscfg.db");
+	    LOGGER.info("STEP " + stepNum
+		    + ": ACTION : Execute the following command: 1. syscfg show | grep -i V3Support 2. grep -i V3Support /opt/secure/data/syscfg.db ");
+	    LOGGER.info("STEP " + stepNum
+		    + ": EXPECTED : \"syscfg show\" should come from the content of /opt/secure/data/syscfg.db");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (!CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.LOG_FILE_SYSCFG)) {
+		/* compare syscfg show output with the content of syscfg.db file */
+		errorMessage = "\"syscfg show\" output is not same as the content of /opt/secure/data/syscfg.db";
+		status = compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv, cmdSyscfgShowSnmpv3Support,
+			BroadBandTestConstants.STRING_SNMP_V3SUPPORT)
+			&& compareSyscfgShowOutputWithTheContentOfSyscfgDbFile(device, tapEnv,
+				cmdSyscfgShowFirewallLevelv6, BroadBandTestConstants.STRING_FIREWALL_LEVEL_V6);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : \"syscfg show\" output is same as the content of /opt/secure/data/syscfg.db");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+
+	    LOGGER.info("############################################################################");
+	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Perform device reactivation.");
+	    LOGGER.info("POST-CONDITION 1 : ACTION : Execute the device reactivation sequence using webpa commands.");
+	    LOGGER.info("POST-CONDITION 1 : EXPECTED : Reactivation should be successfully performed.");
+	    LOGGER.info("############################################################################");
+	    try {
+		BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
+		status = true;
+	    } catch (Exception exception) {
+		errorMessage = "Exception occured while reactivating the device." + exception.getMessage();
+	    }
+	    if (status) {
+		LOGGER.info("POST-CONDITION 1 : ACTUAL : Device Reactivated successfully.");
+	    } else {
+		LOGGER.error("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+	    }
+
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSCFG-1001");
+    }
 
 }

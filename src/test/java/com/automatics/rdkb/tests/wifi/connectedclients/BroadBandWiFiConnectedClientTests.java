@@ -9333,7 +9333,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 					"STEP 11 : ACTION:Execute Webpa Set command for DHCP Min address,Max Address and Lease time with values");
 			LOGGER.info("STEP 11 : EXPECTED:Webpa set request should be successful with status code 200");
 			LOGGER.info("##########################################################################");
-			errorMessage = "Failed to change DHCP ending address with webpa request";
+			errorMessage = "Failed to change DHCP ending address 10.0.0.3 with webpa request";
 			if (DeviceModeHandler.isBusinessClassDevice(device)) {
 				setDhcpMinValue = AutomaticsPropertyUtility
 						.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_STRING_DHCP_MIN_ADDRESS_BUSSI);
@@ -11412,7 +11412,6 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
 			LOGGER.info("PRE-CONDITION STEPS");
 			int preConStepNumber = 1;
-			boolean isReactivated = false;
 			BroadBandPreConditionUtils.executePreConditionToFactoryResetDevice(device, tapEnv, preConStepNumber);
 
 			preConStepNumber++;
@@ -11430,7 +11429,6 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			try {
 				BroadBandWiFiUtils.reactivateDeviceUsingWebpaOrSnmp(tapEnv, device);
 				status = true;
-				isReactivated = status;
 			} catch (TestException e) {
 				errorMessage = e.getMessage();
 			}
@@ -11582,7 +11580,6 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		String errorMessage = null;
 		boolean status = false;
 		String deviceDateTime = null;
-		boolean loggedIn = false;
 		boolean isReactivated = false;
 		String webPaResponse = null;
 		int deviceCount = 0;
@@ -12112,7 +12109,6 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		boolean status = false;
 		String errorMessage = null;
 		try {
-			String hostName = ((Device) deviceConnected).getConnectedDeviceInfo().getUserName();
 			String connectionType = ((Device) deviceConnected).getConnectedDeviceInfo().getConnectionType();
 			String ethernetMacAddr = ((Device) deviceConnected).getConnectedDeviceInfo().getEthernetMacAddress();
 			String wifiMacAddress = ((Device) deviceConnected).getConnectedDeviceInfo().getWifiMacAddress();
@@ -12166,7 +12162,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 	 * Method to verify the connected client details in LMLog.txt.0 file
 	 * 
 	 * @param device            instance of {@link Dut}
-	 * @param tapEnv       instance of {@link AutomaticsTapApi}
+	 * @param tapEnv            instance of {@link AutomaticsTapApi}
 	 * @param connectionTypeLog Client Connection Type log message
 	 * @param hostMacAddress    Client Mac Address
 	 * @param pollDuration      Duration to verify the logs
@@ -12799,4 +12795,355 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		// ###############################################################//
 	}
 
+	/**
+	 * Test to verify Removal of IDS
+	 * <ol>
+	 * <li>1. Check whether the IDS syscfg parameter is removed</li>
+	 * <li>2. Check if IDS enable parameter available</li>
+	 * <li>3. Check if IDS scan task parameter available</li>
+	 * <li>4. Check if samhain log file available</li>
+	 * <li>5.Check whether the file upload2splunk.sh is removed</li>
+	 * <li>6. Check for any entry of IDS in dcmscript</li>
+	 * </ol>
+	 * 
+	 * @author Deepa Bada
+	 * @refactor Athira
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+	@TestDetails(testUID = "TC-RDKB-IDS-1006")
+	public void testToVerifyRemovalOfIDS(Dut device) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-IDS-1006");
+		LOGGER.info("TEST DESCRIPTION: Test to verify Removal of IDS");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Check whether the IDS syscfg parameter is removed");
+		LOGGER.info("2. Check if IDS enable parameter available");
+		LOGGER.info("3. Check if IDS scan task parameter available");
+		LOGGER.info("4. Check if samhain log file available");
+		LOGGER.info("5.Check whether the file upload2splunk.sh is removed");
+		LOGGER.info("6. Check for any entry of IDS in dcmscript ");
+		LOGGER.info("#######################################################################################");
+
+		// Variable to store testcaseID
+		String testCaseId = "TC-RDKB-IDS-006";
+		// Variable to store step number
+		String stepNumber = "s1";
+		// variable to store status
+		boolean status = false;
+		// Variable to store errorMessage
+		String errorMessage = null;
+		// Variable to store response
+		String response = null;
+
+		try {
+
+			// STEP 1: Check whether the IDS syscfg parameter is removed
+			stepNumber = "s1";
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 1: DESCRIPTION :  Check whether the IDS syscfg parameter is removed");
+			LOGGER.info("STEP 1: ACTION : Execute Command:Execute command :cat /opt/secure/data/syscfg.db | grep IDS");
+			LOGGER.info("STEP 1: EXPECTED : Should return empty");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to verify IDS syscfg parameter is removed";
+			response = tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_TO_GREP_IDS_IN_SYSCFG_DB);
+			LOGGER.info("response is " + response);
+			status = CommonMethods.isNull(response);
+
+			// Factory reset is required if the test case is running for the first time in
+			// the device to upate with
+			// latest reset changes
+			if (!status) {
+				if (BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device)) {
+					response = tapEnv.executeCommandInSettopBox(device,
+							BroadBandCommandConstants.CMD_TO_GREP_IDS_IN_SYSCFG_DB);
+					LOGGER.info("response is " + response);
+					status = CommonMethods.isNull(response);
+
+				} else
+					LOGGER.error("failed to perform factory reset");
+			}
+
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL: Successfully verified IDS syscfg parameter is removed");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			// STEP 2: Check if IDS enable parameter available
+			stepNumber = "s2";
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 2: DESCRIPTION : Check if IDS enable parameter available ");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute command :dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.IDS.Enable");
+			LOGGER.info("STEP 2: EXPECTED : IDS enable parameter is not available");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to check abscence of IDS enable parameter";
+			response = tapEnv.executeCommandInSettopBox(device,
+					BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_DMCLI_GET_VALUE,
+							BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandWebPaConstants.DEVICE_DEVICEINFO_RFC_FEATURE_IDS_ENABLE));
+			LOGGER.info("response is " + response);
+
+			status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.PATTERN_DMCLIPARAMETER_NOT_FOUND);
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL: Successfully verified absence of IDS enable parameter");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			// STEP 3: Check if IDS scan task parameter available
+			stepNumber = "s3";
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 3: DESCRIPTION : Check if IDS scan task  parameter available ");
+			LOGGER.info(
+					"STEP 3: ACTION : Execute command :dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.IDS.ScanTask");
+			LOGGER.info("STEP 3: EXPECTED : IDS scan task parameter is  not available");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to check abscence of IDS scan task parameter";
+			response = tapEnv.executeCommandInSettopBox(device,
+					BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_DMCLI_GET_VALUE,
+							BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandWebPaConstants.WEBPA_PARAM_IDS_SCAN_TASK));
+			LOGGER.info("response is " + response);
+
+			status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.PATTERN_DMCLIPARAMETER_NOT_FOUND);
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL: Successfully verified absence of IDS scn task parameter");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			// STEP 4: Check if samhain log file available
+			stepNumber = "s4";
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 4: DESCRIPTION : Check if samhain log file available");
+			LOGGER.info("STEP 4: ACTION : Execute command: ls -l /rdklogs/logs/samhain*");
+			LOGGER.info("STEP 4: EXPECTED : samhain log file is not available");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to check if samhain log file available";
+			response = tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_TO_FIND_SAMHAIN);
+			LOGGER.info("response is " + response);
+
+			status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					AutomaticsConstants.NO_SUCH_FILE_OR_DIRECTORY);
+
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL: Successfully verified absence of samhain log file ");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			// STEP 5: Check whether the file upload2splunk.sh is removed
+			stepNumber = "s5";
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 5: DESCRIPTION : Check whether the file upload2splunk.sh is removed ");
+			LOGGER.info("STEP 5: ACTION : Execute command: find / -name *upload2splunk* 2>/dev/null");
+			LOGGER.info("STEP 5: EXPECTED : upload2splunk.sh file is not present ");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to check if upload2splunk.sh is removed";
+			response = tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_TO_FIND_UPLOAD2SPLUNK);
+			LOGGER.info("response is " + response);
+
+			status = CommonMethods.isNull(response);
+
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL: Successfully verified absence ofupload2splunk.sh file ");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+			// STEP 6: Check for any entry of IDS in dcmscript
+			stepNumber = "s6";
+			status = false;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 6: DESCRIPTION : Check for any entry of IDS in dcmscript ");
+			LOGGER.info("STEP 6: ACTION : Execute command: cat /rdklogs/logs/dcmscript.log | grep IDS");
+			LOGGER.info("STEP 6: EXPECTED : Successfully verified IDS entry in dcmscript");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to check for any entry of IDS in dcmsript";
+			response = tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_TO_GREP_IDS_DCMSCRIPT);
+
+			status = CommonMethods.isNull(response);
+
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL: Successfully verified entry of IDS in dcmscript ");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
+		} catch (Exception exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error("Exception Occurred while verifying IDS removal:" + errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+					false);
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-IDS-1006");
+		
+			}
+	
+	/**
+     * This test case is to Verify the DHCP Lan client
+     * 
+     * 
+     * <ol>
+     * <li>STEP 1: Verify the client connected to ethernet has IP Address assigned from DHCP.</li>
+     * 
+     * <li>STEP 2: Verify whether interface got the correct IPv6 address.</li>
+     * 
+     * <li>STEP 3 :Verify whether you have connectivity using that particular interface using IPV4</li>
+     * 
+     * <li>STEP 4 :Verify whether you have connectivity using that particular interface using IPV6</li>
+     * 
+     * </ol>
+     * 
+     * @param device
+     *            Dut to be used
+     * @author Joseph_Maduram
+     * @refactor Said Hisham
+     */
+
+    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, groups = {
+	    TestGroup.WEBPA, TestGroup.WIFI }, dataProviderClass = AutomaticsTapApi.class)
+    @TestDetails(testUID = "TC-RDKB-DHCP-LANCLIENT-1001")
+    public void testToVerifyDhcpLanClient(Dut device) {
+	// String to store the test case status
+	boolean status = false;
+	// Test case id
+	String testId = "TC-RDKB-DHCP-LANCLIENT-101";
+	// Test step number
+	String testStepNumber = "s1";
+	// String to store the error message
+	String errorMessage = null;
+	Dut connectedClientSettop = null;
+	BroadBandResultObject result = null; // stores test result and error
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-DHCP-LANCLIENT-1001");
+	    LOGGER.info("TEST DESCRIPTION:Verify whether the connected client to the ethernet got the IP address");
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * Step 1: Verify the client connected to ethernet has IP Address assigned from DHCP
+	     *
+	     */
+	    testStepNumber = "s1";
+	    status = false;
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Verify the client connected to ethernet has IP Address assigned from DHCP");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Client connected to ethernet from gateway should receive valid IP Address in DHCP range");
+	    LOGGER.info("STEP 1: EXPECTED: Client connected to LAN should be assigned with IP address from gateway");
+	    LOGGER.info("#####################################################################################");
+	    connectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+	    errorMessage = "Unable to connect to Ethernet client";
+	    if (null != connectedClientSettop) {
+		status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
+			device, connectedClientSettop);
+		errorMessage = "Client connected to ethernet haven't receieve valid IP Address from Gateway";
+	    }
+	    if (status) {
+		LOGGER.info(
+			"S1 ACTUAL: Client connected to ethernet from gateway has received valid IP Address in DHCP range");
+	    } else {
+		LOGGER.error("S1 ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("#####################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+	    /**
+	     * STEP 2:Verify whether interface got the correct IPv6 address.
+	     * 
+	     */
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify whether interface  got the correct IPv6  address.");
+	    LOGGER.info("STEP 2: ACTION : Connected client should get the IPV6 Interface");
+	    LOGGER.info("STEP 2: EXPECTED:Interface IPv6 address should  be shown");
+	    LOGGER.info("#####################################################################################");
+	    testStepNumber = "s2";
+	    status = false;
+	    errorMessage = "interface  didnt got the correct IPV6 address";
+	    result = BroadBandConnectedClientUtils
+		    .verifyIpv6AddressOfEthInterfaceConnectedWithBroadbandDevice(connectedClientSettop, tapEnv);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info("S2 ACTUAL :Interface  got the correct IPv6 address");
+	    } else {
+		LOGGER.error("S2 ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("#####################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    /**
+	     * STEP 3:Verify whether you have connectivity using that particular interface using IPV4.
+	     * 
+	     */
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP 3: Verify whether there is  connectivity using that particular interface using IPV4 ");
+	    LOGGER.info("STEP 3: ACTION : connectivity for Ipv4 interface should be successful");
+	    LOGGER.info("STEP 3: EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info("#####################################################################################");
+	    testStepNumber = "s3";
+	    status = false;
+	    result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
+		    connectedClientSettop, BroadBandTestConstants.URL_HTTPS_FACEBOOK,
+		    BroadBandTestConstants.IP_VERSION4);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info("S3 ACTUAL: connectivity successful using ipv4 interface");
+	    } else {
+		LOGGER.error("S3 ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("#####################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+	    /**
+	     * STEP 4:Verify whether there is connectivity using that particular interface using IPV6.
+	     * 
+	     */
+	    LOGGER.info("#####################################################################################");
+	    LOGGER.info("STEP 4: Verify whether you have connectivity using that particular interface using IPV6");
+	    LOGGER.info("STEP 4: ACTION : connectivity for Ipv6 interface should be successful");
+	    LOGGER.info("STEP 4:EXPECTED: Connectivity check should return status as 200");
+	    LOGGER.info("#####################################################################################");
+	    status = false;
+	    testStepNumber = "s4";
+	    result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
+		    connectedClientSettop, BroadBandTestConstants.URL_HTTPS_FACEBOOK,
+		    BroadBandTestConstants.IP_VERSION6);
+	    status = result.isStatus();
+	    errorMessage = result.getErrorMessage();
+	    if (status) {
+		LOGGER.info("S4 ACTUAL: connectivity successful using ipv6 interface");
+	    } else {
+		LOGGER.error("S4 ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("#####################################################################################");
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+	} catch (Exception exception) {
+	    LOGGER.error("Exception occured during execution !!!!" + exception.getMessage());
+	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, false, errorMessage, true);
+	}
+	LOGGER.info("ENDING TESTCASE :TC-RDKB-DHCP-LANCLIENT-1001");
+    }
+	
 }

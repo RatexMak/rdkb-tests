@@ -48,6 +48,7 @@ import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.dmcli.DmcliUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
@@ -753,15 +754,15 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 				"STEP 9 : Verify Captive portal status of the router after factory reset and connect the client device to the SSID after reactivating the router.");
 
 		LOGGER.info(
-				"STEP 10 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4 : 00.00.00.00, DnsIPv6 : 2001:558:feed::7510");
+				"STEP 10 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 		LOGGER.info(
 				"STEP 11 : Verify xdns override at client mac Level by validating the domain name of the site : <site> after applying dns override with Invalid macaddress/dnsserver values");
 		LOGGER.info(
-				"STEP 12 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z, DnsIPv4 : 255.255.255.0, DnsIPv6 : 2001:558:feed::7510");
+				"STEP 12 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table ");
 		LOGGER.info(
 				"STEP 13 : Verify xdns override at client mac Level by validating the domain name of the site : <site> after applying dns override with Invalid macaddress/dnsserver values");
 		LOGGER.info(
-				"STEP 14 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table with values MacAddress : A:B:C:X:Y:Z , DnsIPv4 : 10.0.0.0, DnsIPv6 : 2001:558:feed::7510");
+				"STEP 14 : Verify the presence of the dnsmasq_servers.conf file in the device and add DNS mapping table");
 		LOGGER.info(
 				"STEP 15 : Verify xdns override at client mac Level by validating the domain name of the site : www.seriesw.net after applying dns override with Invalid macaddress/dnsserver values");
 		LOGGER.info(
@@ -828,7 +829,8 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			// Mac address of the connected client
 			String clientMacAddress = ((Device) connectedClientSettop).getConnectedDeviceInfo().getWifiMacAddress();
 			applyDnsoverrideByAddingDNSMappingTable(device,
-					BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					clientMacAddress, testCaseId, "s4");
@@ -940,7 +942,9 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			 * "s20", "s21"
 			 */
 			applyInvalDnsoverrideValsAndVerifySiteNtBlckd(device, connectedClientSettop, addressForLevelOneSite,
-					addressForLevelOneSite, BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
+					addressForLevelOneSite,
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_TWO_PRIMARY,
 					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
@@ -950,7 +954,9 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			 * "s22", "s23"
 			 */
 			applyInvalDnsoverrideValsAndVerifySiteNtBlckd(device, connectedClientSettop, addressForLevelOneSite,
-					addressForLevelOneSite, BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
+					addressForLevelOneSite,
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					BroadBandTestConstants.STRING_INVALID_VALUE_FOR_MAC_ADDRESS,
 					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
@@ -961,7 +967,8 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			 */
 			applyInvalDnsoverrideValsAndVerifySiteNtBlckd(device, connectedClientSettop, addressForLevelOneSite,
 					addressForLevelOneSite, clientMacAddress,
-					BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					testCaseId, new String[] { "s24", "s25" });
@@ -1028,9 +1035,8 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		status = false;
 		status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 				BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-				AutomaticsPropertyUtility
-						.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
-				BroadBandTestConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE, BroadBandTestConstants.THREE_MINUTES,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 		// Error message
 		errorMessage = "Failed to set Global DNS IPv6 value to '<IPv6>' using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
 		LOGGER.info("PRE-CONDITION-2: ACTUAL: "
@@ -1464,9 +1470,8 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			errorMessage = "Failed to set Global DNS IPv6 value to '<IPv6>' using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-					AutomaticsPropertyUtility
-							.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
-					BroadBandTestConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+					BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE, BroadBandTestConstants.THREE_MINUTES,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 		}
 		LOGGER.info("STEP " + stepNumber + " - ACTUAL: "
 				+ (status ? "Global DNS IPv4 and IPv6 values sucessfully set to '<IPv4>' and '<IPv6>' respectively."
@@ -1502,7 +1507,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		// Error message
 		String errorMessage = null;
 		String passPhraseName = null;
-		String defaultPartner = null;
+
 		LOGGER.info("#######################################################################################");
 
 		if (!DeviceModeHandler.isDSLDevice(device)) {
@@ -2013,7 +2018,8 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			// Mac address of the connected client
 			String clientMacAddress = ((Device) connectedClientSettop).getConnectedDeviceInfo().getWifiMacAddress();
 			applyDnsoverrideByAddingDNSMappingTable(device,
-					BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
+					AutomaticsPropertyUtility
+							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
 					clientMacAddress, testCaseId, "s4");
@@ -2079,7 +2085,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					AutomaticsPropertyUtility.getProperty(
 							BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_THREE_PRIMARY),
 					AutomaticsPropertyUtility.getProperty(
-							BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_THREE_PRIMARY),
+							BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_THREE_PRIMARY),
 					clientMacAddress, testCaseId, "s8");
 			/**
 			 * "s9"
@@ -2129,11 +2135,12 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			status = false;
 			String currentPartnerIdName = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
-			if (!BroadBandCommonUtils.verifySpecificSyndicationPartnerAvailability(currentPartnerIdName)) {
+
+			if (BroadBandCommonUtils.verifySpecificSyndicationPartnerAvailability(currentPartnerIdName)) {
 				verifyCaptivePrtlModeToReactivateRtrAndConnctClient(device, connectedClientSettop, testCaseId,
 						stepNumber);
 			} else {
-				errorMessage = "This step is not applicable for few  Specific Syndication Partners";
+				errorMessage = "This step is not applicable for specific Syndication Partner";
 				LOGGER.info("STEP " + stepNumber + " - ACTUAL: " + errorMessage);
 				LOGGER.info("**********************************************************************************");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
@@ -3728,4 +3735,709 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-XDNS-1006");
 	}
+	
+	   /**
+  * Validation of XDNS redirection when clients are excluded from security edge
+  * <ol>
+  * <li>PRE-CONDITION 1 : RETRIEVE ETHERNET CONNECTED CLIENT FROM CONNECTED CLIENTS LIST</li>
+  * <li>PRE-CONDITION 2 : VERIFY INTERNET CONNECTIVITY IN ETHERNET CONNECTED CLIENT</li>
+  * <li>PRE-CONDITION 3 : RETRIEVE WIFI CONNECTED CLIENT FROM CONNECTED CLIENTS LIST</li>
+  * <li>PRE-CONDITION 4 : ENABLE XDNS IF NOT ENABLED</li>
+  * <li>PRE-CONDITION 5 : VERIFY XDNS PROCESS IS RUNNING IN CPE</li>
+  * <li>1. Verify setting primary and secondary ipv4 and ipv6 XDNS servers</li>
+  * <li>2. Verify XDNS server values in /etc/resolv.conf</li>
+  * <li>3. Start tcpdump as background process for packet capture</li>
+  * <li>4. Run ping command in ethernet client</li>
+  * <li>5. Validate DNS packets being routed to akamai server</li>
+  * <li>6. Run ping command in wifi client</li>
+  * <li>7. Valdiate DNS packets being routed to akamai server</li>
+  * <li>8. Set Akakami server exclusion list for wifi client</li>
+  * <li>9. Verify XDNS server values in /etc/resolv.conf</li>
+  * <li>10. Run ping command in ethernet client</li>
+  * <li>11. Valdiate DNS packets being routed to akamai server</li>
+  * <li>12. Run ping command in ethernet client</li>
+  * <li>13. Valdiate DNS packets are not being routed to akamai server</li>
+  * <li>POST-CONDITION 1 : Remove added XDNS table</li>
+  * <li>POST-CONDITION 2 : Set default comcat DNS server values</li>
+  * <li>POST-CONDITION 3 : Set XDNS to false if disabled before execution</li>
+  * <li>POST-CONDITION 4 : Kill tcpdump process running as background process</li>
+  * <li>POST-CONDITION 5 : Remove akamai.pcap from tmp folder</li>
+  * </ol>
+  * 
+  * @param Dut
+  * 
+  * @author RamaTeja Meduri
+  * @refactor Rakesh C N
+  *
+  */
+
+ @Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+ @TestDetails(testUID = "TC-RDKB-XDNS_SECURITYEDGE-1001")
+ public void testXdnsSecurityEdgeExcluion(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-XDNS_SECURITYEDGE-101";
+	String stepNum = "s1";
+	String errorMessage = null;
+	boolean status = false;
+	Dut ethernetClient = null;// Dut object to store ethernetClient
+	Dut wifiClient = null;// Dut object to store wifiClient
+	String response = null;
+	String xdnsEnable = null;
+	String xdnsTableCount = null;
+	String deviceMac = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-XDNS_SECURITYEDGE-1001");
+	LOGGER.info("TEST DESCRIPTION: Verify DNSSec flag when XDNS is enabled");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION 1 : RETRIEVE ETHERNET CONNECTED CLIENT FROM CONNECTED CLIENTS LIST");
+	LOGGER.info("PRE-CONDITION 2 : VERIFY INTERNET CONNECTIVITY IN ETHERNET CONNECTED CLIENT");
+	LOGGER.info("PRE-CONDITION 3 : RETRIEVE WIFI CONNECTED CLIENT FROM CONNECTED CLIENTS LIST");
+	LOGGER.info("PRE-CONDITION 4 : ENABLE XDNS IF NOT ENABLED");
+	LOGGER.info("PRE-CONDITION 5 : VERIFY XDNS PROCESS IS RUNNING IN CPE");
+	LOGGER.info("1. Verify setting primary and secondary ipv4 and ipv6 XDNS servers");
+	LOGGER.info("2. Verify XDNS server values in /etc/resolv.conf");
+	LOGGER.info("3. Start tcpdump as background process for packet capture");
+	LOGGER.info("4. Run ping command in ethernet client");
+	LOGGER.info("5. Valdiate DNS packets being routed to akamai server");
+	LOGGER.info("6. Run ping command in wifi client");
+	LOGGER.info("7. Valdiate DNS packets being routed to akamai server");
+	LOGGER.info("8. Set Akakami server exclusion list for wifi client");
+	LOGGER.info("9. Verify XDNS server values in /etc/resolv.conf");
+	LOGGER.info("10. Run ping command in ethernet client");
+	LOGGER.info("11. Valdiate DNS packets being routed to akamai server");
+	LOGGER.info("12. Run ping command in ethernet client");
+	LOGGER.info("13. Valdiate DNS packets are not being routed to akamai server");
+	LOGGER.info("POST-CONDITION 1 : Remove added XDNS table");
+	LOGGER.info("POST-CONDITION 2 : Set default comcat DNS server values");
+	LOGGER.info("POST-CONDITION 3 : Set XDNS to false if disabled before execution");
+	LOGGER.info("POST-CONDITION 4 : Kill tcpdump process running as background process");
+	LOGGER.info("POST-CONDITION 5 : Remove akamai.pcap from tmp folder");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+
+	    LOGGER.info(
+		    "PRE-CONDITION 1 : DESCRIPTION : RETRIEVE ETHERNET CONNECTED CLIENT FROM CONNECTED CLIENTS LIST");
+	    LOGGER.info("PRE-CONDITION 1 : ACTION : ETHERNET CLIENT SHOULD BE RETRIEVED");
+	    LOGGER.info("PRE-CONDITION 1 : EXPECTED: ETHERNET CONNECTED CLIENT IS RETRIEVED SUCCESSFULLY");
+	    errorMessage = "Unable to retrieve ethernet client ";
+	    try {
+		ethernetClient = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+	    } catch (TestException exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    status = ethernetClient != null;
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1 : ACTUAL : Ethernet connected client is retrieved successfully");
+	    } else {
+		LOGGER.error("PRE-CONDITION 1 : ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("PRE-CONDITION 2 : DESCRIPTION :VERIFY INTERNET CONNECTIVITY IN ETHERNET CONNECTED CLIENT ");
+	    LOGGER.info(
+		    "PRE-CONDITION 2 : ACTION : EXECUTE curl --connect-timeout 20 --head -4 google.com SHOULD BE SUCCESSFUL");
+	    LOGGER.info("PRE-CONDITION 2 : EXPECTED: CONNECTIVITY CHECK SHOULD RETURN STATUS AS 200");
+	    errorMessage = "No Internet connectivity for Ethernet connected client ";
+	    BroadBandResultObject broadBandResultObject = BroadBandConnectedClientUtils
+		    .verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, ethernetClient,
+			    BroadBandTestConstants.URL_GOOGLE, BroadBandTestConstants.IP_VERSION4);
+	    status = broadBandResultObject.isStatus();
+	    errorMessage = broadBandResultObject.getErrorMessage();
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 2 : ACTUAL : Internet connectivity successful using ipv4 with Curl request");
+	    } else {
+		LOGGER.error("PRE-CONDITION 2 : ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("PRE-CONDITION 3 : DESCRIPTION : RETRIEVE WIFI CONNECTED CLIENT FROM CONNECTED CLIENTS LIST");
+	    LOGGER.info("PRE-CONDITION 3 : ACTION : WIFI CLIENT SHOULD BE RETRIEVED");
+	    LOGGER.info("PRE-CONDITION 3 : EXPECTED: WIFI CONNECTED CLIENT IS RETRIEVED SUCCESSFULLY");
+	    errorMessage = "Unable to retrieve wifi client ";
+	    try {
+		wifiClient = BroadBandConnectedClientUtils
+			.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
+	    } catch (TestException exception) {
+		// Log & Suppress the exception
+		errorMessage = exception.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    status = wifiClient != null;
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 3 : ACTUAL : Wifi connected client is retrieved successfully");
+	    } else {
+		LOGGER.error("PRE-CONDITION 3 : ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("PRE-CONDITION 4 : DESCRIPTION :ENABLE XDNS IF NOT ENABLED ");
+	    LOGGER.info("PRE-CONDITION 4 : ACTION : tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool true");
+	    LOGGER.info("PRE-CONDITION 4 : EXPECTED: XDNS MUST Be enabled");
+	    errorMessage = "XDNS is not enabled";
+	    xdnsEnable = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS);
+	    if (xdnsEnable.equalsIgnoreCase(BroadBandTestConstants.FALSE)) {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS,
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    }
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 4 : ACTUAL : Internet connectivity successful using ipv4 with Curl request");
+	    } else {
+		LOGGER.error("PRE-CONDITION 4 : ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("PRE-CONDITION 5 : DESCRIPTION :VERIFY XDNS PROCESS IS RUNNING IN CPE ");
+	    LOGGER.info("PRE-CONDITION 5 : ACTION : pidof CcspXdnsSsp");
+	    LOGGER.info("PRE-CONDITION 5 : EXPECTED: XDNS PROCESS MUST BE RUNNING IN CPE");
+	    errorMessage = "XDNS process is not running CPE";
+	    status = CommonMethods.isNotNull(
+		    CommonMethods.getPidOfProcess(device, tapEnv, BroadBandCommandConstants.POROCESS_NAME_CCSPXDNSSSP));
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 5 : ACTUAL : Internet connectivity successful using ipv4 with Curl request");
+	    } else {
+		LOGGER.error("PRE-CONDITION 5 : ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s1";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify setting primary and secondary ipv4 and ipv6 XDNS servers");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute webpa or dmcli command for following sets:\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string 74.121.125.53\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string 2620:104:a00b::53\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string 74.121.125.54\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string 2620:104:a00b::54\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag string SecurityEdge\nVerify above values with get after performing set operation.");
+	    LOGGER.info("STEP 1: EXPECTED : Successfully set ipv4 and ipv6 XDNS servers");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to set security edge configurations";
+	    if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, BroadBandTestConstants.CONSTANT_0,
+		    BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)) {
+		errorMessage = "Failed to set value of Primary IPv6 Dns parameter";
+		if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6,
+			BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)) {
+		    errorMessage = "Failed to set value of secondary IPv4 Dns parameter";
+		    if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+			    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS)) {
+			errorMessage = "Failed to set value of secondary IPv6 Dns parameter";
+			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+				BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS)) {
+			    errorMessage = "Failed to set value of device tag for XDNS";
+			    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+				    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG,
+				    BroadBandTestConstants.CONSTANT_0,
+				    BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE);
+			}
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Successfully set ipv4 and ipv6 XDNS servers");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify XDNS server values in /etc/resolv.conf");
+	    LOGGER.info("STEP 2: ACTION : Execute command:cat /etc/resolv.conf");
+	    LOGGER.info("STEP 2: EXPECTED : Resolv.conf has updated XDNS values");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to get content of /etc/resolv.conf";
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+		    BroadBandTestConstants.CAT_COMMAND, BroadBandTestConstants.RESOLVE_DOT_CONF_FILE));
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Primary IPv4 XDNS value not updated in resolv.conf file";
+		if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)) {
+		    errorMessage = "Primary IPv6 XDNS value not updated in resolv.conf file";
+		    if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)) {
+			errorMessage = "Secondary IPv4 XDNS value not updated in resolv.conf file";
+			if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS)) {
+			    errorMessage = "Secondary IPv6 XDNS value not updated in resolv.conf file";
+			    if (CommonMethods.patternMatcher(response,
+				    BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS)) {
+				errorMessage = "Security Edge tag value not updated in resolv.conf file";
+				status = CommonMethods.patternMatcher(response,
+					BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE);
+			    }
+			}
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Resolv.conf has updated XDNS values");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Start tcpdump as background process for packet capture");
+	    LOGGER.info("STEP 3: ACTION : Execute command:/usr/sbin/tcpdump -i erouter0 > /tmp/akamai.pcap 2>&1 &");
+	    LOGGER.info("STEP 3: EXPECTED : tcpdump must be running as background process to capture packets");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "tcpdump is not running as background process to capture packets";
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TCPDUMP_EROUTER0_AKAMAI);
+	    status = CommonMethods
+		    .isNotNull(CommonMethods.getPidOfProcess(device, tapEnv, BroadBandCommandConstants.CMD_TCPDUMP));
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : tcpdump is running running and capturing packets to /tmp/akamai.pcap");
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Run ping command in ethernet client");
+	    LOGGER.info("STEP 4: ACTION : Execute command on ethernet client:ping eenadu.net -c 20");
+	    LOGGER.info("STEP 4: EXPECTED : ping must be successful");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to execute ping command on etherent client";
+	    status = CommonMethods.isNotNull(
+		    tapEnv.executeCommandOnOneIPClients(ethernetClient, BroadBandCommandConstants.CMD_ETH_PING_20));
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL : ping is successful on ethernet client");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Valdiate DNS packets being routed to akamai server");
+	    LOGGER.info(
+		    "STEP 5: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I 74.121.125.53|grep -I 74.121.125.54");
+	    LOGGER.info("STEP 5: EXPECTED : DNS packets must be routed to akamai server");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "DNS packets are not routed to akamai server";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
+		    BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)
+		    || CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS);
+	    if (!status) {
+		status = CommonUtils.patternSearchFromTargetString(response,
+			BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)
+			|| CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS);
+	    }
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_EMPTY_PACKET_AKAMAI);
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Successfully disabled XDNS feature");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("STEP 6: DESCRIPTION : Run ping command in wifi client");
+	    LOGGER.info("STEP 6: ACTION : Execute command on wifi client:ping -n 20 eenadu.net");
+	    LOGGER.info("STEP 6: EXPECTED : ping must be successful");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to execute ping command on wifi client";
+	    status = CommonMethods.isNotNull(
+		    tapEnv.executeCommandOnOneIPClients(wifiClient, BroadBandCommandConstants.CMD_WIFI_PING_20));
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : ping is successful on wifi client");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Valdiate DNS packets being routed to akamai server");
+	    LOGGER.info("STEP 7: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net");
+	    LOGGER.info("STEP 7: EXPECTED : DNS packets must be routed to akamai server");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "DNS packets are not routed to akamai server";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
+		    BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)
+		    || CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS);
+	    if (!status) {
+		status = CommonUtils.patternSearchFromTargetString(response,
+			BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)
+			|| CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS);
+	    }
+	    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_EMPTY_PACKET_AKAMAI);
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : Successfully disabled XDNS feature");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Set Akakami server exclusion list for wifi client");
+	    LOGGER.info(
+		    "STEP 8: ACTION : dmcli eRT addtable Device.X_RDKCENTRAL-COM_XDNS.DNSMappingTable.\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DNSMappingTable.1.MacAddress string 00:0e:8e:92:b6:9d\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DNSMappingTable.1.DnsIPv4 string 75.75.75.75\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DNSMappingTable.1.DnsIPv6 string 2001:558:feed::1\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DNSMappingTable.1.Tag string SecurityEdge_Exclusion");
+	    LOGGER.info("STEP 8: EXPECTED : Akamami server exclusion list must be added to wifi client");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Akamami server exclusion list is not added to wifi client";
+	    deviceMac = BroadBandConnectedClientUtils.getConnectedClientIpOrMacFromTheDevice(device, wifiClient, tapEnv,
+		    false);
+	    xdnsTableCount = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandCommandConstants.DMCLI_PREFIX_TO_ADD_TABLE, AutomaticsConstants.SPACE,
+			    BroadBandWebPaConstants.WEBPA_PARAM_DNS_MAPPING_TABLE,
+			    BroadBandCommandConstants.CMD_GREP_XDNS_DATA_TABLE));
+	    xdnsTableCount = xdnsTableCount.replace(BroadBandTestConstants.DELIMITER_NEW_LINE,
+		    BroadBandTestConstants.EMPTY_STRING);
+
+	    if (CommonMethods.isNotNull(xdnsTableCount)) {
+		if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_XDNS_MAC_ADDR_MAPPING_TABLE
+				.replace(BroadBandTestConstants.TR181_NODE_REF, xdnsTableCount),
+			BroadBandTestConstants.CONSTANT_0, deviceMac.toLowerCase())) {
+		    if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_XDNS_IPV4_MAPPING_TABLE
+				    .replace(BroadBandTestConstants.TR181_NODE_REF, xdnsTableCount),
+			    BroadBandTestConstants.CONSTANT_0,
+			    BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE)) {
+			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_XDNS_IPV6_MAPPING_TABLE
+					.replace(BroadBandTestConstants.TR181_NODE_REF, xdnsTableCount),
+				BroadBandTestConstants.CONSTANT_0,
+				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE)) {
+			    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+				    BroadBandWebPaConstants.WEBPA_PARAM_XDNS_CLIENT_TAG_NAME_MAPPING_TABLE
+					    .replace(BroadBandTestConstants.TR181_NODE_REF, xdnsTableCount),
+				    BroadBandTestConstants.CONSTANT_0,
+				    BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE_EXCLUSION);
+			}
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Successfully set security edge exclusion parameters");
+		tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify XDNS server values in /etc/resolv.conf");
+	    LOGGER.info("STEP 9: ACTION : Execute command:cat /etc/resolv.conf");
+	    LOGGER.info("STEP 9: EXPECTED : Resolv.conf has updated XDNS values");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to get content of /etc/resolv.conf";
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+		    BroadBandTestConstants.CAT_COMMAND, BroadBandTestConstants.RESOLVE_DOT_CONF_FILE));
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Primary IPv4 XDNS value not updated in resolv.conf file";
+		if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)) {
+		    errorMessage = "Primary IPv6 XDNS value not updated in resolv.conf file";
+		    if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)) {
+			errorMessage = "Secondary IPv4 XDNS value not updated in resolv.conf file";
+			if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS)) {
+			    errorMessage = "Secondary IPv6 XDNS value not updated in resolv.conf file";
+			    if (CommonMethods.patternMatcher(response,
+				    BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS)) {
+				errorMessage = "Security Edge exclusion tag value not updated in resolv.conf file";
+				if (CommonMethods.patternMatcher(response,
+					BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE_EXCLUSION)) {
+				    errorMessage = "wifi client mac address value not updated in resolv.conf file";
+				    if (CommonMethods.patternMatcher(response, deviceMac.toLowerCase())) {
+					errorMessage = "Security Edge tag value not updated in resolv.conf file";
+					status = CommonMethods.patternMatcher(response,
+						BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE);
+				    }
+				}
+			    }
+			}
+		    }
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : Resolv.conf has updated XDNS values");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s10";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Run ping command in ethernet client");
+	    LOGGER.info("STEP 10: ACTION : Execute command on ethernet client:ping eenadu.net -c 20");
+	    LOGGER.info("STEP 10: EXPECTED : ping must be successful");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to execute ping command on etherent client";
+	    status = CommonMethods.isNotNull(
+		    tapEnv.executeCommandOnOneIPClients(ethernetClient, BroadBandCommandConstants.CMD_ETH_PING_20));
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL : ping is successful on ethernet client");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s11";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Valdiate DNS packets being routed to akamai server");
+	    LOGGER.info(
+		    "STEP 11: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I 74.121.125.53|grep -I 74.121.125.54");
+	    LOGGER.info("STEP 11: EXPECTED : DNS packets must be routed to akamai server");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "DNS packets are not routed to akamai server";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
+		    BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)
+		    || CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS);
+	    if (!status) {
+		status = CommonUtils.patternSearchFromTargetString(response,
+			BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)
+			|| CommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS);
+	    }
+	    tapEnv.executeCommandUsingSsh(device, "echo > /tmp/akamai.pcap");
+	    if (status) {
+		LOGGER.info("STEP 11: ACTUAL : Successfully disabled XDNS feature");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s12";
+	    status = false;
+
+	    LOGGER.info("STEP 12: DESCRIPTION : Run ping command in wifi client");
+	    LOGGER.info("STEP 12: ACTION : Execute command on ethernet client:ping -n 20 eenadu.net");
+	    LOGGER.info("STEP 12: EXPECTED : ping must be successful");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Failed to execute ping command on etherent client";
+	    status = CommonMethods.isNotNull(
+		    tapEnv.executeCommandOnOneIPClients(wifiClient, BroadBandCommandConstants.CMD_WIFI_PING_20));
+	    if (status) {
+		LOGGER.info("STEP 12: ACTUAL : ping is successful on wifi client");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s13";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION : Valdiate DNS packets are not being routed to akamai server");
+	    LOGGER.info(
+		    "STEP 13: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I 74.121.125.53|grep -I 74.121.125.54");
+	    LOGGER.info("STEP 13: EXPECTED : DNS packets must not be routed to akamai server");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "DNS packets are routed to akamai server";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
+		    BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = (!CommonUtils.patternSearchFromTargetString(response,
+		    BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS))
+		    && (!CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS))
+		    && (!CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS))
+		    && (!CommonUtils.patternSearchFromTargetString(response,
+			    BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS));
+
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL : Successfully disabled XDNS feature");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Remove added XDNS table");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : ACTION : dmcli eRT deltable Device.X_RDKCENTRAL-COM_XDNS.DNSMappingTable.1.");
+	    LOGGER.info("POST-CONDITION 1 : EXPECTED : DNS Mapping Table must be deleted");
+	    LOGGER.info("#######################################################################################");
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.DMCLI_DEL_TABLE,
+			    AutomaticsConstants.SPACE, BroadBandWebPaConstants.WEBPA_PARAM_DNS_MAPPING_TABLE, xdnsTableCount,
+			    BroadBandTestConstants.DOT_OPERATOR));
+	    status = CommonMethods.isNotNull(response) && CommonUtils.patternSearchFromTargetString(response,
+		    BroadBandTestConstants.RESPONSE_EXECUTION_SUCCEED);
+	    if (status) {
+			LOGGER.info("POST-CONDITION 1 : EXPECTED : DNS Mapping Table must be deleted");
+		    } else {
+			LOGGER.error("POST-CONDITION 1 :  " + errorMessage);
+		    }
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 2 : DESCRIPTION : Set default comcat DNS server values");
+	    LOGGER.info(
+		    "POST-CONDITION 2 : ACTION : tr181.Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string 75.75.75.75\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string 2001:558:feed::1\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string \"\"\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string \"\"\ntr181.Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag string empty");
+	    LOGGER.info("POST-CONDITION 2 : EXPECTED : XDNS configs must be restored to default");
+	    LOGGER.info("#######################################################################################");
+	    BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, BroadBandTestConstants.CONSTANT_0,
+		    BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE);
+	    BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, BroadBandTestConstants.CONSTANT_0,
+		    BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE);
+	    DmcliUtils.setWebPaParameterValueUsingDmcliCommand(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_OPEN_DNS_IP_75_76);
+	    DmcliUtils.setWebPaParameterValueUsingDmcliCommand(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
+		    BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.DNS_SERVER_2);
+	    DmcliUtils.setWebPaParameterValueUsingDmcliCommand(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG, BroadBandTestConstants.CONSTANT_0,
+		    BroadBandTestConstants.EMPTY_KEYWORD.toLowerCase());
+	    
+	    if (status) {
+			LOGGER.info("POST-CONDITION 2 : EXPECTED : XDNS configs must be restored to default");
+		    } else {
+			LOGGER.error("POST-CONDITION 2 :  " + errorMessage);
+		    }
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 3 : DESCRIPTION : Set XDNS to false if disabled before execution");
+	    LOGGER.info("POST-CONDITION 3 : ACTION : tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS bool false");
+	    LOGGER.info("POST-CONDITION 3 : EXPECTED : XDNS must be restored to default");
+	    LOGGER.info("#######################################################################################");
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, WebPaDataTypes.BOOLEAN.getValue(),
+		    xdnsEnable);
+	    
+	    if (status) {
+			LOGGER.info("POST-CONDITION 3 : EXPECTED : XDNS must be restored to default");
+		    } else {
+			LOGGER.error("POST-CONDITION 3 :  " + errorMessage);
+		    }
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 4 : DESCRIPTION : Kill tcpdump process running as background process");
+	    LOGGER.info("POST-CONDITION 4 : ACTION : killall -11 tcpdump");
+	    LOGGER.info("POST-CONDITION 4 : EXPECTED : tcpdump process must be killed");
+	    LOGGER.info("#######################################################################################");
+	    status = BroadBandCommonUtils.killAndCheckProcess(device, tapEnv, BroadBandCommandConstants.CMD_TCPDUMP);
+	    
+	    if (status) {
+			LOGGER.info("POST-CONDITION 4 : EXPECTED : tcpdump process must be killed");
+		    } else {
+			LOGGER.error("POST-CONDITION 4 :  " + errorMessage);
+		    }
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 5 : DESCRIPTION : Remove akamai.pcap from tmp folder");
+	    LOGGER.info("POST-CONDITION 5 : ACTION : rm /tmp/akamai.pcap");
+	    LOGGER.info("POST-CONDITION 5 : EXPECTED : /tmp/akamai.pcap must be removed");
+	    LOGGER.info("#######################################################################################");
+	    status = BroadBandCommonUtils.removeFileAndVerifyStatus(tapEnv, device,
+		    BroadBandCommandConstants.PATH_AKAMAI_CAPTURE);
+	    
+	    if (status) {
+			LOGGER.info("POST-CONDITION 5 : EXPECTED : /tmp/akamai.pcap must be removed");
+		    } else {
+			LOGGER.error("POST-CONDITION 5 :  " + errorMessage);
+		    }
+
+
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-XDNS_SECURITYEDGE-1001");
+ }
 }

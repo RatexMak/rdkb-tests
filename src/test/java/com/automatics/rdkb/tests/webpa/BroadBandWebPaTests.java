@@ -647,8 +647,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    status = false;
 	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-		    AutomaticsPropertyUtility
-			.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE), BroadBandTestConstants.THREE_MINUTES,
+		    BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE, BroadBandTestConstants.THREE_MINUTES,
 		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    // Error message
 	    errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
@@ -1946,8 +1945,9 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 2: EXPECTED : XDNS should be enabled sucessfully via WebPA.");
 	    LOGGER.info("**********************************************************************************");
 	    List<WebPaParameter> webPaParameters = BroadBandWebPaUtils.getListOfWebpaParametersToEnableOrDisableXdns(
-		    BroadBandTestConstants.TRUE, BroadBandTestConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY,
-		    AutomaticsPropertyUtility
+		    BroadBandTestConstants.TRUE, AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV4_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY),
+			AutomaticsPropertyUtility
 			.getProperty(BroadBandPropertyKeyConstants.STRING_DNS_IPV6_VALUE_FOR_DNS_LEVEL_ONE_PRIMARY));
 	    resultObject = BroadBandWebPaUtils.executeSetAndGetOnMultipleWebPaGetParams(device, tapEnv,
 		    webPaParameters);
@@ -2048,8 +2048,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			.getListOfWebpaParametersToEnableOrDisableXdns(BroadBandTestConstants.FALSE,
 					AutomaticsPropertyUtility
 					.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
-					AutomaticsPropertyUtility
-					.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE));
+				BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE);
 		resultObject = BroadBandWebPaUtils.executeSetAndGetOnMultipleWebPaGetParams(device, tapEnv,
 			webPaParameters);
 		status = resultObject.isStatus();
@@ -3984,10 +3983,10 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 		    "STEP 4: ACTION : Execute the Webpa Set Command for parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress");
 	    LOGGER.info("STEP 4: EXPECTED : Device WifiClient.MacAddress Value should be set successfully via Webpa.");
 	    LOGGER.info("**********************************************************************************");
-		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
-				BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
-				AutomaticsPropertyUtility
-				.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT));
+	    status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS, BroadBandTestConstants.CONSTANT_0,
+		    AutomaticsPropertyUtility
+			.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT));
 	    if (status) {
 		LOGGER.info("STEP 4: ACTUAL : Setting WifiClient.MacAddress value is successful via Webpa.");
 	    } else {
@@ -4139,7 +4138,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    String[] expectedValues = new String[] { BroadBandTestConstants.TRUE, BroadBandTestConstants.STRING_30,
 	    		AutomaticsPropertyUtility
-	    		.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT),
+				.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_MAC_ADDRESS_WIFICLIENT),
 		    BroadBandTestConstants.WIFICLIENT_SCHEMA_TYPE };
 	    if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
 		status = BroadBandWebPaUtils.verifyWiFiClientDataModelPersistence(device, tapEnv, parameters,
@@ -5491,7 +5490,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 18: DESCRIPTION : Verify notify attribute is turned ON for parameter \"Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client\" using WEBPA ");
 	    LOGGER.info(
-		    "STEP 18: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept:  application/json\" -w %{time_total} -k \"<WEBPA_URL>/api/v2/device/mac:48f7c0063ce5/config?names=Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client&attributes=not");
+		    "STEP 18: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept:  application/json\" -w %{time_total} -k \"<WEBPA_URL>/api/v2/device/mac:<MAC_ADDRESS>/config?names=Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client&attributes=not");
 	    LOGGER.info(
 		    "STEP 18: EXPECTED : Notification should be turned ON for the parameter : Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client");
 	    LOGGER.info("**********************************************************************************");
@@ -5680,7 +5679,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 27: DESCRIPTION : Verify notify attribute is turned on for parameter \"Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable\" using WEBPA ");
 	    LOGGER.info(
-		    "STEP 27: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept: application/json\" -w %{time_total} -k\"<WEBPA_URL>/api/v2/device/mac:48f7c0063ce5/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable&attributes=not");
+		    "STEP 27: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept: application/json\" -w %{time_total} -k\"<WEBPA_URL>/api/v2/device/mac:<MAC_ADDRESS>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable&attributes=not");
 	    LOGGER.info(
 		    "STEP 27: EXPECTED : Notification should be turned ON for the parameter :  Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable ");
 	    LOGGER.info("**********************************************************************************");
@@ -5701,7 +5700,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 28: DESCRIPTION : Verify notify attribute is turned on for parameter \"Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable\" using WEBPA ");
 	    LOGGER.info(
-		    "STEP 28: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept: application/json\" -w %{time_total} -k \"<WEBPA_URL>/api/v2/device/mac:48f7c0063ce5/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable&attributes=not");
+		    "STEP 28: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept: application/json\" -w %{time_total} -k \"<WEBPA_URL>/api/v2/device/mac:<MAC_ADDRESS>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable&attributes=not");
 	    LOGGER.info(
 		    "STEP 28: EXPECTED : Notification should be turned ON for the parameter : Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable");
 	    LOGGER.info("**********************************************************************************");
@@ -5765,7 +5764,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 31: DESCRIPTION : Verify notify attribute is turned OFF for parameter \"Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client\" using WEBPA ");
 	    LOGGER.info(
-		    "STEP 31: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept:application/json\" -w %{time_total} -k \"<WEBPA_URL>/api/v2/device/mac:48f7c0063ce5/config?names=Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client&attributes=not");
+		    "STEP 31: ACTION : Execute command:curl -i -H \"Authorization:Bearer ${WEBPA_SAT}\" -H \"Accept:application/json\" -w %{time_total} -k \"<WEBPA_URL>/api/v2/device/mac:<MAC_ADDRESS>/config?names=Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client&attributes=not");
 	    LOGGER.info(
 		    "STEP 31: EXPECTED : Notification should be turned OFF for the parameter : Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client");
 	    LOGGER.info("**********************************************************************************");
@@ -6881,7 +6880,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP " + stepNumber
 		    + " DESCRIPTION : Perform factory reset on the device using WebPA/Snmp Command and reactivate");
 	    LOGGER.info("STEP " + stepNumber
-		    + " ACTION : Execute WebPa set Command with parameter Device.X_CISCO_COM_DeviceControl.FactoryReset to value \"Router,Wifi,VoIP,Dect,MoCA\"");
+		    + " ACTION : Execute WebPa Command with parameter  Device.X_CISCO_COM_DeviceControl.FactoryReset to set to value\":\"Router,Wifi,VoIP,Dect,MoCA\"");
 	    LOGGER.info(
 		    "STEP " + stepNumber + " EXPECTED : Factory reset should be successful and device should be Up ");
 	    LOGGER.info("**********************************************************************************");
@@ -7288,5 +7287,198 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, step, status, errorMessage, true);
 	}
     }
+    
+    /**
+    *
+    * Test Case : Verify subnet mask range in router mode
+    *
+    * <p>
+    * STEPS:
+    * </p>
+    * <ol>
+    * <li>PRE-CONDITION 1 : GET THE DEFAULT SUBNET MASK VALUE</li>
+    * <li>PRE-CONDITION 2 : VERIFY THAT THE DEVICE IS IN ROUTER MODE</li>
+    * <li>Step 1 : Set and verify the list of valid subnet mask values using webpa when device is in router mode</li>
+    * <li>Step 2 : Set and verify the the list of invalid subnet mask values using webpa when device is in router mode
+    * </li>
+    * <li>POST-CONDITION 1 : SET THE DEFAULT SUBNET MASK VALUE</li>
+    * </ol>
+    * 
+    * @param device
+    *            {@link Dut}
+    * @author Muthukumar
+    * @refactor Said Hisham
+    */
+   @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+   @TestDetails(testUID = "TC-RDKB-SUBMSK-CHANGE-5001")
+   public void testToVerifySubnetMaskValues(Dut device) {
+	int stepNumber = BroadBandTestConstants.CONSTANT_1;
+	String stepNum = "S" + stepNumber;
+	String errorMessage = "";
+	boolean status = false;
+	String defaultSubnetMaskValue = null;
+	String testCaseId = "TC-RDKB-SUBMSK-CHANGE-501";
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SUBMSK-CHANGE-5001");
+	LOGGER.info("TEST DESCRIPTION: Verify subnetmask range in Bridge Mode");
+	LOGGER.info("PRE-CONDITION 1 : GET THE DEFAULT SUBNET MASK VALUE");
+	LOGGER.info("PRE-CONDITION 2 : VERIFY THAT THE DEVICE IS IN ROUTER MODE");
+	LOGGER.info(
+		"Step 1 : Set and verify the list of valid subnet mask values using webpa when device is in router mode");
+	LOGGER.info(
+		"Step 2 : Set and verify the list of invalid subnet mask values using webpa when device is in router mode");
+	LOGGER.info("POST-CONDITION 1 : SET THE DEFAULT SUBNET MASK VALUE");
+	LOGGER.info("#######################################################################################");
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+
+	    /**
+	     * PRECONDITION 1 : GET THE DEFAULT SUBNET MASK VALUE
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : GET THE DEFAULT SUBNET MASK VALUE");
+	    LOGGER.info("PRE-CONDITION 1 : ACTION : GET THE DEFAULT SUBNET MASK VALUE USING WEBPA");
+	    LOGGER.info("PRE-CONDITION 1 : EXPECTED : MUST RETRIEVE THE DEFAULT SUBNET MASK VALUE ");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "FAILED TO GET DEFAULT SUBNET MASK VALUE";
+	    defaultSubnetMaskValue = tapEnv.executeWebPaCommand(device,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_LAN_SUBNET);
+	    status = CommonMethods.isNotNull(defaultSubnetMaskValue);
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1 : ACTUAL : DEFAULT SUBNET MASK VALUE ARE RETRIEVED SUCCESSFULLY");
+	    } else {
+		LOGGER.error("PRE-CONDITION 1 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1 : FAILED : " + errorMessage);
+	    }
+
+	    /**
+	     * PRECONDITION 2 : VERIFY THAT THE DEVICE IS IN ROUTER MODE
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 2 : DESCRIPTION : VERIFY THAT THE DEVICE IS IN ROUTER MODE.");
+	    LOGGER.info("PRE-CONDITION 2 : ACTION : CHECK FOR THE DEVICE IS IN ROUTER MODE USING WEBPA");
+	    LOGGER.info("PRE-CONDITION 2 : EXPECTED : DEVICE SHOULD BE IN 'ROUTER' MODE.");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "FAILED TO VERIFY THE DEVICE IS IN ROUTER MODE";
+	    try {
+		status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_ENABLE,
+			BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER);
+	    } catch (TestException exception) {
+		LOGGER.error(errorMessage + " : " + exception.getMessage());
+	    }
+	    if (!status) {
+		try {
+		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_ENABLE, BroadBandTestConstants.CONSTANT_0,
+			    BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER,
+			    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+		} catch (TestException exception) {
+		    LOGGER.error(errorMessage + " : " + exception.getMessage());
+		}
+		if (status) {
+		    tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
+		}
+	    }
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 2 : ACTUAL : SUCCESSFULLY VERIFIED ROUTER MODE IN GATEWAY");
+	    } else {
+		LOGGER.error("PRE-CONDITION 2 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 2 : FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    BroadBandResultObject broadBandResultObject = null;
+
+	    /**
+	     * STEP 1 : SET AND VERIFY THE LIST OF VALID SUBNET MASK VALUES USING WEBPA WHEN DEVICE IS IN ROUTER MODE
+	     */
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Set and verify the list of valid subnet mask values using webpa when device is in router mode \n"
+		    + " 1. Set subnet mask value using webpa \n" + " 2. Verify the log information in PAMLog.txt.0 \n");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute command:  \n "
+		    + " 1. Execute webpa/dmcli command: dmcli eRT setv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanSubnetMask string <subnetmask value>  \n"
+		    + " 2. cat /rdklogs/logs/PAMLog.txt.0  \n");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : Must set the valid subnet mask values");
+	    LOGGER.info("***************************************************************************************");
+	    errorMessage = "Failed to set and verify the list of valid subnet mask values\n";
+	    broadBandResultObject = BroadBandWiFiUtils.validateValidSubnetMaskValues(device, tapEnv);
+	    status = broadBandResultObject.isStatus();
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    if (status) {
+		LOGGER.info("STEP :  " + stepNumber
+			+ " : ACTUAL : Successfully set and verified the valid subnet mask values");
+	    } else {
+		LOGGER.error("STEP :  " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 2 : SET AND VERIFY THE THE LIST OF INVALID SUBNET MASK VALUES USING WEBPA WHEN DEVICE IS IN ROUTER
+	     * MODE
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("***************************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Set and verify the  the list of invalid subnet mask values using webpa when device is in router mode\n"
+		    + "1. Set subnet mask value using webpa \n" + "2. Verify the log information in PAMLog.txt.0 \n");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : 1.Execute webpa/dmcli command:  \n"
+		    + "1. dmcli eRT setv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanSubnetMask string <subnetmaskvalue> \n"
+		    + "2. cat /rdklogs/logs/PAMLog.txt.0 \n");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : Should not set the invalid subnet mask values");
+	    LOGGER.info("***************************************************************************************");
+	    errorMessage = "Failed to set and verify the list of invalid subnet mask values\n";
+	    broadBandResultObject = BroadBandWiFiUtils.validateInValidSubnetMaskValues(device,
+		    tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_LAN_SUBNET));
+	    status = broadBandResultObject.isStatus();
+	    errorMessage = broadBandResultObject.getErrorMessage();
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :  Successfully verified the invalid subnet mask configuration");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("***************************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    /**
+	     * POST-CONDITION 1 : SET THE DEFAULT SUBNET MASK VALUE
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : SET THE DEFAULT SUBNET MASK VALUE");
+	    LOGGER.info("POST-CONDITION 1 : ACTION : SET THE DEFAULT SUBNET MASK VALUE USING WEBPA");
+	    LOGGER.info("POST-CONDITION 1 : EXPECTED : MUST SET THE DEFAULT SUBNET MASK VALUE ");
+	    LOGGER.info("#######################################################################################");
+	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_LAN_SUBNET, BroadBandTestConstants.CONSTANT_0,
+		    defaultSubnetMaskValue, BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("POST-CONDITION 1 : ACTUAL : SUCCESSFULLY SET THE DEFAULT SUBNET MASK VALUE.");
+	    } else {
+		LOGGER.info("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SUBMSK-CHANGE-5001");
+   }
 
 }

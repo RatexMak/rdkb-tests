@@ -193,7 +193,7 @@ public class BroadBandWebGuiCaptivePortalTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP " + stepNumber
 		    + " : DESCRIPTION : Verify lan gui admin page is redirected to captive portal page after factory reset.");
 	    LOGGER.info("STEP " + stepNumber
-		    + " : ACTION : Launch the below url  in browser https://10.0.0.1 or https://10.1.10.1");
+		    + " : ACTION : Launch the below url  in browser");
 	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : Capative portal should be launched.");
 	    LOGGER.info("**********************************************************************************");
 	    errorMessage = "Failed to launch capative portal when accessing lan gui admin page";

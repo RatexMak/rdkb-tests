@@ -34,11 +34,13 @@ import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWifiWhixUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
@@ -2092,7 +2094,7 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 			"STEP 7: EXPECTED: Files listed in Acceptance criteria 1  should not be present in Atom side ");
 		LOGGER.info("******************************************************************************");
 		errorMessage = "Files present in Atom side of the device are ";
-		for (BroadBandCommandConstants.QUALCOM_FILES file : BroadBandCommandConstants.QUALCOM_FILES.values()) {
+		for (BroadBandCommandConstants.ATOMSIDE_FILES file : BroadBandCommandConstants.ATOMSIDE_FILES.values()) {
 		    status = !BroadBandCommonUtils.isFileExistsonAtom(device, tapEnv, file.getFile());
 		    if (!status) {
 			failures.add(file.getFile());
@@ -2131,7 +2133,7 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 			"STEP 8: EXPECTED: Files listed in Acceptance criteria 2 should not be present in Atom side ");
 		LOGGER.info("******************************************************************************");
 		errorMessage = "Files present in Atom side of the device are ";
-		for (BroadBandCommandConstants.ATOMSYNC_QUALCOM_FILES file : BroadBandCommandConstants.ATOMSYNC_QUALCOM_FILES
+		for (BroadBandCommandConstants.ATOMSYNC_FILES file : BroadBandCommandConstants.ATOMSYNC_FILES
 			.values()) {
 		    status = !BroadBandCommonUtils.isFileExistsonAtom(device, tapEnv, file.getFile());
 		    if (!status) {
@@ -2240,5 +2242,319 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-RM-MODULE-1001");
 	// ###############################################################//
+    }
+    
+    /**
+     * Validate device status when rbus is enabled
+     * <ol>
+     * <li>Collect CPU and memory usage stats for 10 minutes when feature is disabled</li>
+     * <li>Retrieve rbus status using webpa if not enabled post rfc settings</li>
+     * <li>Verify log files for rbus parameter</li> *
+     * <li>Reboot device and wait for Ip aqusition</li>
+     * <li>Validate rbus status using webpa</li>
+     * <li>Collect CPU and memory usage stats for 10 minutes when feature is disabled</li>
+     * <li>Validate CPU and memory usage stats before and after rbus enabled</li>
+     * <li>Reboot device and wait for Ip aqusition</li>
+     * <li>Validate rbus status using webpa</li>
+     * <li>POST-CONDITION 1: BROAD BAND DEVICE REACTIVATION USING WEBPA</li>
+     * <li>POST-CONDITION 2 : REVERT RBUS SETTINGS USING RFC</li>
+     * </ol>
+     * 
+     * @param device
+     * @author prasanthreddy.a
+     * @refactor Said Hisham
+     */
+
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-RBUS-1001")
+    public void testToVerifyRbus(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-RBUS-101";
+	String stepNum = "S1";
+	String errorMessage = "";
+	boolean status = false;
+	boolean statusDefault = false;
+	boolean rbusEnabled = false;
+	String beforeEnablingFeature = null;
+	String afterEnablingFeature = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-RBUS-1001");
+	LOGGER.info("TEST DESCRIPTION: Validate device status when rbus is enabled ");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Collect CPU and memory usage stats for 10 minutes when feature is disabled");
+	LOGGER.info("2. Retrieve rbus status using webpa");
+	LOGGER.info("3. Verify log files for rbus parameter");
+	LOGGER.info("4. Reboot device and wait for Ip aqusition");
+	LOGGER.info("5. Validate rbus status using webpa");
+	LOGGER.info("6. Collect CPU and memory usage stats for 10 minutes when feature is Enabled");
+	LOGGER.info("7. Validate CPU and memory usage stats before and after rbus enabled");
+	LOGGER.info("8. Reboot device and wait for Ip aqusition");
+	LOGGER.info("9. Validate rbus status using webpa");
+	LOGGER.info("POST-CONDITION 1: BROAD BAND DEVICE REACTIVATION USING WEBPA");
+	LOGGER.info("POST-CONDITION 2 : REVERT RBUS SETTINGS USING RFC");
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    errorMessage = "Unable to collect usage details";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION: Collect CPU and memory usage stats for 10 minutes when feature is disabled");
+	    LOGGER.info(
+		    "STEP 1: ACTION: a) execute the following command inside the RG console of the gateway for every one minute and collect the data for CPU and memory usage, "
+			    + "\"top -n 1 |grep -i Mem |sed  's/^[^0-9]*//;s/[^0-9].*$//'\" and \"top -n 1 |grep CPU: |sed  's/^[^0-9]*//;s/[^0-9].*$//'\"\n b) Calculate the average for the data collected ");
+	    LOGGER.info("STEP 1: EXPECTED: Command execution on the device should be successful");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Unable to collect CPU and memory usage data";
+	    String response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    LOGGER.info("STEP 1: Response for CPU and memory utilisation: " + response);
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		beforeEnablingFeature = response;
+		LOGGER.info("STEP 1: ACTUAL : Calculating the average CPU and Memory utilisation for 10 minutes"
+			+ " with client stats telemetry disabled is successful");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S2";
+	    errorMessage = "Unable to enable/status using webpa";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Verify RBUS is enabled.");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute webpa command :Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable");
+	    LOGGER.info("STEP 2: EXPECTED : RBus must be enabled");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE);
+		statusDefault = CommonMethods.isNotNull(response)
+			&& CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.TRUE);
+		status = statusDefault;
+	    } catch (Exception e) {
+		LOGGER.info("Failed to get webpa response " + e.getMessage());
+	    }
+	    if (!statusDefault) {
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+			BroadBandTestConstants.TRUE);
+	    }
+	    if (status) {
+		rbusEnabled = status;
+		LOGGER.info("STEP 2: ACTUAL : Successfully enabled the RBus");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    if (rbusEnabled) {
+
+		stepNum = "S3";
+		errorMessage = "Unable to reboot device";
+		status = false;
+
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 3: DESCRIPTION : Reboot device and validate online status");
+		LOGGER.info("STEP 3: ACTION : Execute : reboot");
+		LOGGER.info("STEP 3: EXPECTED : Successfully rebooted device and online status");
+		LOGGER.info("**********************************************************************************");
+		status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv) && BroadBandWebPaUtils
+			.verifyWebPaProcessIsUp(tapEnv, device, BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+		if (status) {
+
+		    LOGGER.info(
+			    "STEP 3: ACTUAL : Successfully rebooted device and validated device status after reboot");
+		} else {
+		    LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+		stepNum = "S4";
+		errorMessage = "Unable to validate status using webpa";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 4: DESCRIPTION : Validate rbus status using webpa");
+		LOGGER.info(
+			"STEP 4: ACTION : Execute webpa :Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable");
+		LOGGER.info("STEP 4: EXPECTED : Successfully validated rbus status using webpa");
+		LOGGER.info("**********************************************************************************");
+
+		status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE, BroadBandTestConstants.TRUE,
+			BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+		if (status) {
+		    LOGGER.info("STEP 4: ACTUAL :Successfully validated rbus status enabled");
+		} else {
+		    LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+		stepNum = "s5";
+		status = false;
+		LOGGER.info("******************************************************************************");
+		LOGGER.info(
+			"STEP 5: DESCRIPTION: Collect CPU and memory usage stats for 10 minutes when feature is enabled");
+		LOGGER.info(
+			"STEP 5: ACTION: a) execute the following command inside the RG console of the gateway for every one minute and collect the data for CPU and memory usage, "
+				+ "\"top -n 1 |grep -i Mem |sed  's/^[^0-9]*//;s/[^0-9].*$//'\" and \"top -n 1 |grep CPU: |sed  's/^[^0-9]*//;s/[^0-9].*$//'\"\n b) Calculate the average for the data collected ");
+		LOGGER.info("STEP 5: EXPECTED: Command execution on the device should be successful");
+		LOGGER.info("******************************************************************************");
+		errorMessage = "Unable to collect CPU and memory usage data";
+		response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+			BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+		LOGGER.info("STEP 5: Response for CPU and memory utilisation: " + response);
+		status = CommonMethods.isNotNull(response);
+		if (status) {
+		    afterEnablingFeature = response;
+		    LOGGER.info("STEP 5: ACTUAL : Calculating the average CPU and Memory utilisation for 10 minutes"
+			    + " with client stats telemetry disabled is successful");
+		} else {
+		    LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("******************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		stepNum = "s6";
+		status = false;
+		LOGGER.info("******************************************************************************");
+		LOGGER.info("STEP 6: DESCRIPTION: Compare the results from Step 1 and Step 7");
+		LOGGER.info(
+			"STEP 6: ACTION: Compare the averages calculated for CPU utilisation and memory utilisation");
+		LOGGER.info(
+			"STEP 6: EXPECTED: The difference in average should be within 10%, indicating that the feature doesn't have any negative impact on the device");
+		LOGGER.info("******************************************************************************");
+		errorMessage = "The feature causes negative impact on the device";
+		BroadBandResultObject bandResultObject = null;
+		bandResultObject = BroadBandWifiWhixUtils
+			.validateCpuAndMemoryUtilisationForNegativeEffect(beforeEnablingFeature, afterEnablingFeature);
+		if (bandResultObject.isStatus()) {
+		    LOGGER.info(
+			    "STEP 6: ACTUAL : There is no negative impact on the device when this feature is enabled");
+		} else {
+		    LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, bandResultObject.isStatus(),
+			bandResultObject.getErrorMessage(), false);
+	    } else {
+		stepNum = "S3";
+		LOGGER.info(
+			"STEP 3: DESCRIPTION : Verify log files for rbus parameter : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT");
+		errorMessage = "STEP 3: ACTUAL : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT";
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+		stepNum = "S4";
+		LOGGER.info(
+			"STEP 4: DESCRIPTION : Verify log files for rbus parameter : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT");
+		errorMessage = "STEP 4: ACTUAL : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT";
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+		stepNum = "S5";
+		LOGGER.info(
+			"STEP 5: DESCRIPTION : Verify log files for rbus parameter : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT");
+		errorMessage = "STEP 5: ACTUAL : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT";
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+		stepNum = "S6";
+		LOGGER.info(
+			"STEP 6: DESCRIPTION : Verify log files for rbus parameter : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT");
+		errorMessage = "STEP 6: ACTUAL : NOT APPLICABLE SINCE RBUS ENABLED BY DEFAULT";
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+
+	    }
+
+	    stepNum = "S7";
+	    errorMessage = "Unable to reboot device";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Reboot device and validate online status");
+	    LOGGER.info("STEP 7: ACTION : Execute : reboot");
+	    LOGGER.info("STEP 7: EXPECTED : Successfully rebooted device and online status");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandRfcFeatureControlUtils.removeNvramOverrideForRfc(device, tapEnv);
+	    if (status) {
+
+		LOGGER.info("STEP 7: ACTUAL : Successfully rebooted device and validated device status after reboot");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S8";
+	    errorMessage = "Unable to validate status using webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Validate rbus status using webpa");
+	    LOGGER.info("STEP 8: ACTION : Execute webpa :Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable");
+	    LOGGER.info("STEP 8: EXPECTED : Successfully validated rbus status using webpa");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE, BroadBandTestConstants.TRUE,
+		    BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL :Successfully validated rbus status enabled");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+
+	    if (rbusEnabled) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("POST-CONDITION 1 : DESCRIPTION : REVERT RBUS SETTINGS");
+		LOGGER.info("POST-CONDITION 1 : ACTION : SETTING VALUE USING WEBPA AND REBOOT DEVICE ");
+		LOGGER.info("POST-CONDITION 1 : EXPECTED : RBUS SHOULD BE DISABLED");
+		LOGGER.info("#######################################################################################");
+
+		
+		status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+			BroadBandTestConstants.FALSE);
+		
+		boolean rebootStatus = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+		if (rebootStatus) {
+		    
+		    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_FOR_RBUS_ENABLE, BroadBandTestConstants.FALSE);
+		}
+
+		if (status) {
+		    LOGGER.info("POST-CONDITION 1: ACTUAL : SUCCESSFULLY REVERTED RBUS VALUE");
+		} else {
+		    LOGGER.error("POST-CONDITION 1: ACTUAL :UNABLE TO REVERT RBUS VALUE USING WEBPA");
+		}
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-RBUS-1001");
     }
 }

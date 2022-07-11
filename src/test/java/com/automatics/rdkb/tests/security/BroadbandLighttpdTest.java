@@ -1838,7 +1838,7 @@ public class BroadbandLighttpdTest extends AutomaticsTestBase {
 		LOGGER.info("**********************************************************************************");
 		LOGGER.info("STEP 6: DESCRIPTION : Verify reboot reason in splunk logs .");
 		LOGGER.info(
-			"STEP 6: ACTION : Check splunk server hosted at with Wan Mac[Erouter MAC]URL https://spl-br-36e.idk.cable.comcast.com/en-US/app/search Or 96.114.67.23:8089");
+			"STEP 6: ACTION : Check splunk server hosted at with Wan Mac[Erouter MAC]");
 		LOGGER.info("STEP 6: EXPECTED : CR_crash should be available in splunk logs");
 		LOGGER.info("**********************************************************************************");
 		List<String> verifySplunkLog = new ArrayList<>();

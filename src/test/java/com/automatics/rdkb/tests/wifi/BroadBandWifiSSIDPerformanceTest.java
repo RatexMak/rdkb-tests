@@ -25,18 +25,18 @@ import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.TestGroup;
+import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
-import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
-import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
-import com.automatics.rdkb.utils.BroadBandCommonUtils;
-import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
-import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.utils.CommonMethods;
-import com.automatics.rdkb.constants.BroadBandCommandConstants;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
+import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
+import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 
 public class BroadBandWifiSSIDPerformanceTest extends AutomaticsTestBase{
@@ -48,6 +48,7 @@ public class BroadBandWifiSSIDPerformanceTest extends AutomaticsTestBase{
     
     /** Integer to store Iteration value 10 for Wifi Performance test */
     public static final Integer WIFI_PERFORMANCE_MAXIMUM_NUMBER_OF_ITERATION = 10;
+    
     /**
      * Successful Wi-Fi connectivity rate of 2.4GHz radio band for 10 times in Wireless Gateway
      * <ol>
@@ -585,7 +586,6 @@ public class BroadBandWifiSSIDPerformanceTest extends AutomaticsTestBase{
 	LOGGER.info("COMPLETED TEST CASE: TC-RDKB-WIFI-CON-PERF-1001");
 	LOGGER.info("#######################################################################################");
     }
-    
     
     /**
      * Average mean time for Wi-Fi connection establishment of 2.4GHz radio band for 20 times

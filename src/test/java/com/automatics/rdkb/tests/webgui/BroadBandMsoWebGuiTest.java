@@ -3207,8 +3207,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("#######################################################################################");
 	    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 		    BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-		    AutomaticsTapApi.getSTBPropsValue(AutomaticsPropertyUtility
-		    		.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE)),
+		    AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
 		    AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 	    // Error message
 	    errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
@@ -3397,7 +3396,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    factoryResetStatus = true;
 	    // boolean variable to store the status
 	    status = false;
-	    
+
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP :  " + stepNumber
 		    + " : DESCRIPTION : Verify the Captive portal status after Factory reseting the router using webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable");
@@ -3406,9 +3405,10 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("STEP :  " + stepNumber
 		    + " : EXPECTED: Webpa param Device.DeviceInfo.X_RDKCENTRAL-COM_CaptivePortalEnable should return true");
 	    LOGGER.info("**********************************************************************************");
+	    
 	    String currentPartnerIdName = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
 	    		BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID);
-	    
+
 	    if (!DeviceModeHandler.isDSLDevice(device)) {
 
 		// Error message
@@ -3428,7 +3428,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 		LOGGER.info("**********************************************************************************");
 		tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, factoryResetStatus, errorMessage, true);
 	    } else if (BroadBandCommonUtils.verifySpecificSyndicationPartnerAvailability(currentPartnerIdName)) {
-		errorMessage = "This step is not applicable for Syndication Partner-COX and SHAW";
+		errorMessage = "This step is not applicable for specific Syndication Partner";
 		LOGGER.info("STEP " + stepNumber + " - ACTUAL: " + errorMessage);
 		LOGGER.info("**********************************************************************************");
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
