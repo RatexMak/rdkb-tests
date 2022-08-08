@@ -2337,7 +2337,7 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 
 			if (DeviceModeHandler.isBusinessClassDevice(device)) {
 
-				LOGGER.info("Steps 13 to 19 are not applicable for CBR and CFG3 as TR69 is not present in BCI devices");
+				LOGGER.info("Steps 13 to 19 are not applicable for Business Class and Fiber Devices as TR69 is not present in BCI devices");
 				LOGGER.info("#######################################################################################");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, "s13", ExecutionStatus.NOT_APPLICABLE,
 						"N/A for Business class devices", false);

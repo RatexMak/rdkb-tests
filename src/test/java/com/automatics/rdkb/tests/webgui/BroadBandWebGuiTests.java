@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
@@ -32,13 +33,17 @@ import com.automatics.device.Dut;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.TestGroup;
+import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
+import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientInfo;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.rdkb.webui.constants.BroadBandWebGuiElements;
@@ -51,6 +56,8 @@ import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.webui.page.BroadBandCommonPage;
+import com.automatics.rdkb.webui.page.BroadBandDiagnosticToolsPage;
+import com.automatics.rdkb.webui.page.BroadbandLocalIpConfigurationPage;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 
@@ -62,6 +69,12 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 
 public class BroadBandWebGuiTests extends AutomaticsTestBase {
 
+	/** String for step number */
+	public int stepNumber = 0;
+	
+	boolean isBrowserOpen = false; // Boolean variable to check whether Browser is open.
+	protected WebDriver driver;
+	
 	/**
 	 * Test To verify local UI no longer supports the ability to save/restore the
 	 * config file from Admin page
@@ -473,8 +486,7 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 				LOGGER.info("**********************************************************************************");
 				LOGGER.info(
 						"STEP 11: DESCRIPTION : Launch Broad band User Admin page login page and verify login status");
-				LOGGER.info(
-						"STEP 11: ACTION : Naviagte to AdminUI login page using admin/password credentials");
+				LOGGER.info("STEP 11: ACTION : Naviagte to AdminUI login page using admin/password credentials");
 				LOGGER.info(
 						"STEP 11: EXPECTED : Gateway > At a Glance page should be launched and login should be successful using admin credentials");
 				LOGGER.info("**********************************************************************************");
@@ -843,8 +855,7 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			status = false;
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 1: DESCRIPTION : Verify whether Private Wifi SSIDs\" are enabled using WebPA.");
-			LOGGER.info(
-					"STEP 1: ACTION : Execute the command to check Private Wifi SSIDs enabled or not");
+			LOGGER.info("STEP 1: ACTION : Execute the command to check Private Wifi SSIDs enabled or not");
 			LOGGER.info("STEP 1: EXPECTED : Both 2.4 GHz and 5 GHz radio should be enabled");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "Enabling 2.4 GHz private Wi-Fi radio via WebPA failed";
@@ -928,7 +939,7 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 7: DESCRIPTION : Launch the Managed Sites page from Gateway > At a Glance page");
 			LOGGER.info("STEP 7: ACTION : Navigate to  Parental Control > Managed Sites");
 			LOGGER.info(
-					"STEP 7: EXPECTED : Managed Sites page should be successfully launched with page title as \"Parental Control > Managed Sites\"");
+					"STEP 7: EXPECTED : Managed Sites page should be successfully launched with page title as \"Parental Control > Managed Sites \"");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "Unable to launch Managed Sites page from Gateway > At a Glance page";
 			status = LanSideBasePage.isPageLaunchedByUsingWebElementforParentalControlManagedSites(device, tapEnv,
@@ -1078,7 +1089,7 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 14: DESCRIPTION : Launch the Managed Services page");
 			LOGGER.info("STEP 14: ACTION : Navigate to Parental Control > Managed Services");
 			LOGGER.info(
-					"STEP 14: EXPECTED : Managed Services page should be successfully launched with page title as 'Parental Control > Managed Services '");
+					"STEP 14: EXPECTED : Managed Services page should be successfully launched with page title as 'Parental Control > Managed Services'");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "Unable to launch Managed Services page from Managed Sites page";
 			status = LanSideBasePage.isPageLaunchedByUsingWebElementforParentalControlManagedService(device, tapEnv,
@@ -1580,5 +1591,1707 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("**********************************************************************************");
 		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	}
+
+	/**
+	 * Verify assigning DHCP Server Address while old one in use and with expire
+	 * lease time
+	 * <ol>
+	 * <li>PRE CONDITION 1: Connect the client to 2.4 GHz Wi-Fi Network and verify
+	 * connection status.</li>
+	 * <li>Verify the Connected client has got the IPv4 Address between DHCP
+	 * Range</li>
+	 * <li>Verify the Connected client has got the valid IPv6 Address</li>
+	 * <li>Verify the Internet is accessible in the Connected client</li>
+	 * <li>Launch Broad band WebUI login page and verify login status.</li>
+	 * <li>Verify Local IP network page is launched in connected client
+	 * successfully.</li>
+	 * <li>Verify DHCP Beginning Address configured successfully.</li>
+	 * <li>Verify DHCP End Address configured successfully.</li>
+	 * <li>Verify DHCP lease time configured successfully.</li>
+	 * <li>Verify all DHCP configured value saved successfully.</li>
+	 * <li>Verify DHCP changed beginning address reflected via WEBPA or not.</li>
+	 * <li>Verify DHCP changed End address reflected via WEBPA or not.</li>
+	 * <li>Verify DHCP changed Lease time reflected via WEBPA or not.</li>
+	 * <li>Verify new assigned IP while previous IP is in use.</li>
+	 * <li>Verify DHCP lease time configured successfully.</li>
+	 * <li>Verify DHCP Lease time configured value saved successfully.</li>
+	 * <li>Verify Client IP when lease time is expired.</li>
+	 * <li>Verify Connected client is disconnected.</li>
+	 * <li>Connect the client to 2.4 GHz Wi-Fi Network and verify connection
+	 * status.</li>
+	 * <li>Verify Client IP when disconnected & reconnected.</li>
+	 * <li>POST CONDITION 1: Verify DHCP IPv4 values are set to default.</li>
+	 * <li>POST CONDITION 2: Verify browser is closed in connected client.</li>
+	 * </ol>
+	 * 
+	 * @param device{@link Dut}
+	 * 
+	 * @author Prashant Mishra
+	 * @Refactor Sruthi Santhosh
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-WEBUI-7034")
+	public void verifyDhcpServerConfiguration(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-WEBUI-734";
+		String stepNum = "";
+		String errorMessage = "";
+		String ip4AddressRetrievedFromClient = "";
+		String startingAddressLastPart = "";
+		String endAddressLastPart = "";
+		boolean status = false;
+		boolean isBrowserOpen = false;
+		HashMap<String, String> defaultDhcpIpv4ValuesMap = null;
+		Dut deviceConnectedWith2GhzWifi = null;
+		WebDriver webDriver = null;
+		BroadbandLocalIpConfigurationPage localIpPage = null;
+		BroadBandResultObject reConnectionStatus = null;
+		List<String> dhcpStartAndEndAddress = new ArrayList<>();
+
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBUI-7034");
+		LOGGER.info(
+				"TEST DESCRIPTION: Verify assigning DHCP Server Address while old one in use and with expire lease time");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("PRE CONDITION 1. Connect the client to 2.4 GHz Wi-Fi Network and verify connection status.");
+		LOGGER.info("1. Verify the Connected client has got the IPv4 Address between DHCP Range");
+		LOGGER.info("2. Verify the Connected client has got the valid IPv6 Address");
+		LOGGER.info("3. Verify the internet is accessible in the Connected client");
+		LOGGER.info("4. Launch Broad band WebUI login page and verify login status.");
+		LOGGER.info("5. Verify Local Ip network page is launched in connected client successfully.");
+		LOGGER.info("6. Verify DHCP Begining Address configured successfully.");
+		LOGGER.info("7. Verify DHCP End Address configured successfully.");
+		LOGGER.info("8. Verify DHCP lease time configured successfully.");
+		LOGGER.info("9. Verify all DHCP configured value saved successfully.");
+		LOGGER.info("10. Verify DHCP changed beginning address reflected via webpa or not.");
+		LOGGER.info("11. Verify DHCP changed End address reflected via webpa or not.");
+		LOGGER.info("12. Verify DHCP changed Lease time reflected via webpa or not.");
+		LOGGER.info("13. Verify new assigned IP while previous IP is in use.");
+		LOGGER.info("14. Verify DHCP lease time configured successfully.");
+		LOGGER.info("15. Verify  DHCP Lease time configured value saved successfully.");
+		LOGGER.info("16. Verify Client IP when lease time is expired.");
+		LOGGER.info("17. Verify Connected client is disconnected.");
+		LOGGER.info("18. Connect the client to 2.4 GHz Wi-Fi Network and verify connection status.");
+		LOGGER.info("18. Verify Client IP when disconnected & reconnected.");
+		LOGGER.info("POST CONDITION 1. Verify DHCP IPv4 values are set to default.");
+		LOGGER.info("POST CONDITION 1. Verify browser is closed in connected client.");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+
+			errorMessage = "Failed to obtain a 2.4GHz WiFi client associated with the Gateway.";
+			LOGGER.info(
+					"PRE-CONDITION 1 : DESCRIPTION : Connect the client to 2.4 GHz Wi-Fi Network and verify connection status.");
+			LOGGER.info(
+					"PRE-CONDITION 1 : ACTION : Connect to 2.4GHz Wi-Fi using below commands Linux :dmcli dev wifi connect <ssid> password <passwd>; Windows : netsh wlan connect ssid=<ssid> name=<ssid name>");
+			LOGGER.info("PRE-CONDITION 1 : EXPECTED : Device should be connected with 2.4 GHz Wi-Fi Network.");
+			try {
+				deviceConnectedWith2GhzWifi = BroadBandConnectedClientUtils
+						.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+				status = null != deviceConnectedWith2GhzWifi;
+			} catch (Exception exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info(
+						"PRE-CONDITION 1 : ACTUAL : Obtained a WiFi 2.4GHz client assosiated with the gateway successfully.");
+			} else {
+				LOGGER.error("PRE-CONDITION 1 : ACTUAL : " + errorMessage);
+				throw new TestException(
+						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1 : FAILED : " + errorMessage);
+			}
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			/* Checking Connected Client IPv4, IPv6 Address and Internet Connectivity */
+			/* Step 1 to Step 3 */
+			BroadBandConnectedClientUtils.validateIpAddressesAndInternetConnectivityOfConnectedClient(device,
+					deviceConnectedWith2GhzWifi, tapEnv, BroadBandTestConstants.CONSTANT_1, testCaseId);
+
+			/* Getting IPv4 Address of Connected Client */
+			ip4AddressRetrievedFromClient = BroadBandConnectedClientUtils.getIpv4AddressFromConnClient(tapEnv, device,
+					deviceConnectedWith2GhzWifi);
+
+			LOGGER.info("ip4AddressRetrievedFromClient: " + ip4AddressRetrievedFromClient);
+
+			stepNum = "S4";
+			errorMessage = "Unable to launch Login page in connected client.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION : Launch Broad band WebUI login page and verify login status.");
+			LOGGER.info(
+					"STEP 4: ACTION : Launch the below URL format in browser: https://10.0.0.1/ and login with credentials.");
+			LOGGER.info("STEP 4: EXPECTED : Login page should be launched and login should be successful.");
+			LOGGER.info("**********************************************************************************");
+			status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, deviceConnectedWith2GhzWifi);
+			isBrowserOpen = status;
+			webDriver = LanWebGuiLoginPage.getDriver();
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Launch Broad band LanUI login page and login status is successful.");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S5";
+			errorMessage = "Unable to Launch Local IP Network page from LanUI page ";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Launch the Local IP Network page from LanUI page");
+			LOGGER.info(
+					"STEP 5: ACTION : Navigate to  Local IP Network page by clicking on \"Connection\" Menu and then select the submenu \"Local Ip Network\".");
+			LOGGER.info(
+					"STEP 5: EXPECTED : Local IP Network page should get displayed having page title as \"Gateway > Connection > Local IP Configuration\"");
+			LOGGER.info("**********************************************************************************");
+			localIpPage = new BroadbandLocalIpConfigurationPage(webDriver);
+			status = localIpPage.navigateToLocalIpPage(tapEnv, device);
+			if (status) {
+				LOGGER.info(
+						"STEP 5: ACTUAL : Navigating to Local IP Network page by clicking on \"Connection\" Menu and then select the submenu \"Local Ip Network\" is successful.");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S6";
+			errorMessage = "Unable to enter DHCP Begining address in text box.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Verify DHCP Begining Address configured successfully.");
+			LOGGER.info("STEP 6: ACTION : Enter DHCP Begining address value in DHCP Begining address text box.");
+			LOGGER.info("STEP 6: EXPECTED : DHCP Begining address should be entered successfully in text box.");
+			LOGGER.info("**********************************************************************************");
+			dhcpStartAndEndAddress = BroadBandCommonUtils
+					.getDhcpRangeBasedOnEsistingRange(ip4AddressRetrievedFromClient);
+			startingAddressLastPart = dhcpStartAndEndAddress.get(0);
+			if (CommonMethods.isNotNull(startingAddressLastPart)) {
+				status = LanSideBasePage.enterInTextBoxAndValidate(tapEnv, webDriver,
+						BroadBandWebGuiElements.XPATH_FOR_FOURTH_BOX_DHCP_BEGINNING_ADDRESS, startingAddressLastPart);
+			}
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : DHCP Begining Address entered successfully in text box.");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S7";
+			errorMessage = "Unable to enter DHCP End Address in text box.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Verify DHCP End Address configured successfully.");
+			LOGGER.info("STEP 7: ACTION : Enter DHCP End Address value in DHCP Begining address Text Box.");
+			LOGGER.info("STEP 7: EXPECTED : DHCP End address should be entered successfully in text box.");
+			LOGGER.info("**********************************************************************************");
+			endAddressLastPart = dhcpStartAndEndAddress.get(1);
+			if (CommonMethods.isNotNull(endAddressLastPart)) {
+				status = LanSideBasePage.enterInTextBoxAndValidate(tapEnv, webDriver,
+						BroadBandWebGuiElements.XPATH_FOR_FOURTH_BOX_DHCP_END_ADDRESS, endAddressLastPart);
+			}
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : DHCP End Address entered successfully in text box.");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S8";
+			errorMessage = "Unable to enter DHCP lease time amount in text box.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Verify DHCP lease time amount configured successfully.");
+			LOGGER.info("STEP 8: ACTION : Enter DHCP lease time amount value in text Box.");
+			LOGGER.info("STEP 8: EXPECTED : DHCP lease time amount should be entered successfully in text box.");
+			LOGGER.info("**********************************************************************************");
+			status = LanSideBasePage.enterInTextBoxAndValidate(tapEnv, webDriver,
+					BroadBandWebGuiElements.XPATH_FOR_DHCP_LEASE_TIME_AMOUNT, BroadBandTestConstants.STRING_VALUE_TWO);
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : DHCP lease time amount entered successfully in text box.");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S9";
+			errorMessage = "Unable to select DHCP lease time measure from dropdown.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 9: DESCRIPTION : Verify DHCP lease time measure configured successfully.");
+			LOGGER.info("STEP 9: ACTION : Select DHCP lease time measure value from dropdown.");
+			LOGGER.info("STEP 9: EXPECTED : DHCP lease time amount should be entered successfully in text box.");
+			LOGGER.info("**********************************************************************************");
+			status = LanSideBasePage.selectAndValidateValueFromDropDown(
+					BroadBandWebGuiElements.XPATH_FOR_DHCP_LEASE_TIME_MEASURE,
+					BroadBandTestConstants.DHCP_DROP_DOWN_MINUTES);
+			if (status) {
+				LOGGER.info("STEP 9: ACTUAL : DHCP lease time amount entered successfully in text box.");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S10";
+			errorMessage = "Failed to verify changed DHCP beginning address via webpa.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Verify DHCP changed beginning address reflected via webpa or not.");
+			LOGGER.info(
+					"STEP 10: ACTION : Click on save button and Execute the webpa command to change DHCP beginning address");
+			LOGGER.info("STEP 10: EXPECTED : Changed DHCP beginning address must reflect via webpa.");
+			LOGGER.info("**********************************************************************************");
+			/** Clicking on 'Save Settings' button */
+			LanSideBasePage.click(By.xpath(BroadBandWebGuiElements.XPATH_FOR_SAVE_BUTTON_DHCP_CONFIGURATIONS));
+			/** Waiting for 1 Minute to reflect changes */
+			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			String startingAddressAfterDhcpConfiguration = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_MINADDRESS);
+			if (CommonMethods.isNotNull(startingAddressAfterDhcpConfiguration)) {
+				status = BroadBandCommonUtils.verifyConfiguredDhcpAddress(startingAddressAfterDhcpConfiguration,
+						startingAddressLastPart);
+			}
+			if (status) {
+				LOGGER.info("STEP 11: ACTUAL : DHCP beginning address changes reflected successfully.");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S11";
+			errorMessage = "Failed to verify changed DHCP End address via webpa.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 11: DESCRIPTION : Verify DHCP changed End address reflected via webpa or not.");
+			LOGGER.info(
+					"STEP 11: ACTION : Execute the webpa command : curl -X GET -H \"Authorization: Bearer <SAT token>\" -H \"content-type:application/json\" -H \"X-Webpa-Atomic:true\" -k -i <WEBPA URL>/v2/device/mac:<CM_MAC>/config?names=Device.DHCPv4.Server.Pool.1.MaxAddress");
+			LOGGER.info("STEP 11: EXPECTED : Changed DHCP End address must reflect via webpa.");
+			LOGGER.info("**********************************************************************************");
+			String endAddressAfterDhcpConfiguration = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_MAXADDRESS);
+			if (CommonMethods.isNotNull(endAddressAfterDhcpConfiguration)) {
+				status = BroadBandCommonUtils.verifyConfiguredDhcpAddress(endAddressAfterDhcpConfiguration,
+						endAddressLastPart);
+			}
+			if (status) {
+				LOGGER.info("STEP 11: ACTUAL : DHCP End address changes reflected successfully.");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S12";
+			errorMessage = "Failed to verify changed DHCP Lease time via webpa.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 12: DESCRIPTION : Verify DHCP changed Lease time reflected via webpa or not.");
+			LOGGER.info(
+					"STEP 12: ACTION : Execute the webpa command : curl -X GET -H \"Authorization: Bearer <SAT token>\" -H \"content-type:application/json\" -H \"X-Webpa-Atomic:true\" -k -i <WEBPA URL>/v2/device/mac:<CM_MAC>/config?names=Device.DHCPv4.Server.Pool.1.LeaseTime");
+			LOGGER.info("STEP 12: EXPECTED : Changed DHCP End address must reflect via webpa.");
+			LOGGER.info("**********************************************************************************");
+			String LeaseTimeAfterDhcpConfiguration = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_LEASETIME);
+			if (CommonMethods.isNotNull(endAddressAfterDhcpConfiguration)) {
+				status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+						BroadBandTestConstants.STRING_LEASE_TIME_VALUE, LeaseTimeAfterDhcpConfiguration);
+			}
+			if (status) {
+				LOGGER.info("STEP 12: ACTUAL : DHCP Lease time changes reflected successfully.");
+			} else {
+				LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S13";
+			errorMessage = "Unable to connect same client to 2.4GHz Wi-Fi.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 13: DESCRIPTION : Verify same Client get connected to 2.4GHz Wi-Fi and Local IP Page reloaded.");
+			LOGGER.info(
+					"STEP 13: ACTION : Connect same client to 2.4GHz Wi-Fi based on MAC Address and reload Local IP Page.");
+			LOGGER.info(
+					"STEP 13: EXPECTED : Same Client should be Connected to 2.4GHz Wi-Fi and Local IP Page should be reloaded.");
+			LOGGER.info("**********************************************************************************");
+			LanSidePageNavigation lanSidePageNavigation = new LanSidePageNavigation(webDriver);
+			reConnectionStatus = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv,
+					deviceConnectedWith2GhzWifi, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+			status = reConnectionStatus.isStatus();
+			errorMessage = reConnectionStatus.getErrorMessage();
+			LOGGER.info("Waiting for 30 Seconds after reconnecting to Wi-Fi.");
+			tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			LOGGER.info("Page Title after refreshing page: "
+					+ BroadbandPropertyFileHandler.getPageTitleForLocalIpNetwork());
+			if (status) {
+				try {
+					LOGGER.info("Refreshing and Validating local IP page title.");
+					long startTime = System.currentTimeMillis();
+					do {
+						/** Refreshing Local IP Page */
+						LOGGER.info("IP page Refresh");
+						lanSidePageNavigation.refresh();
+						status = BroadBandWebUiUtils.validatePageLaunchedStatusWithPageTitle(webDriver,
+								BroadbandPropertyFileHandler.getPageTitleForLocalIpNetwork());
+
+					} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+							&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+									BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
+
+				} catch (Exception e) {
+					errorMessage = errorMessage + e.getMessage();
+					LOGGER.error(errorMessage);
+				}
+			}
+
+			LOGGER.info("Status is: " + status);
+			if (status) {
+				LOGGER.info(
+						"STEP 13: ACTUAL : Same Client Connected to 2.4GHz Wi-Fi successfully and Local IP page reloaded successfully.");
+			} else {
+				LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S14";
+			errorMessage = "Unable to verify new assigned IP.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 14: DESCRIPTION : Verify new assigned IP while previous IP is in use.");
+			LOGGER.info(
+					"STEP 14: ACTION : Get the device IPv4 address using below commandLinux : ifconfig wlan0\\eth0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Wireless\\Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv4 Address\"");
+			LOGGER.info("STEP 14: EXPECTED : Connected client IP should be changed and within DHCP Range.");
+			LOGGER.info("Waiting for 2 minutes Lease time.");
+			tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+			status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv, device,
+					deviceConnectedWith2GhzWifi);
+			if (status) {
+				LOGGER.info(
+						"STEP 14: ACTUAL : New Assigned Ip after change in DHCP configuration reflected successfully.");
+			} else {
+				LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S15";
+			errorMessage = "Unable to enter new DHCP lease time amount in text box.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 15: DESCRIPTION : Verify new DHCP lease time amount configured successfully.");
+			LOGGER.info("STEP 15: ACTION : Enter new DHCP lease time amount value in text Box.");
+			LOGGER.info("STEP 15: EXPECTED : new DHCP lease time amount should be entered successfully in text box.");
+			LOGGER.info("**********************************************************************************");
+			status = LanSideBasePage.enterInTextBoxAndValidate(tapEnv, webDriver,
+					BroadBandWebGuiElements.XPATH_FOR_DHCP_LEASE_TIME_AMOUNT, BroadBandTestConstants.STRING_6);
+			if (status) {
+				LOGGER.info("STEP 15: ACTUAL : New DHCP lease time amount entered successfully in text box.");
+			} else {
+				LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S16";
+			errorMessage = "Unable to select new DHCP lease time measure from dropdown.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 16: DESCRIPTION : Verify new DHCP lease time measure configured successfully.");
+			LOGGER.info("STEP 16: ACTION : Select new DHCP lease time measure value from dropdown.");
+			LOGGER.info("STEP 16: EXPECTED : New DHCP lease time amount should be entered successfully in text box.");
+			LOGGER.info("**********************************************************************************");
+			status = LanSideBasePage.selectAndValidateValueFromDropDown(
+					BroadBandWebGuiElements.XPATH_FOR_DHCP_LEASE_TIME_MEASURE,
+					BroadBandTestConstants.DHCP_DROP_DOWN_MINUTES);
+			if (status) {
+				LOGGER.info("STEP 16: ACTUAL : DHCP lease time amount entered successfully in text box.");
+			} else {
+				LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S17";
+			errorMessage = "Failed to verify new DHCP Lease time via webpa.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 17: DESCRIPTION : Verify new DHCP Lease time reflected via webpa or not.");
+			LOGGER.info(
+					"STEP 17: ACTION : Execute the webpa command : curl -X GET -H \"Authorization: Bearer <SAT token>\" -H \"content-type:application/json\" -H \"X-Webpa-Atomic:true\" -k -i <WEBPA URL>/v2/device/mac:<CM_MAC>/config?names=Device.DHCPv4.Server.Pool.1.LeaseTime");
+			LOGGER.info("STEP 17: EXPECTED : New DHCP Lease time must reflect via webpa.");
+			LOGGER.info("**********************************************************************************");
+			/** Clicking on 'Save Settings' button */
+			LanSideBasePage.click(By.xpath(BroadBandWebGuiElements.XPATH_FOR_SAVE_BUTTON_DHCP_CONFIGURATIONS));
+			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			String newDhcpLeaseTime = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_DHCP_LEASETIME);
+			status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+					BroadBandTestConstants.STRING_360, newDhcpLeaseTime);
+			long newLeaseTimeStartTime = System.currentTimeMillis();
+			if (status) {
+				LOGGER.info("STEP 17: ACTUAL : New DHCP Lease time reflected successfully.");
+			} else {
+				LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S18";
+			errorMessage = "Unable to disconnect connected client.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 18: DESCRIPTION : Verify Connected client is disconnected.");
+			LOGGER.info("STEP 18: ACTION : Disconnect connected client from SSID.");
+			LOGGER.info("STEP 18: EXPECTED : Connected client should be disconnected successfully.");
+			LOGGER.info("**********************************************************************************");
+			BroadBandResultObject disconnectionStatus = BroadBandConnectedClientUtils
+					.disconnectCnnClientFromSsid(tapEnv, device, deviceConnectedWith2GhzWifi);
+			status = disconnectionStatus.isStatus();
+			errorMessage = disconnectionStatus.getErrorMessage();
+			if (status) {
+				LOGGER.info("STEP 18: ACTUAL : Client disconnected successfully.");
+			} else {
+				LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S19";
+			errorMessage = "Unable to connect same client to 2.4GHz Wi-Fi.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 19 DESCRIPTION : Verify same Client get connected to 2.4GHz Wi-Fi and Local IP Page reloaded.");
+			LOGGER.info(
+					"STEP 19: ACTION : Connect same client to 2.4GHz Wi-Fi based on MAC Address and reload Local IP Page.");
+			LOGGER.info(
+					"STEP 19 EXPECTED : Same Client should be Connected to 2.4GHz Wi-Fi and Local IP Page should be reloaded.");
+			LOGGER.info("**********************************************************************************");
+			reConnectionStatus = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv,
+					deviceConnectedWith2GhzWifi, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+			status = reConnectionStatus.isStatus();
+			errorMessage = reConnectionStatus.getErrorMessage();
+			LOGGER.info("Waiting for 30 Seconds after reconnecting to Wi-Fi.");
+			tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+			if (status) {
+				try {
+					LOGGER.info("Refreshing and Validating local IP page title.");
+					long startTime = System.currentTimeMillis();
+					do {
+						/** Refreshing Local IP Page */
+						LOGGER.info("IP page Refresh");
+						lanSidePageNavigation.refresh();
+						status = BroadBandWebUiUtils.validatePageLaunchedStatusWithPageTitle(webDriver,
+								BroadbandPropertyFileHandler.getPageTitleForLocalIpNetwork());
+
+					} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS
+							&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+									BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
+
+				} catch (Exception e) {
+					errorMessage = errorMessage + e.getMessage();
+					LOGGER.error(errorMessage);
+				}
+			}
+
+			LOGGER.info("Status is: " + status);
+			if (status) {
+				LOGGER.info(
+						"STEP 19: ACTUAL : Same Client Connected to 2.4GHz Wi-Fi successfully and Local IP page reloaded successfully.");
+			} else {
+				LOGGER.error("STEP 19 ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S20";
+			errorMessage = "Unable to verify client IP when lease time is active.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 20: DESCRIPTION : Verify Client IP when lease time is active.");
+			LOGGER.info(
+					"STEP 20: ACTION : Get the device IPv4 address using below commandLinux : ifconfig wlan0\\eth0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Wireless\\Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv4 Address\"");
+			LOGGER.info(
+					"STEP 20: EXPECTED : Client Ip should be assigned to client and within DHCP Range when lease time is active.");
+			LOGGER.info("**********************************************************************************");
+			if (((System.currentTimeMillis() - newLeaseTimeStartTime) / 1000) < 360) {
+				status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
+						device, deviceConnectedWith2GhzWifi);
+			} else {
+				errorMessage = "Lease Time is already Expired.";
+			}
+			if (status) {
+				LOGGER.info("STEP 20: ACTUAL : Client IP verified when lease time is active.");
+			} else {
+				LOGGER.error("STEP 20: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S21";
+			errorMessage = "Unable to disconnect connected client.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 21: DESCRIPTION : Verify Connected client is disconnected.");
+			LOGGER.info("STEP 21: ACTION : Disconnect connected client from SSID.");
+			LOGGER.info("STEP 21: EXPECTED : Connected client should be disconnected successfully.");
+			LOGGER.info("**********************************************************************************");
+			while (true) {
+				if (((System.currentTimeMillis() - newLeaseTimeStartTime) / 1000) > 360) {
+					disconnectionStatus = BroadBandConnectedClientUtils.disconnectCnnClientFromSsid(tapEnv, device,
+							deviceConnectedWith2GhzWifi);
+					status = disconnectionStatus.isStatus();
+					errorMessage = disconnectionStatus.getErrorMessage();
+					break;
+				}
+			}
+			if (status) {
+				LOGGER.info("STEP 21: ACTUAL : Client disconnected successfully.");
+			} else {
+				LOGGER.error("STEP 21: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S22";
+			errorMessage = "Unable to connect same client to 2.4GHz Wi-Fi.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 22: DESCRIPTION : Verify same Client get connected to 2.4GHz Wi-Fi.");
+			LOGGER.info("STEP 22: ACTION : Connect same client to 2.4GHz Wi-Fi based on MAC Address.");
+			LOGGER.info("STEP 22: EXPECTED : Same Client should be Connected to 2.4GHz Wi-Fi.");
+			LOGGER.info("**********************************************************************************");
+			reConnectionStatus = BroadBandConnectedClientUtils.connectGivenConnectedClientToWifi(device, tapEnv,
+					deviceConnectedWith2GhzWifi, WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+			status = reConnectionStatus.isStatus();
+			errorMessage = reConnectionStatus.getErrorMessage();
+			if (status) {
+				LOGGER.info("STEP 22: ACTUAL : Same Client Connected to 2.4GHz Wi-Fi successfully.");
+			} else {
+				LOGGER.error("STEP 22: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S23";
+			errorMessage = "Unable to verify reuse ip after disconnecting & disconnecting.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 23: DESCRIPTION : Verify client reuse same IP address when disconnected & reconnected ");
+			LOGGER.info(
+					"STEP 23: ACTION : Get the device IPv4 address using below commandLinux : ifconfig wlan0\\eth0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Wireless\\Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv4 Address\"");
+			LOGGER.info("STEP 23: EXPECTED : Device should reuse same IP address after disconnected & reconnected ");
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("Waiting for 1 Minute for regaining IPv4 Address.");
+			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv, device,
+					deviceConnectedWith2GhzWifi);
+			if (status) {
+				LOGGER.info("STEP 23: ACTUAL : Reuse ip after disconnecting & disconnecting successfully.");
+			} else {
+				LOGGER.error("STEP 23: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+
+			errorMessage = "Failed to set the default DHCP IPv4 values.";
+			status = false;
+			LOGGER.info("POST-CONDITION 1: DESCRIPTION : Verify DHCP IPv4 values are set to default.");
+			LOGGER.info("POST-CONDITION 1: ACTION : Set the default DHCP IPv4 values using WEBPA.");
+			LOGGER.info("POST-CONDITION 1: EXPECTED : Must set the default DHCP IPv4 values.");
+			defaultDhcpIpv4ValuesMap = BroadBandCommonUtils.addDefaultDhcpValuesinMap(device);
+			status = BroadBandWebGuiAdminPageTest.executePostConditionToSetTheDefaultDchpIpv4Values(device,
+					defaultDhcpIpv4ValuesMap);
+			if (status) {
+				LOGGER.info("POST-CONDITION 1 : ACTUAL : Successfully set the default DHCP IPv4 values.");
+			} else {
+				LOGGER.error("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+			}
+
+			if (isBrowserOpen) {
+				LOGGER.info("POST-CONDITION 2: DESCRIPTION : Verify browser is closed in connected client.");
+				LOGGER.info("POST-CONDITION 2: EXPECTED : Browser should be closed successfully in Connected Client.");
+				try {
+					LanWebGuiLoginPage.closeBrowser();
+					LOGGER.info("POST-CONDITION 2: ACTUAL : Browser closed successfully in Connected Client.");
+				} catch (Exception exception) {
+					LOGGER.error("Exception occurred while closing the browser, unable to close browser.");
+				}
+			}
+			LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WEBUI-7034");
+	}
+
+	/**
+	 * Verify IP ping and traceroutE diagnostics for IPv4 & IPv6 Address from
+	 * Gateway Diagnostics page
+	 * <ol>
+	 * <li>Verify the wireless client is connected and have private 2.4Ghz wifi
+	 * Capability.</li>
+	 * <li>Verify the Connected client has got the IPv4 Address between DHCP
+	 * Range.</li>
+	 * <li>Verify the Connected client has got the valid IPv6 Address.</li>
+	 * <li>Verify the Internet is accessible in the Connected client.</li>
+	 * <li>Launch Broad band WebUI login page and verify login status.</li>
+	 * <li>Verify Navigation to troubleshooting diagnostic tool page.</li>
+	 * <li>Verify valid IPv4 address entered in IPv4 address field.</li>
+	 * <li>Verify Ping Test and Connectivity status.</li>
+	 * <li>Verify valid IPv4 address entered in IPv4 address field in TraceRoute
+	 * Results section.</li>
+	 * <li>Verify traceroute status for entered Valid Ipv4 Address.</li>
+	 * </ol>
+	 * 
+	 * @param device {@link Dut}
+	 * @author Prashant Mishra
+	 * 
+	 * @Refactor Sruthi Santhosh
+	 * 
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-WEBUI-7040")
+	public void verfifyPingConnectivityAndTraceRouteFromUserAdminPageForIpv4Address(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-WEBUI-740";
+		String stepNum = "";
+		String errorMessage = "";
+		String ipAddressToCheck = "";
+		String traceOutput = "";
+		boolean status = false;
+		boolean isBrowserOpen = false;
+		Dut deviceConnectedWith2GhzWifi = null;
+		WebDriver webDriver = null;
+		List<String> valueToBeEnteredInIpBox = new ArrayList<>();
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBUI-7040");
+		LOGGER.info(
+				"TEST DESCRIPTION: Verify IP ping and tracerout diagnostics for IPv4 & IPv6 Address from Gateway Diagnostics page");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify the wireless client is connected and have private 2.4Ghz wifi Capability.");
+		LOGGER.info("2. Verify the Connected client has got the IPv4 Address between DHCP Range.");
+		LOGGER.info("3. Verify the Connected client has got the valid IPv6 Address.");
+		LOGGER.info("4. Verify the internet is accessible in the Connected client.");
+		LOGGER.info("5. Launch Broad band WebUI login page and verify login status.");
+		LOGGER.info("6. Verify Navigation to Diagnostic tools page.");
+		LOGGER.info("7. Verify valid IPv4 address entered in IPv4 address field.");
+		LOGGER.info("8. Verify Ping Test and Connectivity status.");
+		LOGGER.info("9. Verify valid IPv4 address entered in IPv4 address field in TraceRoute Results section.");
+		LOGGER.info("10. Verify traceroute status for entered Valid Ipv4 Address.");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+			stepNum = "S1";
+			errorMessage = "Failed to obtain a 2.4GHz WiFi client associated with the Gateway.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 1: DESCRIPTION : Verify the wireless client is connected and have private 2.4Ghz wifi Capability.");
+			LOGGER.info(
+					"STEP 1: ACTION : Connect to 2.4GHz Wi-Fi using below commands Linux :dmcli dev wifi connect <ssid> password <passwd>; Windows : netsh wlan connect ssid=<ssid> name=<ssid name>");
+			LOGGER.info("STEP 1: EXPECTED : Device should be connected with 2.4GHz Wi-Fi Network.");
+			LOGGER.info("**********************************************************************************");
+			deviceConnectedWith2GhzWifi = BroadBandConnectedClientUtils
+					.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+			status = null != deviceConnectedWith2GhzWifi;
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Obtained a WiFi 2.4GHz client assosiated with the gateway successfully.");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			/**
+			 * Checking Connected Client IPv4, IPv6 Address and Internet Connectivity
+			 */
+			/** Step 2 to Step 4 */
+			BroadBandConnectedClientUtils.validateIpAddressesAndInternetConnectivityOfConnectedClient(device,
+					deviceConnectedWith2GhzWifi, tapEnv, BroadBandTestConstants.CONSTANT_2, testCaseId);
+
+			stepNum = "S5";
+			errorMessage = "Unable to launch Admin GUI page.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Launch Broad band WebUI login page and verify login status.");
+			LOGGER.info(
+					"STEP 5: ACTION : Launch the below URL format in browser :https://10.0.0.1/ for Residential device and https://10.1.10.1/ for Business class devicesLOGIN CREDENTIALS :  username: <admin> Password: <paswrd>");
+			LOGGER.info("STEP 5: EXPECTED : LAN Gui admin page should be launched and login should be successful.");
+			LOGGER.info("**********************************************************************************");
+			status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, deviceConnectedWith2GhzWifi);
+			isBrowserOpen = status;
+			webDriver = LanWebGuiLoginPage.getDriver();
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : Launching Broad band LanUI login page and login status is successful.");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S6";
+			errorMessage = "Failed to navigate to the troubleshooting diagnostic page.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Verify Navigation to the troubleshooting page.");
+			LOGGER.info(
+					"STEP 6: ACTION : Navigate to the troubleshooting diagnostic page and verify navigation status");
+			LOGGER.info("STEP 6: EXPECTED : Troubleshooting diagnostic page navigation must be successful");
+			LOGGER.info("**********************************************************************************");
+			LanSidePageNavigation lanSidePageNavigation = new LanSidePageNavigation(webDriver);
+			status = lanSidePageNavigation.navigateToTroubleShootingNwDiagToolsPage(device, tapEnv, webDriver);
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : Navigated successfully to troubleshooting diagnostic page.");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S7";
+			errorMessage = "Failed to entered ipv4 address in ipv4 field.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Verify valid IPv4 address entered in IPv4 address field.");
+			LOGGER.info(
+					"STEP 7: ACTION : Enter 'facebook.com' Ip address in IPV4 address field and verify entered values.");
+			LOGGER.info("STEP 7: EXPECTED : Ipv4 address should be entered successfully in Text boxes.");
+			LOGGER.info("**********************************************************************************");
+			String nslookupResponse = tapEnv.executeCommandUsingSsh(device,
+					BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_NSLOOKUP_WITH_PATH,
+							BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandTestConstants.NSLOOKUP_FOR_FACEBOOK));
+			if (CommonMethods.isNotNull(nslookupResponse)) {
+				List<String> ipAddressList = BroadBandCommonUtils.patternFinderForMultipleMatches(nslookupResponse,
+						BroadBandTestConstants.PATTERN_TO_RETRIVE_IP_ADDRESS_FROM_NSLOOKUP_RESPONSE,
+						BroadBandTestConstants.CONSTANT_1);
+				if (ipAddressList != null && ipAddressList.size() <= BroadBandTestConstants.CONSTANT_2) {
+					ipAddressToCheck = ipAddressList.get(BroadBandTestConstants.CONSTANT_1);
+				}
+			}
+			/** Splitting IP Address in List to Enter in Boxes. */
+			valueToBeEnteredInIpBox = addIpElementInList(device, BroadBandTestConstants.BOOLEAN_VALUE_FALSE,
+					ipAddressToCheck);
+			status = lanSidePageNavigation.enterIpv4AddressInTextBoxesWithBoxesXpath(tapEnv, valueToBeEnteredInIpBox,
+					BroadBandWebGuiElements.XPATH_IPV4_BOXES_PING_CONNECTIVITY);
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : Ipv4 values entered successfully in Ping Connectivity section.");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S8";
+			errorMessage = "Failed to get the connectivity status for valid ipv4 address.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Verify Ping Test and Connectivity status.");
+			LOGGER.info("STEP 8: ACTION : Click 'CHECK FOR IP ADDRESSES' icon under ipv4 address field.");
+			LOGGER.info("STEP 8: EXPECTED : It should display connecticity status as 'OK'.");
+			LOGGER.info("**********************************************************************************");
+			BroadBandDiagnosticToolsPage diagnosticPage = new BroadBandDiagnosticToolsPage(webDriver);
+			try {
+				status = diagnosticPage.verifyConnectivityTestForIpv4Address(tapEnv,
+						BroadBandTestConstants.PING_CONNECTIVITY_TEST_MESSAGE);
+			} catch (Exception exception) {
+				errorMessage = "Exception occurred while checking ipv4 connectivity : " + exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Successfully verified ipv4 Connectivity status for valid ipv4 address.");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S9";
+			errorMessage = "Failed to set ipv4 address in ipv4 field  in TraceRoute Results.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION : Verify valid IPv4 address entered in IPv4 address field in TraceRoute Results section.");
+			LOGGER.info(
+					"STEP 9: ACTION : Enter 'facebook.com' Ip address in IPV4 address field in TraceRoute Results.");
+			LOGGER.info(
+					"STEP 9: EXPECTED : Ipv4 address should be entered successfully in text boxes in TraceRoute Results section.");
+			LOGGER.info("**********************************************************************************");
+			status = lanSidePageNavigation.enterIpv4AddressInTextBoxesWithBoxesXpath(tapEnv, valueToBeEnteredInIpBox,
+					BroadBandWebGuiElements.XPATH_IPV4_BOXES_TRACEROUTE);
+			if (status) {
+				LOGGER.info("STEP 9: ACTUAL : Ipv4 address entered successfully in boxes.");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S10";
+			errorMessage = "Unable to verify traceroute status.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Verify traceroute status for entered Valid Ipv4 Address.");
+			LOGGER.info("STEP 10: ACTION : Check for Status Ok and success message as 200.");
+			LOGGER.info("STEP 10: EXPECTED : 'Status: Complete !' keyword should be present in traceroute result.");
+			LOGGER.info("**********************************************************************************");
+			/** Clicking button for getting TraceRoute Output */
+			LanSideBasePage.click(By.xpath(BroadBandWebGuiElements.XPATH_BUTTON_TRACEROUTE));
+			/**
+			 * Verifying Success message in output after every 10 seconds for duration of 3
+			 * minutes
+			 */
+			long startTime = System.currentTimeMillis();
+			while ((System.currentTimeMillis() - startTime) / 1000 < 180) {
+				tapEnv.waitTill(BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+				traceOutput = LanSideBasePage.getText(By.xpath(BroadBandWebGuiElements.XPATH_TRACE_OUTPUT_MESSAGE));
+				if (CommonMethods.isNotNull(traceOutput)
+						&& traceOutput.contains(BroadBandTestConstants.TRACE_ROUTE_SUCCESS_MESSAGE)) {
+					status = BroadBandTestConstants.BOOLEAN_VALUE_TRUE;
+					break;
+				}
+			}
+			if (status) {
+				LOGGER.info("STEP 10: ACTUAL : Traceout Result verified successfully.");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					true);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+
+			if (isBrowserOpen) {
+				LOGGER.info("POST-CONDITION 1: DESCRIPTION : Verify the Browser is closed in connected client.");
+				LOGGER.info("POST-CONDITION 1: ACTION : Close Browser in connected client.");
+				LOGGER.info("POST-CONDITION 1: EXPECTED : Browser should be closed successfully in Connected Client.");
+				try {
+					LanWebGuiLoginPage.closeBrowser();
+					LOGGER.info("POST-CONDITION 1: ACTUAL : Browser closed successfully in Connected Client.");
+				} catch (Exception exception) {
+					LOGGER.error("Exception occurred while closing the browser, unable to close browser.");
+				}
+			}
+			LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+	}
+
+	/**
+	 * 
+	 * @param device      instance of {@link Dut}
+	 * @param isGateWayIP Indicates whether IP to be split is GateWay IP or not
+	 * @param ipAddress   It is not null if its connected Client IP address
+	 * @return valuesToBeEntered List contains all IP Address elements
+	 * 
+	 * @Refactor Sruthi Santhosh
+	 */
+	public static List<String> addIpElementInList(Dut device, boolean isGateWayIP, String ipAddress) {
+		List<String> valuesToBeEntered = new ArrayList<>();
+		String[] hostValueToBeAdded;
+		if (isGateWayIP) {
+			ipAddress = DeviceModeHandler.isBusinessClassDevice(device)
+					? BroadBandTestConstants.STRING_BUSINESS_CLASS_GATEWAYIP
+					: BroadBandTestConstants.STRING_RESIDENTIAL_CLASS_GATEWAYIP;
+		}
+		if (CommonMethods.isNotNull(ipAddress)) {
+			hostValueToBeAdded = ipAddress.split("\\.");
+			for (int counter = 0; counter < hostValueToBeAdded.length; counter++) {
+				valuesToBeEntered.add(hostValueToBeAdded[counter]);
+			}
+		}
+		return valuesToBeEntered;
+	}
+	
+	/**
+	 * Test method to login into the Admin page in connected client setup
+	 * 
+	 * @param device          {@link Dut}
+	 * @param deviceConnected instance of connected device
+	 * @param testCaseId      Test case Id
+	 * @param driver          {@link WebDriver}
+	 * @param stepNumber      Test step number
+	 * @refactor Rakesh C N
+	 */
+	public static void executeTestStepsToLoginAdminPage(Dut device, Dut deviceConnected, String testCaseId,
+			WebDriver driver, int stepNumber) {
+		String errorMessage = null;
+		boolean status = false;
+		String stepNum = null;
+
+		/**
+		 * Step : VERIFY LOGIN INTO THE LAN GUI ADIMN PAGE BY USING VALID USERID AND
+		 * VALID PASSWORD
+		 */
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STEP " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE GATEWAY ADMIN PAGE IS ACCESSIBLE IN CONNECTED CLIENT AND CAN BE LOGGED IN USING ADMIN/****** CREDENTIAL FOR RESIDENTIAL OR CUSADMIN/****** CREDENTIAL FOR COMMERCIAL DEVICES");
+		LOGGER.info("STEP " + stepNumber
+				+ " : ACTION : LAUNCH THE GATEWAY ADMIN GUI IN BROWSER URL : https://10.0.0.1 or https://10.1.10.1 , ONCE THE PAGE IS LOADED ,USE USERNAME AND PASSWORD AS ADMIN/****** FOR RESIDENTIAL OR CUSADMIN/****** FOR COMMERCIAL DEVICES TO LOGIN");
+		LOGGER.info("STEP " + stepNumber
+				+ " : EXPECTED : GATEWAY ADMIN PAGE SHOULD BE ACCESSIBLE FROM CLIENT AND CAN BE ABLE TO LOGIN USING ADMIN/****** CREDENTIAL FOR RESIDENTIAL OR CUSADMIN/****** CREDENTIAL FOR COMMERCIAL DEVICES");
+		LOGGER.info("#######################################################################################");
+		errorMessage = "UNABLE TO LOGIN GATEWAY ADMIN PAGE IN CONNECTED CLIENT";
+		try {
+			status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, deviceConnected);
+		} catch (Exception e) {
+			errorMessage = e.getMessage();
+			LOGGER.error("Exception occurred during Gateway Admin Page login : " + errorMessage);
+		}
+		if (status) {
+			LOGGER.info("STEP " + stepNumber + " : ACTUAL : LAN GUI ADMIN LOGIN SUCCESSFUL");
+		} else {
+			LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("#######################################################################################");
+		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
+				errorMessage, true);
+	}
+
+	/**
+	 * Test method to Navigate into the Public Network page in connected client
+	 * setup
+	 * 
+	 * @param device                {@link Dut}
+	 * @param lanSidePageNavigation {@link LanSidePageNavigation}
+	 * @param deviceConnected       instance of connected device
+	 * @param testCaseId            Test case Id
+	 * @param driver                {@link WebDriver}
+	 * @param stepNumber            Test step number
+	 * @refactor Rakesh C N
+	 */
+	public static void executeTestStepsToLanuchPublicWiFiPage(Dut device, LanSidePageNavigation lanSidePageNavigation,
+			String testCaseId, WebDriver driver, int stepNumber) {
+		String errorMessage = null;
+		boolean status = false;
+		String stepNum = null;
+		boolean isBusinessClsDevice = DeviceModeHandler.isBusinessClassDevice(device);
+		/**
+		 * STEP : NAVIGATE TO THE GATEWAY > CONNECTION > PUBLIC NETWORK PAGE FOR
+		 * RESIDENTIAL OR GATEWAY > CONNECTION > PUBLIC NETWORK PAGE FOR COMMERCIAL
+		 * DEVICES AND VERIFY NAVIGATION STATUS
+		 */
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STEP " + stepNumber
+				+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > CONNECTION > PUBLIC NETWORK PAGE FOR RESIDENTIAL OR GATEWAY > CONNECTION > PUBLIC NETWORK PAGE FOR COMMERCIAL DEVICES AND VERIFY NAVIGATION STATUS");
+		LOGGER.info("STEP " + stepNumber
+				+ " : ACTION : CLICK ON GATEWAY > CONNECTION > PUBLIC NETWORK(FOR RESIDENTIAL DEVICE) OR GATEWAY > CONNECTION > PUBLIC NETWORK(FOR COMMERCIAL DEVICE)");
+		LOGGER.info("STEP " + stepNumber
+				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > CONNECTION > PUBLIC NETWORK PAGE (FOR RESIDENTIAL DEVICE) OR GATEWAY > CONNECTION > PUBLIC NETWORK PAGE (FOR COMMERCIAL DEVICE)");
+		LOGGER.info("#######################################################################################");
+		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > CONNECTION > PUBLIC NETWORK PAGE(FOR RESIDENTIAL DEVICE) OR GATEWAY > CONNECTION > PUBLIC NETWORK(FOR COMMERCIAL DEVICE)PAGE";
+		status = lanSidePageNavigation.navigateToPartnerNetworkPage(device, tapEnv, driver, isBusinessClsDevice);
+		if (status) {
+			LOGGER.info("STEP " + stepNumber
+					+ " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > CONNECTION > PUBLIC NETWORK PAGE (FOR RESIDENTIAL DEVICE) OR GATEWAY > CONNECTION > PUBLIC NETWORK PAGE (FOR COMMERCIAL DEVICE) ");
+		} else {
+			LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("#######################################################################################");
+		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
+				errorMessage, true);
+	}
+
+	/**
+	 * Test method to validate the Upstream and Downstream values In Public Wifi
+	 * page
+	 * 
+	 * @param device     {@link Dut}
+	 * @param testCaseId Test case Id
+	 * @param driver     {@link WebDriver}
+	 * @param stepNumber Test step number
+	 * @param dsTblIndex Index for Down stream table
+	 * @param usTblIndex Index for Up stream table
+	 * @refactor Rakesh C N
+	 */
+	public static void validateUpstreamDownsteramValuesInPublicPage(Dut device, String testCaseId, WebDriver driver,
+			int stepNumber, String dsTblIndex, String usTblIndex) {
+		boolean status = false;
+		String errorMessage = null;
+		String responseFromUi = null;
+		String webPaResponse = null;
+		String stepNum = null;
+
+		/**
+		 * SETP : GET THE DOWNSTREAM VALUES IN PUBLIC WIFI NETWORK PAGE
+		 */
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber + " : DESCRIPTION : GET THE DOWNSTREAM VALUES IN PUBLIC WIFI NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber + " : ACTION : READ THE DOWNSTREAM VALUES IN PUBLIC WIFI NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : EXPECTED : MUST RETURN THE DOWNSTREAM VALUES FROM PUBLIC WIFI NETWORK PAGE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "UNABLE TO GET THE DOWNSTREAM VALUES IN PUBLIC WIFI NETWORK PAGE";
+		try {
+			responseFromUi = driver
+					.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_UPDOWNSTREAM_TABLE
+							.replace(BroadBandTestConstants.STRING_REPLACE, dsTblIndex)))
+					.getText().replaceAll(BroadBandTestConstants.PATTERN_MATCHER_FOR_MULTIPLE_SPACES,
+							BroadBandTestConstants.SINGLE_SPACE_CHARACTER);
+		} catch (NoSuchElementException noSuchElementException) {
+			// Log & Suppress the Exception
+			LOGGER.error(noSuchElementException.getMessage());
+		}
+		LOGGER.info("RESPONSE FORM DOWN STREAM TABLE :" + responseFromUi);
+		status = CommonMethods.isNotNull(responseFromUi)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_LOCK_STATUS)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_FREQUENCY)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_SNR)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_POWER_LEVEL)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_MODULATION);
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY RETRIEVED THE DOWNSTREAM VALUES IN PUBLIC WIFI NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
+				errorMessage, true);
+
+		/**
+		 * SETP : VERIFY THE LOCK STATUS VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE LOCK STATUS VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE LOCK STATUS VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE DOWNSTREAM TABLE AND COMPARE THE LOCK STATUS VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE LOCK STATUS VALUE FROM DOWNSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE LOCK STATUS VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DOWNSTREAM_CHANNEL_LOCKSTATUS
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE LOCK STATUS VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE FREQUENCY VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE FREQUENCY VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE FREQUENCY VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE DOWNSTREAM TABLE AND COMPARE THE FREQUENCY VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE FREQUENCY VALUE FROM DOWNSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE FREQUENCY VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DOWNSTREAM_CHANNEL_FREQUENCY
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE FREQUENCY VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE SNR VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE SNR VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE SNR VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE DOWNSTREAM TABLE AND COMPARE THE SNR VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE SNR VALUE FROM DOWNSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE SNR VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DOWNSTREAM_CHANNEL_SNRLEVEL
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE SNR VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE POWER LEVEL VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE POWER LEVEL VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE POWER LEVEL VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE DOWNSTREAM TABLE AND COMPARE THE POWER LEVEL VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE POWER LEVEL VALUE FROM DOWNSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE POWER LEVEL VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DOWNSTREAM_CHANNEL_POWERLEVEL
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE POWER LEVEL VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE MODULATION VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE MODULATION VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE MODULATION VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE DOWNSTREAM TABLE AND COMPARE THE MODULATION VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE MODULATION VALUE FROM DOWNSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE MODULATION VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_DOWNSTREAM_CHANNEL_MODULATION
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE MODULATION VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : GET THE UPSTERAM VALUES IN PUBLIC WIFI NETWORK PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber + " : DESCRIPTION : GET THE UPSTERAM VALUES IN PUBLIC WIFI NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber + " : ACTION : READ THE UPSTERAM VALUES IN PUBLIC WIFI NETWORK PAGE");
+		LOGGER.info(
+				"STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE UPSTERAM VALUES FROM PUBLIC WIFI NETWORK PAGE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "UNABLE TO GET THE UPSTERAM VALUES IN PUBLIC WIFI NETWORK PAGE";
+		try {
+			responseFromUi = driver
+					.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_UPDOWNSTREAM_TABLE
+							.replace(BroadBandTestConstants.STRING_REPLACE, usTblIndex)))
+					.getText().replaceAll(BroadBandTestConstants.PATTERN_MATCHER_FOR_MULTIPLE_SPACES,
+							BroadBandTestConstants.SINGLE_SPACE_CHARACTER);
+		} catch (NoSuchElementException noSuchElementException) {
+			// Log & Suppress the Exception
+			LOGGER.error(noSuchElementException.getMessage());
+		}
+		LOGGER.info("RESPONSE FORM DOWN STREAM TABLE :" + responseFromUi);
+		status = CommonMethods.isNotNull(responseFromUi)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_LOCK_STATUS)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_FREQUENCY)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_SYMBOL_RATE)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_POWER_LEVEL)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_MODULATION)
+				&& CommonUtils.patternSearchFromTargetString(responseFromUi,
+						BroadBandWebGuiTestConstant.UP_AND_DOWN_STREAM_PARAM_CHANNEL_TYPE);
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY RETRIEVED THE UPSTERAM VALUES IN PUBLIC WIFI NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
+				errorMessage, true);
+
+		/**
+		 * SETP : VERIFY THE LOCK STATUS VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE LOCK STATUS VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE LOCK STATUS VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE UPSTREAM TABLE AND COMPARE THE LOCK STATUS VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE LOCK STATUS VALUE FROM UPSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE LOCK STATUS VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_UPSTREAM_CHANNEL_LOCKSTATUS
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE LOCK STATUS VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE FREQUENCY VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE FREQUENCY VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE FREQUENCY VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE UPSTREAM TABLE AND COMPARE THE FREQUENCY VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE FREQUENCY VALUE FROM UPSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE FREQUENCY VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_UPSTREAM_CHANNEL_FREQUENCY
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		String responseUi = responseFromUi.replaceAll("\\s", "");
+		String response = webPaResponse.replaceAll("\\s", "");
+		status = CommonMethods.isNotNull(response)
+				&& (CommonUtils.patternSearchFromTargetString(responseUi, response) || responseUi.contains(response));
+
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE FREQUENCY VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE SYMBOL RATE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE SYMBOL RATE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE SYMBOL RATE VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE UPSTREAM TABLE AND COMPARE THE SNR VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE SYMBOL RATE VALUE FROM UPSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE SYMBOL RATE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_UPSTREAM_CHANNEL_SYMBOLRATE
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE SYMBOL RATE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE POWER LEVEL VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE POWER LEVEL VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE POWER LEVEL VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE UPSTREAM TABLE AND COMPARE THE POWER LEVEL VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE POWER LEVEL VALUE FROM UPSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE POWER LEVEL VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_UPSTREAM_CHANNEL_POWERLEVEL
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE POWER LEVEL VALUE FROM DOWNSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE MODULATION VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE MODULATION VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE MODULATION VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE UPSTREAM TABLE AND COMPARE THE MODULATION VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE MODULATION VALUE FROM UPSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE MODULATION VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_UPSTREAM_CHANNEL_MODULATION
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		status = CommonMethods.isNotNull(webPaResponse)
+				&& (CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse)
+						|| responseFromUi.contains(webPaResponse));
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE MODULATION VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		/**
+		 * SETP : VERIFY THE CHANNEL TYPE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK
+		 * PAGE
+		 */
+		stepNumber++;
+		stepNum = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : DESCRIPTION : VERIFY THE CHANNEL TYPE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		LOGGER.info("STEP : " + stepNumber
+				+ " : ACTION : CHECK THE CHANNEL TYPE VALUE IS AVAILABLE IN PUBLIC NETWORK PAGE UPSTREAM TABLE AND COMPARE THE CHANNEL TYPE VALUE WITH WEBPA");
+		LOGGER.info("STEP : " + stepNumber + " : EXPECTED : MUST RETURN THE CHANNEL TYPE VALUE FROM UPSTREAM TABLE");
+		LOGGER.info("**********************************************************************************");
+		errorMessage = "FAILED TO GET THE CHANNEL TYPE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE";
+		webPaResponse = tapEnv.executeWebPaCommand(device,
+				BroadBandWebPaConstants.WEBPA_PARAM_UPSTREAM_CHANNEL_CHANNELTYPE
+						.replace(BroadBandTestConstants.TR181_NODE_REF, BroadBandTestConstants.STRING_CONSTANT_1));
+		if (CommonMethods.isNotNull(webPaResponse)) {
+			webPaResponse = webPaResponse.replace("(", "\\(");
+			webPaResponse = webPaResponse.replace(")", "\\)");
+			status = CommonUtils.patternSearchFromTargetString(responseFromUi, webPaResponse);
+		}
+
+		if (status) {
+			LOGGER.info("STEP : " + stepNumber
+					+ " : ACTUAL : SUCCESSFULLY VERIFIED THE CHANNEL TYPE VALUE FROM UPSTREAM TABLE IN PUBLIC NETWORK PAGE");
+		} else {
+			LOGGER.error("STEP : " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	}
+	/**
+	 *
+	 * Test Case : Verify channel type, Upstream and Downstream information
+	 * availability in admin login Public network page for 5 Ghz
+	 *
+	 * 
+	 * <p>
+	 * STEPS:
+	 * </p>
+	 * <ol>
+	 * <li>PRE-CONDITION 1 : Connect the client setup to 5 GHz SSID and verify
+	 * connection status</li>
+	 * <li>PRE-CONDITION 2 : Verify the correct IPv4 address for client connected
+	 * with 5 GHz SSID</li>
+	 * <li>PRE-CONDITION 3 : Verify the correct IPv6 address for client connected
+	 * with 5 GHz SSID</li>
+	 * <li>PRE-CONDITION 4 : Verify the internet connectivity in the connected wifi
+	 * client using ipv4 interface</li>
+	 * <li>PRE-CONDITION 5 : Verify the internet connectivity in the connected wifi
+	 * client using ipv6 interface</li>
+	 * <li>Step 1 : Verify login into the LAN GUI Admin page by using valid userid
+	 * and valid password</li>
+	 * <li>Step 2 : Navigate to the Gateway>Connection>PUBLIC Network page and
+	 * verify Navigation Status</li>
+	 * <li>Step 3 : Get the the downstream values in Public wifi network page</li>
+	 * <li>Step 4 : Verify the Lock Status value from downstream table in Public
+	 * Network page and compare the Lock Status value with webpa response *</li>
+	 * <li>Step 5 : Verify the Frequency value from downstream table in Public
+	 * Network page and compare the Frequency value with webpa response</li>
+	 * <li>Step 6 : Verify the SNR value from downstream table in Public Network
+	 * page and compare the SNR value with webpa response</li>
+	 * <li>Step 7 : Verify the Power Level value from downstream table in Public
+	 * Network page compare the Power Level value with webpa response</li>
+	 * <li>Step 8 : Verify the Modulation value from downstream table in Public
+	 * Network page compare the Modulation value with webpa response</li>
+	 * <li>Step 9 : Get the the upstream values in Public wifi network page</li>
+	 * <li>Step 10 : Verify the Lock Status value from upstream table in Public
+	 * Network page compare the Lock Status value with webpa response</li>
+	 * <li>Step 11 : Verify the Frequency value from upstream table in Public
+	 * Network page compare the Frequency value with webpa response</li>
+	 * <li>Step 12 : Verify the Symbol Rate from upstream table in Public Network
+	 * page compare the Symbol Rate value with webpa response</li>
+	 * <li>Step 13 : Verify the Power Level value from upstream table in Public
+	 * Network page compare the Power Level value with webpa response</li>
+	 * <li>Step 14 : Verify the Modulation value from upstream table in Public
+	 * Network page compare the Modulation value with webpa response</li>
+	 * <li>Step 15 : Verify the Channel Type value from upstream table in Public
+	 * Network page compare the Channel Type value with webpa response</li>
+	 * <li>POST-CONDITION 1 : Close the Browser LAN Client</li>
+	 * <li>POST-CONDITION 2 : Verify disconnecting the 5 GHz private wifi SSID</li>
+	 * </ol>
+	 * 
+	 * @param device {@link Dut}
+	 * @author Muthukumar
+	 * @refactor Rakesh C N
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true)
+	@TestDetails(testUID = "TC-RDKB-WIFI-5GHZ-PUBLIC-PAGE-5001")
+	public void testToVerifyTheUpstreamAndDownStreamValuesInAdminLoginFor5Ghz(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-WIFI-5GHZ-PUBLIC-PAGE-501";
+		String stepNum = null;
+		String errorMessage = null;
+		boolean status = false;
+		LanSidePageNavigation lanSidePageNavigation = null;
+		Dut deviceConnectedWith5Ghz = null;
+		stepNumber = 1;
+		// Variable Declation Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-5GHZ-PUBLIC-PAGE-5001");
+		LOGGER.info(
+				"TEST DESCRIPTION: Verify channel type, Upstream and Downstream information availability in admin login Public network page for 5 Ghz");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("PRE-CONDITION 1 : Connect  the  client setup to 5 GHz SSID and verify connection status");
+		LOGGER.info("PRE-CONDITION 2 : Verify the correct IPv4 address for client connected with 5 GHz SSID");
+		LOGGER.info("PRE-CONDITION 3 : Verify the correct IPv6 address for client connected with 5 GHz SSID");
+		LOGGER.info(
+				"PRE-CONDITION 4 : Verify the internet connectivity in the connected wifi client using ipv4 interface");
+		LOGGER.info(
+				"PRE-CONDITION 5 : Verify the internet connectivity in the connected wifi client using ipv6 interface");
+		LOGGER.info("Step 1. Verify login into the LAN GUI Admin page by using valid userid and valid password");
+		LOGGER.info("Step 2. Navigate to the Gateway>Connection>PUBLIC Network page and verify Navigation Status");
+		LOGGER.info("Step 3 : Get the the downstream values in Public wifi network page");
+		LOGGER.info(
+				"Step 4 : Verify the Lock Status value from downstream table in Public Network page and compare the Lock Status value with webpa response  * ");
+		LOGGER.info(
+				"Step 5 : Verify the Frequency value from downstream table in Public Network page and compare the Frequency value with webpa response");
+		LOGGER.info(
+				"Step 6 : Verify the SNR value from downstream table in Public Network page and compare the SNR value with webpa response");
+		LOGGER.info(
+				"Step 7 : Verify the Power Level value from downstream table in Public Network page compare the Power Level value with webpa response");
+		LOGGER.info(
+				"Step 8 : Verify the Modulation value from downstream table in Public Network page compare the Modulation value with webpa response");
+		LOGGER.info("Step 9 : Get the the upstream values in Public wifi network page");
+		LOGGER.info(
+				"Step 10 : Verify the Lock Status value from upstream table in Public Network page compare the Lock Status value with webpa response");
+		LOGGER.info(
+				"Step 11 : Verify the Frequency value from upstream table in Public Network page compare the Frequency value with webpa response");
+		LOGGER.info(
+				"Step 12 : Verify the Symbol Rate from upstream table in Public Network page compare the Symbol Rate value with webpa response");
+		LOGGER.info(
+				"Step 13 : Verify the Power Level value from upstream table in Public Network page compare the Power Level value with webpa response");
+		LOGGER.info(
+				"Step 14 : Verify the Modulation value from upstream table in Public Network page compare the Modulation value with webpa response");
+		LOGGER.info(
+				"Step 15 : Verify the Channel Type value from upstream table in Public Network page compare the Channel Type value with webpa response");
+		LOGGER.info("POST-CONDITION 1 : Close the Browser LAN Client");
+		LOGGER.info("POST-CONDITION 2 : Verify disconnecting the 5 GHz private wifi SSID");
+		LOGGER.info("#######################################################################################");
+		try {
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			deviceConnectedWith5Ghz = BroadBandPreConditionUtils.executePreConditionToVerifyWiFiClientStatus(device,
+					tapEnv, BroadBandTestConstants.BAND_5GHZ);
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			/**
+			 * Step 1 : VERIFY LOGIN INTO THE LAN GUI ADMIN PAGE BY USING VALID USERID AND
+			 * VALID PASSWORD
+			 */
+			executeTestStepsToLoginAdminPage(device, deviceConnectedWith5Ghz, testCaseId, driver, stepNumber);
+			isBrowserOpen = status;
+			driver = LanWebGuiLoginPage.getDriver();
+			LOGGER.info(" webDriver " + driver);
+			lanSidePageNavigation = new LanSidePageNavigation(driver);
+
+			/**
+			 * STEP 2 : NAVIGATE TO THE GATEWAY > CONNECTION > PUBLIC NETWORK PAGE FOR
+			 * RESIDENTIAL OR GATEWAY > CONNECTION > PUBLIC NETWORK PAGE FOR COMMERCIAL
+			 * DEVICES AND VERIFY NAVIGATION STATUS
+			 */
+			stepNumber++;
+			executeTestStepsToLanuchPublicWiFiPage(device, lanSidePageNavigation, testCaseId, driver, stepNumber);
+
+			/**
+			 * SETP 3-15 : VLIDATING UPSTREAM AND DOWNSTREAM VALUES
+			 */
+			stepNumber++;
+			validateUpstreamDownsteramValuesInPublicPage(device, testCaseId, driver, stepNumber,
+					BroadBandTestConstants.STRING_VALUE_FIVE, BroadBandTestConstants.STRING_VALUE_SIX);
+		} catch (Exception e) {
+			errorMessage = e.getMessage();
+			LOGGER.error("EXCEPTION OCCURRED WHILE VERIFYING UPSTREAM AND DOWNSTREAM VALUES IN LAN ADMIN 5 GHZ"
+					+ errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					true);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			/**
+			 * Post-condition 1 : Close the LAN Side Browser
+			 */
+			LOGGER.info("POST-CONDITION 1 : DESCRIPTION : VERIFY LAN SIDE BROWSER CLOSED");
+			LOGGER.info("POST-CONDITION 1 : ACTION : CLOSE THE LAN SIDE BROWSER");
+			LOGGER.info("POST-CONDITION 1 : EXPECTED : BROWSER CLOSED SUCCESSFULLY IN LAN SIDE");
+			if (isBrowserOpen) {
+				try {
+					LanSidePageNavigation.closeBrowser();
+					LOGGER.info("POST-CONDITION 1 : ACTUAL : BROWSER CLOSED SUCCESSFULLY.");
+				} catch (Exception exception) {
+					LOGGER.info(
+							"POST-CONDITION 1 : ACTUAL : EXCEPTION OCCURRED WHILE CLOSING THE BROWSER, UNABLE TO CLOSE BROWSER.");
+				}
+			} else {
+				LOGGER.info("POST-CONDITION 1 : ACTUAL : BROWSER NOT OPENED IN LAN SIDE.");
+			}
+			/**
+			 * Post-condition 2 : Disconnect the 5 GHz private wifi SSID
+			 */
+			BroadBandPostConditionUtils.executePostConditionToDisconnectClientsConnectedWith5Ghz(device, tapEnv,
+					deviceConnectedWith5Ghz, BroadBandTestConstants.CONSTANT_2);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+		LOGGER.info("ENDING TEST CASE:TC-RDKB-WIFI-5GHZ-PUBLIC-PAGE-5001");
 	}
 }

@@ -417,8 +417,7 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 	}
 
 	/**
-	 * Test step method used to verify MoCA page greyed out status in MSO/LAN GUI
-	 * page
+	 * Test step method used to verify MoCA page greyed out status in LAN GUI page
 	 * 
 	 * @param device               instance of{@link Dut}
 	 * @param tapEnv               instance of {@link AutomaticsTapApi}

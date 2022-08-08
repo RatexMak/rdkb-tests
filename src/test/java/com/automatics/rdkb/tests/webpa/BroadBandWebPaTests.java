@@ -103,7 +103,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	LOGGER.info("#######################################################################################");
 	LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBPA-1003");
 	LOGGER.info(
-		"TEST DESCRIPTION: Verify the retrieval of webpa version from tr181 parameter");
+		"TEST DESCRIPTION: Verify the retrieval of webpa version from tr181 parameter ");
 	LOGGER.info("TEST STEPS : ");
 	LOGGER.info("1. Verify WebPA version obtained using WebPA request.");
 	LOGGER.info("#######################################################################################");
@@ -2537,11 +2537,11 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 
 	    if (DeviceModeHandler.isDSLDevice(device)) {
 		LOGGER.info(
-			"STEP 13 and 14 are not applicable for BCI devices as they do not send reboot notification to xFi");
+			"STEP 13 and 14 are not applicable for BCI devices ");
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, "s13", ExecutionStatus.NOT_APPLICABLE,
-			"BCI devices do not send reboot notification to xFi", false);
+			"Not applicable for BCI devices ", false);
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, "s14", ExecutionStatus.NOT_APPLICABLE,
-			"BCI devices do not send reboot notification to xFi", false);
+			"Not applicable for BCI devices", false);
 	    } else {
 		stepNum = "s13";
 		errorMessage = "Unable to find reboot pending notification log message in PAMlog";

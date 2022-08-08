@@ -217,7 +217,7 @@ public class BroadBandQuickTestNew extends BaseQuickTest {
 
 		if (status) {
 		    LOGGER.info("STEP 1 : ACTUAL : Build '" + buildImageName
-			    + "' is available in cdl server(s), proceeding with code download");
+			    + "' is available cdl server(s), proceeding with code download");
 		} else {
 		    errorMessage = "Build '" + buildImageName
 			    + "' is not available in cdl server(s), please check the jenkins status in rdkportal whether is success and build is uploaded to cdl servers";

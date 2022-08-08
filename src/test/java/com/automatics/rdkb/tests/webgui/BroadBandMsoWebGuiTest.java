@@ -2561,8 +2561,6 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_2_4_RADIO_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
 		    BroadBandTestConstants.FALSE);
 	    LOGGER.info("STEP 1 : ACTUAL: " + (status ? "Successfully disabled 2.4 Ghz wifi radio" : errorMessage));
-	    // updateExecutionStatus(device, testId, testStepNumber, status, errorMessage,
-	    // false);
 
 	    /**
 	     * Step 2 :Verify enabling private SSID of 2.4 Ghz using from MSO page, SMNP, TR069 and WEBPA.
@@ -2832,7 +2830,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	LOGGER.info("Status of enable Private SSID through WEBPA is failed-" + webpaStatus);
 
 	LOGGER.info("ERROR MESSAGE - " + errorMessage.toString());
-	executionStatus.setStatus(/* msoStatus && */snmpStatus && tr69Status && webpaStatus);
+	executionStatus.setStatus(snmpStatus && tr69Status && webpaStatus);
 	executionStatus.setErrorMessage(errorMessage.toString());
 
 	LOGGER.info("Status of enabling Private SSID through MSO/SNMP/TR-069/WEBPA is failed-"
@@ -2857,8 +2855,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	LOGGER.debug("STARTING METHOD : verifyEnablingPrivateSsidUsingWebpa");
 	boolean status = false;
 
-	// This parameter gives the value of the Private SSID in MSO page, ready only
-	// parameter
+	// This parameter gives the value of the Private SSID 
 	String checkSsidStatus = BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_SSID_STATUS_FOR_2_4GHZ_PRIVATE_SSID;
 	// This parameter is for modifying Private SSID state.
 	String enableSsid = BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_ENABLE;

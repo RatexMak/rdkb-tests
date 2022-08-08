@@ -7036,7 +7036,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 					"STEP " + stepNumber + ": EXPECTED : The following response should be received. \"OutOfService\"");
 			LOGGER.info("**********************************************************************************");
 			ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
-					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
 			LOGGER.info("5GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
 			status = CommonMethods.isNotNull(ssidNameFromWebPa)
 					&& ssidNameFromWebPa.equals(AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));

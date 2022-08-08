@@ -3197,7 +3197,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_DNS_PRIMARY_IP_TCPDUMP);
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_CMD_TO_GET_DNS_PRIMARY_IP_TCPDUMP));
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3319,7 +3319,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_DNS_SECONDARY_IP_TCPDUMP);
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_CMD_TO_GET_DNS_SECONDARY_IP_TCPDUMP));
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3526,7 +3526,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_INVALID_DNS_PRIMARY_IP_TCPDUMP);
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_CMD_TO_GET_INVALID_DNS_PRIMARY_IP_TCPDUMP));
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3926,7 +3926,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 1: DESCRIPTION : Verify setting primary and secondary ipv4 and ipv6 XDNS servers");
 	    LOGGER.info(
-		    "STEP 1: ACTION : Execute webpa or dmcli command for following sets:\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string 74.121.125.53\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string 2620:104:a00b::53\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string 74.121.125.54\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string 2620:104:a00b::54\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag string SecurityEdge\nVerify above values with get after performing set operation.");
+		    "STEP 1: ACTION : Execute webpa or dmcli command for following sets:\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv4 string <ip>\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6 string <ip>\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv4 string <ip>\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultSecondaryDeviceDnsIPv6 string <ip>\nDevice.X_RDKCENTRAL-COM_XDNS.DefaultDeviceTag string SecurityEdge\nVerify above values with get after performing set operation.");
 	    LOGGER.info("STEP 1: EXPECTED : Successfully set ipv4 and ipv6 XDNS servers");
 	    LOGGER.info("**********************************************************************************");
 	    errorMessage = "Failed to set security edge configurations";
@@ -4054,7 +4054,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 5: DESCRIPTION : Valdiate DNS packets being routed to akamai server");
 	    LOGGER.info(
-		    "STEP 5: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I 74.121.125.53|grep -I 74.121.125.54");
+		    "STEP 5: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <IP>");
 	    LOGGER.info("STEP 5: EXPECTED : DNS packets must be routed to akamai server");
 	    LOGGER.info("**********************************************************************************");
 	    errorMessage = "DNS packets are not routed to akamai server";
@@ -4259,7 +4259,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 11: DESCRIPTION : Valdiate DNS packets being routed to akamai server");
 	    LOGGER.info(
-		    "STEP 11: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I 74.121.125.53|grep -I 74.121.125.54");
+		    "STEP 11: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <ip>|grep -I <ip>");
 	    LOGGER.info("STEP 11: EXPECTED : DNS packets must be routed to akamai server");
 	    LOGGER.info("**********************************************************************************");
 	    errorMessage = "DNS packets are not routed to akamai server";
@@ -4312,7 +4312,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 13: DESCRIPTION : Valdiate DNS packets are not being routed to akamai server");
 	    LOGGER.info(
-		    "STEP 13: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I 74.121.125.53|grep -I 74.121.125.54");
+		    "STEP 13: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <IP>");
 	    LOGGER.info("STEP 13: EXPECTED : DNS packets must not be routed to akamai server");
 	    LOGGER.info("**********************************************************************************");
 	    errorMessage = "DNS packets are routed to akamai server";
