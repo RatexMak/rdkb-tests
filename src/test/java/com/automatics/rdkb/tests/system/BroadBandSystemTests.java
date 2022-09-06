@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
@@ -51,6 +53,7 @@ import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
@@ -632,10 +635,9 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    try {
-	    	String expectedResponse = AutomaticsPropertyUtility
-				    .getProperty(BroadBandTestConstants.PROP_KEY_EXPECTED_RESPONSE);
-			status = BroadBandSystemUtils.verifyDnsmasqSerivceStatus(device, tapEnv,
-					expectedResponse);
+		String expectedResponse = AutomaticsPropertyUtility
+			.getProperty(BroadBandTestConstants.PROP_KEY_EXPECTED_RESPONSE);
+		status = BroadBandSystemUtils.verifyDnsmasqSerivceStatus(device, tapEnv, expectedResponse);
 	    } catch (Exception e) {
 		status = false;
 		errorMessage += "." + e.getMessage();
@@ -2237,8 +2239,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 6: DESCRIPTION : Verify whether the DNS queries sent to only primary server");
 	    LOGGER.info("STEP 6: ACTION : 1) grep -I \"google.com\" /tmp/dummy.txt");
-	    LOGGER.info(
-		    "STEP 6: EXPECTED : In the response only primary DNS server details should present");
+	    LOGGER.info("STEP 6: EXPECTED : In the response only primary DNS server details should present");
 	    LOGGER.info("**********************************************************************************");
 
 	    scanFile = new Scanner(tapEnv.executeCommandUsingSsh(device,
@@ -5392,7 +5393,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 	}
     }
-    
+
     /**
      * Validate if RDKB SSH client is not accessible via WAN.
      * <ol>
@@ -5453,8 +5454,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    errorMessage = "SSH client is accessible via WAN IP. ";
 	    status = false;
 	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP 2: DESCRIPTION : Validate if we are  able to SSH to the WAN IP using the Jump server ");
+	    LOGGER.info("STEP 2: DESCRIPTION : Validate if we are  able to SSH to the WAN IP using the Jump server ");
 	    LOGGER.info("STEP 2: ACTION : SSH to the wanip of the device using the jump server");
 	    LOGGER.info("STEP 2: EXPECTED : SSH client must not accessible via WAN IP. ");
 	    LOGGER.info("**********************************************************************************");
@@ -5475,133 +5475,512 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-9008");
     }
-    
-	/**
-	 * Verify accessibilty for ARM to Atom SSH.
-	 * <ol>
-	 * <li>Verify Atom console is accessible from ARM console</li>
-	 * <li>Verify CR process running status in atom console from ARM console</li>
-	 * </ol>
-	 * 
-	 * @author Gnanaprakasham
-	 * @refactor Athira
-	 * 
-	 * @param device {@link Dut}
-	 * 
-	 */
-	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
-	@TestDetails(testUID = "TC-RDKB-SYSTEM-1029")
 
-	public void verifyaccessibilityFromArmConsoleToAtomConsole(Dut device) {
+    /**
+     * Verify accessibilty for ARM to Atom SSH.
+     * <ol>
+     * <li>Verify Atom console is accessible from ARM console</li>
+     * <li>Verify CR process running status in atom console from ARM console</li>
+     * </ol>
+     * 
+     * @author Gnanaprakasham
+     * @refactor Athira
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-SYSTEM-1029")
 
-		// Variable Declaration begins
-		String testCaseId = "TC-RDKB-SYSTEM-129";
-		String stepNum = null;
-		String errorMessage = null;
-		boolean status = false;
-		// Variable Declaration Ends
+    public void verifyaccessibilityFromArmConsoleToAtomConsole(Dut device) {
 
-		LOGGER.info("#######################################################################################");
-		LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-1029");
-		LOGGER.info("TEST DESCRIPTION: Verify accessibilty for ARM to Atom SSH");
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SYSTEM-129";
+	String stepNum = null;
+	String errorMessage = null;
+	boolean status = false;
+	// Variable Declaration Ends
 
-		LOGGER.info("TEST STEPS : ");
-		LOGGER.info("1. Verify Atom console is accessible from ARM console");
-		LOGGER.info("2. Verify CR process running status in atom console from ARM console");
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-1029");
+	LOGGER.info("TEST DESCRIPTION: Verify accessibilty for ARM to Atom SSH");
 
-		LOGGER.info("#######################################################################################");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Verify Atom console is accessible from ARM console");
+	LOGGER.info("2. Verify CR process running status in atom console from ARM console");
 
-		try {
+	LOGGER.info("#######################################################################################");
 
-			stepNum = "S1";
-			errorMessage = "Not able to access atom console from ARM console";
-			status = false;
-			String ipAddress = null;
+	try {
 
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 1: DESCRIPTION : Verify Atom console is accessible from ARM console");
-			LOGGER.info("STEP 1: ACTION : Execute the below command to verify access status");
-			LOGGER.info("STEP 1: EXPECTED : Atom console should be accessible from ARM console.");
-			LOGGER.info("**********************************************************************************");
+	    stepNum = "S1";
+	    errorMessage = "Not able to access atom console from ARM console";
+	    status = false;
+	    String ipAddress = null;
 
-			// Atom console IP obtained from property file for specific devices
-			try {
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify Atom console is accessible from ARM console");
+	    LOGGER.info("STEP 1: ACTION : Execute the below command to verify access status");
+	    LOGGER.info("STEP 1: EXPECTED : Atom console should be accessible from ARM console.");
+	    LOGGER.info("**********************************************************************************");
 
-				ipAddress = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
-						BroadBandTestConstants.ATOM_CONSOLE_IP_SPECIFIC_DEVICES);
-			} catch (Exception e) {
+	    // Atom console IP obtained from property file for specific devices
+	    try {
 
-				LOGGER.info("No device specific value found, test case is not appicable for the Platform");
-			}
-			if (CommonMethods.isNotNull(ipAddress)) {
-				String[] commands = { AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.CMD_TOACCESS_ATOMCONSOLEFROMARM),
-						AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.CMD_TOACCESS_ATOMCONSOLEFROMARM).replace("<ip address>", ipAddress)
-								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + BroadBandTestConstants.CMD_ECHO
-								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + "\""
-								+ BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY + "\"" };
+		ipAddress = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+			BroadBandTestConstants.ATOM_CONSOLE_IP_SPECIFIC_DEVICES);
+	    } catch (Exception e) {
 
-				BroadBandResultObject broadBandResultObject = verifyAccessLogsFromArmConsole(device, tapEnv, commands,
-						BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY, "atom");
+		LOGGER.info("No device specific value found, test case is not appicable for the Platform");
+	    }
+	    if (CommonMethods.isNotNull(ipAddress)) {
+		String[] commands = {
+			AutomaticsTapApi
+				.getSTBPropsValue(BroadBandPropertyKeyConstants.CMD_TOACCESS_ATOMCONSOLEFROMARM),
+			AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.CMD_TOACCESS_ATOMCONSOLEFROMARM)
+				.replace("<ip address>", ipAddress) + BroadBandTestConstants.SINGLE_SPACE_CHARACTER
+				+ BroadBandTestConstants.CMD_ECHO + BroadBandTestConstants.SINGLE_SPACE_CHARACTER + "\""
+				+ BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY + "\"" };
 
-				status = broadBandResultObject.isStatus();
-				errorMessage = broadBandResultObject.getErrorMessage();
+		BroadBandResultObject broadBandResultObject = verifyAccessLogsFromArmConsole(device, tapEnv, commands,
+			BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY, "atom");
 
-				if (status) {
-					LOGGER.info("STEP 1: ACTUAL : SUCCESSFULLY VERIFIED ATOM CONSOLE IS ACCESSSIBLE FROM ARM CONSOLE");
-				} else {
-					LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-				}
-				LOGGER.info("**********************************************************************************");
+		status = broadBandResultObject.isStatus();
+		errorMessage = broadBandResultObject.getErrorMessage();
 
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+		if (status) {
+		    LOGGER.info("STEP 1: ACTUAL : SUCCESSFULLY VERIFIED ATOM CONSOLE IS ACCESSSIBLE FROM ARM CONSOLE");
+		} else {
+		    LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
 
-				stepNum = "S2";
-				errorMessage = "Failed to verify CR process running status via ARM to atom connection";
-				status = false;
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
-				LOGGER.info("**********************************************************************************");
-				LOGGER.info("STEP 2: DESCRIPTION : Verify CR process running status in atom console from ARM console");
-				LOGGER.info("STEP 2: ACTION : Execute the command atond verify access status ");
-				LOGGER.info(
-						"STEP 2: EXPECTED : CR process must be running and response should contains CR process pid id");
-				LOGGER.info("**********************************************************************************");
+		stepNum = "S2";
+		errorMessage = "Failed to verify CR process running status via ARM to atom connection";
+		status = false;
 
-				commands[1] = commands[1].replace(
-						BroadBandTestConstants.CMD_ECHO + BroadBandTestConstants.SINGLE_SPACE_CHARACTER + "\""
-								+ BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY + "\"",
-						BroadBandTestConstants.PS_COMMAND_FOR_CCSP_PROCESS);
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("STEP 2: DESCRIPTION : Verify CR process running status in atom console from ARM console");
+		LOGGER.info("STEP 2: ACTION : Execute the command atond verify access status ");
+		LOGGER.info(
+			"STEP 2: EXPECTED : CR process must be running and response should contains CR process pid id");
+		LOGGER.info("**********************************************************************************");
 
-				broadBandResultObject = verifyAccessLogsFromArmConsole(device, tapEnv, commands,
-						BroadBandTestConstants.CCSP_COMPONENT_LIST_ATOM.get(1),
-						BroadBandTestConstants.STRING_ATOM_CONSOLE);
+		commands[1] = commands[1].replace(
+			BroadBandTestConstants.CMD_ECHO + BroadBandTestConstants.SINGLE_SPACE_CHARACTER + "\""
+				+ BroadBandTestConstants.STRING_VERIFY_ATOM_ACCESSIBILITY + "\"",
+			BroadBandTestConstants.PS_COMMAND_FOR_CCSP_PROCESS);
 
-				status = broadBandResultObject.isStatus();
-				errorMessage = broadBandResultObject.getErrorMessage();
+		broadBandResultObject = verifyAccessLogsFromArmConsole(device, tapEnv, commands,
+			BroadBandTestConstants.CCSP_COMPONENT_LIST_ATOM.get(1),
+			BroadBandTestConstants.STRING_ATOM_CONSOLE);
 
-				if (status) {
-					LOGGER.info(
-							"STEP 2: ACTUAL : SUCCESSFULLY VERIFIED CR PROCESS RUNNING STATUS IN ATOM CONSOLE FROM ARM CONSOLE");
-				} else {
-					LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-				}
+		status = broadBandResultObject.isStatus();
+		errorMessage = broadBandResultObject.getErrorMessage();
 
-				LOGGER.info("**********************************************************************************");
-
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, broadBandResultObject.isStatus(),
-						broadBandResultObject.getErrorMessage(), true);
-			} else {
-				status = false;
-				errorMessage = "The test case is not appicable for the Platform";
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, false, errorMessage, true);
-			}
-
-		} catch (Exception e) {
-			errorMessage = errorMessage + e.getMessage();
-			LOGGER.error(errorMessage);
-			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-					errorMessage, false);
+		if (status) {
+		    LOGGER.info(
+			    "STEP 2: ACTUAL : SUCCESSFULLY VERIFIED CR PROCESS RUNNING STATUS IN ATOM CONSOLE FROM ARM CONSOLE");
+		} else {
+		    LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
 		}
 
-		LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-1029");
+		LOGGER.info("**********************************************************************************");
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, broadBandResultObject.isStatus(),
+			broadBandResultObject.getErrorMessage(), true);
+	    } else {
+		status = false;
+		errorMessage = "The test case is not appicable for the Platform";
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, false, errorMessage, true);
+	    }
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+		    errorMessage, false);
 	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-1029");
+    }
+
+    /**
+     * Verify the swap memory can be enabled and disabled using ZRAM
+     * <ol>
+     * <li>Configure and post RFC payload data to enable swap memory when RFC config service is triggered</li>
+     * <li>Restart RFC config service to update settings</li>
+     * <li>Verify Memory Swap has been enabled by RFC script</li>
+     * <li>Verify the gateway can be rebooted using WebPA</li>
+     * <li>Verify the memory swap is still enabled after reboot</li>
+     * <li>Verify the memory swap enable using ZRAM is logged in Console log file</li>
+     * <li>Verify ZRAM partitions on the device after enabling swap memory</li>
+     * <li>Configure and post RFC payload data to disable swap memory when RFC config service is triggered</li>
+     * <li>Restart RFC config service to update settings</li>
+     * <li>Verify Memory Swap has been disabled by RFC script</li>
+     * <li>Verify the gateway can be rebooted using WebPA to disable memory swap</li>
+     * <li>Verify the memory swap is still disabled after reboot</li>
+     * <li>Verify the memory swap disable using ZRAM is logged in Console log file</li>
+     * </ol>
+     * 
+     * @refactor Govardhan
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-SWAP-5001")
+    public void testToEnableSwap(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-SWAP-501";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SWAP-5001");
+	LOGGER.info("TEST DESCRIPTION: Verify the swap memory can be enabled and disabled using ZRAM");
+	LOGGER.info("TEST STEPS : ");
+
+	LOGGER.info(
+		"1. Configure and post RFC payload data to enable swap memory when RFC config service is triggered");
+	LOGGER.info("2. Restart RFC config service to update settings");
+	LOGGER.info("3. Verify Memory Swap has been enabled by RFC script");
+	LOGGER.info("4. Verify the gateway can be rebooted using WebPA to enable swap during bootup");
+	LOGGER.info("5. Verify the memory swap is still enabled after reboot");
+	LOGGER.info("6. Verify the memory swap enable using ZRAM is logged in Console log file");
+	LOGGER.info("7. Verify ZRAM partitions on the device after enabling swap memory");
+	LOGGER.info(
+		"8. Configure and post RFC payload data to disable swap memory when RFC config service is triggered");
+	LOGGER.info("9. Restart RFC config service to update settings");
+	LOGGER.info("10. Verify Memory Swap has been disabled by RFC script");
+	LOGGER.info("11. Verify the gateway can be rebooted using WebPA to disable memory swap");
+	LOGGER.info("12. Verify the memory swap is still disabled after reboot");
+	LOGGER.info("13. Verify the memory swap disable using ZRAM is logged in Console log file");
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    stepNum = "S1";
+	    errorMessage = "Unable to post the RFC payload data to Proxy Xconf DCM Server";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Configure and post RFC payload data to enable swap memory when RFC config service is triggered");
+	    LOGGER.info("STEP 1: ACTION : Post the RFC payload data to Proxy Xconf DCM Server");
+	    LOGGER.info("STEP 1: EXPECTED : RFC payload data should be successfully posted to Proxy Xconf DCM Server");
+	    LOGGER.info("**********************************************************************************");
+	    JSONObject jsonObject = new JSONObject();
+	    try {
+		jsonObject.put(
+			CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.TR181_DOT,
+				BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP),
+			BroadBandTestConstants.TRUE);
+	    } catch (JSONException e) {
+		errorMessage = "Exception occurred while configuring RFC payload data : " + e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    status = BroadBandRfcFeatureControlUtils.executePreconditionForRfcTests(device, tapEnv,
+		    BroadBandTestConstants.STRING_RFC_DATA_PAYLOAD
+			    .replace(BroadBandTestConstants.STRING_REPLACE, jsonObject.toString())
+			    .replace(BroadBandTestConstants.CONSTANT_REPLACE_STBMAC_LSAPAYLOADDATA,
+				    device.getHostMacAddress()));
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : RFC payload data to enable Memory Swap is successfully posted to Proxy Xconf DCM Server");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S2";
+	    errorMessage = "Unable to restart RFC Service";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Restart RFC config service to update settings");
+	    LOGGER.info("STEP 2: ACTION : Execute the command : sh /lib/rdk/RFCbase.sh");
+	    LOGGER.info("STEP 2: EXPECTED : RFC config should restart successfully");
+	    LOGGER.info("**********************************************************************************");
+	    String response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : RFC service restart has been successfully trigerred");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S3";
+	    errorMessage = "Unable to validate Memory Swap enable status";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Verify Memory Swap has been enabled by RFC script");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Validate the TR-181 'Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MEMSWAP.Enable' param using WebPA");
+	    LOGGER.info("STEP 3: EXPECTED : Memory Swap should be enabled successfully by RFC");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP);
+	    status = CommonMethods.isNotNull(response) && BroadBandTestConstants.TRUE.equalsIgnoreCase(response);
+	    if (!status) {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP, BroadBandTestConstants.CONSTANT_3,
+			BroadBandTestConstants.TRUE);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Validated using WebPA, Memory Swap is enabled successfully using RFC");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s4";
+	    errorMessage = "Unable to reboot the gateway!";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Verify the gateway can be rebooted using WebPA  to enable swap during bootup");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute the command : curl -4 -k -H \"Authorization: Bearer <SAT_TOKEN>\"  -X PATCH <WEBPA_URL><CM_MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"Device.X_CISCO_COM_DeviceControl.RebootDevice\",\"value\":\"Device\"}]}\"");
+	    LOGGER.info("STEP 4: EXPECTED : Device should come online");
+	    LOGGER.info("**********************************************************************************");
+	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+	    if (status) {
+		tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTES);
+		LOGGER.info("STEP 4: ACTUAL : Device reboot is successful and device is up");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s5";
+	    errorMessage = "Unable to check memory swap status using WebPA";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify the memory swap is still enabled after reboot");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute webPA get command on TR-181 param \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MEMSWAP.Enable\" ");
+	    LOGGER.info("STEP 5: EXPECTED : The returned value should be \"true\"");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP);
+	    errorMessage = "Null/invalid response retrieved. Expected : true; Response : " + response;
+	    status = CommonMethods.isNotNull(response) && BroadBandTestConstants.TRUE.equalsIgnoreCase(response);
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Memory swap is successfully retaining its status after reboot");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s6";
+	    errorMessage = "Memory swap enable operation using ZRAM is not logged in Console log file";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify the memory swap enable using ZRAM is logged in Console log file");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Check console logs for logging on ZRAM enable using \"cat /rdklogs/logs/zram.log | grep zram\" command");
+	    LOGGER.info("STEP 6: EXPECTED : ZRAM enable should be logged under cat /rdklogs/logs/zram.log");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
+		    ? tapEnv.executeCommandOnAtom(device,
+			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
+		    : tapEnv.executeCommandUsingSsh(device,
+			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.patternSearchFromTargetString(response,
+		    BroadBandTraceConstants.LOG_MESSAGE_ENABLING_ZRAM);
+	    if (status) {
+		LOGGER.info(
+			"STEP 6: ACTUAL : Memory swap enable operation using ZRAM is successfully logged in zram.log file");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "s7";
+	    errorMessage = "Unable to check ZRAM partition in the device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Verify ZRAM partitions in the device after enabling swap memory");
+	    LOGGER.info("STEP 7: ACTION : Check for the ZRAM partitions in the device using \"cat /proc/swaps\"");
+	    LOGGER.info("STEP 7: EXPECTED : ZRAM partitions should be present in the device");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
+		    ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION)
+		    : tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION);
+	    if (CommonMethods.isNotNull(response)) {
+		List<String> partitions = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			BroadBandTestConstants.PATTERN_TO_GET_ZRAM_PARTITION_FILE_NAMES);
+		errorMessage = "The gateway don't have any ZRAM partition even after enabling memory swap";
+		if (partitions.size() != 0 && !partitions.isEmpty()) {
+		    errorMessage = "Expected ZRAM partitions in AtomSync is 1 and other platforms should have 2. But Actual no of partitions is "
+			    + partitions.size();
+		    status = partitions.size() == BroadBandTestConstants.CONSTANT_2;
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : ZRAM partitions is successfully present in the device");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S8";
+	    errorMessage = "Unable to post the RFC payload data to Proxy Xconf DCM Server";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 8: DESCRIPTION : Configure and post RFC payload data to disable swap memory when RFC config service is triggered");
+	    LOGGER.info("STEP 8: ACTION : Post the RFC payload data to Proxy Xconf DCM Server");
+	    LOGGER.info("STEP 8: EXPECTED : RFC payload data should be successfully posted to Proxy Xconf DCM Server");
+	    LOGGER.info("**********************************************************************************");
+	    jsonObject = new JSONObject();
+	    try {
+		jsonObject.put(
+			CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.TR181_DOT,
+				BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP),
+			BroadBandTestConstants.FALSE);
+	    } catch (JSONException e) {
+		errorMessage = "Exception occurred while configuring RFC payload data : " + e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    status = BroadBandRfcFeatureControlUtils.executePreconditionForRfcTests(device, tapEnv,
+		    BroadBandTestConstants.STRING_RFC_DATA_PAYLOAD
+			    .replace(BroadBandTestConstants.STRING_REPLACE, jsonObject.toString())
+			    .replace(BroadBandTestConstants.CONSTANT_REPLACE_STBMAC_LSAPAYLOADDATA,
+				    device.getHostMacAddress()));
+	    if (status) {
+		LOGGER.info(
+			"STEP 8: ACTUAL : RFC payload data to disable Swap Memory is successfully posted to Proxy Xconf DCM Server");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S9";
+	    errorMessage = "Unable to restart RFC Service";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Restart RFC config service to update settings");
+	    LOGGER.info("STEP 9: ACTION : Execute the command : sh /lib/rdk/RFCbase.sh");
+	    LOGGER.info("STEP 9: EXPECTED : RFC config should restart successfully");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL : RFC service restart has been successfully trigerred");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S10";
+	    errorMessage = "Unable to validate Memory Swap disable status";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Verify Memory Swap has been disabled by RFC script");
+	    LOGGER.info(
+		    "STEP 10: ACTION : Validate the TR-181 'Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MEMSWAP.Enable' param using WebPA");
+	    LOGGER.info("STEP 10: EXPECTED : Memory Swap should be disabled successfully by RFC");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP);
+	    status = CommonMethods.isNotNull(response) && BroadBandTestConstants.FALSE.equalsIgnoreCase(response);
+	    if (!status) {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP, BroadBandTestConstants.CONSTANT_3,
+			BroadBandTestConstants.FALSE);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL : Validated using WebPA, Memory Swap is disabled successfully using RFC");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s11";
+	    errorMessage = "Unable to reboot the gateway!";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Verify the gateway can be rebooted using WebPA to disable memory swap");
+	    LOGGER.info(
+		    "STEP 11: ACTION : Execute the command : curl -4 -k -H \"Authorization: Bearer <SAT_TOKEN>\"  -X PATCH <WEBPA_URL><CM_MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"Device.X_CISCO_COM_DeviceControl.RebootDevice\",\"value\":\"Device\"}]}\"");
+	    LOGGER.info("STEP 11: EXPECTED : Device should come online");
+	    LOGGER.info("**********************************************************************************");
+	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+	    if (status) {
+		tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTES);
+		LOGGER.info("STEP 11: ACTUAL : Device reboot is successful and device is up");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s12";
+	    errorMessage = "Unable to check memory swap status using WebPA";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 12: DESCRIPTION : Verify the memory swap is still disabled after reboot");
+	    LOGGER.info(
+		    "STEP 12: ACTION : Execute webPA get command on TR-181 param \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.MEMSWAP.Enable\" ");
+	    LOGGER.info("STEP 12: EXPECTED : The returned value should be \"false\"");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_TO_ENABLE_MEMORY_SWAP);
+	    errorMessage = "Null/invalid response retrieved. Expected : false; Response : " + response;
+	    status = CommonMethods.isNotNull(response) && BroadBandTestConstants.FALSE.equalsIgnoreCase(response);
+	    if (status) {
+		LOGGER.info("STEP 12: ACTUAL : Memory swap is successfully retaining its status after reboot");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "s13";
+	    errorMessage = "Memory swap disable operation using ZRAM is not logged in Console log file";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 13: DESCRIPTION : Verify the memory swap disable using ZRAM is logged in Console log file");
+	    LOGGER.info("STEP 13: ACTION : Check console logs for logging on ZRAM enable");
+	    LOGGER.info("STEP 13: EXPECTED : ZRAM disable should be logged under cat /rdklogs/logs/zram.log");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
+		    ? tapEnv.executeCommandOnAtom(device,
+			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
+		    : tapEnv.executeCommandUsingSsh(device,
+			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.patternSearchFromTargetString(response,
+		    BroadBandTraceConstants.LOG_MESSAGE_DISABLING_ZRAM);
+	    if (status) {
+		LOGGER.info(
+			"STEP 13: ACTUAL : Memory swap disable operation using ZRAM is successfully logged in zram.log file");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SWAP-5001");
+    }
+
 }

@@ -340,7 +340,7 @@ public class BroadBandPublicWifiTests extends BroadBandWebUiBaseTest {
 		stepNumber = BroadBandTestConstants.CONSTANT_4;
 		while (stepNumber <= BroadBandTestConstants.CONSTANT_9) {
 		    stepNum = "s" + stepNumber;
-		    errorMessage = "STEP " + stepNumber + ": ACTUAL : PUBLIC WIFI NOT APPLICABLE  FOR PACE DEVICES";
+		    errorMessage = "STEP " + stepNumber + ": ACTUAL : PUBLIC WIFI NOT APPLICABLE  FOR FIBER DEVICES";
 		    LOGGER.info("******************************************************************************");
 		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 			    errorMessage, false);

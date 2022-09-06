@@ -18,6 +18,7 @@
 
 package com.automatics.rdkb.tests.system;
 
+import org.apache.http.HttpStatus;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
@@ -26,6 +27,7 @@ import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.exceptions.TestException;
+import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -33,12 +35,16 @@ import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
+import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
+import com.automatics.rdkb.utils.telemetry.BroadBandTelemetry2Utils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.webpa.WebPACommonUtils;
 import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
@@ -1463,4 +1469,969 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase{
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-ONBOARDING-1000");
    }
+   
+   /**
+   *
+   * Test Case : Test case to verify Running Telemetry 2.0 process as non-root
+   *
+   * <p>
+   * STEPS:
+   * </p>
+   * <ol>
+   * <li>PRE CONDITION 1 : Check telemetry process is running in the device, If not enable the telemetry & verify</li>
+   * <li>PRE CONDITION 2 : Set SelfHeal trigger interval to 4 minutes</li>
+   * <li>1. Verify nonroot support blocklist parameter value is null or No blocklisted process by default</li>
+   * <li>2. Check Telemetry2_0 process run as non-root</li>
+   * <li>3. Kill Telemetry2_0 in the device</li>
+   * <li>4. Verify minidump is created for killed Telemetry2_0 process</li>
+   * <li>5. Verify Telemetry2_0 is recreated with non-root after selfheal</li>
+   * <li>6. Verify parodus is running as unprivilege mode in CapDebug.txt</li>
+   * <li>7. Verify the default capabilities for Telemetry2.0 are defined in JSON config file.</li>
+   * <li>8. Enable nonroot support blocklist feature using RFC</li>
+   * <li>9. Verify nonroot support blocklist feature parameter is Telemetry2.0 using RFC</li>
+   * <li>10. Check Telemetry2_0 process run as root</li>
+   * <li>11. Kill Telemetry2_0 process in the device</li>
+   * <li>12. Verify minidump is created for killed Telemetry2_0 process</li>
+   * <li>13. Verify Telemetry2_0 process is recreated after selfheal</li>
+   * <li>POST CONDITION 1 : Set Null value to Non-root Blocklist parameter through RFC</li>
+   * <li>POST CONDITION 2 : delete RFC feature</li>
+   * </ol>
+   * 
+   * @param device
+   *            {@link Dut}
+   * 
+   * @author Leela Krishnama Naidu Andela & Betel Costrow
+   * @refactor yamini.s
+   *
+   */
+  @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+  @TestDetails(testUID = "TC-RDKB-NONROOT-T2-1000")
+  public void testToVerifyT2AsNonroot(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-NONROOT-T2-100";
+	String stepNum = "s1";
+	boolean status = false;
+	String response = null;
+	String errorMessage = "Not able to validate Running Telemetry 2.0 process as non-root";
+	String telemetryNonRootLog = null;
+	boolean telemetryEnabledDefault = false;
+	String successMsg = null;
+	// Variable Declaration Ends
+
+	try {
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-NONROOT-T2-1000");
+	    LOGGER.info("TEST DESCRIPTION: Verify Running Telemetry 2.0 process as non-root Previllages");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info(
+		    " PRE CONDITION 1 : Check telemetry process is running in the device, If not enable the telemetry & verify");
+	    LOGGER.info(" PRE CONDITION 2 : Set SelfHeal trigger interval to 4 minutes");
+	    LOGGER.info(
+		    "1. Verify nonroot support blocklist parameter value is null or No blocklisted process by default ");
+	    LOGGER.info("2. Check Telemetry2_0 process run as non-root");
+	    LOGGER.info("3. Kill Telemetry2_0 in the device");
+	    LOGGER.info("4. Verify minidump is created for killed Telemetry2_0 process ");
+	    LOGGER.info("5. Verify Telemetry2_0 is recreated with non-root after selfheal");
+	    LOGGER.info("6. Verify parodus is running as unprivilege mode in CapDebug.txt");
+	    LOGGER.info("7. Verify the default capabilities for Telemetry2.0 are defined in JSON config file.");
+	    LOGGER.info("8. Enable nonroot support blocklist feature using RFC");
+	    LOGGER.info("9. Verify nonroot support blocklist feature parameter is telemetry2_0 using RFC ");
+	    LOGGER.info("10. Check Telemetry2_0 process run as root");
+	    LOGGER.info("11. Kill  Telemetry2_0 process in the device");
+	    LOGGER.info("12. Verify minidump is created for killed Telemetry2_0 process ");
+	    LOGGER.info("13. Verify Telemetry2_0 process is recreated after selfheal");
+	    LOGGER.info("POST CONDITION 1  : Set Null value to Non-root Blocklist parameter through RFC ");
+	    LOGGER.info("POST CONDITION 2  : delete RFC feature ");
+	    LOGGER.info("#######################################################################################");
+
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info(
+		    "PRE-CONDITION 1: DESCRIPTION: Check telemetry process is running in the device, If not enable the telemetry & verify");
+	    LOGGER.info("PRE-CONDITION 1: ACTION : 1) pidof telemetry2_0 2)Enable telemetry through webpa");
+	    LOGGER.info("PRE-CONDITION 1: EXPECTED : Telemetry process should be running in the device");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to get the t2.0 process running status";
+	    telemetryEnabledDefault = BroadBandCommonUtils.verifyProcessRunningStatus(device, tapEnv, false,
+		    BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0);
+	    successMsg = "Telemetry is by default enabled in the device";
+	    if (!telemetryEnabledDefault) {
+		if (BroadBandTelemetry2Utils.setTelemetry2ConfigurationViaWebpa(device, tapEnv)) {
+		    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)
+			    && BroadBandTelemetry2Utils.verifyTelemetry2ConfigurationViaWebpa(device, tapEnv);
+		    successMsg = "Enabled the telemetry in the device and verified telemetry process is running";
+		}
+	    } else {
+		status = telemetryEnabledDefault;
+	    }
+
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1: ACTUAL : " + successMsg);
+	    } else {
+		LOGGER.error("PRE-CONDITION 1: ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 2: DESCRIPTION: Set SelfHeal trigger interval to 4 minutes");
+	    LOGGER.info(
+		    "PRE-CONDITION 2: ACTION : Execute webpa Command: tr181.Device.SelfHeal.ResourceMonitor.X_RDKCENTRAL-COM_UsageComputeWindow");
+	    LOGGER.info("PRE-CONDITION 2: EXPECTED : SelfHeal trigger interval must be set to 4 minutes");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to set Self Heal Trigger interval to 4 mins";
+	    if (BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_AGGRESSIVE_SELFHEAL_INTERVAL, WebPaDataTypes.INTEGER.getValue(),
+		    BroadBandTestConstants.STRING_VALUE_TWO)) {
+		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+			BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, WebPaDataTypes.INTEGER.getValue(),
+			BroadBandTestConstants.STRING_VALUE_FOUR);
+	    }
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 2: ACTUAL : SelfHeal trigger interval is set to 4 minutes");
+	    } else {
+		LOGGER.error("PRE-CONDITION 2: ACTUAL : " + errorMessage);
+		throw new TestException(errorMessage);
+	    }
+
+	    LOGGER.info("##################################################################################");
+
+	    stepNum = "s1";
+	    errorMessage = "Default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Blocklist is not null or No blocklisted process";
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Verify nonroot support blocklist parameter value is null or No blocklisted process by default ");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Blocklist");
+	    LOGGER.info("STEP 1: EXPECTED : Default value should be null or No blocklisted process ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandWebPaUtils.verifyDefaultValueForNonRootSupportList(device, tapEnv);
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : Sucessfully verified non-root support blocklist parameter as null or No blocklisted process by default");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "telemetry2_0 process not running as non-root";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Check telemetry2_0 process run as non-root");
+	    LOGGER.info("STEP 2: ACTION : Execute:ps | grep -nri -E \"telemetry2_0\" | grep bin");
+	    LOGGER.info("STEP 2: EXPECTED : Response should have non-root along with telemetry2_0  process id");
+	    LOGGER.info("**********************************************************************************");
+
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS
+		    .replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.STRING_NON_ROOT);
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfuly verified parodus process is running as non-root");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "telemetry2_0 process is not killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Kill telemetry2_0 in the device");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute:1.get telemetry2_0 process using pidof telemetry2_02.kill -1 <pidof telemetry2_0>");
+	    LOGGER.info("STEP 3: EXPECTED : telemetry2_0 process should be killed");
+	    LOGGER.info("**********************************************************************************");
+	    CommonUtils.clearLogFile(tapEnv, device, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB);
+	    status = BroadBandCommonUtils.killAndCheckProcess(device, tapEnv,
+		    BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0);
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Successfully verified telemetry2_0 process id ");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "minidump is not created after telemetry2_0 process killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Verify minidump is created for killed telemetry2_0 process ");
+	    LOGGER.info("STEP 4: ACTION : Execute:grep -I \"Response code: 200\" /rdklogs/logs/core_log.txt");
+	    LOGGER.info("STEP 4: EXPECTED : Response should have 200 success message ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RESPONSE_200, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL :Verified minidump is created for killed telemetry2_0 process");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "telemetry2_0 process not running as non-root";
+	    status = false;
+	    long startTimeStamp = System.currentTimeMillis();
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION : Verify telemetry2_0 is recreated with non-root after selfheal");
+	    LOGGER.info(
+		    "STEP 5: ACTION : Execute:ps | grep -nri -E \"telemetry2_0\" | grep binwait for 7 to 20min to get new process id");
+	    LOGGER.info("STEP 5: EXPECTED : Response should have non-root along with telemetry2_0 process id");
+	    LOGGER.info("**********************************************************************************");
+	    do {
+		response = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(BroadBandTestConstants.STRING_REPLACE,
+				BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+		status = CommonMethods.isNotNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_NON_ROOT);
+		if (CommonMethods.isNull(telemetryNonRootLog)) {
+		    telemetryNonRootLog = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			    BroadBandTraceConstants.LOG_MESSAGE_UNPRIVILEGE_MODE_T2,
+			    BroadBandCommandConstants.CMD_TO_GET_CAPDEBUG, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		}
+	    } while (!status
+		    && (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Successfuly verified telemetry2_0 process is running as non-root");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "telemtry2_0 is not running in unprivilege mode";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Verify telemtry2_0 is running as unprivilege mode in CapDebug.txt  ");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Execute:grep -I \"Dropping root privilege of telemtry2_0: runs as unprivilege mode\"  /rdklogs/logs/CapDebug.txt");
+	    LOGGER.info("STEP 6: EXPECTED : Response should have uprivilege mode");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(telemetryNonRootLog);
+	    LOGGER.info("Response captured from CapDebug.txt file " + telemetryNonRootLog);
+	    if (!status) {
+		telemetryNonRootLog = tapEnv.searchAndFindLineWithMatchingStringFromStart(device,
+			BroadBandTraceConstants.LOG_MESSAGE_UNPRIVILEGE_MODE_T2,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		status = CommonMethods.isNotNull(telemetryNonRootLog);
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Successfully verified telemetry2_0 running as unprivilage mode");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 7: DESCRIPTION :Validate Default capabilities and Privilege adjustments defined in JSON config file");
+	    LOGGER.info(
+		    "STEP 7: ACTION :Execute linux  Command:cat /etc/security/caps/process-capabilities.json| grep -I process name");
+	    LOGGER.info(
+		    "STEP 7: EXPECTED :All process with nonroot privilleges should be listed under process-capabilities.json");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "Unable to find the process in process-capabilities.json";
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_GET_ALL_PROCESS_CAPABILITIES);
+	    status = CommonMethods.isNotNull(response) && CommonMethods.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0);
+
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL :All the  processes are present in the process-capabilities.json");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "s8";
+	    errorMessage = "Nonroot support blocklist feature is not telemetry2_0 using RFC";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 8: DESCRIPTION : Enable nonroot support blocklist feature using RFC");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Using any rest client post the below content to RFC mock server: https://<XCONF_URL>/featureControl/updateSettings"
+			    + "{\"estbMacAddress\":\"<MAC_ADDRESS>\",\"features\":[{\"name\":\"nonroot_support\",\"effectiveImmediate\":true,\"enable\":true,"
+			    + "\"configData\":{\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Blocklist\":\"telemetry2_0\"}}]}and perform an reboot");
+	    LOGGER.info("STEP 8: EXPECTED : Nonroot support feature should be telemetry2_0 using RFC");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTestConstants.CONFIGURABLE_NONROOT_BLOCKLIST_TELEMETRY, true);
+
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Succesfully enabled non-root support blocklist feature using RFC");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Blocklist is not telemetry2_0 using RFC";
+	    status = false;
+	    startTimeStamp = System.currentTimeMillis();
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 9: DESCRIPTION : Verify nonroot support blocklist feature parameter is telemetry2_0 using RFC ");
+	    LOGGER.info(
+		    "STEP 9: ACTION : Execute:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.NonRootSupport.Blocklist");
+	    LOGGER.info("STEP 9: EXPECTED : Nonroot support blocklist parameter response should be telemetry2_0");
+	    LOGGER.info("**********************************************************************************");
+	    do {
+		response = tapEnv.executeWebPaCommand(device,
+			BroadBandWebPaConstants.TR181_PARAM_NONROOT_SUPPORT_BLOCKLIST);
+		LOGGER.info("response :" + response);
+		status = CommonMethods.isNotNull(response)
+			&& response.contains(BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0);
+	    } while (!status
+		    && (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info(
+			"STEP 9: ACTUAL : Sucessfully verified non-root support blocklist parameter is telemetry2_0 using webpa/dmcli");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s10";
+	    errorMessage = "telemtery2_0 process not running as root";
+	    status = false;
+	    startTimeStamp = System.currentTimeMillis();
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 10: DESCRIPTION : Check telemtery2_0 process run as root");
+	    LOGGER.info("STEP 10: ACTION : Execute:ps | grep -nri -E \"telemtery2_0\" | grep bin");
+	    LOGGER.info("STEP 10: EXPECTED : Response should have root along with telemtery2_0 process id");
+	    LOGGER.info("**********************************************************************************");
+	    do {
+		response = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(BroadBandTestConstants.STRING_REPLACE,
+				BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+		status = CommonMethods.isNotNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_ROOT);
+	    } while (!status
+		    && (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP 10: ACTUAL : Successfuly verified telemtery2_0  process is running as root");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s11";
+	    errorMessage = "telemtery2_0 process is not killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 11: DESCRIPTION : Kill telemtery2_0 process in the device");
+	    LOGGER.info(
+		    "STEP 11: ACTION : Execute:1.get telemtery2_0 process using pidof telemtery2_02.kill -1 <telemtery2_0>");
+	    LOGGER.info("STEP 11: EXPECTED : telemtery2_0 process should be killed");
+	    LOGGER.info("**********************************************************************************");
+	    CommonUtils.clearLogFile(tapEnv, device, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB);
+	    status = BroadBandCommonUtils.killAndCheckProcess(device, tapEnv,
+		    BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0);
+
+	    if (status) {
+		LOGGER.info("STEP 11: ACTUAL : Successfully verified telemetry2_0 process id ");
+	    } else {
+		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s12";
+	    errorMessage = "minidump is not created after telemetry2_0 process killed";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 12: DESCRIPTION : Verify minidump is created for killed telemetry2_0 process ");
+	    LOGGER.info("STEP 12: ACTION : Execute:grep -I \"Response code: 200\" /rdklogs/logs/core_log.txt");
+	    LOGGER.info("STEP 12: EXPECTED : Response should have 200 success message ");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RESPONSE_200, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
+		    BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 12: ACTUAL : Verified minidump is created for killed telemetry2_0 process");
+	    } else {
+		LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s13";
+	    errorMessage = "telemetry2_0 process not running as root";
+	    status = false;
+	    startTimeStamp = System.currentTimeMillis();
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 13: DESCRIPTION : Verify telemetry2_0 process is recreated after selfheal");
+	    LOGGER.info(
+		    "STEP 13: ACTION : Execute:ps | grep -nri -E \"telemetry2_0\" | grep binwait for 7 to 20min to get new process id");
+	    LOGGER.info("STEP 13: EXPECTED : Response should have root along with telemetry2_0 process id");
+	    LOGGER.info("**********************************************************************************");
+	    do {
+		response = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(BroadBandTestConstants.STRING_REPLACE,
+				BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+		status = CommonMethods.isNotNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_ROOT);
+	    } while (!status
+		    && (System.currentTimeMillis() - startTimeStamp) < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP 13: ACTUAL : Successfuly verified telemetry2_0 process is running as root");
+	    } else {
+		LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    status = false;
+	    successMsg = null;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Set Null value to Non-root Blocklist parameter through RFC");
+	    LOGGER.info(
+		    "POST-CONDITION 1 : ACTION : 1)Send following HTTP DELETE request using POSTMAN/rest client:: https://<XCONF_URL>/featureControl/clear?estbMacAddress=<mac>&featureName=nonroot_support2) reboot the device twice");
+	    LOGGER.info("POST-CONDITION 1 : EXPECTED : RFC set should be successful");
+	    LOGGER.info("**********************************************************************************");
+
+	    try {
+		status = BroadBandRfcFeatureControlUtils.rfcFeatureWithSingleRebootRetrievewNow(tapEnv, device,
+			BroadBandTestConstants.CONFIGURABLE_NONROOT_BLOCKLIST_TELEMETRY, true);
+	    } catch (Exception e) {
+		LOGGER.info("Exception occured while " + e.getMessage());
+	    }
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION 1 : ACTUAL : Successfully set null value to Non-root Blocklist parameter.");
+	    } else {
+		LOGGER.error(
+			"POST-CONDITION 1 : ACTUAL : Unable to set null value to Non-root Blocklist parameter though RFC");
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("POST-CONDITION 2 : DESCRIPTION : delete RFC feature");
+	    LOGGER.info(
+		    "POST-CONDITION 2 : ACTION : 1)Send following HTTP DELETE request using POSTMAN/rest client:: https://<XCONF_URL>/featureControl/clear?estbMacAddress=<mac>&featureName=nonroot_support2) reboot the device twice");
+	    LOGGER.info("POST-CONDITION 2 : EXPECTED : RFC feature should be removed successfully");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = (HttpStatus.SC_OK == BroadBandRfcFeatureControlUtils.clearSettingsInProxyXconfDcmServerForRDKB(
+		    device, tapEnv, false, BroadBandTestConstants.CONFIGURABLE_NONROOT_BLOCKLIST_TELEMETRY));
+	    if (status) {
+		LOGGER.info("POST-CONDITION 2 : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION 2 : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-NONROOT-T2-1000");
+  }
+
+  /**
+   * Test to Verify that RFC requests contain accountId Unknown on Every powercycle
+   * 
+   * <li>PRE CONDITION 1. Reboot the device</li>
+   * <li>1. Verify RFC xconf query has &accountID=unknown in the curl request</li>
+   * <li>2. Check Account retrived from Dut by accountID RFC in /tmp/rfc_configdata.txt</li>
+   * <li>3. Restart rfc-config.service to fetch the RFC settings from the mock xconf</li>
+   * <li>4. Verify RFC xconf query &accountID=<accountID from Dut> in the curl request</li>
+   * <li>5. Restart rfc-config.service to fetch the RFC settings from the mock xconf</li>
+   * <li>6. Verify RFC xconf query &accountID=<accountID from Dut> in the subsquent xconf call</li>
+   * <li>7. Remove the AccounID by setting invaild accountId</li>
+   * <li>8. Verify Accountid is set in syscfg.db file using syscfg get command</li>
+   * <li>9. Reboot the device</li>
+   * <li>10. Verify RFC xconf query log for Account ID mismatch & accountID=unknown</li>
+   * <li>11. Perform factory reset on the device</li>
+   * <li>12.Verify RFC xconf query has &accountID=unknown in the curl request</li>
+   *
+   * @author Leela Krishnama Naidu Andela
+   * @refactor Said hisham
+   * 
+   **/
+  @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+  @TestDetails(testUID = "TC-RDKB-RFC-1202")
+  public void testToVerifyAccountIdFromRfcRequest(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-RFC-202";
+	String stepNum = null;
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	String accountId = null;
+	String accountIdFromSystem = null;
+	String accountIdFromWebpa = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-RFC-1202");
+	LOGGER.info("TEST DESCRIPTION:Test to Verify that RFC requests contain accountId Unknown on Every powercycle");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION 1:Perform reboot on the device");
+	LOGGER.info("1. Verify RFC xconf query has &accountID=unknown in the curl request");
+	LOGGER.info("2. Check Account retrived from Dut by accountID RFC in  /tmp/rfc_configdata.txt ");
+	LOGGER.info("3. Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	LOGGER.info("4. Verify RFC xconf query &accountID=<accountID from Dut> in the curl request");
+	LOGGER.info("5. Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	LOGGER.info("6. Verify RFC xconf query &accountID=<accountID from Dut> in the subsquent xconf call");
+	LOGGER.info("7. Remove the AccounID by setting  invaild accountId");
+	LOGGER.info("8. Verify Accountid is set in syscfg.db file using syscfg get command");
+	LOGGER.info("9. Reboot the device");
+	LOGGER.info("10. Verify RFC xconf query log for Account ID mismatch & accountID=unknown");
+	LOGGER.info("11. Perform factory reset on the device");
+	LOGGER.info("12. Verify RFC xconf query has &accountID=unknown in the curl request");
+	LOGGER.info("#######################################################################################");
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Pre-condition : perform reboot on the device
+	     */
+	    LOGGER.info("#######################################################################################");
+	    // Reboot the Device.
+	    LOGGER.info("PRE-CONDITION STEP 1: REBOOT THE DEVICE.");
+	    LOGGER.info("PRE-CONDITION DESCRIPTION: REBOOT THE DEVICE USING COMMAND.");
+	    LOGGER.info("PRE-CONDITION EXPTECTED: DEVICE MUST REBOOT AND COME UP.");
+	    BroadBandCommonUtils.rebootDeviceAsPreCondition(tapEnv, device);
+	    LOGGER.info("PRE-CONDITION ACTUAL : DEVICE REBOOTED SUCCESSFULLY.");
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Step 1 : Verify RFC xconf query has &accountID=unknown in the curl request
+	     */
+	    int stepNumber = BroadBandTestConstants.CONSTANT_1;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "accountID = Unknown is not being sent in DCM xconf request";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify xconf query has & accountID = Unknown in the curl request");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute command:1) cat /rdklogs/logs/dcmrfc.log |grep -i Account ");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : The RFC curl request should have accountID = Unknown appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID,
+			    BroadBandTestConstants.STRING_UNKNOWN));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that RFC curl request  has accountID = Unknown in the curl request");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 2 : Check Account retrived from Dut by accountID RFC in /tmp/rfc_configdata.txt
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "tr181 parameter for accountId has not been stored in rfc_configdata.txt file";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " DESCRIPTION : Verify that the accountId value has been stored in persistent memory in the tr181 object Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info("STEP " + stepNumber
+		    + " ACTION : Execute command:dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info("STEP " + stepNumber
+		    + " EXPECTED : /tmp/rfc_configdata.txt file should contain \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID \" parameter and its value should be equal to accountId value");
+	    LOGGER.info("**********************************************************************************");
+	    accountId = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+
+	    BroadBandResultObject result = BroadBandRfcFeatureControlUtils.verifyParameterUpdatedByRfc(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID, accountId);
+	    status = result.isStatus();
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " ACTUAL : AccountId has been found in tr181 Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    /**
+	     * Step 3 : Restart rfc-config.service to fetch the RFC settings from the mock xconf
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to restart rfc service";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : sh /lib/rdk/RFCbase.sh");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : rfc service should be restarted successfully");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : rfc-config service has been restarted successfully");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 4 : Verify RFC xconf query has &accountID=<accountID> in the curl request
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "accountID = " + accountId + " is not being sent in DCM xconf request";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Verify xconf query has & accountID = " + accountId
+		    + " in the curl request");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute command:1) cat /rdklogs/logs/dcmrfc.log |grep -i Account ");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The RFC curl request should have accountID = " + accountId
+		    + " appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+		tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTE_IN_MILLIS);
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+		status = CommonMethods.isNotNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    }
+	    tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that RFC curl request  has accountId as " + accountId
+			+ " appended in it");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 5 : Restart rfc-config.service to fetch the RFC settings from the mock xconf
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to restart rfc service";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : sh /lib/rdk/RFCbase.sh");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : rfc service should be restarted successfully");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : rfc-config service has been restarted successfully");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 6 : Verify RFC xconf query &accountID=<accountID from Dut> in the subsquent xconf call & http_code:
+	     * 304
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "accountID = " + accountId + " is not being sent in DCM xconf request ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Verify xconf query has & accountID = " + accountId
+		    + " http_code: 304 in the subsequent xconf call");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute command:1) cat /rdklogs/logs/dcmrfc.log |grep -i Account ");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The RFC curl request should have accountID = " + accountId
+		    + " appended in it & http_code: 304");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId))) {
+		errorMessage = " http_code: 304 not logged in /rdklogs/logs/dcmrfc.log file";
+		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTestConstants.HTTP_RESPONSE_CODE_304, BroadBandTestConstants.DCMRFC_LOG_FILE,
+			BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.FIVE_SECONDS_IN_MILLIS);
+
+		status = CommonUtils.isNotEmptyOrNull(response) && CommonUtils
+			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.HTTP_RESPONSE_CODE_304);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that RFC curl request  has accountId as " + accountId
+			+ " appended in it & http_code: 304");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 7 : Set Invalid AccountID with Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Unable to Set invalid AccoundID  via webpa/dmcli ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Set Invalid AccountID 1234567890 using web/dmcil");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute webpa command: "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : WebPA Set operation should be successful ");
+	    LOGGER.info("**********************************************************************************");
+	    status = WebPACommonUtils.setWebPaParameter(tapEnv, device,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID, BroadBandTestConstants.INVAILD_ACCOUNT_ID,
+		    BroadBandTestConstants.CONSTANT_0);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Invalid AccountId has been set via "
+			+ BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 8: Verify Accountid is set in syscfg.db file using syscfg get command and cross validate via dmcli
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Unable to Verify Accountid is set in syscfg.db file using syscfg get command";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify Accountid is set in syscfg.db file using syscfg get command");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute command \"syscfg get AccountID\"");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Successfully verified that AccountId is set in syscfg.db file");
+	    LOGGER.info("**********************************************************************************");
+	    accountIdFromSystem = tapEnv
+		    .executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandCommandConstants.CMD_FOR_SYSCFG_GET, BroadBandCommandConstants.CMD_FOR_ACCOUNTID))
+		    .trim();
+	    accountIdFromWebpa = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(accountIdFromSystem) && CommonMethods.isNotNull(accountIdFromWebpa)
+		    && CommonUtils.patternSearchFromTargetString(accountIdFromSystem, accountIdFromWebpa);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that AccountId is set in syscfg.db file");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    /**
+	     * Step 9 : Reboot the device
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Unable to perform reboot operation on the device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Reboot the device");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute Command: /sbin/reboot");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : Device should reboot and come up");
+	    LOGGER.info("**********************************************************************************");
+	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : Successfully rebooted the device");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 10 : Verify RFC xconf query log for Account ID mismatch & accountID=unknown
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "accountID = Unknown is not being sent in DCM xconf request ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify xconf query has & accountID = Unknown in the curl request & Account ID mismatch logged in /rdklogs/logs/dcmrfc.log");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute command:1) cat /rdklogs/logs/dcmrfc.log |grep -i Account & Account Id mismatch: ");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : The RFC curl request should have accountID = Unknown appended in it & Account ID mismatch was logged in /rdklogs/logs/dcmrfc.log");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID,
+			    BroadBandTestConstants.STRING_UNKNOWN))) {
+		errorMessage = "Account ID mismatch is not logged in /rdklogs/logs/dcmrfc.log ";
+		response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTestConstants.ACCOUNT_ID_MISMATCH, BroadBandTestConstants.DCMRFC_LOG_FILE,
+			BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS,
+			BroadBandTestConstants.FIVE_SECONDS_IN_MILLIS);
+
+		status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			BroadBandTestConstants.ACCOUNT_ID_MISMATCH);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that RFC curl request  has accountID = Unknown & accountId mismatch");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 11 : Factory reset the device
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Unable to perform wifi factory reset operation on the device. hence blocking the execution.";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Do factory reset the device using webpa");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute webpa set command: parameter: Device.X_CISCO_COM_DeviceControl.FactoryReset datatype: string value: Router,Wifi,VoIP,Dect,MoCA");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Device should be ssh able after factory reset");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Devices came online after factory reset");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 12 : Verify RFC xconf query has &accountID=unknown in the curl request
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "accountID = Unknown is not being sent in DCM xconf request after Factory-reset";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify xconf query has & accountID = Unknown in the curl request");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute command:1) cat /rdklogs/logs/dcmrfc.log |grep -i Account ");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : The RFC curl request should have accountID = Unknown appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID,
+			    BroadBandTestConstants.STRING_UNKNOWN));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that RFC curl request  has accountID = Unknown in the curl request after Factory reset");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+
+	} finally {
+
+	    BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, false,
+		    BroadBandTestConstants.CONSTANT_1);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-RFC-1202");
+
+  }
 }
