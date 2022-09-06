@@ -18,6 +18,7 @@
 package com.automatics.rdkb.tests.security;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.openqa.selenium.By;
@@ -5393,4 +5394,171 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 	else
 	    return stepCount;
     }
+    
+    /**
+     * Test to verify whether any new certificates are added to RDK devices other than the trusted ones defined in the
+     * default CA bundle under /usr/share/ca-certificates/ca-certificates.crt
+     * <ol>
+     * <li>Read the default ca bundle /usr/share/ca-certificates/ca-certificates.crt and get the issuer.</li>
+     * <li>Get all certificates from /opt folder</li>
+     * <li>Compare the issuers from step 1 and 2</li>
+     * </ol>
+     * 
+     * @author Sowndharya Thangaraj
+     * @refactor yamini.s
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-CertValidation-1001")
+    public void validateCertificate(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-CertValidation-001";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	String cmdResponse = null;
+	String certificatename[] = null;
+	String response = null;
+	String OPEN_SSL = "openssl x509 -in ";
+	String GREP_ISSUER = " -text -noout | grep Issuer";
+	ArrayList<String> certificateIssuers = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-CertValidation-1001");
+	LOGGER.info("TEST DESCRIPTION: Test to verify whether any new certificates are added to RDK devices other than the trusted ones defined in the default CA bundle under /usr/share/ca-certificates/ca-certificates.crt");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Read the default ca bundle /usr/share/ca-certificates/ca-certificates.crt and get the issuer.");
+	LOGGER.info("2. Get all certificates from /tmp folder");
+	LOGGER.info("3. Compare the issuers from step 1 and 2");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+
+	    stepNum = "s1";
+	    errorMessage = "FAILED: Could not read the default CA bundle";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Read the default ca bundle /usr/share/ca-certificates/ca-certificates.crt and get the issuer.");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Read the default ca bundle /usr/share/ca-certificates/ca-certificates.crt and get the issuer and store it. Use the command openssl crl2pkcs7 -nocrl -certfile ca-certificates.crt | openssl pkcs7 -print_certs -text  | grep \"Issuer:\" ");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : Should be able to read the default CA bundle and read the issuer for the certificates");
+	    LOGGER.info("**********************************************************************************");
+
+	    tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CERTIFICATE_ISSUER);
+	    status = CommonMethods.isFileExists(device, tapEnv, BroadBandTestConstants.FILE_ISSUER_DETAILS);
+
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : Successfully got the issuer of the certificate");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "FAILED: Unable to find / read the certificate details from stb";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Get all certificates from /tmp folder");
+	    LOGGER.info(
+		    "STEP 2: ACTION : 1. Find all certificate details from  stb with the command and store find / -name \".crt\".Read the certificates and find out the issuer using command while read line; do echo $line; openssl x509 -in $line -text -noout | grep Issuer and store the issuer");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : Should be able to find all the certificates and read the issuer for the certificates");
+	    LOGGER.info("**********************************************************************************");
+
+	    cmdResponse = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TO_GET_CERTIFICATES_NAMES);
+	    status = CommonMethods.isNotNull(cmdResponse);
+
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfully got all certificates in /tmp folder");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = null;
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Compare the issuers from step 1 and 2");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Compare the issuer details from step 1 and 2 for each certificate. This includes C, CN, O, OU, ST and L If any  additional  issuer is found other than in default bundle in step2, find out the corresponding certificate and report");
+	    LOGGER.info("STEP 3: EXPECTED : No additional issuer should be found.");
+	    LOGGER.info("**********************************************************************************");
+
+	    String issuersName = BroadbandPropertyFileHandler.getCertificateIssuerName();
+	    ArrayList<String> validIssuers = new ArrayList<String>(
+		    Arrays.asList(issuersName.split(BroadBandTestConstants.CHARACTER_COMMA)));
+	    certificatename = cmdResponse.split(BroadBandTestConstants.REGEX_CHECK_NEXT_LINE);
+	    for (String certificate : certificatename) {
+		if (certificate.contains(BroadBandTestConstants.CERT_EXTENSION)) {
+		    response = tapEnv.executeCommandUsingSsh(device, OPEN_SSL + certificate.trim() + GREP_ISSUER);
+		    certificateIssuers = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			    BroadBandTestConstants.REGEX_PATTERN_CAPITAL_LETTERS);
+		    for (String issuer : certificateIssuers) {
+			if (validIssuers.contains(issuer)) {
+			    status = true;
+			} else {
+			    errorMessage = certificate + BroadBandTestConstants.CHARACTER_COMMA;
+			    LOGGER.info(errorMessage);
+			}
+
+		    }
+
+		    status = CommonMethods.isNull(errorMessage);
+		}
+	    }
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : Successfully verified the certificate and its corresponding issuer");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : Failed to Verify the Valid Certificate Issuers for" + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info(
+		    "POST-CONDITION : DESCRIPTION : Temporary files created for storing the data should be removed ");
+	    LOGGER.info("POST-CONDITION : ACTION : Remove the files created under the tmp folder ");
+	    LOGGER.info("POST-CONDITION : EXPECTED : Files should get removed form the loation");
+
+	    status = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
+		    BroadBandTestConstants.FILE_ISSUER_DETAILS);
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-CertValidation-1001");
+    }
+    
+    
+    
 }

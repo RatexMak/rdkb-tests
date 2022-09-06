@@ -42,6 +42,7 @@ import com.automatics.rdkb.enums.BroadBandWhixEnumConstants.WEBPA_AP_INDEXES;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWifiBaseTest;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
+import com.automatics.rdkb.webui.BroadBandWebUiBaseTest;
 import com.automatics.rdkb.webui.constants.BroadBandWebGuiElements;
 import com.automatics.rdkb.webui.constants.BroadBandWebGuiTestConstant;
 import com.automatics.rdkb.webui.constants.BroadBandWebGuiTestConstant.RestoreGateWay;
@@ -3765,7 +3766,7 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
      * @param deviceConnected
      *            instance of connected device
      * @param testCaseId
-     * @param browser       
+     * @param browser
      * 
      * @refactor Said hisham
      */
@@ -4566,4 +4567,561 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 		errorMessage, false);
     }
 
+    /**
+     *
+     * Test Case : Verify access to DUT via UserAdmin page - WAN IP using Windows OS and Internet Explorer browser
+     * (HTTPS Disabled and Enabled)
+     *
+     * <p>
+     * STEPS:
+     * </p>
+     * <ol>
+     * <li>PRE-CONDITION 1 : Verify the private wifi 2.4 GHz and 5 GHz ssid's are broadcasting in connected client.</li>
+     * <li>Step 1 : Connect the client to 2.4/5 GHz Private Wi-Fi Network and verify connection status.</li>
+     * <li>Step 2 : Verify the correct IPv4 address for client connected with 2.4/5 GHz SSID.</li>
+     * <li>Step 3 : Verify the correct IPv6 address for client connected with 2.4/5 GHz SSID.</li>
+     * <li>Step 4 : Verify whether have connectivity using that particular interface using IPV4 for client connected
+     * with 2.4/5 GHz.</li>
+     * <li>Step 5 : Verify whether have connectivity using that particular interface using IPV6 for client connected
+     * with 2.4/5 GHz.</li>
+     * <li>Step 6 : Verify login into the LAN GUI Adimn page by using valid userid and valid password using Internet
+     * Explorer Browser.</li>
+     * <li>Step 7 : Navigate to the Advanced > Port Forwarding page and verify navigation status.</li>
+     * <li>Step 8 : Verify Port Forwarding is in Disabled State.</li>
+     * <li>Step 9 : Navigate to the Advanced > Remote Management page and verify navigation status.</li>
+     * <li>Step 10 : Verify Enable Button for HTTPS 8181 is in disabled state.</li>
+     * <li>Step 11 : Verify WEBPA command to get the WANIPV6 of the Client is Successful.</li>
+     * <li>Step 12 : Verify disconnecting the client connected with 2.4/5 GHz SSID and 5GHz SSID in the setup</li>
+     * <li>POST-CONDITION 1 : Revert the HTTPS 8181 in Remote Management to its default value. .</li>
+     * 
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Elangovan
+     * @refactor Govardhan
+     *
+     */
+    @Test(dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+	    BroadBandTestGroup.WIFI })
+    @TestDetails(testUID = "TC-RDKB-WEB-GUI-IE-5001")
+    public void VerifyAccessByWanIpAfterHttpsEnabledInIe2GHz(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-WEB-GUI-IE-501";
+	int stepNumber = 1;
+	String stepNum = "S" + stepNumber;
+	String errorMessage = null;
+	boolean status = false;
+	List<Dut> ssidVisibleDevices = new ArrayList<Dut>();
+	Dut ssidVisibleDevice = null;
+	int preConStepNumber = 1;
+	// Variable Declaration Ends
+	try {
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-WEB-GUI-IE-5001");
+	    LOGGER.info(
+		    "TEST DESCRIPTION: Verify access to DUT via UserAdmin page - WAN IP using Windows OS and Internet Explorer browser (HTTPS Disabled and Enabled).");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info(
+		    " PRE CONDITION 1 : Verify the private wifi 2.4 GHz and 5 GHz ssid's are broadcasting in connected client.");
+	    LOGGER.info("Step 1. Connect the client to 2.4/5 GHz Private Wi-Fi Network and verify connection status ");
+	    LOGGER.info("Step 2. Verify  the correct IPv4  address for client connected with 2.4/5 GHz SSID");
+	    LOGGER.info("Step 3. Verify  the correct IPv6  address for client connected with 2.4/5 GHz SSID");
+	    LOGGER.info(
+		    "Step 4. Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4/5 GHz ");
+	    LOGGER.info(
+		    "Step 5. Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4/5 GHz ");
+	    LOGGER.info(
+		    "Step 6. Verify login into the LAN GUI Adimn page by using valid userid and valid password using Internet Explorer browser");
+	    LOGGER.info("Step 7. Navigate to the Advanced > Port Forwarding page and verify navigation status");
+	    LOGGER.info("Step 8. Verify Port Forwarding is in Disabled State.");
+	    LOGGER.info("Step 9. Navigate to the Advanced > Remote Management page and verify navigation status");
+	    LOGGER.info("Step 10. Verify Enable Button for HTTPS 8181 is in disabled state.");
+	    LOGGER.info("Step 11. Verify WEBPA command to get the WANIPV6 of the Client is Successful. ");
+	    LOGGER.info(
+		    "Step 12. Verify disconnecting the client connected with 2.4/5 GHz SSID and GHz SSID in the setup");
+	    LOGGER.info(" POST CONDITION 1 : Revert the HTTPS 8181 in Remote Management to its default value.");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS:");
+	    /**
+	     * PRE-CONDITION 1-2 : VERIFY THE PRIVATE WIFI 2.4 GHZ AND 5 GHZ SSID'S ARE ENABLED
+	     */
+	    BroadBandPreConditionUtils.executePreConditionToVerifyRadioStatus(device, tapEnv, preConStepNumber);
+	    /**
+	     * PRE-CONDITION 3 : VERIFY THE PRIVATE WIFI 2.4 GHZ AND 5 GHZ SSID'S ARE BROADCASTING IN CONNECTED CLIENT
+	     */
+	    preConStepNumber = 3;
+	    ssidVisibleDevices = BroadBandPreConditionUtils.executePreConditionToGetBothPrivateWiFiSsidsVisibleDevices(
+		    device, tapEnv, preConStepNumber, BroadBandTestConstants.CONSTANT_1);
+	    ssidVisibleDevice = ssidVisibleDevices.get(BroadBandTestConstants.CONSTANT_0);
+	    BroadBandWebUiBaseTest broadBandWebUiBaseTest = new BroadBandWebUiBaseTest();
+	    broadBandWebUiBaseTest.invokeBrowser();
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Step 1-15 : VERIFY ACCESS TO DUT VIA USERADMIN PAGE - WAN (OR) EROUTER IP USING WINDOWS OS AND INTERNET
+	     * EXPLORER BROWSER.
+	     */
+	    executeTestStepToVerifyAccessToDut(device, ssidVisibleDevice, testCaseId,
+		    BroadBandTestConstants.BAND_2_4GHZ_OR_5GHZ, Browser.IE, driver);
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error(
+		    "EXCEPTION OCCURRED WHILE VALIDATING ACCESS TO DUT VIA USERADMIN PAGE - WAN (OR) EROUTER IP USING WINDOWS OS AND INTERNET EXPLORER BROWSER : "
+			    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WEB-GUI-IE-5001");
+	LOGGER.info("**********************************************************************************");
+    }
+
+    /**
+     * 
+     * Test Case : Verify access to DUT via UserAdmin page - WAN IP using Windows OS and Firefox browser (HTTPS Disabled
+     * and Enabled)
+     * 
+     * <ol>
+     * <li>PRE-CONDITION 1 : Verify the private wifi 2.4 GHz ssid's are broadcasting in connected client.</li>
+     * <li>Connect the client to 2.4/5 GHz Private Wi-Fi Network and verify connection status</li>
+     * <li>Verify the correct IPv4 address for client connected with 2.4 GHz SSID</li>
+     * <li>Verify the correct IPv6 address for client connected with 2.4 GHz SSID</li>
+     * <li>Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4 GHz
+     * </li>
+     * <li>Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4 GHz
+     * </li>
+     * <li>Verify login into the LAN GUI Adimn page by using valid userid and valid password</li>
+     * <li>Navigate to the Advanced > Port Forwarding page and verify navigation status</li>
+     * <li>Verify Port Forwarding is in Disabled State.</li>
+     * <li>Navigate to the Advanced > Remote Management page and verify navigation status</li>
+     * <li>Verify Enable Button for HTTPS 8181 is in disabled state.</li>
+     * <li>Verify WEBPA command to get the WANIPV6 of the Client is Successful.</li>
+     * <li>Verify disconnecting the client connected with 2.4 GHz SSID and 5Ghz SSID in the setup</li>
+     * <li>POST-CONDITION : Revert the HTTPS 8181 in Remote Management to its default value.</li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Manikandan T
+     * @refactor Govardhan
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.WIFI)
+    @TestDetails(testUID = "TC-RDKB-WEB-GUI-FF-5004")
+    public void testToVerifyRemoteManagementFor2GHz(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-WEB-GUI-FF-504";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	int preConStepNumber = 1;
+	List<Dut> ssidVisibleDevices = null;
+	Dut ssidVisibleDevice2GHz = null;
+	// Variable Declaration Ends
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WEB-GUI-FF-5004");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify access to DUT via UserAdmin page - WAN IP using Windows OS and Firefox browser (HTTPS Disabled and Enabled)");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info(
+		" PRE CONDITION 1 : Verify the private wifi 2.4 GHz and 5 GHz ssid's are broadcasting in connected client.");
+	LOGGER.info("1. Connect the client to 2.4 GHz Private Wi-Fi Network and verify connection status ");
+	LOGGER.info("2. Verify  the correct IPv4  address for client connected with 2.4 GHz SSID");
+	LOGGER.info("3. Verify  the correct IPv6  address for client connected with 2.4 GHz SSID");
+	LOGGER.info(
+		"4. Verify whether have connectivity using that particular interface using IPV4 for client connected with 2.4 GHz ");
+	LOGGER.info(
+		"5. Verify whether have connectivity using that particular interface using IPV6 for client connected with 2.4 GHz ");
+	LOGGER.info("6. Verify login into the LAN GUI Adimn page by using valid userid and valid password");
+	LOGGER.info("7. Navigate to the Advanced > Port Forwarding page and verify navigation status");
+	LOGGER.info("8. Verify Port Forwarding is in Disabled State.");
+	LOGGER.info("9. Navigate to the Advanced > Remote Management page and verify navigation status");
+	LOGGER.info("10. Verify Enable Button for HTTPS 8181 is in disabled state.");
+	LOGGER.info("11. Verify WEBPA command to get the WANIPV6 of the Client is Successful. ");
+	LOGGER.info("12. Verify disconnecting the client connected with 2.4 GHz SSID and 5Ghz SSID in the setup");
+	LOGGER.info("#######################################################################################");
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : VERIFY THE PRIVATE WIFI 2.4 GHZ AND 5 GHZ SSID'S ARE BROADCASTING IN CONNECTED CLIENT
+	     */
+	    preConStepNumber = 1;
+	    ssidVisibleDevices = BroadBandPreConditionUtils.executePreConditionToGetBothPrivateWiFiSsidsVisibleDevices(
+		    device, tapEnv, preConStepNumber, BroadBandTestConstants.CONSTANT_1);
+	    ssidVisibleDevice2GHz = ssidVisibleDevices.get(BroadBandTestConstants.CONSTANT_0);
+	    BroadBandWebUiBaseTest broadBandWebUiBaseTest = new BroadBandWebUiBaseTest();
+	    broadBandWebUiBaseTest.invokeBrowser();
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Step 1-15 : VERIFY ACCESS TO DUT VIA USERADMIN PAGE - WAN (OR) EROUTER IP USING WINDOWS OS AND FIREFOX
+	     * BROWSER.
+	     */
+	    executeTestStepToVerifyAccessToDut(device, ssidVisibleDevice2GHz, testCaseId,
+		    BroadBandTestConstants.BAND_2_4GHZ, Browser.FIREFOX, driver);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WEB-GUI-FF-5004");
+    }
+
+    /**
+     * 
+     * Test Case : Verify access to DUT via UserAdmin page - WAN IP using Windows OS and Firefox browser (HTTPS Disabled
+     * and Enabled)
+     * 
+     * <ol>
+     * <li>PRE-CONDITION 1 : Verify the private wifi 5 GHz ssid's are broadcasting in connected client.</li>
+     * <li>Connect the client to 5 GHz Private Wi-Fi Network and verify connection status</li>
+     * <li>Verify the correct IPv4 address for client connected with 5 GHz SSID</li>
+     * <li>Verify the correct IPv6 address for client connected with 5 GHz SSID</li>
+     * <li>Verify whether have connectivity using that particular interface using IPV4 for client connected with 5 GHz
+     * </li>
+     * <li>Verify whether have connectivity using that particular interface using IPV6 for client connected with 5 GHz
+     * </li>
+     * <li>Verify login into the LAN GUI Admin page by using valid userid and valid password</li>
+     * <li>Navigate to the Advanced > Port Forwarding page and verify navigation status</li>
+     * <li>Verify Port Forwarding is in Disabled State.</li>
+     * <li>Navigate to the Advanced > Remote Management page and verify navigation status</li>
+     * <li>Verify Enable Button for HTTPS 8181 is in disabled state.</li>
+     * <li>Verify WEBPA command to get the WANIPV6 of the Client is Successful.</li>
+     * <li>Verify disconnecting the client connected with 5 GHz SSID and 5Ghz SSID in the setup</li>
+     * <li>POST-CONDITION : Revert the HTTPS 8181 in Remote Management to its default value.</li>
+     * </ol>
+     * 
+     * @param device
+     *            {@link Dut}
+     * 
+     * @author Manikandan T
+     * @refactor Govardhan
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.WIFI)
+    @TestDetails(testUID = "TC-RDKB-WEB-GUI-FF-5005")
+    public void testToVerifyRemoteManagementFor5GHz(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-WEB-GUI-FF-505";
+	String stepNum = "";
+	String errorMessage = "";
+	boolean status = false;
+	int preConStepNumber = 1;
+	List<Dut> ssidVisibleDevices = null;
+	Dut ssidVisibleDevice5GHz = null;
+	// Variable Declaration Ends
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WEB-GUI-FF-5005");
+	LOGGER.info(
+		"TEST DESCRIPTION: Verify access to DUT via UserAdmin page - WAN (or) eRouter IP using Windows OS and Firefox browser (HTTPS Disabled and Enabled)");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info(" PRE CONDITION 1 : Verify the private wifi 5 GHz ssid's are broadcasting in connected client.");
+	LOGGER.info("1. Connect the client to 5 GHz Private Wi-Fi Network and verify connection status ");
+	LOGGER.info("2. Verify  the correct IPv4  address for client connected with 5 GHz SSID");
+	LOGGER.info("3. Verify  the correct IPv6  address for client connected with 5 GHz SSID");
+	LOGGER.info(
+		"4. Verify whether have connectivity using that particular interface using IPV4 for client connected with 5 GHz ");
+	LOGGER.info(
+		"5. Verify whether have connectivity using that particular interface using IPV6 for client connected with 5 GHz ");
+	LOGGER.info("6. Verify login into the LAN GUI Adimn page by using valid userid and valid password");
+	LOGGER.info("7. Navigate to the Advanced > Port Forwarding page and verify navigation status");
+	LOGGER.info("8. Verify Port Forwarding is in Disabled State.");
+	LOGGER.info("9. Navigate to the Advanced > Remote Management page and verify navigation status");
+	LOGGER.info("10. Verify Enable Button for HTTPS 8181 is in disabled state.");
+	LOGGER.info("11. Verify WEBPA command to get the WANIPV6 of the Client is Successful. ");
+	LOGGER.info("12. Verify disconnecting the client connected with 2.4/5 GHz SSID and 5Ghz SSID in the setup");
+	LOGGER.info("#######################################################################################");
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    /**
+	     * PRE-CONDITION 1 : VERIFY THE PRIVATE WIFI 5 GHZ SSID'S ARE BROADCASTING IN CONNECTED CLIENT
+	     */
+	    preConStepNumber = 1;
+	    ssidVisibleDevices = BroadBandPreConditionUtils.executePreConditionToGetBothPrivateWiFiSsidsVisibleDevices(
+		    device, tapEnv, preConStepNumber, BroadBandTestConstants.CONSTANT_1);
+	    ssidVisibleDevice5GHz = ssidVisibleDevices.get(BroadBandTestConstants.CONSTANT_0);
+	    BroadBandWebUiBaseTest broadBandWebUiBaseTest = new BroadBandWebUiBaseTest();
+	    broadBandWebUiBaseTest.invokeBrowser();
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Step 1-15 : VERIFY ACCESS TO DUT VIA USERADMIN PAGE - WAN (OR) EROUTER IP USING WINDOWS OS AND FIREFOX
+	     * BROWSER.
+	     */
+	    executeTestStepToVerifyAccessToDut(device, ssidVisibleDevice5GHz, testCaseId,
+		    BroadBandTestConstants.BAND_5GHZ, Browser.FIREFOX, driver);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WEB-GUI-FF-5005");
+    }
+
+    /**
+     * Method to Verify access to DUT via UserAdmin page - WAN IP using Windows OS
+     * 
+     * @param device
+     *            {@link Dut}
+     * @param ssidVisibleDevice
+     *            Private wifi visible device
+     * @param testId
+     *            Test case ID
+     * @param wifiBand
+     *            Step Number
+     * @param wifiBand
+     *            Frequency band 2.4/5 GHz
+     * @param name
+     *            Instance of{@link Browser}
+     * @param driver
+     *            Instance of{@link WebDriver}
+     * @refactor Govardhan
+     */
+    private static void executeTestStepToVerifyAccessToDut(Dut device, Dut ssidVisibleDevice, String testCaseId,
+	    String wifiBand, Browser browser, WebDriver driver) {
+	boolean status = false;
+	String errorMessage = null;
+	WebDriver lanDriver = null;
+	int stepNumber = 1;
+	int postConStepNumber = 1;
+	LanSidePageNavigation lanSidePageNavigation = null;
+	try {
+	    /**
+	     * STEP 1 : CONNECT THE CONNECTED CLIENT IN THE SETUP TO 2.4/5 GHZ SSID AND VERIFY CONNECTION STATUS
+	     */
+	    BroadBandWiFiUtils.executeTestStepToConnectPrivateWiFi(device, testCaseId, ssidVisibleDevice, wifiBand,
+		    stepNumber);
+
+	    /**
+	     * STEP 2-5 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED WITH 2.4GHZ AND INTERNET
+	     * CONNECTIVITY USING IPV4 AND IPV6 INTERFACE.
+	     */
+	    stepNumber++;
+	    BroadBandWiFiUtils.verifyIpv4AndIpV6ConnectionInterface(device, testCaseId, ssidVisibleDevice, stepNumber);
+
+	    /**
+	     * STEP 6 : VERIFY LOGIN INTO THE LAN GUI ADIMN PAGE BY USING USERID AND PASSWORD
+	     */
+	    stepNumber = 6;
+	    status = false;
+	    errorMessage = null;
+	    stepNum = "S" + stepNumber;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : VERIFY THE GATEWAY ADMIN PAGE IS ACCESSIBLE IN CONNECTED CLIENT AND CAN BE LOGGED IN USING CUSADMIN/****** CREDENTIAL");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : LAUNCH THE GATEWAY ADMIN GUI IN BROWSER URL :https://10.1.10.1 , ONCE THE PAGE IS LOADED ,USE USERNAME AND PASSWORD AS CUSADMIN/****** TO LOGIN");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : GATEWAY ADMIN PAGE SHOULD BE ACCESSIBLE FROM CLIENT AND CAN BE ABLE TO LOGIN USING CUSADMIN/****** CREDENTIAL ");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "UNABLE TO LOGIN GATEWAY ADMIN PAGE IN CONNECTED CLIENT";
+	    try {
+		status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, ssidVisibleDevice, browser);
+		isBrowserOpen = status;
+		lanDriver = LanWebGuiLoginPage.getDriver();
+		LOGGER.info(" LAn webDriver " + lanDriver);
+		lanSidePageNavigation = new LanSidePageNavigation(lanDriver);
+	    } catch (Exception e) {
+		errorMessage = e.getMessage();
+		LOGGER.error("EXCEPTION OCCURRED DURING GATEWAY ADMIN PAGE LOGIN : " + errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : LAN GUI ADMIN LOGIN SUCCESSFUL");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(lanDriver, tapEnv, device, testCaseId, stepNum,
+		    status, errorMessage, true);
+
+	    /**
+	     * Step 7 : NAVIGATE TO THE ADVANCED > PORT FORWARDING PAGE AND VERIFY NAVIGATION STATUS
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : NAVIGATE TO THE ADVANCED > PORT FORWARDING PAGE AND VERIFY NAVIGATION STATUS");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON ADVANCED > PORT FORWARDING");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE ADVANCED > PORT FORWARDING PAGE");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON ADVANCED > PORT FORWARDING PAGE";
+	    status = lanSidePageNavigation.navigateToAdvancedPage(device, tapEnv, lanDriver);
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR ADVANCED > PORT FORWARDING PAGE");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(lanDriver, tapEnv, device, testCaseId, stepNum,
+		    status, errorMessage, true);
+
+	    /**
+	     * Step 8 : VERIFY PORT FORWARDING IS IN DISABLED STATE.
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : VERIFY PORT FORWARDING IS IN DISABLED STATE.");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : CHECK THE PORT FORWARDING BUTTON IS DISABLED.");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : PORT FORWARDING SHOULD BE IN  DISABLED STATE.");
+	    LOGGER.info("**********************************************************************************");
+	    status = !BroadBandCommonPage.getPortForwardingModeEnabledStatus(lanDriver, device);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : Port forwarding mode is in disabled state");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(lanDriver, tapEnv, device, testCaseId, stepNum,
+		    status, errorMessage, false);
+
+	    /**
+	     * Step 9 : NAVIGATE TO THE ADVANCED > REMOTE MANAGEMENT PAGE AND VERIFY NAVIGATION STATUS
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    errorMessage = null;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : NAVIGATE TO THE ADVANCED > REMOTE MANAGEMENT PAGE AND VERIFY NAVIGATION STATUS");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON ADVANCED > REMOTE MANAGEMENT");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE ADVANCED > REMOTE MANAGEMENT PAGE");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON ADVANCED > REMOTE MANAGEMENT PAGE";
+	    status = lanSidePageNavigation.navigateToAdvancedRemoteMgmtPage(device, tapEnv, lanDriver);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : NAVIGATION SUCCESSFUL FOR ADVANCED > REMOTE MANAGEMENT PAGE PAGE");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(lanDriver, tapEnv, device, testCaseId, stepNum,
+		    status, errorMessage, true);
+
+	    /**
+	     * Step 10 : VERIFY ENABLE BUTTON FOR HTTPS 8181 IS IN DISABLED STATE.
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : DESCRIPTION : VERIFY ENABLE BUTTON FOR HTTPS 8181 IS IN DISABLED STATE.");
+	    LOGGER.info("STEP :  " + stepNumber + " : ACTION :  CHECK THE ENABLE BUTTON FOR HTTPS 8181.");
+	    LOGGER.info(
+		    "STEP :  " + stepNumber + " : EXPECTED: ENABLE BUTTON FOR HTTPS 8181 SHOULD BE IN DISABLED STATE.");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "UNABLE TO VERIFY ENABLE BUTTON FOR HTTPS 8181 IS IN DISABLED STATE.";
+	    status = !BroadBandCommonPage.getHttpsModeEnabledStatus(lanDriver, device);
+	    // if https port 8181 is enabled,disabling through webpa.
+	    if (!status) {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_FOR_HTTPS_REMOTE_ACCESSSTATUS,
+			BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+	    }
+	    if (status) {
+		LOGGER.info("STEP :  " + stepNumber + " : ACTUAL : HTTPS 8181 IS IN DISABLED STATE.");
+	    } else {
+		LOGGER.error("STEP :  " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(lanDriver, tapEnv, device, testCaseId, stepNum,
+		    status, errorMessage, true);
+
+	    /**
+	     * Step 11 : VERIFY WEBPA COMMAND TO GET THE WANIPV6 OF THE CLIENT IS SUCCESSFUL.
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : DESCRIPTION : VERIFY WEBPA COMMAND TO GET THE WANIPV6 OF THE CLIENT IS SUCCESSFUL.");
+	    LOGGER.info("STEP :  " + stepNumber + " : ACTION :  Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6");
+	    LOGGER.info("STEP :  " + stepNumber
+		    + " : EXPECTED: WEBPA GET SHOULD BE SUCCESSFUL AND WANIPV6 SHOULD BE RETRIEVED SUCCESFULLY.");
+	    LOGGER.info("**********************************************************************************");
+	    errorMessage = "UNABLE TO GET THE WAN IPV6 USING THE WEBPA PARAMETER.";
+	    String wanIpv6Address = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+	    LOGGER.info("Wan Ipv6 Address = " + wanIpv6Address);
+	    status = CommonMethods.isNotNull(wanIpv6Address);
+	    if (status) {
+		LOGGER.info("STEP :  " + stepNumber + " : ACTUAL : WANIPV6 ADDRESS IS RETRIEVED SUCCESSFULLY");
+	    } else {
+		LOGGER.error("STEP :  " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 12 : VERIFY DISCONNECTING THE WIFI CLIENT IN THE SETUP TO THE 2.4/5 GHZ SSID
+	     */
+	    stepNumber++;
+	    BroadBandWiFiUtils.executeTestStepToDisconnectPrivateWiFi(device, testCaseId, ssidVisibleDevice, wifiBand,
+		    stepNumber);
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("EXCEPTION OCCURRED WHILE VALIDATING ACCESS TO DUT VIA USERADMIN PAGE - WAN (OR) EROUTER IP : "
+		    + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    true);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    /**
+	     * POST-CONDITION 1 : DISABLE THE HTTPS 8181 IN REMOTE MANAGEMENT THROUGH WEBPA
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION " + postConStepNumber
+		    + " : DESCRIPTION : REVERT THE HTTPS  PORT 8181 IN REMOTE MANAGEMENT TO ITS DEFAULT VALUE AS FALSE.");
+	    LOGGER.info("POST-CONDITION " + postConStepNumber
+		    + " : ACTION : EXECUTE WEBPA COMMAND : Device.UserInterface.X_CISCO_COM_RemoteAccess.HttpsEnable");
+	    LOGGER.info("POST-CONDITION " + postConStepNumber
+		    + " : EXPECTED : REVERTING THE HTTPS PORT 8181 IN REMOTE MANAGEMENT TO ITS DEFAULT VALUE SHOULD BE SUCCESSFUL.");
+	    LOGGER.info("#######################################################################################");
+	    status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_HTTPS_REMOTE_ACCESSSTATUS,
+		    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE);
+	    if (status) {
+		LOGGER.info("POST-CONDITION " + postConStepNumber
+			+ " : ACTUAL : REVERTING THE HTTPS 8181 IN REMOTE MANAGEMENT TO ITS DEFAULT VALUE AS FALSE IS SUCCESSFUL");
+	    } else {
+		LOGGER.error("POST-CONDITION " + postConStepNumber
+			+ " : ACTUAL : REVERTING THE HTTP 8181 IN REMOTE MANAGEMENT TO ITS DEFAULT VALUE AS FALSE FAILED");
+	    }
+	    /**
+	     * POST-CONDITION 2 : CLOSE THE LAN SIDE BROWSER
+	     */
+	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : VERIFY LAN SIDE BROWSER CLOSED");
+	    LOGGER.info("POST-CONDITION 1 : ACTION : CLOSE THE LAN SIDE BROWSER");
+	    LOGGER.info("POST-CONDITION 1 : EXPECTED : BROWSER CLOSED SUCCESSFULLY IN LAN SIDE");
+	    if (isBrowserOpen) {
+		try {
+		    LanSidePageNavigation.closeBrowser();
+		    LOGGER.info("POST-CONDITION 1 : ACTUAL : BROWSER CLOSED SUCCESSFULLY.");
+		} catch (Exception exception) {
+		    LOGGER.info(
+			    "POST-CONDITION 1 : ACTUAL : EXCEPTION OCCURRED WHILE CLOSING THE BROWSER, UNABLE TO CLOSE BROWSER.");
+		}
+	    } else {
+		LOGGER.info("POST-CONDITION 1 : ACTUAL : BROWSER NOT OPENED IN LAN SIDE.");
+	    }
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+    }
 }

@@ -25,21 +25,25 @@ import java.util.ArrayList;
  *
  */
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
+import org.codehaus.jettison.json.JSONException;
 import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.exceptions.TestException;
+import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.telemetry.BroadBandTelemetryUtils;
 import com.automatics.tap.AutomaticsTapApi;
@@ -48,6 +52,7 @@ import com.automatics.utils.CommonMethods;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWifiWhixUtils;
 
 public class BroadBandDeviceFingerPrintTest extends AutomaticsTestBase {
 
@@ -1007,5 +1012,802 @@ public class BroadBandDeviceFingerPrintTest extends AutomaticsTestBase {
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-OVS-1001");
 		// ###############################################################//
 	}
+	
+	/**
+    *
+    * Test Case : Test to integrate OVS in RDKB-Productization
+    *
+    * <p>
+    * STEPS:
+    * </p>
+    * <ol>
+    * <li>Step 1 : Get and verify the brlan0 bridge name</li>
+    * <li>Step 2 : Get the list of interface names associated with brlan0</li>
+    * <li>Step 3 : Update the OVS enable status as true using RFC</li>
+    * <li>Step 4 : Verify OVS enable status using webpa after RFC update</li>
+    * <li>Step 5 : Verify the log information in OvsAgentApi.log</li>
+    * <li>Step 6 : Verify the log information in OvsAgentLog.txt.0</li>
+    * <li>Step 7 : Verify the log information in bridgeUtils.log</li>
+    * <li>Step 8 : Verify that device logs the time required for completing the intermediate stages in BootTime.log
+    * </li>
+    * <li>Step 9 : Verify log message for OVS enabled in MeshAgent log file</li>
+    * <li>Step 10 : Verify Vlan bridges when ovs was enabled under OVS bridge control and verify the interface details
+    * for brlan0 from Step #2</li>
+    * <li>Step 11 : Verify bridge and vlan command interface under linux bridge control</li>
+    * <li>Step 12 : Verify Collecting CPU and memory usage stats for 5mins when OVS is enabled.</li>
+    * <li>Step 13 : set and verify Advance Security to be enabled</li>
+    * <li>Step 14 : Verify the flood treshold to tcp and upd packets</li>
+    * <li>Step 15 : Update the OVS disabled status as true using RFC</li>
+    * <li>Step 16 : Verify that device logs the time required for completing the intermediate stages in BootTime.log
+    * </li>
+    * <li>Step 17 : Compare the boot time log before Ovs enable and after enabled</li>
+    * <li>Step 18 : Verify log message for OVS disabled in MeshAgent log file</li>
+    * <li>Step 19 : Verify Collecting CPU and memory usage stats for 5mins when Ovs is disabled.</li>
+    * <li>Step 20 : Verify negative impact of enabling OVS on CPU and Memory</li>
+    * <li>Step 21 : Verify Vlan bridges when OVS was disabled under OVS bridge control</li>
+    * <li>Step 22 : Verify bridge and vlan command interface under linux bridge control</li>
+    * <li>Post Condition : Remove RFC configuration from the Xconf server</li>
+    * </ol>
+    * 
+    * @param device
+    *            {@link Instance of Dut}
+    * 
+    * @author Lakshmi Keshava Murthy, Muthukumar
+    * @refactor yamini.s
+    *
+    */
+   @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+   	    TestGroup.NEW_FEATURE, TestGroup.SECURITY })
+       @TestDetails(testUID = "TC-RDKB-OVS-1002")
+   public void testToVerifyOVSintegration(Dut device) throws JSONException {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-OVS-102";
+	boolean status = false;
+	String response = null;
+	String errorMessage = null;
+	String beforeEnablingFeature = null;
+	String afterEnablingFeature = null;
+	int stepNumber = BroadBandTestConstants.CONSTANT_1;
+	String stepNum = "s" + stepNumber;
+	// Variable Declaration Ends
+	try {
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("STARTING TEST CASE: TC-RDKB-OVS-1002");
+	    LOGGER.info("TEST DESCRIPTION: Test to integrate OVS in RDKB-Productization");
+	    LOGGER.info("TEST STEPS : ");
+	    LOGGER.info("Step 1 : Get and verify the brlan0 bridge name");
+	    LOGGER.info("Step 2 : Get the list of interface names associated with brlan0");
+	    LOGGER.info("Step 3 : Update the OVS enable status as true using RFC");
+	    LOGGER.info("Step 4 : Verify OVS enable status using webpa after RFC update");
+	    LOGGER.info("Step 5 : Verify the log information in OvsAgentApi.log");
+	    LOGGER.info("Step 6 : Verify the log information in OvsAgentLog.txt.0");
+	    LOGGER.info("Step 7 : Verify the log information in bridgeUtils.log");
+	    LOGGER.info(
+		    "Step 8 : Verify that device logs the time required for  completing  the intermediate stages in BootTime.log");
+	    LOGGER.info("Step 9 : Verify log message for OVS enabled in MeshAgent log file");
+	    LOGGER.info(
+		    "Step 10 : Verify Vlan bridges when ovs was enabled under OVS bridge control and verify the interface details for brlan0 from Step #2");
+	    LOGGER.info("Step 11 : Verify bridge and vlan command interface under linux bridge control");
+	    LOGGER.info("Step 12 : Verify Collecting CPU and memory usage stats for 5mins when OVS is enabled.");
+	    LOGGER.info("Step 13 : set and verify Advance Security to be enabled");
+	    LOGGER.info("Step 14 : Verify the flood treshold to tcp and upd packets");
+	    LOGGER.info("Step 15 : Update the OVS disabled status as true using RFC");
+	    LOGGER.info(
+		    "Step 16 : Verify that device logs the time required for  completing  the intermediate stages in BootTime.log");
+	    LOGGER.info("Step 17 : Compare the boot time log before Ovs enable and after enabled");
+	    LOGGER.info("Step 18 : Verify log message for OVS disabled in MeshAgent log file");
+	    LOGGER.info("Step 19 : Verify Collecting CPU and memory usage stats for 5mins when Ovs is disabled.");
+	    LOGGER.info("Step 20 : Verify negative impact of enabling OVS on CPU and Memory");
+	    LOGGER.info("Step 21 : Verify Vlan bridges when OVS was disabled under OVS bridge control");
+	    LOGGER.info("Step 22 : Verify bridge and vlan command interface under linux bridge control");
+	    LOGGER.info("Post Condition : Remove RFC configuration from the Xconf server");
+	    LOGGER.info("#######################################################################################");
+
+	    /**
+	     * STEP 1 : GET AND VERIFY THE BRLAN0 BRIDGE NAME
+	     */
+	    errorMessage = "Failed to get and verify the brlan0 bridge name ";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Get and verify the brlan0 bridge name");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": ACTION : Execute command: psmcli get dmsb.l2net.1.Port.1.Name – brlan0");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Must return the brlan0 bridge name");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_PSMCLI_GET_DMSB_L2NET_1_PORT_1_NAME);
+	    status = CommonMethods.isNotNull(response) && BroadBandCommonUtils.patternSearchFromTargetString(response,
+		    BroadBandTestConstants.INTERFACE_NAME_BRLAN0);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Sucessfully Get and verified the brlan0 bridge name");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 2 : GET THE LIST OF INTERFACE NAMES ASSOCIATED WITH BRLAN0
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to get the list of interface names associated with brlan0 ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION : Get the list of interface names associated with brlan0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command: grep -i \"dmsb.l2net.1.Members.\" /tmp/bbhm_cur_cfg.xml");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : Must return the list of interface names associated with brlan0");
+	    LOGGER.info("**********************************************************************************");
+	    List<String> listOfInterfaces = BroadBandCommonUtils.getListOfInterfaces(device, tapEnv);
+	    status = !listOfInterfaces.isEmpty();
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Sucessfully retrieved the list of interface names associated with brlan0");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 3 : UPDATE THE OVS ENABLE STATUS AS TRUE USING RFC
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to update the OVS enable status as true using RFC";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Update the OVS enable status as true using RFC");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OVS.Enable as true");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : OVS enable status should be enabled using RFC");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTestConstants.OVS_FEATURE_NAME, true);
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + ": ACTUAL : Sucessfully updated OVS enable status as true using RFC");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 4 : VERIFY OVS ENABLE STATUS USING WEBPA AFTER RFC UPDATE
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to get the response for webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OVS.Enable";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify OVS enable status using webpa after RFC update");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION :Execute webpa command : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OVS.Enable");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED :  OVS enable should be true");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_OVS_ENABLE, BroadBandTestConstants.TRUE,
+		    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Successfully verified OVS enable status using webpa after RFC update");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 5 : VERIFY THE LOG INFORMATION IN OVSAGENTAPI.LOG
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to verify the log information in OvsAgentApi.log";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify the log information in OvsAgentApi.log ");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command: 1. grep -i \"open_log successfully opened\"  /rdklogs/logs/OvsAgentApi.log\n"
+		    + "2. grep -i \"Socket connected successfully\"  /rdklogs/logs/OvsAgentApi.log\n"
+		    + "3. grep -i \"ovs_agent_api_init successfully initialized\"  /rdklogs/logs/OvsAgentApi.log\n"
+		    + "4. grep -i \"ovsdb_write successfully wrote\"  /rdklogs/logs/OvsAgentApi.log\n"
+		    + "5. grep -i \"ovsdb_monitor successfully wrote\"  /rdklogs/logs/OvsAgentApi.log\n"
+		    + "6. grep -i \"handle_transact_insert_request\"  /rdklogs/logs/OvsAgentApi.log");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : Must return the expected log information in OvsAgentApi.log");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.validateListOfLogInformation(device, tapEnv,
+		    BroadBandTraceConstants.OVSAGENTAPI_LOG, BroadBandCommandConstants.FILE_PATH_OVSAGENTAPI_LOG);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Sucessfully verified the log information in OvsAgentApi.log ");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 6 : VERIFY THE LOG INFORMATION IN OVSAGENTLOG.TXT.0
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to verify the log information in OvsAgentApi.log";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify the log information in OvsAgentLog.txt.0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command: 1.grep -i \"Ovs Agent Log Initialized\"  /rdklogs/logs/OvsAgentLog.txt.0\n"
+		    + "2.grep -i \"Ovs Agent Api Initialized for Component\"  /rdklogs/logs/OvsAgentLog.txt.0\n"
+		    + "3.grep -i \"Ovs Action Initialized\"  /rdklogs/logs/OvsAgentLog.txt.0\n"
+		    + "4.grep -i \"Ovs Agent interact monitor table 0 succeeded\"  /rdklogs/logs/OvsAgentLog.txt.0\n"
+		    + "5.grep -i \"gwconf_mon_cb interact transact table 1 succeeded\"  /rdklogs/logs/OvsAgentLog.txt.0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : Must return the expected log information in OvsAgentLog.txt.0");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.validateListOfLogInformation(device, tapEnv,
+		    BroadBandTraceConstants.OVSAGENTLOG_TXT, BroadBandCommandConstants.FILE_PATH_OVSAGENTLOG_TXT);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Sucessfully verified the log information in OvsAgentLog.txt.0");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 7 : VERIFY THE LOG INFORMATION IN BRIDGEUTILS.LOG
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to verify the log information in bridgeUtils.log";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify the log information in bridgeUtils.log");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command: 1. grep -i \"updateBridgeInfo : parent_ifname is  : if_name is <INTERFACE_NAME> : bridge <BRIDGE_NAME>\"  /rdklogs/logs/bridgeUtils.log\n"
+		    + "2. grep -i \"create_bridge_api ovs is enabled, calling ovs api\"  /rdklogs/logs/bridgeUtils.log");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": EXPECTED : Must return the expected log information in bridgeUtils.log");
+	    LOGGER.info("**********************************************************************************");
+	    String command = null;
+	    String logMessage = null;
+	    int resultCount = BroadBandTestConstants.CONSTANT_0;
+	    try {
+		for (String interfaceName : listOfInterfaces) {
+		    logMessage = BroadBandTraceConstants.LOG_MESSAGE_UPDATEB_RIDGE_INFO.replace(
+			    BroadBandTestConstants.STRING_INTERFACE_TO_REPLACE,
+			    BroadBandTestConstants.INTERFACE_NAME_BRLAN0);
+		    logMessage = logMessage.replace(BroadBandTestConstants.STRING_REPLACE, interfaceName);
+		    command = BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandCommandConstants.CMD_GREP_A_I.replaceAll(
+				    BroadBandTestConstants.STRING_VALUE_TO_REPLACE,
+				    BroadBandTestConstants.STRING_CONSTANT_1),
+			    BroadBandTestConstants.TEXT_DOUBLE_QUOTE, logMessage,
+			    BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+			    BroadBandCommandConstants.FILE_PATH_BRIDGEUTILS_LOG);
+		    response = tapEnv.executeCommandUsingSsh(device, command);
+		    if (CommonMethods.isNotNull(response) && BroadBandCommonUtils.patternSearchFromTargetString(
+			    response, BroadBandTraceConstants.LOG_MESSAGE_CREATE_BRIDGE_API)) {
+			resultCount = resultCount + BroadBandTestConstants.CONSTANT_1;
+		    } else {
+			LOGGER.error("Failed to verify " + command);
+		    }
+		}
+	    } catch (Exception e) {
+		errorMessage += e.getMessage();
+	    }
+	    status = listOfInterfaces.size() == resultCount;
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Sucessfully verified the log information in bridgeUtils.log");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 8 : VERIFY THAT DEVICE LOGS THE TIME REQUIRED FOR COMPLETING THE INTERMEDIATE STAGES IN BOOTTIME.LOG
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to capture the boot time logs";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify that device logs the time required for  completing  the intermediate stages in BootTime.log ");
+	    LOGGER.info("STEP " + stepNumber
+		    + "ACTION : Execute the command in device console: cat /rdklogs/logs/BootTime.log to get the boot time values");
+	    LOGGER.info("STEP " + stepNumber
+		    + "EXPECTED : Device should log the time take for completing intermediate stages");
+	    LOGGER.info("**********************************************************************************");
+	    HashMap<String, Integer> bootTimeAfterOvs = new HashMap<String, Integer>();
+	    try {
+		for (String process : BroadBandCommandConstants.BOOTTIME_COMPONENT_LIST_OVS) {
+		    String logsAfterOvs = BroadBandCommonUtils.searchArmOrAtomLogFile(tapEnv, device, process,
+			    BroadBandCommandConstants.FILE_BOOT_TIME_LOG);
+		    status = CommonMethods.isNotNull(logsAfterOvs);
+		    if (status) {
+			int uptimeAfterOvs = Integer.parseInt(logsAfterOvs.split("=")[1]);
+			bootTimeAfterOvs.put(process, uptimeAfterOvs);
+		    }
+		    status = bootTimeAfterOvs.size() == 8;
+		}
+	    } catch (TestException e) {
+		errorMessage = e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Sucessfully captured boot time logs");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 9 : VERIFY LOG MESSAGE FOR OVS ENABLED IN MESHAGENT LOG FILE
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to get the log message for OVS enabled in MeshAgent log file";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION :  Verify log message for OVS enabled in MeshAgent log file");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command in ATOM console : grep -i ovs /rdklogs/logs/MeshAgentLog.txt.0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED :  Should get the log message for OVS enabled in MeshAgent log file");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+		    BroadBandTraceConstants.LOG_MESSAGE_OVS, BroadBandCommandConstants.LOG_FILE_MESHAGENT,
+		    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTraceConstants.LOG_MESSAGE_OVS_ENABLED_MESH);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Successfully received the log message for OVS enabled in MeshAgent log file");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 10 : VERIFY VLAN BRIDGES WHEN OVS WAS ENABLED UNDER OVS CONTROL BRIDGE
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to valiadte the VLAN bridge status after OVS enabled";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify VLAN bridges when OVS was enabled under OVS control bridge");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute command: ovs-vsctl show");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ovs vlan control having newly created VLAN bridges");
+	    LOGGER.info("************************************************************");
+	    try {
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.OVS_SHOW_COMMAND);
+		resultCount = BroadBandTestConstants.CONSTANT_0;
+		if (CommonMethods.isNotNull(response)
+			&& BroadBandCommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.STRING_PORT_BRLAN0)
+			&& BroadBandCommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.STRING_BRIDGE_BRLAN0)) {
+		    for (String interfaceName : listOfInterfaces) {
+			if (BroadBandCommonUtils.patternSearchFromTargetString(response,
+				BroadBandTestConstants.PORT_NAME.replace(BroadBandTestConstants.STRING_REPLACE,
+					interfaceName))
+				&& BroadBandCommonUtils.patternSearchFromTargetString(response,
+					BroadBandTestConstants.INTERFACE_NAME
+						.replace(BroadBandTestConstants.STRING_REPLACE, interfaceName))) {
+			    resultCount = resultCount + BroadBandTestConstants.CONSTANT_1;
+			}
+		    }
+		}
+		status = listOfInterfaces.size() == resultCount;
+	    } catch (Exception e) {
+		errorMessage += e.getMessage();
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfuly validated VLAN bridges when OVS enabled ");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 11 : Verify bridge and VLAN command interface under linux bridge control
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    status = false;
+	    errorMessage = "Failed to validate the VLAN bridge status empty after OVS enabled";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify bridge and VLAN command interface under linux bridge control");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute linux Command: brctl show");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Bridge and Vlan details should be empty under bridge control after OVS enabled");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.BRCTL_SHOW);
+	    status = CommonMethods.isNotNull(response)
+		    && !CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			    BroadBandTestConstants.INTERFACE_NAME_BRLAN0)
+		    && !CommonUtils.isGivenStringAvailableInCommandOutput(response,
+			    BroadBandTestConstants.INTERFACE_NAME_BRLAN1);
+	    if (status) {
+		LOGGER.info("STEP " + stepNum
+			+ ": ACTUAL : Successfully validated VLAN bridge status is empty after OVS enabled ");
+	    } else {
+		LOGGER.error("STEP " + stepNum + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 12 : VERIFY COLLECTING CPU AND MEMORY USAGE STATS FOR 5MINS WHEN OVS IS ENABLED
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to get the CPU and memory usage after enbling OVS";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify Collecting CPU and memory usage stats for 5mins when OVS is enabled.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the following command inside the RG console of the gateway for every one minute and collect the data for CPU and memory usage"
+		    + "1. \"top -n 1 |grep -i Mem |sed  \"s/^[^0-9]*//;s/[^0-9].*$//\"\""
+		    + "2. \"top -n 1 |grep CPU: |sed  \"s/^[^0-9]*//;s/[^0-9].*$//\"\""
+		    + "3. Calculate the average for the data");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : CPU and memory usage should be collected");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    LOGGER.info("CPU and memory usage stats when OVS was enabled");
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		afterEnablingFeature = response;
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfuly collected CPU and memory usage details");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 13 : SET AND VERIFY ADVANCE SECURITY TO BE ENABLED
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to enable advance security";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Set and verify Advance Security to be enabled");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command 1.tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.Softflowd.Enable bool true"
+		    + "2.tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_AdvancedSecurity.SafeBrowsing.Enable bool true");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Advance security must be enabled");
+	    LOGGER.info("**********************************************************************************");
+	    if (BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_ADVANCED_SECURITY_SOFTFLOWD, WebPaDataTypes.BOOLEAN.getValue(),
+		    BroadBandTestConstants.TRUE)) {
+		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_ADVANCED_SECURITY_SAFE_BROWSING,
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfully enabled Advaance security");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 14 : VERIFY THE FLOOD TRESHOLD TO TCP AND UPD PACKETS 
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to validate the expected flood threshold to tcp and upd packets";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION : Verify the flood treshold to tcp and upd packets ");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute command- 1. cat /tcp_pkt_threshold"
+		    + "2. cat /udp_pkt_threshold from the file path /proc/sys/net/flowmgr");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : The threshold must be greater than 10");
+	    LOGGER.info("**********************************************************************************");
+	    String tcpThreshold = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_TCP_PACKET_THRESHOLD);
+	    String udpThreshold = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.CMD_UDP_PACKET_THRESHOLD);
+	    tcpThreshold = tcpThreshold.trim();
+	    udpThreshold = udpThreshold.trim();
+	    status = Integer.parseInt(tcpThreshold) >= BroadBandTestConstants.CONSTANT_10
+		    && Integer.parseInt(udpThreshold) >= BroadBandTestConstants.CONSTANT_10;
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Successfully validated the flood threshold value to be greater than 10 to tcp and upd packets");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 15 : UPDATE THE OVS DIABLE STATUS AS TRUE USING RFC
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to update the OVS disable using RFC";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Update the OVS diable status as true using RFC");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.OVS.Enable as false");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED :OVS enable status should be diabled using RFC");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandRfcFeatureControlUtils.enableOrDisableFeatureByRFC(tapEnv, device,
+		    BroadBandTestConstants.OVS_FEATURE_NAME, false);
+	    if (status) {
+		LOGGER.info(
+			"STEP " + stepNumber + ": ACTUAL : Sucessfully updated OVS disable status as true using RFC");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * STEP 16 : VERIFY THAT DEVICE LOGS THE TIME REQUIRED FOR COMPLETING THE INTERMEDIATE STAGES IN
+	     * BOOTTIME.LOG
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    status = false;
+	    errorMessage = "Failed to capture the boot time logs ";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify that device logs the time required for  completing  the intermediate stages in BootTime.log");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command in device console: cat /rdklogs/logs/BootTime.log to get the boot time values");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : Device should log the time taken for completing intermediate stages");
+	    LOGGER.info("**********************************************************************************");
+	    HashMap<String, Integer> bootTimeBeforeOvs = new HashMap<String, Integer>();
+	    try {
+		for (String process : BroadBandCommandConstants.BOOTTIME_COMPONENT_LIST_OVS) {
+		    String logsBeforeOvs = BroadBandCommonUtils.searchArmOrAtomLogFile(tapEnv, device, process,
+			    BroadBandCommandConstants.FILE_BOOT_TIME_LOG);
+		    status = CommonMethods.isNotNull(logsBeforeOvs);
+		    if (status) {
+			int uptimeBeforeOvs = Integer.parseInt(logsBeforeOvs.split("=")[1]);
+			bootTimeBeforeOvs.put(process, uptimeBeforeOvs);
+		    }
+		}
+		status = bootTimeBeforeOvs.size() == 8;
+	    } catch (TestException e) {
+		errorMessage = e.getMessage();
+		LOGGER.error(errorMessage);
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfully captured boot time logs");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 17 : COMPARE THE BOOT TIME LOG BEFORE OVS ENABLE AND AFTER ENABLED
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Observing boot time increase after Ovs enabled";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Compare the boot time log before OVS enable and after enabled");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute the command in ARM console:  Boot time Ovs diasbled - Boot time Ovs enabled ");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : There was not more than 5% increase in the boot time");
+	    LOGGER.info("**********************************************************************************");
+	    HashMap<String, Boolean> result = new HashMap<String, Boolean>();
+	    for (String component : BroadBandCommandConstants.BOOTTIME_COMPONENT_LIST_OVS) {
+		boolean output = false;
+		LOGGER.info("bootTimeAfterOvs.get(component):"+bootTimeAfterOvs.get(component));
+		LOGGER.info("bootTimeBeforeOvs.get(component):"+bootTimeBeforeOvs.get(component));
+		int difference = bootTimeAfterOvs.get(component) - bootTimeBeforeOvs.get(component);
+		LOGGER.info("Component:"+component+" Difference:"+difference);
+		if (difference < BroadBandTestConstants.CONSTANT_10) {
+		    output = true;
+		}
+		result.put(component, output);
+	    }
+	    int count = 0;
+	    for (Map.Entry<String, Boolean> entry : result.entrySet()) {
+		if (entry.getValue() == false) {
+		    count++;
+		    LOGGER.info("The value is more than 5% for " + entry.getKey());
+		}
+	    }
+	    status = count == 0;
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Successfully verified the boot time logs before OVS enable and after enabled");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 18 : VERIFY LOG MESSAGE FOR OVS DISABLED IN MESHAGENT LOG FILE
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = " Failed to get the log message for OVS disabled in MeshAgent log file ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION :Verify log message for OVS disabled in MeshAgent log file");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command in ATOM console: grep -i ovs /rdklogs/logs/MeshAgentLog.txt.0");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : Should get the log message for OVS disabled in MeshAgent log file");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+		    BroadBandTraceConstants.LOG_MESSAGE_OVS, BroadBandCommandConstants.LOG_FILE_MESHAGENT,
+		    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTraceConstants.LOG_MESSAGE_OVS_DISABLED_MESH);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Successfully verified log message for OVS disabled in MeshAgent log file");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 19 : VERIFY COLLECTING CPU AND MEMORY USAGE STATS FOR 5MINS WHEN OVS IS DISABLED
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to get the CPU and memory usage stats when OVS is disabled";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify Collecting CPU and memory usage stats for 5mins when OVS is disabled.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : a)Execute the following command inside the RG console of the gateway for every one minute and collect the data for CPU and memory usage, \\\"top -n 1 |grep -i Mem |sed  \\\"s/^[^0-9]*//;s/[^0-9].*$//\\\"\\\" and \\\"top -n 1 |grep CPU: |sed  \\\"s/^[^0-9]*//;s/[^0-9].*$//\\\"\\\"  b) Calculate the average for the data.\");");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : CPU and memory usage should be collected");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandWifiWhixUtils.calculateAverageCpuAndMemoryUtilisation(device, tapEnv,
+		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    LOGGER.info("CPU and memory usage stats when OVS was disabled");
+	    status = CommonMethods.isNotNull(response);
+	    if (status) {
+		beforeEnablingFeature = response;
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfuly collected CPU and memory usage details");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 20 : VERIFY NEGATIVE IMPACT OF ENABLING OVS ON CPU AND MEMORY
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "There is a negative impact on CPU & Memory after enabling OVS";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP " + stepNumber + ": DESCRIPTION : Verify negative impact of enabling OVS on CPU and Memory");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute 1. Log in web Interface with User Id and Password."
+		    + "2. Compare the averages calculated for CPU utilisation and memory utilisation in step 2 & 12");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : The difference in average should be within 10%, indicating that the feature doesn't have any negative impact on the device ");
+	    LOGGER.info("**********************************************************************************");
+	    BroadBandResultObject bandResultObject = null;
+	    bandResultObject = BroadBandWifiWhixUtils
+		    .validateCpuAndMemoryUtilisationForNegativeEffect(beforeEnablingFeature, afterEnablingFeature);
+	    status = bandResultObject.isStatus();
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Successfully verified that there is no negative impact of enabling OVS on CPU and memory");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 21 : VERIFY VLAN BRIDGES WHEN OVS WAS DISABLED UNDER OVS BRIDGE CONTROL
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Failed to validate the VLAN bridge status";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify VLAN bridges when OVS was disabled under OVS bridge control");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute command: ovs-vsctl show");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : VLAN Bridges should be empty");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.OVS_SHOW_COMMAND);
+	    status = CommonMethods.isNotNull(response) && !response.contains(BroadBandTestConstants.STRING_PORT_BRLAN0)
+		    && !response.contains(BroadBandTestConstants.STRING_BRIDGE_BRLAN0);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfuly validated VLAN bridge status");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * STEP 22 : VERIFY BRIDGE AND VLAN COMMAND INTERFACE UNDER LINUX BRIDGE CONTROL
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = " Failed to validate the VLAN bridge status under linux bridge control ";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": DESCRIPTION : Verify bridge and VLAN command interface under linux bridge control");
+	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute command: brctl show");
+	    LOGGER.info("STEP " + stepNumber + ": EXPECTED : Bridge and VLAN details should be retrieved");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.BRCTL_SHOW);
+	    status = CommonMethods.isNotNull(response)
+		    && (response.contains(BroadBandTestConstants.INTERFACE_NAME_BRLAN0)
+			    || response.contains(BroadBandTestConstants.INTERFACE_NAME_BRLAN1));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Sucessfully validated VLAN bridge status under linux bridge control");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, false, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("POST-CONDITION 1: DESCRIPTION: Remove rfc.properties file from /nvram directory");
+	    LOGGER.info("POST-CONDITION 1: ACTION: Execute command: rm /nvram/rfc.properties");
+	    LOGGER.info("POST-CONDITION 1: EXPECTED: Should be deleted rfc.properties file");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Failed to remove rfc.properties file from /nvram directory";
+	    status = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
+		    BroadBandRfcFeatureControlUtils.NVRAM_RFC_PROPERTIES);
+	    if (status) {
+		LOGGER.info(
+			"POST-CONDITION 1: ACTUAL :Successfully removed the rfc.properties file in /nvram directory");
+	    } else {
+		LOGGER.error("POST-CONDITION 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS: FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE:TC-RDKB-OVS-1002");
+   }
 
 }
