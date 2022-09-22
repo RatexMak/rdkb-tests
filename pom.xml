@@ -12,7 +12,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>RDKMAutomationRDKBUtils</groupId>
-			<artifactId>rdkb-utils</artifactId>
+			<artifactId>rdkb-utils-dev</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
