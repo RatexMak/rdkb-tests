@@ -176,6 +176,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("EXPECTED: Command should return latest openSSL version");
 	    LOGGER.info("**********************************************************************************");
 	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_FETCH_LIBSSL_FILE);
+	    response = "/usr/lib/"+response;
 	    LOGGER.info("LIBSSL used in build is: " + response);
 	    if (CommonMethods.isNotNull(response)) {
 		response = tapEnv.executeCommandUsingSsh(device,
@@ -211,6 +212,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 	    LOGGER.info("EXPECTED: Command should return latest openSSL version");
 	    LOGGER.info("**********************************************************************************");
 	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_FETCH_LIBCRYPTO_FILE);
+	    response = "/usr/lib/"+response;
 	    LOGGER.info("libcrypto used in build is : " + response);
 	    if (CommonMethods.isNotNull(response)) {
 		response = tapEnv.executeCommandUsingSsh(device,
