@@ -2681,7 +2681,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW);
 	    LOGGER.info("UsageComputeWindow retrieved using WebPa = " + response);
 	    status = CommonMethods.isNotNull(response)
-		    && response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW);
+		    && response.equalsIgnoreCase(BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 	    errorMessage = "Unable to verify the UsageComputeWindow  using WebPA command on TR181 parameter 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow'  -Expected value:"
 		    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:" + response;
 
@@ -2775,15 +2775,15 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW);
 		LOGGER.info("UsageComputeWindow retrieved using WebPa = " + response);
 		status = CommonMethods.isNotNull(response)
-			&& response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW);
+			&& response.equalsIgnoreCase(BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 	    } while (!status && (System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
 		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 	    errorMessage = "Unable to verify the UsageComputeWindow  using WebPA command on TR181 parameter 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow'  -Expected value:"
-		    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:" + response;
+		    + BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:" + response;
 	    if (status) {
 		LOGGER.info(
 			"STEP 5: ACTUAL : Successfully verified the default UsageComputeWindow  'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow' using WebPA command.-Expected value:"
-				+ BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:"
+				+ BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:"
 				+ response);
 	    } else {
 		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
@@ -3628,7 +3628,6 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    errorMessage = "Failed to verify the ping 8.8.8.8 response in ARM/ATOM console";
 	    response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
 		    BroadBandCommandConstants.CMD_PING_8_8_8_8);
-	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 	    status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
 		    BroadBandConnectedClientTestConstants.PATTERN_MATCHER_PING_RESPONSE_LINUX);
 	    if (status) {

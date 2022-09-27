@@ -722,7 +722,7 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 
 			try {
 				status = BroadBandCommonUtils.validateSelfHealParameterValues(selfHealConfiguration,
-						BroadBandTestConstants.STRING_RESOURCE_USAGE_FOR_SELF_HEAL, RESOURCE_USAGE_COMPUTE_WINDOW);
+						BroadBandTestConstants.STRING_RESOURCE_USAGE_FOR_SELF_HEAL, BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 			} catch (Exception exception) {
 				errorMessage = exception.getMessage();
 				LOGGER.error(errorMessage);
@@ -3415,9 +3415,10 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 					try {
 						LOGGER.info("GOING TO WAIT FOR 2 MINUTE.");
 						tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
-						response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
-								BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(),
-								SnmpDataType.INTEGER, BroadBandTestConstants.STRING_VALUE_THREE);
+//						response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+//								BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(),
+//								SnmpDataType.INTEGER, BroadBandTestConstants.STRING_VALUE_THREE);
+						response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv, BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER, BroadBandTestConstants.STRING_VALUE_THREE, BroadBandTestConstants.STRING_VALUE_ZERO);
 
 						if (CommonMethods.isNotNull(response)) {
 							errorMessage = "Failed to set resourceUsageComputeWindow value as 3 using snmp mib  .1.3.6.1.4.1.17270.44.1.1.7.0 ";
@@ -3732,9 +3733,10 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 						BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, BroadBandTestConstants.CONSTANT_2,
 						RESOURCE_USAGE_COMPUTE_WINDOW);
 			} else {
-				response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
-						BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
-						RESOURCE_USAGE_COMPUTE_WINDOW);
+//				response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+//						BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
+//						RESOURCE_USAGE_COMPUTE_WINDOW);
+				response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv, BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER, BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty(), BroadBandTestConstants.STRING_VALUE_ZERO);
 				status = CommonMethods.isNotNull(response);
 			}
 			if (status) {
@@ -3838,8 +3840,9 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 1: EXPECTED : On executing this command, Factory Reset should be successful and Device should be up after successful Factory Reset");
 			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
-					BroadBandTestConstants.FOUR_MINUTES);
+//			status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
+//					BroadBandTestConstants.FOUR_MINUTES);
+			status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 			if (status) {
 				isFactoryReset = true;
 				LOGGER.info("STEP 1: ACTUAL : successfully factory reset device");
