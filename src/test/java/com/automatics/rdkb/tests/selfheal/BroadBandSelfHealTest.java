@@ -3291,9 +3291,12 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			}
 
 			// Set resource usage computing value to default value 15.
-			BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+//			BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+//					BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
+//					BroadBandTestConstants.STRING_VALUE_FIFTEEN);
+			response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
 					BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
-					BroadBandTestConstants.STRING_VALUE_FIFTEEN);
+					BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty(), BroadBandTestConstants.STRING_VALUE_ZERO);
 		}
 
 	}
