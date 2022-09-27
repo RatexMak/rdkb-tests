@@ -3628,6 +3628,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    errorMessage = "Failed to verify the ping 8.8.8.8 response in ARM/ATOM console";
 	    response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
 		    BroadBandCommandConstants.CMD_PING_8_8_8_8);
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 	    status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
 		    BroadBandConnectedClientTestConstants.PATTERN_MATCHER_PING_RESPONSE_LINUX);
 	    if (status) {
