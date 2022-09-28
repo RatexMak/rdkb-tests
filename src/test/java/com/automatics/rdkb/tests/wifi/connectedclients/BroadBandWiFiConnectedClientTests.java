@@ -6320,6 +6320,14 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
 					operatingStandard);
+			//for including devices working in g,n operating standard
+			if(!status) {
+				operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N.getOperatingmode();
+				
+				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+						operatingStandard);
+			}
 			if (status) {
 				LOGGER.info(
 						"STEP 1: ACTUAL : The operating mode for 2.4GHz network in RDKB device is g/n or b/g/n for DSL device or g/n/ax for others");

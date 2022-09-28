@@ -4003,8 +4003,9 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 5: ACTION : Factory reset the device and reactivate it.");
 	    LOGGER.info("STEP 5: EXPECTED : Factory resetting the device should be successful.");
 	    LOGGER.info("**********************************************************************************");
-	    isFactoryReset = status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv,
-		    device);
+//	    isFactoryReset = status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv,
+//		    device);
+	    isFactoryReset = status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 	    if (status) {
 		LOGGER.info("STEP 5: ACTUAL : Factory Resetting and Reactivating the device is succesful.");
 	    } else {
