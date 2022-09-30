@@ -265,17 +265,17 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 5:Verification of usage compute window using the TR181 parameter-Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow  to get the default UsageComputeWindow value");
-	    LOGGER.info("EXPECTED-UsageComputeWindow should have the default value as 15");
+	    LOGGER.info("EXPECTED-UsageComputeWindow should have the default value as given in properties");
 	    LOGGER.info("#####################################################################################");
 	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW);
 	    LOGGER.info("UsageComputeWindow retrieved using WebPa = " + response);
 	    status = CommonMethods.isNotNull(response)
-		    && response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW);
+		    && response.equalsIgnoreCase(BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 	    errorMessage = "Unable to verify the UsageComputeWindow  using WebPA command on TR181 parameter 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow'  -Expected value:"
-		    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:" + response;
+		    + BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:" + response;
 	    LOGGER.info("S5 ACTUAL : " + (status
 		    ? "Successfully verified the default UsageComputeWindow  'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow' using WebPA command.-Expected value:"
-			    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:"
+			    + BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:"
 			    + response
 		    : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
@@ -399,8 +399,11 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    BroadBandWebPaConstants.PING_INTERVAL, BroadBandTestConstants.CONSTANT_PING_INTERVAL_14,
 		    BroadBandTestConstants.CONSTANT_2);
 	    tapEnv.waitTill(BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
-	    status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.INVALID_PARAMETER_VALUE);
-	    LOGGER.info(
+		status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.INVALID_PARAMETER_VALUE);
+		if (!status) {
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.STATUS_FAILED);
+		}
+		LOGGER.info(
 		    "S10 webPaServerResponse is : " + webPaServerResponse.getMessage() + " & Status is : " + status);
 	    LOGGER.info("S10 ACTUAL : " + (status
 		    ? " Not able to set the Invalid Ping Interval as 14 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_pingInterval' using WebPA command."
@@ -426,6 +429,9 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    BroadBandTestConstants.CONSTANT_2);
 	    tapEnv.waitTill(BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
 	    status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.INVALID_PARAMETER_VALUE);
+	    if (!status) {
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.STATUS_FAILED);
+		}
 	    LOGGER.info(
 		    "S11 webPaServerResponse is : " + webPaServerResponse.getMessage() + " & Status is : " + status);
 	    LOGGER.info("S11 ACTUAL : " + (status
@@ -4745,17 +4751,17 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 5:Verify retrieving the value of Device.SelfHeal.ResourceMonitor.X_RDKCENTRAL-COM_UsageComputeWindow  to get the resourceUsageComputeWindow using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.7.0)");
-	    LOGGER.info("EXPECTED- Should be able to get the UsageComputeWindow  default value as 15");
+	    LOGGER.info("EXPECTED- Should be able to get the UsageComputeWindow  default value as given in properties");
 	    LOGGER.info("#####################################################################################");
 	    response = BroadBandSnmpUtils.executeSnmpGetOnRdkDevices(tapEnv, device,
 		    BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid() + ".0");
 	    LOGGER.info("UsageComputeWindow retrieved using SNMP = " + response);
 	    status = CommonMethods.isNotNull(response)
-		    && response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW);
+		    && response.equalsIgnoreCase(BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 	    errorMessage = "Unable to verify the UsageComputeWindow  using SNMP command.";
 	    LOGGER.info("S5 ACTUAL : " + (status
 		    ? "Successfully verified  the default UsageComputeWindow  using SNMP command.-Expected value:"
-			    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:"
+			    + BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:"
 			    + response
 		    : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
