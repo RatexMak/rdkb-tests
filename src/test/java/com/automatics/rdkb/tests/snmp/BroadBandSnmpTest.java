@@ -1102,7 +1102,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 3: DESCRIPTION : Verify the Server Address Type can be retrieved using SNMP");
 			LOGGER.info(
-					"STEP 3: ACTION : Execute the SNMP command to retrieve Server Address Type using OID 1.3.6.1.2.1.69.1.3.6.0");
+					"STEP 3: ACTION : Execute the SNMP command to retrieve Server Address Type ");
 			LOGGER.info(
 					"STEP 3: EXPECTED : Server Address Type should be retrieved from SNMP, the value should be either 0(IPv4) or 1 (IPv6) or 2(Hexa Decimal)");
 			LOGGER.info("**********************************************************************************");
@@ -4671,13 +4671,13 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			stepNum = "S3";
-			errorMessage = "snmpset on docsDevSwServerAddressType(1.3.6.1.2.1.69.1.3.6.0) failed.";
+			errorMessage = "snmpset on docsDevSwServerAddressType(OID) failed.";
 			status = false;
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
 					"STEP 3: DESCRIPTION : Verify SNMP MIB docsDevSwServerAddressType is set to IPv6 address type.");
 			LOGGER.info(
-					"STEP 3: ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.6.0 and value to be set as  2.");
+					"STEP 3: ACTION : Execute SNMP SET command to set docsDevSwServerAddressType value to  2.");
 			LOGGER.info(
 					"STEP 3: EXPECTED : SNMP MIB  docsDevSwServerAddressType should be set to IPv6 address type(2).");
 			LOGGER.info("**********************************************************************************");
@@ -8433,4 +8433,379 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 
 		}
 	}
+	
+	/**
+	 * Verify RFC control of SNMPv2
+	 * <ol>
+	 * <li>Verify DOCSIS SNMPv2 commands are working regardless of parameter
+	 * value</li>
+	 * <li>Verify RDKB SNMPv2 commands are working or not working as per default
+	 * value in pre condition</li>
+	 * <li>Configure RFC payload to enable or disable SNMPv2 support based on
+	 * default value</li>
+	 * <li>Verify SNMPv2 support parameter is updated by RFC</li>
+	 * <li>Reboot the device and verify SNMPv2 support is enabled or disabled</li>
+	 * <li>Verify DOCSIS SNMPv2 commands are working regardless of parameter
+	 * value</li>
+	 * <li>Verify RDKB SNMPv2 commands are working or not working as per default
+	 * value in pre condition</li>
+	 * </ol>
+	 * 
+	 * @author Ashwin sankara
+	 * @refactor Rakesh C N
+	 * 
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-RFC-SNMP-1001", testDecription = "Verify RFC control of SNMPv2")
+	public void testVerifyRFCSNMPv2Control(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-RFC-SNMP-101";
+		String stepNum = "s1";
+		String errorMessage = null;
+		String expectedValue = null;
+		String response = null;
+		String defaultValue = null;
+		boolean defaultVal = true;
+		boolean status = false;
+		BroadBandResultObject result = new BroadBandResultObject();
+		// Variable Declation Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-RFC-SNMP-1001");
+		LOGGER.info("TEST DESCRIPTION: Verify RFC control of SNMPv2");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify DOCSIS SNMPv2 commands are working regardless of parameter value");
+		LOGGER.info("2. Verify RDKB SNMPv2 commands are working or not working as per default value in pre condition");
+		LOGGER.info("3. Configure RFC payload to enable or disable SNMPv2 support based on default value");
+		LOGGER.info("4. Verify SNMPv2 support parameter is updated by RFC");
+		LOGGER.info("5. Reboot the device and verify SNMPv2 support is enabled or disabled");
+		LOGGER.info("6. Verify DOCSIS SNMPv2 commands are working regardless of parameter value");
+		LOGGER.info("7. Verify RDKB SNMPv2 commands are working or not working as per default value in pre condition");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+			LOGGER.info("PRE-CONDITION : DESCRIPTION : Verify default value of SNMPv2 support");
+			LOGGER.info(
+					"PRE-CONDITION : ACTION : Execute webpa or dmcli command to get value of parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V2Support");
+			LOGGER.info("PRE-CONDITION : EXPECTED : Value obtained is not null and is default true");
+
+			errorMessage = "Unable to verify default value of SNMPv2 support";
+			defaultValue = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_DISABLE_SNMPV2);
+			status = CommonMethods.isNotNull(defaultValue)
+					&& (defaultValue.equalsIgnoreCase(BroadBandTestConstants.TRUE)
+							|| defaultValue.equalsIgnoreCase(BroadBandTestConstants.FALSE));
+
+			if (status) {
+				if (defaultValue.equalsIgnoreCase(BroadBandTestConstants.TRUE)) {
+					defaultVal = true;
+				} else if (defaultValue.equalsIgnoreCase(BroadBandTestConstants.FALSE)) {
+					defaultVal = false;
+				}
+				LOGGER.info("PRE-CONDITION : ACTUAL : Pre condition executed successfully");
+			} else {
+				LOGGER.error("PRE-CONDITION : ACTUAL : Pre condition failed: Default value of parameter obtained is: "
+						+ defaultValue);
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+			}
+
+			if (DeviceModeHandler.isFibreDevice(device)) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("Fibre devices do not support DOCSIS snmp oid");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, "s1", ExecutionStatus.NOT_APPLICABLE,
+						"Fibre devices do not support DOCSIS snmp oid", false);
+			} else {
+
+				LOGGER.info("**********************************************************************************");
+
+				errorMessage = "Obtained null expected value of Firmware version from tr181 parameter";
+				status = false;
+
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 1: DESCRIPTION : Verify DOCSIS SNMPv2 commands are working regardless of parameter value");
+				LOGGER.info(
+						"STEP 1: ACTION : Execute sample DOCSIS snmp command:snmpget -v2c -c udp6:<ipv6_address> .1.3.6.1.2.1.69.1.3.5.0(firmware version)");
+				LOGGER.info("STEP 1: EXPECTED : Firmware value is obtained successfully");
+				LOGGER.info("**********************************************************************************");
+
+				expectedValue = BroadBandCommonUtils.getCurrentlyRunningImageVersionUsingWebPaCommand(tapEnv, device);
+				if (CommonMethods.isNotNull(expectedValue)) {
+					errorMessage = "Obtained snmp response other than firmware version value for DOCSIS oid";
+					response = BroadBandSnmpUtils.executeSnmpGetOnRdkDevices(tapEnv, device,
+							BroadBandSnmpMib.ECM_DOCS_DEV_CURRENT_SOFTWARE_VERSION.getOid());
+					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response, expectedValue);
+				}
+
+				if (status) {
+					LOGGER.info("STEP 1: ACTUAL : Firmware value is obtained successfully");
+				} else {
+					LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+				}
+
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			}
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s2";
+			errorMessage = "Obtained null expected value of 5G SSID from tr181 parameter";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION : Verify RDKB SNMPv2 commands are working or not working as per default value in pre condition");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute sample RDKB snmp command:snmpget -v2c -c udp6:<ipv6_address> .1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101(5G SSIDD)");
+			LOGGER.info(
+					"STEP 2: EXPECTED : Value is obtained when SNMPv2 support is true and no such object/instance response is obtained when SNMPv2 support is false");
+			LOGGER.info("**********************************************************************************");
+
+			expectedValue = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME);
+			if (CommonMethods.isNotNull(expectedValue)) {
+				response = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+						BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_5.getOid(),
+						BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_5.getTableIndex());
+				if (defaultVal) {
+					errorMessage = "Obtained snmp response other than value when SNMPv2 support enabled";
+					status = CommonMethods.isNotNull(response) && expectedValue.equals(response);
+				} else {
+					errorMessage = "Obtained snmp response without no such object/instance when SNMPv2 support disabled";
+					status = CommonMethods.isNotNull(response)
+							&& (CommonMethods.patternMatcher(response, BroadBandTestConstants.NO_SUCH_OBJECT_AVAILABLE)
+									|| CommonMethods.patternMatcher(response, BroadBandTestConstants.NO_SUCH_INSTANCE));
+				}
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 2: ACTUAL : Value is obtained when SNMPv2 support is true and no such object/instance response is obtained when SNMPv2 support is false");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s3";
+			errorMessage = "Failed to configure RFC payload for SNMPv2 enable/disable";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 3: DESCRIPTION : Configure RFC payload to enable or disable SNMPv2 support based on default value");
+			LOGGER.info(
+					"STEP 3: ACTION :\n1. Copy and update /nvram/rfc.properties with mock RFC config server URL\n2. Post payload mock RFC server\n3. Reboot device or trigger Configurable RFC check-in");
+			LOGGER.info("STEP 3: EXPECTED : Successfully rebooted or triggered check-in after configuring RFC payload");
+			LOGGER.info("**********************************************************************************");
+
+			try {
+				expectedValue = (defaultVal ? BroadBandTestConstants.FALSE : BroadBandTestConstants.TRUE);
+				if (BroadBandRfcFeatureControlUtils.executePreconditionForRfcTests(device, tapEnv,
+						BroadbandPropertyFileHandler.getPayloadToEnableDisableSnmpv2()
+								.replaceAll(BroadBandTestConstants.ENABLE_DISABLE_VALUE, expectedValue))) {
+					errorMessage = "Unable to trigger RFC checkin or reboot successfully";
+					status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, BroadBandTestConstants.CONSTANT_2,
+							BroadBandTestConstants.STRING_VALUE_ONE);
+					if (!status) {
+						status = CommonUtils.rebootAndWaitForIpAcquisition(tapEnv, device);
+					}
+				}
+			} catch (Exception e) {
+				LOGGER.error("Exception while getting the payload: " + e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 3: ACTUAL : Successfully rebooted or triggered check-in after configuring RFC payload");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s4";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION : Verify SNMPv2 support parameter is updated by RFC");
+			LOGGER.info(
+					"STEP 4: ACTION :\n1. Verify /tmp/rfc_configdata.txt contains posted parameter value\n2. Verify log message for updation in /rdklogs/logs/dcmrfc.log\n3. Verify parameter value is changed");
+			LOGGER.info("STEP 4: EXPECTED : Successfully set parameter value through RFC");
+			LOGGER.info("**********************************************************************************");
+
+			result = BroadBandRfcFeatureControlUtils.verifyParameterUpdatedByRfc(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_DISABLE_SNMPV2, expectedValue);
+			errorMessage = result.getErrorMessage();
+			status = result.isStatus();
+
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Successfully set parameter value through RFC");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s5";
+			errorMessage = "Device did not reboot successfully";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Reboot the device and verify SNMPv2 support is enabled or disabled");
+			LOGGER.info(
+					"STEP 5: ACTION : Execute command: /sbin/reboot, Poll and execute: grep -i \"RFC value for SNMPV2 support\" /rdklogs/logs/Consolelog.txt.0 (ArmConsolelog.txt.0)");
+			LOGGER.info("STEP 5: EXPECTED : Enabled or disabled SNMPv2 support as per RFC value");
+			LOGGER.info("**********************************************************************************");
+
+			if (BroadBandRfcFeatureControlUtils.removeNvramOverrideForRfc(device, tapEnv)) {
+				errorMessage = "Unable to find log message for SNMPv2 support set to " + expectedValue;
+				response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_RFC_VALUE_SNMPV2_SUPPORT,
+						(CommonMethods.isAtomSyncAvailable(device, tapEnv)
+								? BroadBandCommandConstants.FILE_ARMCONSOLELOG
+								: BroadBandCommandConstants.FILE_CONSOLELOG),
+						BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+				status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response, expectedValue);
+			}
+
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : Enabled or disabled SNMPv2 support as per RFC value");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			if (DeviceModeHandler.isFibreDevice(device)) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("Fibre devices do not support DOCSIS snmp oid");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, "s6", ExecutionStatus.NOT_APPLICABLE,
+						"Fibre devices do not support DOCSIS snmp oid", false);
+			} else {
+
+				stepNum = "s6";
+				errorMessage = "Obtained response other than value for DOCSIS oid";
+				status = false;
+
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 6: DESCRIPTION : Verify DOCSIS SNMPv2 commands are working regardless of parameter value");
+				LOGGER.info(
+						"STEP 6: ACTION : Execute sample DOCSIS snmp command:snmpget -v2c -c udp6:<ipv6_address> .1.3.6.1.2.1.69.1.3.5.0(firmware version)");
+				LOGGER.info("STEP 6: EXPECTED : Firmware value is obtained successfully");
+				LOGGER.info("**********************************************************************************");
+
+				BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+				expectedValue = BroadBandCommonUtils.getCurrentlyRunningImageVersionUsingWebPaCommand(tapEnv, device);
+				if (CommonMethods.isNotNull(expectedValue)) {
+					errorMessage = "Obtained snmp response other than firmware version value for DOCSIS oid";
+					response = BroadBandSnmpUtils.executeSnmpGetOnRdkDevices(tapEnv, device,
+							BroadBandSnmpMib.ECM_DOCS_DEV_CURRENT_SOFTWARE_VERSION.getOid());
+					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response, expectedValue);
+				}
+
+				if (status) {
+					LOGGER.info("STEP 6: ACTUAL : Firmware value is obtained successfully");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			}
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s7";
+			errorMessage = "Obtained response other than value or no such object/timeout based on changed value";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 7: DESCRIPTION : Verify RDKB SNMPv2 commands are working or not working as per default value in pre condition");
+			LOGGER.info(
+					"STEP 7: ACTION : Execute sample RDKB snmp command:snmpget -v2c -c udp6:<ipv6_address> .1.3.6.1.4.1.17270.50.2.2.2.1.1.3.10101(5G SSIDD)");
+			LOGGER.info(
+					"STEP 7: EXPECTED : Value is obtained when SNMPv2 support is true and no such object/instance is obtained when SNMPv2 support is false");
+			LOGGER.info("**********************************************************************************");
+
+			expectedValue = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME);
+			if (CommonMethods.isNotNull(expectedValue)) {
+				response = BroadBandSnmpUtils.executeSnmpGetWithTableIndexOnRdkDevices(tapEnv, device,
+						BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_5.getOid(),
+						BroadBandSnmpMib.ECM_PRIVATE_WIFI_SSID_5.getTableIndex());
+				if (!defaultVal) {
+					errorMessage = "Obtained snmp response other than value when SNMPv2 support enabled";
+					status = CommonMethods.isNotNull(response) && expectedValue.equals(response);
+				} else {
+					errorMessage = "Obtained snmp response without no such object/instance when SNMPv2 support disabled";
+					status = CommonMethods.isNotNull(response)
+							&& (CommonMethods.patternMatcher(response, BroadBandTestConstants.NO_SUCH_OBJECT_AVAILABLE)
+									|| CommonMethods.patternMatcher(response, BroadBandTestConstants.NO_SUCH_INSTANCE));
+				}
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 7: ACTUAL : Value is obtained when SNMPv2 support is true and no such object/instance response is obtained when SNMPv2 support is false");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					true);
+
+		} finally {
+			if (!CommonMethods.patternMatcher(errorMessage, BroadBandTestConstants.PRE_CONDITION_ERROR)) {
+				LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+				LOGGER.info("POST-CONDITION STEPS");
+				LOGGER.info(
+						"POST-CONDITION : DESCRIPTION : Reset value of SNMPv2 support parameter and reboot the device.");
+				LOGGER.info(
+						"POST-CONDITION : ACTION : Execute webpa or dmcli command to set value of parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SNMP.V2Supportto default value");
+				LOGGER.info("POST-CONDITION : EXPECTED : Device rebooted successfully after resetting parameter value");
+
+				errorMessage = "Unable to reset value of SNMPv2 support parameter to default value: " + defaultValue;
+				if (BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_DISABLE_SNMPV2, WebPaDataTypes.BOOLEAN.getValue(),
+						defaultValue)) {
+					errorMessage = "Unable to reboot device successfully";
+					status = BroadBandRfcFeatureControlUtils.removeNvramOverrideForRfc(device, tapEnv);
+				}
+
+				if (status) {
+					LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+				} else {
+					LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed: " + errorMessage);
+				}
+				LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+				LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+			}
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-RFC-SNMP-1001");
+	}
+
 }

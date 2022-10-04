@@ -49,6 +49,7 @@ import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
@@ -63,6 +64,7 @@ import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
+import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.AutomaticsPropertyUtility;
@@ -5983,4 +5985,351 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-SWAP-5001");
     }
 
+    /**
+     * Test to verify reporting of RFC feature enable
+     * 
+     * <li>1. Update RFC_CONFIG_SERVER_URL value in rfc.properties file with an invalid URL and check whether the URL
+     * updated</li>
+     * <li>2. Restart the RFC service using webpa set command</li>
+     * <li>3. Verify the features reported as NONE in dcmrfc.log file</li>
+     * <li>4. Change RFC_CONFIG_SERVER_URL value in rfc.properties file with valid MOCK server URL</li>
+     * <li>5. Restart the RFC service using webpa set command</li>
+     * <li>6. Verify the feature profiles reported as STAGING</li>
+     * <li>7. Restart the RFC service using webpa set command</li>
+     * <li>8. Verify the feature profile reported as ACTIVE and check whether the current list matches with the earlier
+     * STAGING list</li>
+     * <li>9. Restart the RFC service using webpa set command</li>
+     * <li>10. Verify the ACTIVE profile logs and check previous ACTIVE featues list is present in the current list</li>
+     * 
+     * @author ArunKumar Jayachandran
+     * @refactor Rakesh C N
+     */
+
+    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true, groups = {
+	    TestGroup.NEW_FEATURE })
+    @TestDetails(testUID = "TC-RDKB-SYSTEM-1033")
+    public void testToVerifyRfcLogReport(Dut device) {
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-1033");
+	LOGGER.info("TEST DESCRIPTION: Test to verify reporting of RFC feature enable");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info(
+		"1. Update RFC_CONFIG_SERVER_URL value in rfc.properties file with an invalid URL and check whether the URL updated");
+	LOGGER.info("2. Restart the RFC service using webpa set command");
+	LOGGER.info("3. Verify the features reported as NONE in dcmrfc.log file");
+	LOGGER.info("4. Change  RFC_CONFIG_SERVER_URL value in rfc.properties file with valid MOCK server URL");
+	LOGGER.info("5. Restart the RFC service using webpa set command");
+	LOGGER.info("6. Verify the feature profiles reported as STAGING");
+	LOGGER.info("7. Restart the RFC service using webpa set command");
+	LOGGER.info(
+		"8. Verify the feature profile reported as ACTIVE  and check  whether the current list matches with the earlier STAGING list");
+	LOGGER.info("9. Restart the RFC service using webpa set command");
+	LOGGER.info(
+		"10. Verify the ACTIVE profile logs and check previous ACTIVE featues list is present in the current list");
+	LOGGER.info("#######################################################################################");
+
+	// variable declaration begins
+	// Status of test script verification
+	boolean status = false;
+	// Test case id
+	String testCaseId = "TC-RDKB-SYSTEM-133";
+	// Test step number
+	String stepNumber = "s1";
+	// String to store error message
+	String errorMessage = null;
+	// String to store response
+	String response = null;
+	// List to store RFC staging features
+	ArrayList<String> rfcStagingList = null;
+	// List to store RFC active features 1
+	ArrayList<String> rfcActiveList1 = null;
+	// List to store RFC active features 2
+	ArrayList<String> rfcActiveList2 = null;
+	// variable declaration ends
+
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    LOGGER.info("PRE-CONDITION STEPS");
+	    LOGGER.info(
+		    "PRE-CONDITION : DESCRIPTION : Copy rfc.properties file from /etc to /nvram directory");
+	    LOGGER.info(
+		    "PRE-CONDITION : ACTION : Execute command: cp /etc/rfc.properties /nvram/rfc.properties");
+	    LOGGER.info(
+		    "PRE-CONDITION : EXPECTED : rfc.properties file should be present in /nvram directory");
+	    boolean preStatus = BroadBandRfcFeatureControlUtils.copyRfcPropertiesFromEtcToNVRAM(device, tapEnv)
+		    && CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
+			    BroadBandCommandConstants.FILE_DCMRFC_LOG);
+	    if (!preStatus) {
+		throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR
+			+ " : pre-condition step failed to copy rfc.properties file to /nvram directory");
+	    }
+	    LOGGER.info(
+		    "PRE-CONDITION : ACTUAL: Successfully copied rfc.properties file to /nvram directory");
+	    LOGGER.info("PRE-CONFIGURATIONS : FINAL STATUS -  " + preStatus);
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+	    stepNumber = "s1";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION: Update RFC_CONFIG_SERVER_URL value in rfc.properties file with an invalid URL and check whether the URL updated");
+	    LOGGER.info(
+		    "STEP 1: ACTION: Change the value of RFC_CONFIG_SERVER_URL to an invalid url ");
+	    LOGGER.info("STEP 1: EXPECTED: The RFC_CONFIG_SERVER_URL in  rfc.properties should be updated to new one");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the RFC_CONFIG_SERVER_URL  in /nvram/rfc.properties";
+	    status = BroadBandRfcFeatureControlUtils.copyAndUpdateRfcPropertiesNewXconfUrl(device, tapEnv,
+		    AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_PROXY_XCONF_INVALID_URL));
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL: Successfully updated invalid URL in /nvram/rfc.properties file");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s2";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION: Restart the RFC service using webpa set command");
+	    LOGGER.info(
+		    "STEP 2: ACTION: Execute webpa set command: parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow datatype: uint value: 1");
+	    LOGGER.info("STEP 2: EXPECTED: Webpa set should be success and get the response code as 200");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to set the webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow to restart RFC service";
+	    status = BroadBandWiFiUtils.setWebPaParams(device, WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.CONSTANT_2);
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL: Successfully restarted the RFC service using webpa operation");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s3";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION: Verify the features reported as NONE in dcmrfc.log file");
+	    LOGGER.info(
+		    "STEP 3: ACTION: Execute command: 1. grep -i \"[RFC]:: [Features Enabled]-[NONE]\" /rdklogs/logs/dcmrfc.log\n  2. grep -i \"http_code:404\" /rdklogs/logs/dcmrfc.log");
+	    LOGGER.info("STEP 3: EXPECTED: Should be present the log message in dcmrfc.log file");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to verify the expected logs \"[RFC]:: [Features Enabled]-[NONE]\" in /rdklogs/logs/dcmrfc.log";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTraceConstants.LOG_MESSAGE_RFC_NONE,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Expected http_code  404 is not received";
+		status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_HTTP_CODE_404, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+			BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    }
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL: Successfully verified http code & log message in dcmrfc.log file");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s4";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION: Change  RFC_CONFIG_SERVER_URL value in rfc.properties file with valid MOCK server URL ");
+	    LOGGER.info(
+		    "STEP 4: ACTION: Change the value of RFC_CONFIG_SERVER_URL to an valid mock server url :https://rdkautotool.ccp.xcal.tv/featureControl/getSettings");
+	    LOGGER.info(
+		    "STEP 4: EXPECTED: The RFC_CONFIG_SERVER_URL in  rfc.properties should be updated to valid mock server url successfully");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to update the RFC_CONFIG_SERVER_URL with valid mock url";
+	    CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device, BroadBandCommandConstants.FILE_DCMRFC_LOG);
+	    status = BroadBandRfcFeatureControlUtils.copyAndUpdateRfcPropertiesNewXconfUrl(device, tapEnv,
+		    AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_PROXY_XCONF_RFC_URL));
+	    if (status) {
+		LOGGER.info("STEP 4: ACTUAL: Successfully updated valid URL in /nvram/rfc.properties file");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s5";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 5: DESCRIPTION: Restart the RFC service using webpa set command");
+	    LOGGER.info(
+		    "STEP 5: ACTION: Execute webpa set command: parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow datatype: uint value: 1");
+	    LOGGER.info("STEP 5: EXPECTED: Webpa set should be success and get the response code as 200");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to set the webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow to restart RFC service";
+	    status = BroadBandWiFiUtils.setWebPaParams(device, WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.CONSTANT_2);
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL: Successfully restarted the RFC service using webpa operation");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s6";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION: Verify the feature profiles reported as STAGING");
+	    LOGGER.info(
+		    "STEP 6: ACTION: Execute command: 1. grep -i \"[RFC]:: [Features Enabled]-[STAGING]\" /rdklogs/logs/dcmrfc.log\n 2. grep -i \"http_code: 200\" /rdklogs/logs/dcmrfc.log");
+	    LOGGER.info("STEP 6: EXPECTED: Should be present the log message in dcmrfc.log file");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Feature profile is not reported as STAGING";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RFC_STAGING, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Expected status code 200 is not received";
+		rfcStagingList = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			BroadBandTestConstants.PATTERN_RFC_FEATURE_LIST);
+		status = !rfcStagingList.isEmpty() && rfcStagingList.size() > BroadBandTestConstants.CONSTANT_0
+			&& CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+				BroadBandTraceConstants.LOG_MESSAGE_RFC_HTTP_CODE_200,
+				BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	    }
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL: Successfully verified http code & log message in dcmrfc.log file");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s7";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION: Restart the RFC service using webpa set command");
+	    LOGGER.info(
+		    "STEP 7: ACTION: Execute webpa set command: parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow datatype: uint value: 1");
+	    LOGGER.info("STEP 7: EXPECTED: Webpa set should be success and get the response code as 200");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to set the webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow to restart RFC service";
+	    CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device, BroadBandCommandConstants.FILE_DCMRFC_LOG);
+	    status = BroadBandWiFiUtils.setWebPaParams(device, WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.CONSTANT_2);
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL: Successfully restarted the RFC service using webpa operation");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s8";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 8: DESCRIPTION: Verify the feature profile reported as ACTIVE  and check  whether the current list matches with the earlier STAGING list");
+	    LOGGER.info(
+		    "STEP 8: ACTION: Execute command: 1. grep -i \"[RFC]:: [Features Enabled]-[ACTIVE]\"  /rdklogs/logs/dcmrfc.log\n 2. grep -i \"http_code: 304\" /rdklogs/logs/dcmrfc.log 3. Check whether previous STAGING features are also present in current active list retured");
+	    LOGGER.info("STEP 8: EXPECTED: Log message should be present in dcmrfc.log file");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Feature profile reported is not ACTIVE";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RFC_ACTIVE, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Expected status code 304 is not received or Current ACTIVE feature list doesnot matches with earlier STAGING list";
+		if (CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_HTTP_CODE_304, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+			BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS))) {
+		    rfcActiveList1 = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			    BroadBandTestConstants.PATTERN_RFC_FEATURE_LIST);
+		    status = !rfcActiveList1.isEmpty() && rfcActiveList1.size() > BroadBandTestConstants.CONSTANT_0
+			    && rfcActiveList1.equals(rfcStagingList);
+		}
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 8: ACTUAL: Successfully verified http code as 304, log message in dcmrfc.log file also verified ACTIVE & STAGING feature list are same");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s9";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION: Restart the RFC service using webpa set command");
+	    LOGGER.info(
+		    "STEP 9: ACTION: Execute webpa set command: parameter: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow datatype: uint value: 1");
+	    LOGGER.info("STEP 9: EXPECTED: Webpa set should be success and get the response code as 200");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Failed to set the webpa parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Control.RetrieveNow to restart RFC service";
+	    CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device, BroadBandCommandConstants.FILE_DCMRFC_LOG);
+	    status = BroadBandWiFiUtils.setWebPaParams(device, WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN,
+		    BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.CONSTANT_2);
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL: Successfully restarted the RFC service using webpa operation");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	    stepNumber = "s10";
+	    status = false;
+	    LOGGER.info("******************************************************************************");
+	    LOGGER.info(
+		    "STEP 10: DESCRIPTION: Verify the ACTIVE profile logs and check previous ACTIVE featues list is present in the current list");
+	    LOGGER.info(
+		    "STEP 10: ACTION: Execute command: grep -i \"[RFC]:: [Features Enabled]-[ACTIVE]\"  /rdklogs/logs/dcmrfc.log grep -i \"http_code: 304\" /rdklogs/logs/dcmrfc.log 3. Check whether previous STAGING features are also present in current active list retured");
+	    LOGGER.info("STEP 10: EXPECTED: Log message should be present in dcmrfc.log file");
+	    LOGGER.info("******************************************************************************");
+	    errorMessage = "Feature profile reported is not ACTIVE";
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+		    BroadBandTraceConstants.LOG_MESSAGE_RFC_ACTIVE, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+		    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    if (CommonMethods.isNotNull(response)) {
+		errorMessage = "Expected status code 304 is not received or Current ACTIVE feature list doesnot matches with earlier ACTIVE list";
+		if (CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+			BroadBandTraceConstants.LOG_MESSAGE_HTTP_CODE_304, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+			BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS))) {
+		    rfcActiveList2 = CommonMethods.patternFinderToReturnAllMatchedString(response,
+			    BroadBandTestConstants.PATTERN_RFC_FEATURE_LIST);
+		    status = !rfcActiveList2.isEmpty() && rfcActiveList2.size() > BroadBandTestConstants.CONSTANT_0
+			    && rfcActiveList1.equals(rfcActiveList2);
+		}
+	    }
+	    if (status) {
+		LOGGER.info(
+			"STEP 10: ACTUAL: Successfully verified http code as 304, log message in dcmrfc.log file also verified current & eariler ACTIVE feature list are same");
+	    } else {
+		LOGGER.error("STEP 10: ACTUAL: " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+	    // ##################################################################################################//
+
+	} catch (Exception exception) {
+	    errorMessage = exception.getMessage();
+	    LOGGER.error("Exception Occurred while Verifying reporting of RFC feature enable" + errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNumber, status, errorMessage,
+		    false);
+	} finally {
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("POST-CONDITION: DESCRIPTION: Remove rfc.properties file from /nvram directory");
+	    LOGGER.info("POST-CONDITION: ACTION: Execute command: rm /nvram/rfc.properties");
+	    LOGGER.info("POST-CONDITION: EXPECTED: Should be deleted rfc.properties file");
+	    status = CommonUtils.removeFileandVerifyFileRemoval(tapEnv, device,
+		    BroadBandRfcFeatureControlUtils.NVRAM_RFC_PROPERTIES);
+	    LOGGER.info("POST-CONDITION: ACTUAL: Successfully removed the rfc.properties file in /nvram directory");
+	    LOGGER.info("POST-CONFIGURATIONS: FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-1033");
+	// ###############################################################//
+    }
 }

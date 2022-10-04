@@ -1902,4 +1902,398 @@ public class BroadBandRebootPrimitivesTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-REBOOT-1012");
 	}
+	
+    /**
+     * Verification of any kind of crash in device if Multiple WiFi reset triggerred
+     * <ol>
+     * <li>Pre condition 1. Disable mesh using system Commands</li>
+     * <li>Verify Adv Security is enabled</li>
+     * <li>Check for available ath interfaces</li>
+     * <li>Wifi reset device using webpa</li>
+     * <li>Wait for 5 minutes and Check for available ath interfaces is same as Step 3</li>
+     * <li>Verify the ccspwifi process should not be affected</li>
+     * <li>Verify any crash in Selfheal log</li>
+     * <li>Verify Success Rate for ath interface to be same after multiple wifi reset</li>
+     * <li>Verify Success Rate for Ccsp wifiProcess to be same after multiple wifi reset</li>
+     * <li>Verify Success Rate for no process crash in SealHeal logs on multiple wifi reset</li>
+     * <li>Post condition 1. Enable mesh using system Commands</li>
+     * 
+     * @author kiruthiga.sakthivel
+     * @refactor Athira
+     * 
+     * @param device
+     *            {@link Dut}
+     *            </ol>
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-WIFI-REBOOT-1001")
+    public void testToVerifyCrashOnMultipleReboot(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-WIFI-REBOOT-101";
+	String stepNum = "S1";
+	String errorMessage = "";
+	boolean status = false;
+	int countOfIteration = 5;
+	Integer iteration = 0;// Integer to store iteration value
+	Integer successCount = 0;// Integer to store successcount
+	Integer wifiProcessSuccessCnt = 0;// Integer to store ccp wifi process successcount
+	Integer selfHealLogSuccessCnt = 0;// Integer to store SelfHeal log crash successcount
+	String response = null;
+	String processId = null;
+	String interfaceath0Response = null;
+	String interfaceath1Response = null;
+	boolean failureFlag = false;
+	String cmdForath0 = null;
+	String cmdForath1 = null;
+	float successRateInterface = 0;// Float to store success rate of ath interface
+	float wifiProcessSuccessRate = 0;// Float to store ccp wifi process success rate
+	float selfHealLogsuccessRate = 0;// Float to store Success Rate of SelfHeal Log Crash validation
+	String meshInitialStatus = null;
+	int postConStepNumber = 0;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-REBOOT-1001");
+	LOGGER.info("TEST DESCRIPTION: Verification of any kind of crash in device if Multiple WiFi reset triggerred");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("Pre condition 1. Disable mesh using system Commands");
+	LOGGER.info("1. Verify Adv Security is enabled ");
+	LOGGER.info("2. Check for available ath interfaces ");
+	LOGGER.info("IterationStep 1. Wifi reset device using webpa");
+	LOGGER.info("IterationStep 2. Wait for 5 minutes  and  Check for available ath interfaces is same as Step 3");
+	LOGGER.info("IterationStep 3. Verify the ccspwifi process should not be affected");
+	LOGGER.info("IterationStep 4. Verify  any crash in Selfheal log ");
+	LOGGER.info("3. Verify Success Rate for ath interface to be same after multiple wifi reset");
+	LOGGER.info("4. Verify Success Rate for Ccsp wifiProcess to be same after multiple wifi reset");
+	LOGGER.info("5. Verify Success Rate for no process crash in SealHeal logs on multiple wifi reset");
+	LOGGER.info("Post condition 1. Enable mesh using system Commands");
+	LOGGER.info("#######################################################################################");
+
+	try {
+		
+		if (!DeviceModeHandler.isBusinessClassDevice(device)) {
+			// Perform mesh disabling in precondition only when mesh is enabled
+			if (BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_RDKCENTRAL_MESH_ENABLE, BroadBandTestConstants.TRUE,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)) {
+				meshInitialStatus = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_RDKCENTRAL_MESH_ENABLE);
+				BroadBandPreConditionUtils.executePreConditionToDisableMeshUsingSystemCommands(device, tapEnv,
+						meshInitialStatus, BroadBandTestConstants.CONSTANT_1);
+			}
+		}
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("THIS TEST SCRIPT INVOLVES 5 WIFI  RESET SCENARIOS AND MAY CAUSE CRASHS");
+	    LOGGER.info("#######################################################################################");
+
+	    stepNum = "S1";
+	    errorMessage = "Failed to verify Adv security as Enabled";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 1: DESCRIPTION : Verify Adv Security is enabled ");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute webpa Get Command Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable ");
+	    LOGGER.info("STEP 1: EXPECTED : Succesfully verified Adv Security is enabled");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_FINGER_PRINT_ENABLE, BroadBandTestConstants.TRUE);
+	    if (!status) {
+		status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_FINGER_PRINT_ENABLE,
+			WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.TRUE);
+	    }
+	    if (status) {
+		LOGGER.info("STEP 1: ACTUAL : SUCCESSFULLY VERIFIED Advanced Security Status USING "
+			+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_FINGER_PRINT_ENABLE);
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    stepNum = "S2";
+	    errorMessage = "Received null response for ath0 and ath1 interface accesspoints";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Check for available ath interfaces ");
+	    LOGGER.info("STEP 2: ACTION : Execute Command: iwconfig ath0 and iwconfig ath1");
+	    LOGGER.info("STEP 2: EXPECTED : It should return the available ath interfaces");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		cmdForath0 = CommonMethods.isAtomSyncAvailable(device,tapEnv)
+			? BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_IW_CONFIG_PATH,
+					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.INTERFACE_ATH0)
+			: BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_IFCONFIG,
+					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.INTERFACE_ATH0);
+		LOGGER.info("STEP 2: cmdForath0 " + cmdForath0);
+		
+		cmdForath1 = CommonMethods.isAtomSyncAvailable(device,tapEnv)
+			? BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.CMD_IW_CONFIG_PATH,
+					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.INTERFACE_ATH1)
+			: BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_IFCONFIG,
+					BroadBandTestConstants.SINGLE_SPACE_CHARACTER, BroadBandTestConstants.INTERFACE_ATH1);
+		LOGGER.info("STEP 2: cmdForath1 " + cmdForath1);
+		
+		interfaceath0Response = BroadBandCommonUtils.retrieveBssidMacAddressUsingSystemCommands(device, tapEnv,
+			cmdForath0);
+		LOGGER.info("STEP 2: interfaceath0Response " + interfaceath0Response);
+		
+		interfaceath1Response = BroadBandCommonUtils.retrieveBssidMacAddressUsingSystemCommands(device, tapEnv,
+			cmdForath1);
+		LOGGER.info("STEP 2: interfaceath1Response " + interfaceath1Response);
+		
+		if (CommonMethods.isNotNull(interfaceath0Response) && CommonMethods.isNotNull(interfaceath1Response)) {
+		    errorMessage = "Unable to get the ath interfaces accesspoints";
+		    status = CommonMethods.patternMatcher(interfaceath0Response,
+			    BroadBandTestConstants.STRING_REGEX_IP_MAC)
+			    && CommonMethods.patternMatcher(interfaceath1Response,
+				    BroadBandTestConstants.STRING_REGEX_IP_MAC);
+		    LOGGER.info("STEP 2: status " + status);
+		}
+	    } catch (Exception exception) {
+		LOGGER.error("Exception occurrd while checking ath interfaces: " + exception.getMessage());
+	    }
+	    if (status) {
+		LOGGER.info("STEP 2: ACTUAL : Successfuly retrieved the available ath interfaces");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    for (int count = 0; count < countOfIteration; count++) {
+		iteration = count + 1;
+		/**
+		 * ITERATION 1: Wifi reset device using webpa
+		 */
+		errorMessage = "Unable to reset the device";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("ITERATION :" + iteration + " 1:  Wifi reset device using webpa");
+		LOGGER.info("**********************************************************************************");
+		status = BroadBandWiFiUtils.setWebPaParams(device,
+			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_CONTROL_DEVICE_REBOOT,
+			BroadBandTestConstants.STRING_FACTORY_RESET_WIFI, BroadBandTestConstants.CONSTANT_0);
+		if (status) {
+		    LOGGER.info("ITERATION :" + iteration + " 1: Successfully wifi Rebooted the device");
+		} else {
+		    LOGGER.error("ITERATION :" + iteration + " 1: " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+
+		/**
+		 * ITERATION 2: Wifi reset device using webpa
+		 */
+		errorMessage = "Unable to get the ath interfaces";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("ITERATION :" + iteration
+			+ " 2:  Wait for 5 minutes  and  Check for available ath interfaces is same as Step 3");
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("ITERATION :" + iteration + " Waiting for 5 Minutes");
+		tapEnv.waitTill(BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS);
+		try {
+		    if (CommonMethods.isNotNull(interfaceath0Response)
+			    && CommonMethods.isNotNull(interfaceath1Response)) {
+			errorMessage = "ath interfaces received is not same a Step 3";
+			status = CommonMethods
+				.patternMatcher(BroadBandCommonUtils.retrieveBssidMacAddressUsingSystemCommands(device,
+					tapEnv, cmdForath0), interfaceath0Response)
+				&& CommonMethods.patternMatcher(BroadBandCommonUtils
+					.retrieveBssidMacAddressUsingSystemCommands(device, tapEnv, cmdForath0),
+					interfaceath1Response);
+		    }
+		} catch (Exception exception) {
+		    LOGGER.error("Exception occurrd while checking ath interfaces: " + exception.getMessage());
+		}
+		if (status) {
+		    successCount++;
+		    LOGGER.info(
+			    "ITERATION :" + iteration + "  2:  Successfully retrieved the available ath interfaces");
+		} else {
+		    LOGGER.error("ITERATION :" + iteration + "  2: " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+
+		/**
+		 * ITERATION 3: Wifi reset device using webpa
+		 */
+		errorMessage = "Failed to verify the CcspWifi process running";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("ITERATION :" + iteration + " 3:  Verify the ccspwifi process should not be affected");
+		LOGGER.info("**********************************************************************************");
+		response = CommonMethods.patternFinder(CommonMethods.isAtomSyncAvailable(device,tapEnv)
+			? CommonMethods.executeCommandInAtomConsole(device, tapEnv,
+				BroadBandCommandConstants.CMD_PS_GREP_V.replace(BroadBandTestConstants.PROCESS_NAME,
+					BroadBandTestConstants.WIFI_PROCESS_NAME))
+			: tapEnv.executeCommandUsingSsh(device,
+				BroadBandCommandConstants.CMD_PS_GREP_V.replace(BroadBandTestConstants.PROCESS_NAME,
+					BroadBandTestConstants.WIFI_PROCESS_NAME)),
+			BroadBandTestConstants.PATTERN_MATCHER_TO_GET_CCSP_WIFI_PROCESS_PID);
+		LOGGER.info("ccspwifi process id is "+response);
+		if (iteration == 1) {
+		    processId = response;
+		}
+		if (CommonMethods.isNotNull(response) && processId.equalsIgnoreCase(response)) {
+		    wifiProcessSuccessCnt++;
+		    LOGGER.info("ITERATION :" + iteration + " 3 : Ccspwifi process is not affected, As expected.");
+		} else {
+		    LOGGER.error("ITERATION :" + iteration + " 3 :" + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+
+		/**
+		 * ITERATION 4: Wifi reset device using webpa
+		 */
+		errorMessage = "Failed to verify the SelfHeal logs";
+		status = false;
+		LOGGER.info("**********************************************************************************");
+		LOGGER.info("ITERATION :" + iteration + " 4: Verify  whether any crash occured in Selfheal log ");
+		LOGGER.info("**********************************************************************************");
+		status = CommonMethods.isNull(tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CMD_CHECK_SELF_HEAL_LOGS_FOR_CRASH));
+		if (status) {
+		    selfHealLogSuccessCnt++;
+		    LOGGER.info(
+			    "ITERATION :" + iteration + " 4: Successfully verified as no crash found in selfheal logs");
+		} else {
+		    LOGGER.error("ITERATION :" + iteration + " 4: " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+	    }
+
+	    stepNum = "S3";
+	    errorMessage = "Number of success Count made is less than number of attempts. Acutal number of success to get ath interfaces : "
+		    + successCount;
+	    status = false;
+	    failureFlag = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Verify Success Rate for ath interface to be same after multiple wifi reset");
+	    LOGGER.info("STEP 3: ACTION : Calculate the Success Count");
+	    LOGGER.info("STEP 3: EXPECTED : It should return the number of iteration as Success count");
+	    LOGGER.info("**********************************************************************************");
+	    successRateInterface = successCount * 100 / countOfIteration;
+
+	    if (successCount == countOfIteration) {
+		status = true;
+		LOGGER.info("STEP 3: ACTUAL: Success Count for ath interfaces is " + successCount
+			+ " Successful iterations out of 10 iterations is :" + successRateInterface);
+	    } else {
+		failureFlag = true;
+		LOGGER.error("STEP 3:ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("Success Rate for ath interface to be same after multiple wifi reset is :"
+		    + successRateInterface + "%");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S4";
+	    errorMessage = "Number of success Count made is less than number of attempts. Acutal number of success to get Ccsp wifiprocess id  : "
+		    + wifiProcessSuccessCnt;
+	    status = false;
+	    failureFlag = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Verify Success Rate for Ccsp wifiProcess to be same after multiple wifi reset");
+	    LOGGER.info("STEP 4: ACTION : Calculate the Success Count");
+	    LOGGER.info("STEP 4: EXPECTED : It should return the number of iteration as Success count");
+	    LOGGER.info("**********************************************************************************");
+	    wifiProcessSuccessRate = wifiProcessSuccessCnt * 100 / countOfIteration;
+
+	    if (wifiProcessSuccessCnt == countOfIteration) {
+		status = true;
+		LOGGER.info("STEP 4: ACTUAL: Success Count for Ccsp wifiProcess id is " + wifiProcessSuccessCnt
+			+ " Successful iterations out of 10 iterations is :" + wifiProcessSuccessRate);
+	    } else {
+		failureFlag = true;
+		LOGGER.error("STEP 4:ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("Success Rate for Ccsp wifiProcess id to be same after multiple wifi reset is :"
+		    + wifiProcessSuccessRate + "%");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    stepNum = "S5";
+	    errorMessage = "Number of success Count made is less than number of attempts. Acutal number of success on no crash in SelfHeal log: "
+		    + selfHealLogSuccessCnt;
+	    status = false;
+	    failureFlag = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 5: DESCRIPTION : Verify Success Rate for no process crash in SealHeal logs on multiple wifi reset");
+	    LOGGER.info("STEP 5: ACTION : Calculate the Success Count");
+	    LOGGER.info("STEP 5: EXPECTED : It should return the number of iteration as Success count");
+	    LOGGER.info("**********************************************************************************");
+	    selfHealLogsuccessRate = selfHealLogSuccessCnt * 100 / countOfIteration;
+
+	    if (selfHealLogSuccessCnt == countOfIteration) {
+		status = true;
+		LOGGER.info("STEP 5: ACTUAL: Success Count for no process crash in SealHeal logs is "
+			+ selfHealLogSuccessCnt + " Successful iterations out of 10 iterations is :"
+			+ selfHealLogsuccessRate);
+	    } else {
+		failureFlag = true;
+		LOGGER.error("STEP 5:ACTUAL: " + errorMessage);
+	    }
+	    LOGGER.info("Success Rate for no process crash in SealHeal logs on multiple wifi reset is :"
+		    + selfHealLogsuccessRate + "%");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		LOGGER.info("POST-CONDITION STEPS");
+		if (!DeviceModeHandler.isBusinessClassDevice(device)) {
+			// Perform mesh enabling in postcondition
+			if (BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_RDKCENTRAL_MESH_ENABLE, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)) {
+				postConStepNumber++;
+
+				status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_RDKCENTRAL_MESH_ENABLE, WebPaDataTypes.BOOLEAN.getValue(),
+						BroadBandTestConstants.TRUE);
+				
+				if (status) {
+					LOGGER.info("POST-CONDITION " + postConStepNumber + ": Mesh is Enabled, Retained to its default Value");
+				} else {
+					LOGGER.info("POST-CONDITION " + postConStepNumber + ": UNABLE TO START THE MESH SERVICE");
+				}
+				
+				
+			}
+		}
+		// Post condition will execute only when any crash happens
+		if (failureFlag) {
+			postConStepNumber++;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("POST-CONDITION " + postConStepNumber + ": DESCRIPTION : Reboot the device ");
+			LOGGER.info(
+					"POST-CONDITION " + postConStepNumber + ": ACTION : Execute the following command:/sbin/reboot ");
+			LOGGER.info("POST-CONDITION " + postConStepNumber + ": EXPECTED : Reboot should be successful");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "Failed to reboot and access the device";
+			status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+
+			if (status) {
+				LOGGER.info("POST-CONDITION " + postConStepNumber
+						+ ": ACTUAL : Post condition to reboot the device executed successfully");
+			} else {
+				LOGGER.error("POST-CONDITION " + postConStepNumber + ": ACTUAL : Post condition failed" + errorMessage);
+			}
+		}
+		LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-WIFI-REBOOT-1001");
+}
 }
