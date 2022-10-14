@@ -124,7 +124,9 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 
 	try {
 //	    response = conn.send(command, expectStr, options);
-		conn.sendAsRoot(command);
+//		conn.sendAsRoot(command);
+		conn.connect();
+		conn.sendCommand(command, 1000);
 		conn.sendCommand(password, 1000);
 //		conn.sendToShell(commands);
 		conn.bufferResponse();
