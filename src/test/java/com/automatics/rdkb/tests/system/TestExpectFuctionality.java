@@ -13,6 +13,7 @@ import com.automatics.providers.connection.DeviceConnectionProvider;
 import com.automatics.providers.connection.SshConnection;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
+import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
@@ -26,7 +27,7 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 	public void testVerifyExpectFeature(Dut device) {
 
 		String testCaseId = "";
-		String stepNum = "";
+		String stepNum = "1";
 		String errorMessage = "";
 		boolean status = false;
 		String ssidName = null;
@@ -38,7 +39,7 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 		// variable to store connection type of the connected client
 		String connectionType = null;
 		String macAddress = null;
-		Device ecastSettop = (Device) device;
+		
 
 		// Variable Declaration Ends
 
@@ -69,6 +70,7 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 					LOGGER.info("Client device Wi-Fi capability : " + wifiCapability);
 
 					try {
+						Device ecastSettop = (Device) clientSettop;
 						if (ecastSettop.isLinux()) {
 							LOGGER.info("user password :" + device.getExtraProperties().get("password"));
 
@@ -77,9 +79,12 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 								String[] commands = {BroadBandCommandConstants.CMD_SUDO + connectToLinux
 										.replaceAll("<ssid>", ssidName).replaceAll("<password>", passPhraseName),"rdk@1234"};
 								response = execute(clientSettop, commands);
+								LOGGER.info("response :"+response);
 							} catch (Exception e) {
 								LOGGER.info("failed to execute commands");
 							}
+						}else {
+							LOGGER.error("no linux device");
 						}
 					} catch (Exception e) {
 						LOGGER.info("ssh connection failed :" + e.getMessage());
@@ -90,10 +95,14 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("no CC devices connected");
 			}
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 		} catch (Exception e) {
-			LOGGER.info("exception occured :" + e.getMessage());
+			LOGGER.error("exception occured :" + e.getMessage());
+			 CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					    true);
 		}
+		LOGGER.info("ending testcase");
 	}
 	
     /**
