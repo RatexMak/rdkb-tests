@@ -2903,4 +2903,109 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-1003");
 		LOGGER.info("#######################################################################################");
 	}
+	
+    /**
+     * Method to verifyCronTabProcess
+     * 
+     * @param device
+     *            {@link Dut}
+     * @param testId
+     *            Test case ID
+     * @param stepNumber
+     *            Step Number
+     * @return boolean postExecution status
+     * 
+     * @Refactor Sruthi Santhosh
+     */
+    public static boolean verifyCronTabProcess(Dut device, String testCaseId, int stepNumber) throws TestException {
+
+    // Variable Declaration begins
+	String errorMessage = null;
+	boolean status = false;
+	String stepNum = null;
+	String response = null;
+	boolean postExecution = false;
+	long boxUpTimeInSeconds = 0;
+	boolean isSTBAccessible = false;
+	// Variable Declaration ends
+	try {
+
+	    /**
+	     * Step 10 : Verify cron job is scheduled
+	     */
+	    stepNumber++;
+	    stepNum = "s" + stepNumber;
+	    errorMessage = "Unable to retrieve crontab processes either from crontab -l/crotab -l -c /var/spool/cron/crontabs";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify  cron tab processes is running.");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": ACTION : Execute command:crontab -l -c /var/spool/cron/crontabs and command:crontab -l");
+	    LOGGER.info("STEP " + stepNumber
+		    + ": EXPECTED : Response should contain cron tab processes and it should be same for both the commands executed.");
+	    LOGGER.info("**********************************************************************************");
+	    String cronTabResponse = null;
+	    errorMessage = "Failed to enable periodic firmware check";
+	    // to enable periodic firmware check is enabled to get firmware download process in crontab.
+	    try {
+		status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+			BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE,
+			BroadBandTestConstants.BOOLEAN_VALUE_TRUE.toString(),
+			BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		if (!status) {
+		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+			    BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE,
+			    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+			    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+			    BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
+		    postExecution = status;
+		    // waiting for twenty seconds for rabid process disable changes to get reflected
+		    tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTE_IN_MILLIS);
+		}
+	    } catch (Exception exception) {
+		LOGGER.error(errorMessage + " : " + exception.getMessage());
+	    }
+	    // while condition is to wait till the firmware download process is running in crontab processes
+	    errorMessage = "Failed to get the crontab processes either in crontab -l or crontab -l -c /var/spool/cron/crontabs commands.";
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+	    do {
+		isSTBAccessible = CommonMethods.isSTBAccessible(device);
+		if (!isSTBAccessible) {
+		    LOGGER.error("Device is not accessible while checking for cron tab process is up and running");
+		}
+		boxUpTimeInSeconds = CommonUtils.getBoxUptimeInSeconds(device, tapEnv);
+		cronTabResponse = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CRONTAB_EXECUTE_COMMAND);
+		status = cronTabResponse.contains(BroadBandCommandConstants.FIRMWARE_SCRIPT_GENERIC_NAME);
+	    } while (!status && (boxUpTimeInSeconds * 1000 < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS)
+		    && isSTBAccessible && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+			    BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
+	    // while condition status check is not required as the below command is to retrieve crontab processes using
+	    // absolute path.
+	    try {
+		response = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommandConstants.CRONTAB_EXECUTE_ABSOLUTEPATH);
+		status = CommonMethods.isNotNull(cronTabResponse) && CommonMethods.isNotNull(response)
+			&& BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+				cronTabResponse, response);
+	    } catch (Exception exception) {
+		status = false;
+		LOGGER.error(errorMessage + " : " + exception.getMessage());
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified cron tab process obtained from absolute path");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	return postExecution;
+    }
 }

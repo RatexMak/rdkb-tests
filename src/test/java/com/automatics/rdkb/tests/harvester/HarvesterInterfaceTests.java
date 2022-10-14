@@ -72,8 +72,7 @@ public class HarvesterInterfaceTests extends AutomaticsTestBase {
 		boolean status = false;
 		String reportingPeriodValue = null;
 		// Variable Declaration Ends
-		// Steps related to Factory reset and default value validation has been moved to
-		// TC-RDKB-DEFAULT-VALUES-1001
+
 		LOGGER.info("#######################################################################################");
 		LOGGER.info("STARTING TEST CASE: TC-RDKB-VALIDATE-HARV-3001");
 		LOGGER.info("TEST DESCRIPTION: Validate Wi-Fi Harvester InterfaceDevicesWifi Report after Reboot of DUT");

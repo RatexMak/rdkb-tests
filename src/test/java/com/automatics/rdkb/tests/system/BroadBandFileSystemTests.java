@@ -18,9 +18,13 @@
 package com.automatics.rdkb.tests.system;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpStatus;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -29,6 +33,7 @@ import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.BroadbandRfcDataBaseValueObject;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -2557,4 +2562,657 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-RBUS-1001");
     }
+    
+    /**
+	 * Validate rfc default and enabled values in defaults/database file
+	 * <ol>
+	 * <li>Validate rfcDefaults has rfc parameters</li>
+	 * <li>Validate tr181store file entries</li>
+	 * <li>Configure RFC payload to enable presence detect</li>
+	 * <li>Verify
+	 * Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PresenceDetect.Enable
+	 * parameter is updated by RFC</li>
+	 * <li>Validate presencedetect is updated in tr181store file entries</li>
+	 * <li>Disable presencedetect using webpa</li>
+	 * <li>Validate presencedetect is updated in tr181store file entries source
+	 * should be updated to webpa</li>
+	 * <li>Reboot and wait for IP Acquisition</li>
+	 * <li>Validate presencedetect is updated in tr181store file entries source
+	 * should be updated to rfc</li>
+	 * <li>Delete rfc featurename from mockxconf and reboot device</li>
+	 * <li>Validate presencedetect is not available in tr181store file entries</li>
+	 * <li>Disable presencedetect using webpa</li>
+	 * <li>Validate presencedetect is updated in tr181store file entries source
+	 * should be updated to webpa</li>
+	 * <li>Reboot and wait for IP Acquisition</li>
+	 * <li>Validate presencedetect is persisted in tr181store file entries source
+	 * should be updated to webpa</li>
+	 * <li>POST-CONDITION 1 : CONFIGURE RFC PAYLOAD TO REVERT SETTINGS IN GW</li>
+	 * </ol>
+	 * 
+	 * @param device Dut instance
+	 * @author prasanthreddy.a
+	 * @refactor yamini.s
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.WEBPA)
+	@TestDetails(testUID = "TC-RDKB-RFC-DATABASE-1001")
+	public void testToValidateRfcDatabase(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-RFC-DATABASE-101";
+		String stepNum = "";
+		String errorMessage = "";
+		boolean status = false;
+		String response = null;
+		String payload = BroadBandTestConstants.STRING_RFC_DATA_GENERIC_PAYLOAD
+				.replace(BroadBandTestConstants.STRING_PAYLOAD_REPLACE, BroadBandTestConstants.TEMPORARY_FOLDER);
+		boolean enabledByRfc = false;
+		String defaultValue = null;
+		Map<String, String> responseMap = new HashMap<String, String>();
+		JSONObject jsonObject = new JSONObject();
+		Map<String, BroadbandRfcDataBaseValueObject> dataBaseMap = new HashMap<String, BroadbandRfcDataBaseValueObject>();
+		long startTime = 0;
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-RFC-DATABASE-1001");
+		LOGGER.info("TEST DESCRIPTION: Validate rfc default and enabled values in defaults/database file");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Validate rfcDefaults has rfc parameters");
+		LOGGER.info("2. Validate tr181store file entries");
+		LOGGER.info("3.  Configure RFC payload to enable presence detect");
+		LOGGER.info(
+				"4. Verify Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PresenceDetect.Enable parameter is updated by RFC");
+		LOGGER.info("5. Validate presencedetect is updated in tr181store file entries");
+		LOGGER.info("6. Disable presencedetect using webpa");
+		LOGGER.info(
+				"7. Validate presencedetect is updated in tr181store file entries source should be updated to webpa");
+		LOGGER.info("8. Reboot and wait for IP Acquisition ");
+		LOGGER.info("9. Validate presencedetect is updated in tr181store file entries source should be updated to rfc");
+		LOGGER.info("10. Delete rfc featurename from mockxconf and reboot device ");
+		LOGGER.info("11. Validate presencedetect is not available in tr181store file entries ");
+		LOGGER.info("12. Disable presencedetect using webpa");
+		LOGGER.info(
+				"13. Validate presencedetect is updated in tr181store file entries source should be updated to webpa");
+		LOGGER.info("14. Reboot and wait for IP Acquisition ");
+		LOGGER.info(
+				"15. Validate presencedetect is persisted in tr181store file entries source should be updated to webpa");
+		LOGGER.info("POST-CONDITION 1 : CONFIGURE RFC PAYLOAD TO REVERT SETTINGS IN GW");
+		LOGGER.info("#######################################################################################");
+
+		try {
+
+			stepNum = "S1";
+			errorMessage = "Unable to validate rfcDefaults.json ";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Validate rfcDefaults has rfc parameters");
+			LOGGER.info("STEP 1: ACTION : Execute : cat /etc/rfcDefaults.json ");
+			LOGGER.info(
+					"STEP 1: EXPECTED : Parameters starting with Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature. Should be available");
+			LOGGER.info("**********************************************************************************");
+
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandCommandConstants.FILE_LOCATION_RFC_DEFAULTS));
+				status = CommonMethods.isNotNull(response);
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+
+			if (status) {
+				responseMap = BroadBandCommonUtils.parseJsonDataToMap(response);
+				if (!responseMap.isEmpty()) {
+					status = true;
+					for (Map.Entry<String, String> iterator : responseMap.entrySet()) {
+						if (!CommonUtils.patternSearchFromTargetString(iterator.getKey(),
+								BroadBandTestConstants.STRING_RFC_PARAM_PATTERN)) {
+							status = false;
+							break;
+
+						}
+					}
+				}
+			}
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Successfully validated rfcdefaults json file");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S2";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : Validate tr181store file entries");
+			LOGGER.info("STEP 2: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info(
+					"STEP 2: EXPECTED : Successfully validated Each parameter name, value, update time, and source of update ");
+			LOGGER.info("**********************************************************************************");
+
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+				status = CommonMethods.isNotNull(response);
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+
+			if (status) {
+				dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+				status = !dataBaseMap.isEmpty() && dataBaseMap != null;
+			}
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Successfully validated tr181store json");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S3";
+			errorMessage = "Failed to configure RFC payload for Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PresenceDetect.Enable enable/disable";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION :  Configure RFC payload to enable presence detect");
+			LOGGER.info(
+					"STEP 3: ACTION : Copy and update /nvram/rfc.properties with mock RFC config server URL2. Post payload after replacing ESTB mac and enable/disable value 3. Reboot device or trigger Configurable RFC check-in");
+			LOGGER.info(
+					"STEP 3: EXPECTED :  Successfully rebooted or triggered check-in after configuring RFC payload");
+			LOGGER.info("**********************************************************************************");
+			try {
+				defaultValue = tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS);
+			} catch (Exception e) {
+				LOGGER.info("Failed to get webpa response " + e.getMessage());
+			}
+			if (CommonMethods.isNotNull(defaultValue) && BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device,
+					tapEnv, BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)) {
+				try {
+					jsonObject.put(
+							CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.TR181_DOT,
+									BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS),
+							BroadBandTestConstants.TRUE);
+				} catch (JSONException e) {
+					LOGGER.error("Unable to parse given Json input array");
+				}
+
+				if (BroadBandRfcFeatureControlUtils.executePreconditionForRfcTests(device, tapEnv,
+						payload.replace(BroadBandTestConstants.STRING_REPLACE, jsonObject.toString()))) {
+					errorMessage = "Unable to reboot device successfully";
+					status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv)
+							&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device,
+									BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+					enabledByRfc = status;
+				}
+
+			}
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Rfc settings post and rebooted device successfully");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S4";
+			errorMessage = "Unable to validate values in log files";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 4: DESCRIPTION : Verify Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PresenceDetect.Enable parameter is updated by RFC");
+			LOGGER.info(
+					"STEP 4: ACTION : Verify /tmp/rfc_configdata.txt contains posted parameter value2. Verify log message for updation in /rdklogs/logs/dcmrfc.log3. Verify parameter value is changed");
+			LOGGER.info("STEP 4: EXPECTED : Successfully validated values in rfc");
+			LOGGER.info("**********************************************************************************");
+
+			BroadBandResultObject result = BroadBandRfcFeatureControlUtils.verifyParameterUpdatedByRfc(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS,
+					BroadBandTestConstants.TRUE);
+			status = result.isStatus();
+
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Successfully verified rfc logs and webpa that presence detect enabled");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S5";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Validate presencedetect is updated in tr181store file entries");
+			LOGGER.info("STEP 5: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info(
+					"STEP 5: EXPECTED : Successfully validated  parameter name, value, update time, and source of update ");
+			LOGGER.info("**********************************************************************************");
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+			if (CommonMethods.isNotNull(response)) {
+				dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+				if (dataBaseMap != null && !dataBaseMap.isEmpty() && dataBaseMap
+						.containsKey(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)) {
+					status = CommonUtils.patternSearchFromTargetString(
+							dataBaseMap.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)
+									.getUpdateSource(),
+							BroadBandTestConstants.STRING_RFC);
+				}
+			}
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : Successfully validated presence of "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS
+						+ " in tr181store and validate source as 'rfc'");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S6";
+			errorMessage = "Unable to execute webpa";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Disable presencedetect using webpa");
+			LOGGER.info(
+					"STEP 6: ACTION : Execute: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PresenceDetect.Enable value : false");
+			LOGGER.info("STEP 6: EXPECTED : Successfully disabled presencedetect using webpa");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : Successfully executed webpa command to disable "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS);
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S7";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 7: DESCRIPTION : Validate presencedetect is updated in tr181store file entries source should be updated to webpa");
+			LOGGER.info("STEP 7: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info(
+					"STEP 7: EXPECTED : Successfully validated  parameter name, value, update time, and source of update ");
+			LOGGER.info("**********************************************************************************");
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+			if (CommonMethods.isNotNull(response)) {
+				dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+				if (dataBaseMap != null && !dataBaseMap.isEmpty() && dataBaseMap
+						.containsKey(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)) {
+					status = CommonUtils.patternSearchFromTargetString(
+							dataBaseMap.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)
+									.getUpdateSource(),
+							BroadBandTestConstants.PROCESS_NAME_WEBPA);
+				}
+			}
+
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : Successfully validated presence of "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS
+						+ " in tr181store and validate source as 'webpa'");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S8";
+			errorMessage = "Unable to reboot device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Reboot and wait for IP Acquisition ");
+			LOGGER.info("STEP 8: ACTION : Execute : reboot");
+			LOGGER.info("STEP 8: EXPECTED : Sucessfully rebooted device ");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv);
+
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Successfully rebooted device and wait till device is online");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S9";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION : Validate presencedetect is updated in tr181store file entries source should be updated to rfc");
+			LOGGER.info("STEP 9: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info(
+					"STEP 9: EXPECTED : Successfully validated  parameter name, value, update time, and source of update ");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (BroadBandRfcFeatureControlUtils.verifyParameterUpdatedByRfc(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS,
+						BroadBandTestConstants.TRUE).isStatus()) {
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+									BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+									BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+				}
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+			if (CommonMethods.isNotNull(response)) {
+				dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+				if (dataBaseMap != null && !dataBaseMap.isEmpty() && dataBaseMap
+						.containsKey(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)) {
+					status = CommonUtils.patternSearchFromTargetString(
+							dataBaseMap.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)
+									.getUpdateSource(),
+							BroadBandTestConstants.STRING_RFC);
+				}
+			}
+			if (status) {
+				LOGGER.info("STEP 9: ACTUAL : Successfully validated presence of "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS
+						+ " in tr181store and validate source as 'webpa'");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S10";
+			errorMessage = "Unable to reboot device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Delete rfc featurename from mockxconf and reboot device ");
+			LOGGER.info("STEP 10: ACTION : Execute : reboot");
+			LOGGER.info("STEP 10: EXPECTED : Sucessfully rebooted device ");
+			LOGGER.info("**********************************************************************************");
+
+			status = (HttpStatus.SC_OK == BroadBandRfcFeatureControlUtils.clearSettingsInProxyXconfDcmServerForRDKB(
+					device, tapEnv, false, BroadBandTestConstants.TEMPORARY_FOLDER));
+
+			if (status) {
+				enabledByRfc = false;
+				LOGGER.info(
+						"STEP 10: ACTUAL : Successfully deleted feature from xconf and rebooted device, wait till device is online");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S11";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 11: DESCRIPTION : Validate presencedetect is not available in tr181store file entries ");
+			LOGGER.info("STEP 11: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info("STEP 11: EXPECTED : Successfully validated  presence detect is not available ");
+			LOGGER.info("**********************************************************************************");
+			tapEnv.waitTill(BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS);
+
+			startTime = System.currentTimeMillis();
+			do {
+				try {
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+									BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+									BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+				} catch (Exception e) {
+					LOGGER.error("Exception caught while executing command " + e.getMessage());
+				}
+				if (CommonMethods.isNotNull(response)) {
+					dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+					if (dataBaseMap != null && !dataBaseMap.isEmpty()) {
+						status = !dataBaseMap
+								.containsKey(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS);
+					}
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS && !status
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+			if (status) {
+				LOGGER.info("STEP 11: ACTUAL : Successfully validated that "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS
+						+ " removed from tr181store");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S12";
+			errorMessage = "Unable to execute webpa";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 12: DESCRIPTION : Disable presencedetect using webpa");
+			LOGGER.info(
+					"STEP 12: ACTION : Execute: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.PresenceDetect.Enable value : false");
+			LOGGER.info("STEP 12: EXPECTED : Successfully disabled presencedetect using webpa");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+			if (status) {
+				LOGGER.info("STEP 12: ACTUAL : Successfully disabled "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS);
+			} else {
+				LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S13";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 13: DESCRIPTION : Validate presencedetect is updated in tr181store file entries source should be updated to webpa");
+			LOGGER.info("STEP 13: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info(
+					"STEP 13: EXPECTED : Successfully validated  parameter name, value, update time, and source of update ");
+			LOGGER.info("**********************************************************************************");
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+			if (CommonMethods.isNotNull(response)) {
+				dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+				if (dataBaseMap != null && !dataBaseMap.isEmpty() && dataBaseMap
+						.containsKey(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)) {
+					status = CommonUtils.patternSearchFromTargetString(
+							dataBaseMap.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)
+									.getUpdateSource(),
+							BroadBandTestConstants.PROCESS_NAME_WEBPA);
+				}
+			}
+
+			if (status) {
+				LOGGER.info("STEP 13: ACTUAL : Successfully validated presence of "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS
+						+ " in tr181store and validate source as 'webpa'");
+			} else {
+				LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S14";
+			errorMessage = "Unable to reboot device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 14: DESCRIPTION : Reboot and wait for IP Acquisition ");
+			LOGGER.info("STEP 14: ACTION : Execute : reboot");
+			LOGGER.info("STEP 14: EXPECTED : Sucessfully rebooted device ");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv);
+
+			if (status) {
+				LOGGER.info("STEP 14: ACTUAL :  Successfully rebooted device and wait till device is online");
+			} else {
+				LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S15";
+			errorMessage = "Unable to validate tr181store.json";
+			status = false;
+			response = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 15: DESCRIPTION : Validate presencedetect is persisted in tr181store file entries source should be updated to webpa");
+			LOGGER.info("STEP 15: ACTION : Execute :cat  /opt/secure/RFC/tr181store.json");
+			LOGGER.info(
+					"STEP 15: EXPECTED : Successfully validated  parameter name, value, update time, and source of update ");
+			LOGGER.info("**********************************************************************************");
+
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_CAT,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandCommandConstants.FILE_LOCATION_RFC_DATABASE));
+			} catch (Exception e) {
+				LOGGER.error("Exception caught while executing command " + e.getMessage());
+			}
+			if (CommonMethods.isNotNull(response)) {
+				dataBaseMap = BroadBandCommonUtils.parseRfcDataBaseResponse(response);
+				if (dataBaseMap != null && !dataBaseMap.isEmpty() && dataBaseMap
+						.containsKey(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)) {
+					status = CommonUtils.patternSearchFromTargetString(
+							dataBaseMap.get(BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS)
+									.getUpdateSource(),
+							BroadBandTestConstants.PROCESS_NAME_WEBPA);
+				}
+			}
+
+			if (status) {
+				LOGGER.info("STEP 15: ACTUAL : Successfully validated presence of "
+						+ BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS
+						+ " in tr181store and validate source as 'webpa'");
+			} else {
+				LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			if (enabledByRfc) {
+				jsonObject = new JSONObject();
+				response = null;
+				LOGGER.info("#######################################################################################");
+				LOGGER.info("POST-CONDITION 1 : DESCRIPTION : CONFIGURE RFC PAYLOAD TO REVERT SETTINGS IN GW");
+				LOGGER.info(
+						"POST-CONDITION 1 : ACTION :  COPY AND UPDATE /nvram/rfc.properties WITH MOCK RFC CONFIG SERVER URL 2. Post payload after replacing ESTB mac and enable/disable value to <XCONF URL>/featureControl/updateSettings 3. REBOOT DEVICE OR TRIGGER CONFIGURABLE RFC CHECK-IN");
+				LOGGER.info(
+						"POST-CONDITION 1 : EXPECTED : SUCCESSFULLY REBOOTED OR TRIGGERED CHECK-IN AFTER CONFIGURING RFC PAYLOAD");
+				LOGGER.info("#######################################################################################");
+				try {
+					response = tapEnv.executeWebPaCommand(device,
+							BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS);
+				} catch (Exception e) {
+					LOGGER.info("Failed to get webpa response " + e.getMessage());
+				}
+				if (!defaultValue.equals(response)) {
+					try {
+						jsonObject.put(
+								CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.TR181_DOT,
+										BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS),
+								defaultValue);
+					} catch (JSONException e) {
+						LOGGER.error("Unable to parse given Json input array");
+					}
+
+					if (BroadBandRfcFeatureControlUtils.executePreconditionForRfcTests(device, tapEnv,
+							payload.replace(BroadBandTestConstants.STRING_REPLACE, jsonObject.toString()))) {
+						errorMessage = "Unable to reboot device successfully";
+						status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv)
+								&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device,
+										BroadBandTestConstants.BOOLEAN_VALUE_TRUE)
+								&& BroadBandRfcFeatureControlUtils.verifyParameterUpdatedByRfc(device, tapEnv,
+										BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_AND_SET_PRESENCE_DETECT_STATUS,
+										defaultValue).isStatus()
+								&& (CommonUtils.performCreateRemoveUpdateFileOperations(tapEnv, device,
+										BroadBandCommonUtils.concatStringUsingStringBuffer(
+												BroadBandCommandConstants.CMD_RM_WITH_R_F_OPTION,
+												BroadBandRfcFeatureControlUtils.NVRAM_RFC_PROPERTIES))
+										|| CommonUtils.performCreateRemoveUpdateFileOperations(tapEnv, device,
+												BroadBandTestConstants.CMD_REMOVE_NVRAM_DCM_PROPERTIES));
+
+					}
+				} else {
+					status = true;
+				}
+				if (status) {
+					LOGGER.info("POST-CONDITION 1 : ACTUAL : SUCESSFULLY REVERTED SETTINGS IN GW");
+				} else {
+					LOGGER.error("POST-CONDITION 1 : ACTUAL : " + errorMessage);
+
+				}
+			}
+
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-RFC-DATABASE-1001");
+	}
+
 }

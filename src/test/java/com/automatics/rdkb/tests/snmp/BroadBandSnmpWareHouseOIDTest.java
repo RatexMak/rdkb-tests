@@ -2237,13 +2237,13 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
 
 	stepNumber++;
 	stepNum = "s" + stepNumber;
-	errorMessage = "snmpset on docsDevSwServerAddressType(1.3.6.1.2.1.69.1.3.6.0) failed.";
+	errorMessage = "snmpset on docsDevSwServerAddressType(OID) failed.";
 	status = false;
 	LOGGER.info("**********************************************************************************");
 	LOGGER.info("STEP " + stepNumber
 		+ " : DESCRIPTION : Verify SNMP MIB docsDevSwServerAddressType is set to IPv6 address type.");
 	LOGGER.info("STEP " + stepNumber
-		+ " : ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.6.0 and value to be set as  2  and SNMP get to verify same set value.");
+		+ " : ACTION : Execute SNMP SET command with to be set docsDevSwServerAddressType value as  2  and SNMP get to verify same set value.");
 	LOGGER.info("STEP " + stepNumber
 		+ " : EXPECTED : SNMP MIB  docsDevSwServerAddressType should be set to IPv6 address type(2)  and SNMP Get output should be same as set value.");
 	LOGGER.info("**********************************************************************************");
@@ -2388,13 +2388,13 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
 
 	stepNumber++;
 	stepNum = "s" + stepNumber;
-	errorMessage = "snmpset on docsDevSwServerAddressType(1.3.6.1.2.1.69.1.3.6.0) failed.";
+	errorMessage = "snmpset on docsDevSwServerAddressType(OID) failed.";
 	status = false;
 	LOGGER.info("**********************************************************************************");
 	LOGGER.info("STEP " + stepNumber
 		+ " : DESCRIPTION : Verify SNMP MIB docsDevSwServerAddressType is set to IPv4 address type.");
 	LOGGER.info("STEP " + stepNumber
-		+ " : ACTION : Execute SNMP SET command with  oid as 1.3.6.1.2.1.69.1.3.6.0 and value to be set as  1  and SNMP get to verify same set value.");
+		+ " : ACTION : Execute SNMP SET command to set docsDevSwServerAddressType and value to be set as  1  and SNMP get to verify same set value.");
 	LOGGER.info("STEP " + stepNumber
 		+ " : EXPECTED : SNMP MIB  docsDevSwServerAddressType should be set to IPv4 address type(1) and SNMP Get output should be same as set value.");
 	LOGGER.info("**********************************************************************************");

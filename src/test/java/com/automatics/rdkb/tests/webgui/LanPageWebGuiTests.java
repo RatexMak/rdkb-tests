@@ -18,8 +18,8 @@
 
 package com.automatics.rdkb.tests.webgui;
 
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +32,11 @@ import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Device;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.BroadbandDownStreamGui;
 import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -45,6 +47,7 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
+import com.automatics.rdkb.utils.BroadBandSystemUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
@@ -65,6 +68,7 @@ import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
 import com.automatics.webpa.WebPaParameter;
+import com.automatics.webpa.WebPaServerResponse;
 
 public class LanPageWebGuiTests extends AutomaticsTestBase {
 
@@ -334,7 +338,15 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-CHANNEL_BANDWIDTH-1001#####################");
 	}
-
+	
+	/**
+	 * Method to validate channel bandwidth options
+	 * 
+	 * @param device
+	 * @param connectedClient
+	 * @param tapApi
+	 * @refactor Athira
+	 */
 	public void channelBandwidthOptionsValidation(Dut device, Dut clientDevice, LanSideWiFiPage lanSideWiFiPage,
 			String testId, WebDriver lanDriver, Integer testStepNumber, String wifiSsidName, String wifiSsidPassword,
 			String channelBandwithValue, String[] wifiRadioParamters, boolean is5Ghz,
@@ -352,7 +364,7 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("STEP " + testStepNumber + " : EXPECTED : WIFI SETTINGS SHOULD BE SAVED SUCCESSFULLY");
 		BroadBandResultObject broadBandResultObject = new BroadBandResultObject();
 		try {
-			// BroadBandWebPaUtils.disableAkerCloudUiAndMeshUsingWebpa(device, tapEnv);
+
 			broadBandResultObject = lanSideWiFiPage.editWifiPageAndSaveSettings(device, tapEnv, lanDriver, wifiSsidName,
 					wifiSsidPassword, is5Ghz, bandwidthOption);
 			errorMessage = broadBandResultObject.getErrorMessage();
@@ -415,8 +427,7 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("Current Page title in GUI- " + pageTitle);
 		if (pageTitle.equals(url)) {
 			lanDriver.navigate().refresh();
-			// lanSideWiFiPage.loginToAdminPageAndRedirectToWifiPage(tapEnv,
-			// settop, clientSettop, lanDriver);
+
 		}
 		boolean wifiPageStatus = BroadBandWebUiUtils.validatePageLaunchedStatusWithPageTitle(lanDriver,
 				BroadbandPropertyFileHandler.getPageTitleConnectionWiFi());
@@ -4062,6 +4073,1053 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 					true);
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-WEB-GUI-5013");
+	}
+
+	/**
+	 * Verify that the AdminUI Network page displays the IPv6 values
+	 * <ol>
+	 * <li>Verify ethernet client is connected with Gateway device</li>
+	 * <li>Verify the client connected to ethernet has valid IPv4 Address</li>
+	 * <li>Verify the IPv6 Address is retrieved from the client connected to
+	 * Ethernet</li>
+	 * <li>Verify the internet is accessible in the client connected to Ethernet
+	 * using IPV4 Interface</li>
+	 * <li>Verify the internet is accessible in the client connected to Ethernet
+	 * using IPV6 Interface</li>
+	 * <li>Launch admin GUI login page and verify login status</li>
+	 * <li>Launch the admin GUI Network page from admin GUI page.</li>
+	 * <li>Verify the WAN IP Address (IPv6)</li>
+	 * <li>Verify theWAN Default Gateway Address (IPv6)</li>
+	 * <li>Verify the Delegated prefix (IPv6)</li>
+	 * <li>Verify the Primary DNS Server (IPv6)</li>
+	 * <li>Verify the Secondary DNS Server (IPv6)</li>
+	 * <li>Verify the WAN Link Local Address (IPv6)</li> *
+	 * <li>Retrieve SNR and Powerlevel params and values using webpa</li>
+	 * <li>Verify the READ-ONLY attribute of WebPA Parameter
+	 * Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.SNRLevel</li>
+	 * <li>Verify the READ-ONLY attribute of WebPA Parameter
+	 * Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.PowerLevel</li>
+	 * <li>Retrieve SNR and Power levels in GUI</li>
+	 * <li>Validate SNR and Power levels in GUI with webpa result</li>
+	 * <li>Retrieve SNR Level param via SNMP and cross validate with webpa value
+	 * obtained</li>
+	 * <li>Retrieve Power Level param via SNMP and cross validate with webpa value
+	 * obtained</li>
+	 * 
+	 * @param device {@link Dut}
+	 * @author Parvathy, Prasanth Reddy Andena, Vignesh Ravichandran
+	 *         </ol>
+	 * @refactor Athira
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-ADMIN-GUI-5002")
+	public void verifyIpv6AdressInNetworkPage(Dut device) {
+
+		String testCaseId = null;
+		String stepNum = "S1";
+		String errorMessage = null;
+		boolean status = false;
+		Dut deviceConnectedWithEthernet = null;
+		WebDriver webDriver = null;
+		LanSidePageNavigation lanSidePageNavigation = null;
+		BroadBandResultObject result = null; // stores test result and error
+		boolean isBusinessDevice = DeviceModeHandler.isBusinessClassDevice(device);
+		Map<String, String> snrParams = new HashMap<String, String>();
+		Map<String, String> powerParams = new HashMap<String, String>();
+		Map<String, String> channelParams = new HashMap<String, String>();
+		String snrValue = null;
+		String powerValue = null;
+		boolean isSnrMetric = false;
+		boolean isPowerMetric = false;
+		testCaseId = "TC-RDKB-ADMIN-GUI-502";
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-ADMIN-GUI-5002");
+		LOGGER.info("TEST DESCRIPTION: Verify that the ADMIN UI Network page displays the IPv6 values");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify ethernet client is connected with Gateway device");
+		LOGGER.info("2. Verify the client  connected to ethernet has valid IPv4 Address");
+		LOGGER.info("3. Verify the IPv6 Address is retrieved  from the client connected to Ethernet");
+		LOGGER.info("4. Verify the internet is accessible in the client connected to Ethernet using IPV4 interface");
+		LOGGER.info("5. Verify the internet is accessible in the client connected to Ethernet using IPV6 interface");
+		LOGGER.info("6. Launch admin GUI login page and verify login status");
+		LOGGER.info("7. Launch the admin GUI Network page from Admin UI page.");
+		LOGGER.info("8. Verify the WAN IP Address (IPv6)");
+		LOGGER.info("9. Verify theWAN Default Gateway Address (IPv6)");
+		LOGGER.info("10. Verify the Delegated prefix (IPv6)");
+		LOGGER.info("11. Verify the Primary DNS Server (IPv6)");
+		LOGGER.info("12. Verify the Secondary DNS Server (IPv6)");
+		LOGGER.info("13. Verify the WAN Link Local Address (IPv6)");
+		LOGGER.info("14. Retrieve SNR and Powerlevel params and values using webpa");
+		LOGGER.info(
+				"15. Verify the READ-ONLY attribute of WebPA Parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.SNRLevel");
+		LOGGER.info(
+				"16. Verify the READ-ONLY attribute of WebPA Parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.PowerLevel");
+		LOGGER.info("17. Retrieve SNR and Power levels in GUI");
+		LOGGER.info("18. Validate SNR and Power levels in GUI with webpa result");
+		LOGGER.info("19. Retrieve SNR  Level param via SNMP and cross validate with webpa value obtained");
+		LOGGER.info("20. Retrieve Power  Level param via SNMP and cross validate with webpa value obtained");
+
+		LOGGER.info("#######################################################################################");
+		try {
+
+			stepNum = "S1";
+			errorMessage = "Failed to retrieve the ethernet connected client associated with the gateway device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Verify ethernet client is connected with Gateway");
+			LOGGER.info(
+					"STEP 1: ACTION : Get the ethernet client from the list of clients associated with the account");
+			LOGGER.info("STEP 1: EXPECTED : Client connected to the Ethernet should be retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+
+			try {
+				deviceConnectedWithEthernet = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			status = (null != deviceConnectedWithEthernet);
+
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Obtained an ethernet client associated with the gateway successfully");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+			stepNum = "S2";
+			errorMessage = "Unable to get the correct IPV4 address from LAN client";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : Verify the client  connected to ethernet has valid IPv4 Address");
+			LOGGER.info(
+					"STEP 2: ACTION : Get the device IPv4 address using below commandLinux : ifconfig eth0 |grep -i \"inet addr:\"Windows: ipconfig "
+							+ "|grep -A 10 \"Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv4 Address\"");
+			LOGGER.info(
+					"STEP 2: EXPECTED : Client connected to the Ethernet should be assigned with a valid IP Address");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandConnectedClientUtils.verifyIpv4AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(
+					((Device) deviceConnectedWithEthernet).getOsType(), deviceConnectedWithEthernet, tapEnv);
+
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Successfully verified the correct IPV4 address from LAN client");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S3";
+			errorMessage = "Unable to get the correct IPV6 address from LAN client";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 3: DESCRIPTION : Verify the IPv6 Address is retrieved  from the client connected to Ethernet");
+			LOGGER.info("STEP 3: ACTION : Get the device IPv4 address using below commandLinux : ifconfig eth0 |"
+					+ "grep -i \"inet addr6:\"Windows: ipconfig |grep -A 10 \"Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\"");
+			LOGGER.info(
+					"STEP 3: EXPECTED : Local IPv6 Address assigned to the client should be retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(
+					((Device) deviceConnectedWithEthernet).getOsType(), deviceConnectedWithEthernet, tapEnv);
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Successfully verified the correct IPV6 address from LAN client");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S4";
+			errorMessage = "Not able to access the site'www.google.com' from LAN client using IPV4 address";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 4: DESCRIPTION : Verify the internet is accessible in the client connected to Ethernet using IPV4 interface");
+			LOGGER.info("STEP 4: ACTION : Execute the command in connected client:curl -4 -v 'www.google.com' "
+					+ " | grep '200 OK' OR ping -4 -n 5 google.com, LINUX : curl -4 -f --interface <interfaceName>"
+					+ " www.google.com | grep '200 OK' OR ping -4 -n 5 google.com");
+			LOGGER.info("STEP 4: EXPECTED : Internet should be accessible in the connected client.");
+			LOGGER.info("**********************************************************************************");
+
+			result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
+					deviceConnectedWithEthernet,
+					BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
+					BroadBandTestConstants.IP_VERSION4);
+			status = result.isStatus();
+			if (!status) {
+				errorMessage = "Ping operation failed to access the site 'www.google.com' using IPV4 address";
+				status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(deviceConnectedWithEthernet,
+						tapEnv, BroadBandTestConstants.PING_TO_GOOGLE, BroadBandTestConstants.IP_VERSION4);
+			}
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Connected LAN client has internet connectivity using IPV4 interface");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S5";
+			errorMessage = "Not able to access the site'www.google.com' from LAN client using IPV6 address";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 5: DESCRIPTION : Verify the internet is accessible in the client connected to Ethernet using IPV6 interface");
+			LOGGER.info("STEP 5: ACTION : Execute the command in connected client:curl -4 -v 'www.google.com' "
+					+ " | grep '200 OK' OR ping -4 -n 5 google.com, LINUX : curl -4 -f --interface <interfaceName>"
+					+ " www.google.com | grep '200 OK' OR ping -4 -n 5 google.com ");
+			LOGGER.info("STEP 5: EXPECTED : Internet should be accessible in the connected client.");
+			LOGGER.info("**********************************************************************************");
+
+			result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
+					deviceConnectedWithEthernet,
+					BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
+					BroadBandTestConstants.IP_VERSION6);
+			status = result.isStatus();
+			if (!status) {
+				errorMessage = "Ping operation failed to access the site 'www.google.com' using IPV6 address";
+				status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(deviceConnectedWithEthernet,
+						tapEnv, BroadBandTestConstants.PING_TO_GOOGLE, BroadBandTestConstants.IP_VERSION6);
+			}
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : Connected LAN client has internet connectivity using IPV6 interfac");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S6";
+			errorMessage = "Unable to Login to LanGUI page using Admin credential";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Launch admin GUI login page and verify login status");
+			LOGGER.info(
+					"STEP 6: ACTION : Launch the admin GUI login page using LOGIN CREDENTIALS :"
+							+ "  username: adminPassword: password");
+			LOGGER.info("STEP 6: EXPECTED : admin GUI page should be launched and login should be successful");
+			LOGGER.info("**********************************************************************************");
+
+			try {
+				status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, deviceConnectedWithEthernet);
+				webDriver = LanWebGuiLoginPage.getDriver();
+				lanSidePageNavigation = new LanSidePageNavigation(webDriver);
+			} catch (Exception e) {
+				LOGGER.error("Exception while launching admin GUI");
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 6: ACTUAL : Launch Broad band WebUI login page and verify login status is successful");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S7";
+			errorMessage = "Unable to launch  \"Gateway\"->  \"Connections\"->\"Admin UI Network\" ";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Launch the Network page from Admin UI page.");
+			LOGGER.info(
+					"STEP 7: ACTION : Navigate to Network page by clicking \"Gateway\"->  \"Connections\"->\" Network\". ");
+			LOGGER.info(
+					"STEP 7: EXPECTED : Xifinity Network page should get displayed having page title as \"Gateway > Connection > Network\".");
+			LOGGER.info("**********************************************************************************");
+			try {
+
+				boolean isCbrDevice = DeviceModeHandler.isBusinessClassDevice(device);
+
+				status = lanSidePageNavigation.navigateToPartnerNetworkPage(device, tapEnv, webDriver, isCbrDevice);
+			} catch (Exception e) {
+				LOGGER.error("Exception while Launching the Network page from Admin UI page");
+			}
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : Navigated to Network page successfully");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "S8";
+			errorMessage = "Unable to retrieve the valid WAN IP Address (IPv6) from Admin UI Network page";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Verify the WAN IP Address (IPv6)");
+			LOGGER.info("STEP 8: ACTION : Retrive the WAN IP Address (IPv6) using the Xpath element.");
+			LOGGER.info("STEP 8: EXPECTED : Retrieving the WAN IP Address (IPv6) should be successful.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (isBusinessDevice) {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_WAN_IP_ADDRESS_IPV6_BUSSINESS_DEVICE,
+							BroadBandTestConstants.STRING_WAN_IPV6_ADDRESS, webDriver);
+				} else {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_WAN_IP_ADDRESS_IPV6,
+							BroadBandTestConstants.STRING_WAN_IPV6_ADDRESS, webDriver);
+				}
+			} catch (Exception e) {
+				status = false;
+				LOGGER.error(" Exception occured while  Retrieving the WAN IP Address (IPv6) from Admin UI Network page"
+						+ e.getMessage());
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 8: ACTUAL :  Successfully retrieved a valid IPV6 adrress for  WAN IP Address from GUI");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, false);
+
+			stepNum = "S9";
+			errorMessage = "Unable to retrieve the valid WAN Default Gateway Address (IPv6) from Admin UI Network page";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 9: DESCRIPTION : Verify the WAN Default Gateway Address (IPv6)");
+			LOGGER.info("STEP 9: ACTION : Retrive the WAN Default Gateway Address (IPv6) using the Xpath element.");
+			LOGGER.info("STEP 9: EXPECTED : Retrieving the WAN Default Gateway Address (IPv6) should be successful.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (isBusinessDevice) {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_WAN_DEFAULT_GATEWAY_ADDRESS_IPV6_BUSSINESS_DEVICE,
+							BroadBandTestConstants.STRING_WAN_IPV6_DEFAULT, webDriver);
+				} else {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_WAN_DEFAULT_GATEWAY_ADDRESS_IPV6,
+							BroadBandTestConstants.STRING_WAN_IPV6_DEFAULT, webDriver);
+				}
+			} catch (Exception e) {
+				status = false;
+				LOGGER.error(
+						" Exception occured while Retrieving the WAN Default Gateway Address (IPv6) from Network page"
+								+ e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 9: ACTUAL :  Successfully retrieved a valid IPV6 adrress for WAN Default Gateway Address from GUI");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, false);
+
+			stepNum = "S10";
+			errorMessage = "Unable to retrieve the valid Delegated Prefix Address (IPv6) from Network page";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Verify the Delegated prefix (IPv6)");
+			LOGGER.info("STEP 10: ACTION : Retrive the Delegated prefix (IPv6) using the Xpath element.");
+			LOGGER.info("STEP 10: EXPECTED : Retrieving the Delegated prefix (IPv6) should be successful.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				String delegatedPrefixRetrieved = null;
+				if (isBusinessDevice) {
+					delegatedPrefixRetrieved = webDriver
+							.findElement(By.xpath(
+									BroadBandWebGuiElements.XPATH_FOR_DELEGATED_PREFIX_IPV6_BUSSINESSCLASS_DEVICE))
+							.getText();
+				} else {
+					delegatedPrefixRetrieved = webDriver
+							.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DELEGATED_PREFIX_IPV6)).getText();
+				}
+				if (CommonMethods.isNotNull(delegatedPrefixRetrieved)) {
+					delegatedPrefixRetrieved = delegatedPrefixRetrieved.trim().split("/")[0];
+					LOGGER.info("Delegated prefix (IPv6) retrieved from Web GUI : " + delegatedPrefixRetrieved);
+					status = CommonMethods.isIpv6Address(delegatedPrefixRetrieved);
+				}
+			} catch (Exception e) {
+				status = false;
+				LOGGER.error(" Exception occured while getting Delegated prefix (IPv6) from Network page"
+						+ e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 10: ACTUAL :  Successfully retrieved a valid IPV6 adrress for Delegated Prefix from GUI");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, false);
+
+			stepNum = "S11";
+			errorMessage = "Unable to retrieve the valid Primay DNS Server (IPv6) from Network page";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 11: DESCRIPTION : Verify the Primary DNS Server (IPv6)");
+			LOGGER.info("STEP 11: ACTION : Retrive the Primary DNS Server (IPv6) using the Xpath element.");
+			LOGGER.info("STEP 11: EXPECTED : Retrieving the Primary DNS Server (IPv6) should be successful.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (isBusinessDevice) {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_PRIMARY_DNS_SERVER_IPV6_BUSSINESS_DEVICE,
+							BroadBandTestConstants.STRING_PRIMARY_IPV6_DNS, webDriver);
+				} else {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_PRIMARY_DNS_SERVER_IPV6,
+							BroadBandTestConstants.STRING_PRIMARY_IPV6_DNS, webDriver);
+				}
+			} catch (Exception e) {
+				status = false;
+				LOGGER.error(
+						" Exception occured while Retrieving the Primary DNS Server (IPv6) from Network page"
+								+ e.getMessage());
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 11: ACTUAL :  Successfully retrieved a valid IPV6 adrress for Primary DNS Server from GUI");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, false);
+
+			stepNum = "S12";
+			errorMessage = "Unable to retrieve the valid Secondary DNS Server (IPv6) from Network page";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 12: DESCRIPTION : Verify the Secondary DNS Server (IPv6)");
+			LOGGER.info("STEP 12: ACTION : Retrive the Secondary DNS Server (IPv6) using the Xpath element.");
+			LOGGER.info("STEP 12: EXPECTED : Retrieving the Secondary DNS Server (IPv6)should be successful.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (isBusinessDevice) {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_SECONDARY_DNS_SERVER_IPV6_BUSSINESS_DEVICE,
+							BroadBandTestConstants.STRING_SECONDARY_IPV6_DNS, webDriver);
+				} else {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_SECONDARY_DNS_SERVER_IPV6,
+							BroadBandTestConstants.STRING_SECONDARY_IPV6_DNS, webDriver);
+				}
+			} catch (Exception e) {
+				status = false;
+				LOGGER.error(
+						" Exception occured while Retrieving the Secondary DNS Server (IPv6) from Network page"
+								+ e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 12: ACTUAL :  Successfully retrieved a valid IPV6 adrress for Secondary DNS Server from GUI");
+			} else {
+				LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, false);
+
+			stepNum = "S13";
+			errorMessage = "Unable to retrieve the valid WAN Link Local Address (IPv6) from Network page";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 13: DESCRIPTION : Verify the WAN Link Local Address (IPv6)");
+			LOGGER.info("STEP 13: ACTION : Retrive the WAN Link Local Address (IPv6) using the Xpath element.");
+			LOGGER.info("STEP 13: EXPECTED : Retrieving the WAN Link Local Address (IPv6) should be successful.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				if (isBusinessDevice) {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_WAN_LINK_LOCAL_ADDRESS_IPV6_BUSSINESS_CLASS,
+							BroadBandTestConstants.STRING_WAN_LOCAL_IPV6, webDriver);
+				} else {
+					status = BroadBandWebUiUtils.verifyIpV6AddressElementInPartnerNetworkPage(
+							BroadBandWebGuiElements.XPATH_FOR_WAN_LINK_LOCAL_ADDRESS_IPV6,
+							BroadBandTestConstants.STRING_WAN_LOCAL_IPV6, webDriver);
+				}
+			} catch (Exception e) {
+				status = false;
+				LOGGER.error(
+						" Exception occured while Retrieving the WAN Link Local Address (IPv6) from Network page"
+								+ e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 13: ACTUAL :  Successfully retrieved a valid IPV6 adrress for WAN Link Local Address from GUI");
+			} else {
+				LOGGER.error("STEP 13: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, false);
+
+			Boolean isSupportedDevice = null;
+			isSupportedDevice = BroadbandPropertyFileHandler.isDeviceledlogsAvailable(device);
+
+			if (isSupportedDevice) {
+				stepNum = "s14";
+				errorMessage = "Unable to retrieve snr and powerlevel params and values/metrics not available for snr and power level";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 14: DESCRIPTION : Retrieve SNR and Powerlevel params and values using webpa");
+				LOGGER.info(
+						"STEP 14: ACTION :Execute : curl command using parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan. ");
+				LOGGER.info("STEP 14: EXPECTED : Successfully retrieved SNR and Powerlevel params and values");
+				LOGGER.info("**********************************************************************************");
+
+				Map<String, String> webpaParamMap = tapEnv.executeMultipleWebPaGetCommands(device,
+						new String[] { BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM });
+
+				String responseArray = webpaParamMap.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM);
+				webpaParamMap = BroadBandCommonUtils.getJsonDataFromJsonArrayInMap(responseArray);
+				for (Map.Entry<String, String> entry : webpaParamMap.entrySet()) {
+					if (CommonMethods.patternMatcher(entry.getKey(),
+							BroadBandTestConstants.PATTERN_FOR_PARAM_OFDM_SNR)) {
+						snrParams.put(entry.getKey(), entry.getValue());
+						isSnrMetric = CommonUtils.patternSearchFromTargetString(entry.getValue(),
+								BroadBandTestConstants.METRIC_DB) ? true : false;
+					}
+					if (CommonMethods.patternMatcher(entry.getKey(),
+							BroadBandTestConstants.PATTERN_FOR_PARAM_OFDM_POWER)) {
+						powerParams.put(entry.getKey(), entry.getValue());
+						isPowerMetric = CommonUtils.patternSearchFromTargetString(entry.getValue(),
+								BroadBandTestConstants.METRIC_DBMV) ? true : false;
+					}
+					if (CommonMethods.patternMatcher(entry.getKey(),
+							BroadBandTestConstants.PATTERN_FOR_PARAM_OFDM_CHANNELID)) {
+						channelParams.put(entry.getKey(), entry.getValue());
+					}
+				}
+				status = !snrParams.isEmpty() && !powerParams.isEmpty() && !channelParams.isEmpty() && isSnrMetric
+						&& isPowerMetric;
+
+				if (status) {
+					LOGGER.info("STEP 14: ACTUAL : Successfully retrieved snr and power level values");
+				} else {
+					LOGGER.error("STEP 14: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s15";
+				errorMessage = "Unable to validate readonly for SNR param";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 15: DESCRIPTION : Verify the READ-ONLY attribute of WebPA Parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.SNRLevel");
+				LOGGER.info(
+						"STEP 15: ACTION : Execute command using parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.SNRLevel to set <Value>");
+				LOGGER.info("STEP 15: EXPECTED : Successfully verified readonly attribute for SNR param");
+				LOGGER.info("**********************************************************************************");
+				for (Map.Entry<String, String> entry : snrParams.entrySet()) {
+					status = false;
+					try {
+						WebPaServerResponse serverResponse = BroadBandWebPaUtils.setWebPaParamAndReturnResp(tapEnv,
+								device, entry.getKey(), BroadBandTestConstants.CONSTANT_153,
+								BroadBandTestConstants.CONSTANT_0);
+						result = BroadBandWebPaUtils.verifyReadOnlyAtributeOfWebPaParamFromWebPaServerResponse(
+								serverResponse, entry.getKey());
+
+						errorMessage = result.getErrorMessage();
+						status = result.isStatus();
+						if (!status) {
+							break;
+						}
+
+					} catch (Exception e) {
+						LOGGER.error("Exception occured while validating param " + e.getMessage());
+					}
+				}
+				if (status) {
+					LOGGER.info("STEP 15: ACTUAL : Successfully validated Docsis ofdm snr param is only readable");
+				} else {
+					LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s16";
+				errorMessage = "Unable to validate readonly for Power level param";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 16: DESCRIPTION : Verify the READ-ONLY attribute of WebPA Parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.PowerLevel ");
+				LOGGER.info(
+						"STEP 16: ACTION : Execute : curl command to set <Value> using parameter Device.X_RDKCENTRAL-COM_CableModem.DsOfdmChan.{i}.PowerLevel");
+				LOGGER.info("STEP 16: EXPECTED : Successfully verified readonly attribute for Power level param");
+				LOGGER.info("**********************************************************************************");
+				for (Map.Entry<String, String> entry : powerParams.entrySet()) {
+					status = false;
+					try {
+						WebPaServerResponse serverResponse = BroadBandWebPaUtils.setWebPaParamAndReturnResp(tapEnv,
+								device, entry.getKey(), BroadBandTestConstants.CONSTANT_153,
+								BroadBandTestConstants.CONSTANT_0);
+						result = BroadBandWebPaUtils.verifyReadOnlyAtributeOfWebPaParamFromWebPaServerResponse(
+								serverResponse, entry.getKey());
+						errorMessage = result.getErrorMessage();
+						status = result.isStatus();
+						if (!status) {
+
+							break;
+						}
+
+					} catch (Exception e) {
+						LOGGER.error("Exception occured while validating param " + e.getMessage());
+					}
+				}
+				if (status) {
+					LOGGER.info("STEP 16: ACTUAL :  Successfully validated Docsis ofdm power param is only readable");
+				} else {
+					LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s17";
+				errorMessage = "Unable to retrieve snr and power level values in GUI";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 17: DESCRIPTION : Retrieve SNR and Power levels in GUI  ");
+				LOGGER.info("STEP 17: ACTION : retrieve values of SNR and power levels of OFDM in GUI");
+				LOGGER.info("STEP 17: EXPECTED : Successfully retrieved Power and SNR level values in GUI");
+				LOGGER.info("**********************************************************************************");
+				List<BroadbandDownStreamGui> listOfOfdmValues = BroadBandCommonPage
+						.getOfdmValuesFromNetworkPage(webDriver, channelParams, true);
+				status = !listOfOfdmValues.isEmpty();
+				if (status) {
+					LOGGER.info("STEP 17: ACTUAL : Successfully retrieved snr and powerlevel values");
+				} else {
+					LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+						status, errorMessage, true);
+
+				stepNum = "s18";
+				errorMessage = "Unable to cross validate snr and power level values in GUI with webpa";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 18: DESCRIPTION : Validate SNR and Power levels in GUI with webpa result");
+				LOGGER.info("STEP 18: ACTION : Cross validate values of webpa with GUI ");
+				LOGGER.info("STEP 18: EXPECTED : Successfully cross validated Power and SNR level values in GUI");
+				LOGGER.info("**********************************************************************************");
+				for (BroadbandDownStreamGui listEntry : listOfOfdmValues) {
+					for (int count = 1; count < channelParams.size() + 1; count++) {
+						if (listEntry.getIndex()
+								.equals(channelParams.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM_CHANNELID
+										.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(count))))) {
+							snrValue = snrParams.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM_SNR_LEVEL
+									.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(count)));
+							powerValue = powerParams.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM_POWER_LEVEL
+									.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(count)));
+							status = listEntry.getSnr().equals(snrValue)
+									&& listEntry.getPowerLevel().equals(powerValue);
+							LOGGER.info("SNR Value from GUI: " + listEntry.getSnr() + "SNR Value from Webpa: "
+									+ snrValue + "\n Power Value from GUI: " + listEntry.getPowerLevel()
+									+ "Power Value from Webpa: " + powerValue + "\n Status:" + status);
+
+						}
+					}
+					if (!status) {
+						break;
+					}
+				}
+				if (!status) {
+					webDriver.navigate().refresh();
+					listOfOfdmValues = BroadBandCommonPage.getOfdmValuesFromNetworkPage(webDriver, channelParams,
+							false);
+					webpaParamMap = tapEnv.executeMultipleWebPaGetCommands(device,
+							new String[] { BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM });
+					responseArray = webpaParamMap.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM);
+					webpaParamMap = BroadBandCommonUtils.getJsonDataFromJsonArrayInMap(responseArray);
+					for (Map.Entry<String, String> entry : webpaParamMap.entrySet()) {
+						if (CommonMethods.patternMatcher(entry.getKey(),
+								BroadBandTestConstants.PATTERN_FOR_PARAM_OFDM_SNR)) {
+							snrParams.put(entry.getKey(), entry.getValue());
+							isSnrMetric = CommonUtils.patternSearchFromTargetString(entry.getValue(),
+									BroadBandTestConstants.METRIC_DB) ? true : false;
+						}
+						if (CommonMethods.patternMatcher(entry.getKey(),
+								BroadBandTestConstants.PATTERN_FOR_PARAM_OFDM_POWER)) {
+							powerParams.put(entry.getKey(), entry.getValue());
+							isPowerMetric = CommonUtils.patternSearchFromTargetString(entry.getValue(),
+									BroadBandTestConstants.METRIC_DBMV) ? true : false;
+						}
+
+					}
+					for (BroadbandDownStreamGui listEntry : listOfOfdmValues) {
+						for (int count = 1; count < channelParams.size() + 1; count++) {
+							if (listEntry.getIndex()
+									.equals(channelParams.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM_CHANNELID
+											.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(count))))) {
+								snrValue = snrParams.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM_SNR_LEVEL
+										.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(count)));
+								powerValue = powerParams.get(BroadBandWebPaConstants.WEBPA_PARAM_DOSCIS_OFDM_POWER_LEVEL
+										.replace(BroadBandTestConstants.TR181_NODE_REF, String.valueOf(count)));
+								status = listEntry.getSnr().equals(snrValue)
+										&& listEntry.getPowerLevel().equals(powerValue);
+								LOGGER.info("SNR Value from GUI: " + listEntry.getSnr() + "SNR Value from Webpa: "
+										+ snrValue + "\n Power Value from GUI: " + listEntry.getPowerLevel()
+										+ "Power Value from Webpa: " + powerValue + "\n Status:" + status);
+
+							}
+						}
+						if (!status) {
+							break;
+						}
+					}
+				}
+				if (status) {
+					LOGGER.info(
+							"STEP 18: ACTUAL : Successfully validated SNR and power level values in GUI with Webpa");
+				} else {
+					LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s19";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 19: DESCRIPTION : Retrieve SNR  Level param via SNMP and cross validate with webpa value obtained");
+				LOGGER.info(
+						"STEP 19: ACTION : Execute the SNMP Get Command : snmpget -v2c -c <Community String> udp6:<CM MAC> .1.3.6.1.4.1.4491.2.1.27.1.2.5.1.3  to retrieve the SNR Level");
+				LOGGER.info("STEP 19: EXPECTED : SNR Level obtained via SNMP should match with WEBPA value obtained");
+				LOGGER.info("**********************************************************************************");
+				result = BroadBandSystemUtils.getAndCrossVerifySnrLevelValueViaSnmpAndWebpa(device, tapEnv);
+				errorMessage = result.getErrorMessage();
+				status = result.isStatus();
+				if (status) {
+					LOGGER.info("STEP 19: ACTUAL : Successfully cross validated SNR value in snmp with Webpa");
+				} else {
+					LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s20";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 20: DESCRIPTION : Retrieve Power Level param via SNMP and cross validate with webpa value obtained");
+				LOGGER.info(
+						"STEP 20: ACTION : Execute the SNMP Get Command : snmpget -v2c -c <Community String> udp6:<CM MAC> .1.3.6.1.4.1.4491.2.1.28.1.11.1.3 to retrieve the Power Level");
+				LOGGER.info("STEP 20: EXPECTED : Power Level obtained via SNMP should match with WEBPA value obtained");
+				LOGGER.info("**********************************************************************************");
+				result = BroadBandSystemUtils.getAndCrossVerifyPowerLevelValueViaSnmpAndWebpa(device, tapEnv);
+				errorMessage = result.getErrorMessage();
+				status = result.isStatus();
+				if (status) {
+					LOGGER.info("STEP 20: ACTUAL : Successfully cross validated power value in snmp with Webpa");
+				} else {
+					LOGGER.error("STEP 20: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			} else {
+				int count = BroadBandTestConstants.CONSTANT_14;
+				while (count <= BroadBandTestConstants.CONSTANT_20) {
+					stepNum = "s" + count;
+					errorMessage = "NOT APPLICABLE FOR THIS DEVICE";
+					status = false;
+					LOGGER.info("STEP " + stepNum + ":  NOT APPLICABLE FOR THIS DEVICE ");
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+					count++;
+				}
+			}
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-ADMIN-GUI-5002");
+	}
+
+	/**
+	 * 
+	 * <ol>
+	 * <li>1:Login to Lan side GUI page of device</li>
+	 * <li>2:Launch Connection page and navigate to WIFI page</li>
+	 * <li>3:Navigate to Edit 5Ghz page and verfiy channel bandwidth options 20MHz ,
+	 * 20/40MHz,20/40/80MHz</li>
+	 * <li>4:Change Wi-Fi settings of 5Ghz SSID Wi-FI settings(SSID, Password,
+	 * Channel Bandwidth-40MHz)</li>
+	 * <li>5:Validate Wifi SSID name , Password and channel bandwidth using
+	 * webpa</li>
+	 * <li>6:Connect to a connected client with 5Ghz radio ssid</li>
+	 * <li>7:Verify whether Connected client got the IPv4 address</li>
+	 * <li>8:Verify whether Connected client got the IPv6 address.</li>
+	 * <li>9:Verify whether you have connectivity using that particular interface
+	 * using IPV4</li>
+	 * <li>10:Verify whether you have connectivity using that particular interface
+	 * using IPV6</li>
+	 * <li>11:Change Wi-Fi settings of 5Ghz SSID Wi-FI settings(SSID, Password,
+	 * Channel Bandwidth-80MHz)</li>
+	 * <li>12:Validate Wifi SSID name , Password and channel bandwidth using
+	 * webpa</li>
+	 * <li>13:Connect to a connected client with 5Ghz radio ssid</li>
+	 * <li>14:Verify whether Connected client got the IPv4 address</li>
+	 * <li>15:Verify whether Connected client got the IPv6 address.</li>
+	 * <li>16:Verify whether you have connectivity using that particular interface
+	 * using IPV4</li>
+	 * <li>17:Verify whether you have connectivity using that particular interface
+	 * using IPV6</li>
+	 * <li>18:Change Wi-Fi settings of 5Ghz SSID Wi-FI settings(SSID, Password,
+	 * Channel Bandwidth-20MHz)</li>
+	 * <li>19:Validate Wifi SSID name , Password and channel bandwidth using
+	 * webpa</li>
+	 * <li>20:Connect to a connected client with 5Ghz radio ssid</li>
+	 * <li>21:Verify whether Connected client got the IPv4 address</li>
+	 * <li>22:Verify whether Connected client got the IPv6 address.</li>
+	 * <li>23:Verify whether you have connectivity using that particular interface
+	 * using IPV4</li>
+	 * <li>24:Verify whether you have connectivity using that particular interface
+	 * using IPV6</li>
+	 * </ol>
+	 * 
+	 * @refactor yamini.s
+	 */
+
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+			BroadBandTestGroup.WIFI, BroadBandTestGroup.WEBPA })
+	@TestDetails(testUID = "TC-RDKB-CHANNEL-BANDWIDTH-1002")
+	public void verifyChannelBandwidthInAdminGUI5Ghz(Dut device) {
+		boolean status = false;// String to store the test case status
+		String testId = "TC-RDKB-CHANNEL-BANDWIDTH-102";// Test case id
+		String testStep = null;// Test step number
+		String errorMessage = null;// String to store the error message
+		WebDriver lanDriver = null;// Webdriver to store object
+		Dut clientSettop = null;// Dut object to store client device
+		String wifi5GhzSsidName = null;// String to store wifi ssid name
+		String wifi5GhzPassPhrase = null;// String to store wifi passphrase
+		String defaultChannel = null;// String to store channel bandwidth
+		try {
+			LOGGER.info("#################### STARTING TEST CASE: TC-RDKB-CHANNEL_BANDWIDTH-1002#####################");
+			LOGGER.info("TEST DESCRIPTION: Test to verify channel bandwidth of 5Ghz wifi ssid from Lan GUI");
+			LOGGER.info("TEST STEPS : ");
+			LOGGER.info("PRE-CONDITION : ");
+			LOGGER.info("1.Login to Lan side GUI page of device");
+			LOGGER.info("2.Launch Connection page and navigate to WIFI page");
+			LOGGER.info("3.Navigate to Edit 5Ghz page and verfiy channel bandwidth options 20MHz and 20/40MHz");
+			LOGGER.info("4.Change Wi-Fi settings of 5Ghz SSID Wi-FI settings(SSID, Password, Channel Bandwidth-40MHz)");
+			LOGGER.info("5.Validate Wifi SSID name , Password and channel bandwidth using webpa");
+			LOGGER.info("6.Connect to a connected client with 5Ghz radio ssid ");
+			LOGGER.info("7.Verify whether Connected client  got the  IPv4  address ");
+			LOGGER.info("8.Verify whether Connected client got the   IPv6 address.");
+			LOGGER.info("9.Verify whether you have connectivity using that particular interface using IPV4");
+			LOGGER.info("10.Verify whether you have connectivity using that particular interface using IPV6");
+			LOGGER.info(
+					"11.Change Wi-Fi settings of 5Ghz SSID Wi-FI settings(SSID, Password, Channel Bandwidth-80MHz)");
+			LOGGER.info("12.Validate Wifi SSID name , Password and channel bandwidth using webpa");
+			LOGGER.info("13.Connect to a connected client with 5Ghz radio ssid ");
+			LOGGER.info("14.Verify whether Connected client  got the IPv4 address ");
+			LOGGER.info("15.Verify whether Connected client got the IPv6 address.");
+			LOGGER.info("16.Verify whether you have connectivity using that particular interface using IPV4");
+			LOGGER.info("17.Verify whether you have connectivity using that particular interface using IPV6");
+			LOGGER.info(
+					"18.Change Wi-Fi settings of 5Ghz SSID Wi-FI settings(SSID, Password, Channel Bandwidth-20MHz)");
+			LOGGER.info("19.Validate Wifi SSID name , Password and channel bandwidth using webpa");
+			LOGGER.info("20.Connect to a connected client with 5Ghz radio ssid ");
+			LOGGER.info("21.Verify whether Connected client  got the IPv4 address ");
+			LOGGER.info("22.Verify whether Connected client got the IPv6 address.");
+			LOGGER.info("23.Verify whether you have connectivity using that particular interface using IPV4");
+			LOGGER.info("24.Verify whether you have connectivity using that particular interface using IPV6");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("################################# STARTING PRE-CONFIGURATIONS #############################");
+			LOGGER.info("PRE-CONFIGURATIONS TEST STEPS : ");
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("PRE-CONDITION 1: Verify whether Private SSID 5Ghz can be enabled using webPA");
+			LOGGER.info("PRE-CONDITION 1: EXPECTED: Private SSID 5Ghz should be enabled successfully");
+			errorMessage = "Unable to enable 5Ghz private SSID using webpa";
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS,
+					BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+					BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("PRE-CONDITION 1: ACTUAL : PRE CONDITION EXECUTED SUCCESSFULLY");
+			} else {
+				LOGGER.error("PRE-CONDITION 1: ACTUAL : " + errorMessage);
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("PRE-CONDITION 2: Retrieve WiFi SSID name of 5Ghz using webpa");
+			LOGGER.info("PRE-CONDITION 2: EXPECTED: Private SSID 5Ghz name should be retrieved");
+			errorMessage = "Unable to retrieve 5Ghz private SSID name using webpa";
+			wifi5GhzSsidName = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME);
+			if (CommonMethods.isNotNull(wifi5GhzSsidName)) {
+				LOGGER.info("PRE-CONDITION 2: ACTUAL : PRE CONDITION EXECUTED SUCCESSFULLY");
+			} else {
+				LOGGER.error("PRE-CONDITION 2: ACTUAL : " + errorMessage);
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("PRE-CONDITION 3: Retrieve WiFi SSID Passphrase of 5Ghz using webpa");
+			LOGGER.info("PRE-CONDITION 3: EXPECTED: Private SSID 5Ghz Passphrase should be retrieved");
+			errorMessage = "Unable to retrieve 5Ghz private SSID Passphrase using webpa";
+			wifi5GhzPassPhrase = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5GHZ_SECURITY_KEYPASSPHRASE);
+			if (CommonMethods.isNotNull(wifi5GhzPassPhrase)) {
+				LOGGER.info("PRE-CONDITION 3: ACTUAL : PRE CONDITION EXECUTED SUCCESSFULLY");
+			} else {
+				LOGGER.error("PRE-CONDITION 3: ACTUAL : " + errorMessage);
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+			}
+			LOGGER.info("#####################################################################################");
+			LOGGER.info("PRE-CONDITION 4: Retrieve WiFi SSID Channel bandwidth of 5Ghz using webpa");
+			LOGGER.info("PRE-CONDITION 4: EXPECTED: Private SSID 5Ghz Channel bandwidth should be retrieved");
+			errorMessage = "Unable to retrieve 5Ghz private SSID Channel bandwidth using webpa";
+			defaultChannel = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_FOR_OPERATING_BANDWIDTH_IN_5GHZ_BAND);
+
+			if (CommonMethods.isNotNull(defaultChannel)) {
+				LOGGER.info("PRE-CONDITION 4: ACTUAL : PRE CONDITION EXECUTED SUCCESSFULLY");
+			} else {
+				LOGGER.error("PRE-CONDITION 4: ACTUAL : " + errorMessage);
+				throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + errorMessage);
+			}
+			/**
+			 * STEP 1: Launch the Login page on Connected Client
+			 */
+			status = false;
+			testStep = "s1";
+			errorMessage = "Connected client device is not obtained";
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP 1: DESCRIPTION :LAUNCH ADMIN LOGIN PAGE AND LOGIN");
+			LOGGER.info("STEP 1: ACTION :LOGIN TO LAN SIDE GUI ADMIN PAGE");
+			LOGGER.info("STEP 1: EXPECTED: LOGIN SHOULD BE SUCCESSFUL AND REDIRECTED TO AT A GLANCE PAGE");
+			LOGGER.info("#######################################################################################");
+			try {
+				clientSettop = BroadBandConnectedClientUtils
+						.get5GhzWiFiCapableClientDeviceAndConnectToAssociated5GhzSsid(device, tapEnv);
+				if (null != clientSettop) {
+					errorMessage = "Unable to Login to LanGUI page using Admin credential";
+					status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, clientSettop);
+					lanDriver = LanWebGuiLoginPage.getDriver();
+				}
+				if (status) {
+					LOGGER.info("STEP 1:ACTUAL:Launched GUI page and login sucessfully");
+				} else {
+					LOGGER.error("STEP 1:ACTUAL:" + errorMessage);
+				}
+			} catch (Exception exception) {
+				LOGGER.error("Exception in launching GUI page " + exception.getMessage());
+			}
+			LOGGER.info("#######################################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, true);
+			/**
+			 * STEP 2:Launch Connection page and navigate to WIFI page
+			 */
+			status = false;
+			testStep = "s2";
+			errorMessage = "Unable to navigate to Connection page -> WiFi page from 'At a Glance Page'";
+			LOGGER.info("##########################################################################");
+			LOGGER.info("STEP 2 : DESCRIPTION :LAUNCH CONNECTION PAGE AND NAVIGATE TO WIFI PAGE");
+			LOGGER.info("STEP 2 : ACTION :NAVIGATE TO WIFI PAGE FROM CONNECTION PAGE");
+			LOGGER.info("STEP 2 : EXPECTED:Connection page -> WiFi page  NAVIGATE SUCCESSFULLY");
+			LanSideWiFiPage lanSideWiFiPage = new LanSideWiFiPage(lanDriver);
+			try {
+				if (lanSideWiFiPage.navigateToConnection(device, tapEnv)) {
+					status = lanSideWiFiPage.navigateToWiFiPage(device, tapEnv);
+				}
+			} catch (Exception exception) {
+				LOGGER.error("Exception in launching WiFi page " + exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP 2:ACTUAL :Navigate to WiFi page successfully");
+			} else {
+				LOGGER.error("STEP 2:ACTUAL :" + errorMessage);
+			}
+			LOGGER.info("##########################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+			/**
+			 * STEP 3:Navigate to Edit 2.4Ghz page and Verify channel bandwidth options
+			 * 20MHz and 20/40MHz
+			 */
+			status = false;
+			testStep = "s3";
+			errorMessage = "Unable to verify channel bandwidth options in 5Ghz WiFi Page";
+			LOGGER.info("##########################################################################");
+			LOGGER.info("STEP 3 : DESCRIPTION : VERIFY CHANNEL BANDWIDTH OPTIONS 20MHZ , 20/40MHZ and 20/40/80MHZ");
+			LOGGER.info("STEP 3 : ACTION : NAVIGATE TO 5GHZ EDIT PAGE");
+			LOGGER.info("STEP 3 : EXPECTED : CHANNEL BANDWIDTH OPTIONS SHOULD BE VERIFIED");
+			BroadBandResultObject broadBandResultObject = new BroadBandResultObject();
+			try {
+				broadBandResultObject = lanSideWiFiPage.verifyBandwidthOptionsInWifiPage(device, tapEnv, true);
+			} catch (Exception e) {
+				LOGGER.error("Exception in Validating Bandwith options in Wifi Edit page \n" + e.getMessage());
+			}
+			errorMessage = broadBandResultObject.getErrorMessage();
+			if (broadBandResultObject.isStatus()) {
+				status = true;
+				LOGGER.info("STEP 3:ACTUAL :Channel bandwidth options in Wifi  page verified successfully");
+			} else {
+				LOGGER.error("STEP 3:ACTUAL :" + errorMessage);
+			}
+			LOGGER.info("##########################################################################");
+			tapEnv.updateExecutionStatus(device, testId, testStep, status, errorMessage, false);
+			String[] wifi24GhzParamters = { BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5GHZ_SECURITY_KEYPASSPHRASE,
+					BroadBandWebPaConstants.WEBPA_PARAM_FOR_OPERATING_BANDWIDTH_IN_5GHZ_BAND };
+			status = false;
+			channelBandwidthOptionsValidation(device, clientSettop, lanSideWiFiPage, testId, lanDriver, 4,
+					BroadBandTestConstants.STRING_VALUE_5GHZ_SSID1, BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY1,
+					BroadBandTestConstants.OPERATING_BANDWIDTH_40_MMZ, wifi24GhzParamters, true,
+					BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+					BroadBandWebGuiElements.ELEMENT_ID_CHANNEL_40MHZ_5Ghz);
+			status = false;
+			channelBandwidthOptionsValidation(device, clientSettop, lanSideWiFiPage, testId, lanDriver, 11,
+					BroadBandTestConstants.STRING_VALUE_5GHZ_SSID2, BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY2,
+					BroadBandTestConstants.OPERATING_BANDWIDTH_80_MMZ, wifi24GhzParamters, true,
+					BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+					BroadBandWebGuiElements.ELEMENT_ID_CHANNEL_80MHZ);
+			status = false;
+			channelBandwidthOptionsValidation(device, clientSettop, lanSideWiFiPage, testId, lanDriver, 18,
+					BroadBandTestConstants.STRING_VALUE_5GHZ_SSID3, BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY3,
+					BroadBandTestConstants.OPERATING_BANDWIDTH_20_MMZ, wifi24GhzParamters, true,
+					BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+					BroadBandWebGuiElements.ELEMENT_ID_CHANNEL_20MHZ_5Ghz);
+		} catch (Exception exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error("Exception occured in channel bandwidth validation" + errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, testStep, status, errorMessage, true);
+		} finally {
+			try {
+				LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+				BroadBandWebGuiTests broadBandWebGuiTests = new BroadBandWebGuiTests();
+				broadBandWebGuiTests.postConfigurationsForWifiRestoration(device, WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+						clientSettop, wifi5GhzSsidName, wifi5GhzPassPhrase, defaultChannel);
+			} catch (Exception e) {
+				LOGGER.error("Exception in POST CONFIGURATIONS " + e.getMessage());
+			}
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-CHANNEL-BANDWIDTH-1002");
 	}
 
 }

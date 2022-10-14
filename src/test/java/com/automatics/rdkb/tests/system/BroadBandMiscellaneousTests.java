@@ -40,6 +40,9 @@ import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
+import com.automatics.rdkb.utils.cdl.BroadBandXconfCdlUtils;
+import com.automatics.rdkb.utils.cdl.CodeDownloadUtils;
+import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.telemetry.BroadBandTelemetry2Utils;
@@ -49,6 +52,7 @@ import com.automatics.snmp.SnmpDataType;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.CommonMethods;
+import com.automatics.utils.xconf.XConfUtils;
 
 public class BroadBandMiscellaneousTests extends AutomaticsTestBase{
     
@@ -1998,6 +2002,1113 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase{
 
 	LOGGER.info("ENDING TEST CASE: TC-RDKB-NONROOT-T2-1000");
   }
+  
+  /**
+   * Test to Verify that xconf requests contain accountId
+   * 
+   * <li>PRE CONDITION 1. Reboot the device</li>
+   * <li>1. Verify Accountid is set in syscfg.db file using syscfg get command and cross validate via dmcli</li>
+   * <li>2. Verify RFC xconf query has &accountID=unknown in the curl request</li>
+   * <li>3.Verify CDL xconf query has &accountID=<accountID> in the curl request</li>
+   * <li>4. Verify DCM xconf query has &accountID=<accountID> in the curl request</li>
+   * <li>5. Reboot the device and verify AccountId persist</li>
+   * <li>6. Remove the AccounID by setting Unknown to syscfg.db file using syscfg set command</li>
+   * <li>7. Configure mock xconf url in swupdate.conf</li>
+   * <li>8. Restart rfc-config.service to fetch the RFC settings from the mock xconf</li>
+   * <li>9. Reboot the device</li>
+   * <li>10. Verify RFC xconf query has &accountID=unknown in the curl request</li>
+   * <li>11. Verify CDL xconf query has &accountID=unknown in the curl request</li>
+   * <li>12.Verify DCM xconf query has &accountID=unknown in the curl request</li>
+   * <li>13. Configure mock xconf url in swupdate.conf</li>
+   * <li>14. Restart rfc-config.service to fetch the RFC settings from the mock xconf</li>
+   * <li>15. Reboot the device</li>
+   * <li>16. Verify the AccounID is set in syscfg.db file using syscfg set command and cross validate via dmcli</li>
+   * <li>17. Verify RFC xconf query has &accountID=unknown in the curl request</li>
+   * <li>18. Verify CDL xconf query has &accountID=<accountID> in the curl request</li>
+   * <li>19. Verify DCM xconf query has &accountID=<accountID> in the curl request</li>
+   * <li>20. Verify invalid AccoundID with special characters is not set in the xconf query's via dmcli command</li>
+   * <li>21. Verify invalid AccoundID with special characters that is set is not present in the xconf query's via
+   * dmcli command</li>
+   * <li>22. Verify invalid AccoundID with more than 32 characters is not set in the xconf query's via dmcli command
+   * </li>
+   * <li>23. Verify invalid AccoundID with more than 32 characters that is set is not present in the xconf query's via
+   * dmcli command</li>
+   * <li>24. Perform factory reset on the device</li>
+   * <li>25.Verify that the accountId value has been stored in persistent memory in syscfg.db file using syscfg set
+   * command and cross validate via dmcli</li>
+   * <li>POST CONDITION 1. Reactivate the device</li>
+   *
+   * @author Muthukumar
+   * @refactor Said Hisham
+   * 
+   **/
+  @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+  @TestDetails(testUID = "TC-RDKB-RFC-1200")
+  public void testToVerifyAccountIdFromXconfRequest(Dut device) {
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-RFC-200";
+	String stepNum = null;
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	String accountIdFromSystem = null;
+	String accountIdFromWebpa = null;
+	String defaultAccountIdFromSystem = null;
+	boolean isReset = false;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-RFC-1200");
+	LOGGER.info("TEST DESCRIPTION:Test to Verify that xconf requests contain accountId ");
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION 1:Perform reboot on the device");
+	LOGGER.info(
+		"1. Verify Accountid is set in syscfg.db file using syscfg get command  and cross validate via dmcli");
+	LOGGER.info("2. Verify RFC xconf query has &accountID=<unknown> in the curl request.");
+	LOGGER.info("3. Verify CDL xconf query has &accountID=<accountID> in the curl request.");
+	LOGGER.info("4. Verify DCM xconf query has &accountID=<accountID> in the curl request.");
+	LOGGER.info("5. Reboot the device and verify AccountId persist");
+	LOGGER.info("6. Remove the AccounID by setting Unknown to syscfg.db file using syscfg set command");
+	LOGGER.info("7. Configure mock xconf url in swupdate.conf");
+	LOGGER.info("8. Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	LOGGER.info("9. Reboot the device");
+	LOGGER.info("10. Verify RFC xconf query has &accountID=unknown in the curl request.");
+	LOGGER.info("11. Verify CDL xconf query has &accountID=unknown in the curl request.");
+	LOGGER.info("12. Verify DCM xconf query has &accountID=unknown in the curl request.");
+	LOGGER.info("13. Configure mock xconf url in swupdate.conf");
+	LOGGER.info("14. Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	LOGGER.info("15. Reboot the device");
+	LOGGER.info(
+		"16. Verify the AccounID is present in syscfg.db file using syscfg set command and cross validate via dmcli");
+	LOGGER.info("17. Verify RFC xconf query has &accountID=<Unknown> in the curl request");
+	LOGGER.info("18. Verify CDL xconf query has &accountID=<accountID> in the curl request");
+	LOGGER.info("19. Verify DCM xconf query has &accountID=<accountID> in the curl request");
+	LOGGER.info(
+		"20. Verify invalid AccoundID with special characters is not set in the xconf query's via dmcli command");
+	LOGGER.info(
+		"21. Verify invalid AccoundID with special characters that is set is not present in the xconf query's via dmcli command");
+	LOGGER.info(
+		"22. Verify invalid AccoundID with more than 32 characters is not set in the xconf query's via dmcli command");
+	LOGGER.info(
+		"23. Verify invalid AccoundID with more than 32 characters that is set is not present in the xconf query's via dmcli command");
+	LOGGER.info("24.  Perform factory reset on the device");
+	LOGGER.info(
+		"25. Verify that the accountId value has been stored in persistent memory  in syscfg.db file using syscfg set command and cross validate via dmcli");
+	LOGGER.info("POST CONDITION 1. Reactivate the device");
+	LOGGER.info("#######################################################################################");
+	try {
+	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Pre-condition 1 : perform reboot on the device
+	     */
+	    LOGGER.info("#######################################################################################");
+	    LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : perform reboot on the device");
+	    LOGGER.info("PRE-CONDITION 1 : ACTION :  Execute Command: /sbin/reboot");
+	    LOGGER.info("PRE-CONDITION 1 : EXPTECTED : Successfully performed reboot on the device and device come up");
+	    LOGGER.info("#######################################################################################");
+	    errorMessage = "Unable to reboot the device";
+	    try {
+		status = BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv)
+			&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+	    } catch (TestException exception) {
+		errorMessage = "Exception occurred while performing reboot";
+		LOGGER.error(errorMessage + " : " + exception.getMessage());
+	    }
+	    if (status) {
+		LOGGER.info("PRE-CONDITION 1 : ACTUAL : Successfully performed reboot operation on the device.");
+	    } else {
+		LOGGER.error("PRE-CONDITION 1 : ACTUAL : " + errorMessage);
+		throw new TestException(
+			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1: FAILED : " + errorMessage);
+	    }
+	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+	    /**
+	     * Step 1 : Verify Accountid is set in syscfg.db file using syscfg get command and cross validate via dmcli
+	     */
+	    int stepNumber = 1;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to Verify Accountid is set in syscfg.db file using syscfg get command";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify Accountid is set in syscfg.db file using syscfg get command");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : 1. cat /nvram/syscfg.db | grep Account");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Successfully verified that AccountId is set in syscfg.db file");
+	    LOGGER.info("**********************************************************************************");
+	    defaultAccountIdFromSystem = tapEnv
+		    .executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandCommandConstants.CMD_FOR_SYSCFG_GET, BroadBandCommandConstants.CMD_FOR_ACCOUNTID))
+		    .trim();
+	    accountIdFromWebpa = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(defaultAccountIdFromSystem) && CommonMethods.isNotNull(accountIdFromWebpa)
+		    && CommonMethods.patternMatcher(defaultAccountIdFromSystem,
+			    BroadBandTestConstants.PATTERN_FOR_ACCOUNTID)
+		    && CommonUtils.patternSearchFromTargetString(defaultAccountIdFromSystem, accountIdFromWebpa);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that AccountId is set in syscfg.db file");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 2-4 : Verify RFC/CDL/DCM xconf query has &accountID=<accountID> in the curl request
+	     */
+	    getAccountIDAndVerifyFromXconfQuery(device, tapEnv, testCaseId, BroadBandTestConstants.CONSTANT_2,
+		    defaultAccountIdFromSystem);
+
+	    /**
+	     * Step 5 : Reboot the device and verify AccountId persist
+	     */
+	    stepNumber = BroadBandTestConstants.CONSTANT_5;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Device could not be rebooted";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Reboot the device and verify AccountId persist after reboot");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute Command: /sbin/reboot");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Device should reboot and come up and AccountId should persist");
+	    LOGGER.info("**********************************************************************************");
+	    if (BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv)
+		    && BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true)) {
+		errorMessage = "Unable to verify AccountId persist after reboot";
+		accountIdFromSystem = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_FOR_SYSCFG_GET,
+				BroadBandCommandConstants.CMD_FOR_ACCOUNTID));
+		accountIdFromWebpa = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+		status = CommonMethods.isNotNull(accountIdFromSystem) && CommonMethods.isNotNull(accountIdFromWebpa)
+			&& CommonUtils.patternSearchFromTargetString(accountIdFromSystem, defaultAccountIdFromSystem)
+			&& CommonUtils.patternSearchFromTargetString(accountIdFromSystem, accountIdFromWebpa);
+		if (status) {
+		    LOGGER.info("STEP " + stepNumber
+			    + " : ACTUAL : Successfully rebooted the device and verified accountId persist");
+		} else {
+		    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+		}
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 6 : Remove the AccountID by setting Unknown to syscfg.db file
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to Remove account ID value from syscfg.db file using syscfg set command";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Remove the AccounID by setting Unknown to syscfg.db file using syscfg set command");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute Command : 1. syscfg set AccountID Unknown 2. syscfg commit");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Successfully removed the AccounID by setting Unknown from syscfg.db file");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.executeCommandUsingSsh(device,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandCommandConstants.SYSCFG_ACCOUNTID,
+			    BroadBandTestConstants.STRING_UNKNOWN, BroadBandTestConstants.SEMI_COLON,
+			    BroadBandCommandConstants.CMD_FOR_SYSCFG_COMMIT));
+	    try {
+		status = BroadBandRfcFeatureControlUtils.setAccountIDInProxyXconf(device,
+			BroadBandTestConstants.STRING_UNKNOWN, tapEnv);
+	    } catch (Exception e) {
+		LOGGER.error("Exception while setting account ID in RFC");
+	    }
+
+	    status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID, BroadBandTestConstants.STRING_UNKNOWN);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : Successfully Removed account ID value from syscfg.db file using syscfg set command");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 7 : Restart rfc-config.service to fetch the RFC settings from the mock xconf
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to restart rfc service";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : sh /lib/rdk/RFCbase.sh");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : rfc service should be restarted successfully");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : rfc-config service has been restarted successfully");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 8 : Configure mock xconf url in swupdate.conf
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to configure mock xconf url in swupdate.conf";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Configure mock xconf url in swupdate.conf");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTION : Execute command:1) Configure mock xconf url in swupdate.conf 2)echo <xconf url> /opt/swupdate.conf");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : The mock xconf configuration shoul dbe successful");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("Updating mock xconf url in swupdate.conf file");
+	    response = tapEnv.executeCommandUsingSsh(device,
+		    BroadBandCommandConstants.SYSCFG_ACCOUNTID + BroadBandTestConstants.STRING_UNKNOWN);
+	    BroadBandXconfCdlUtils.updateSoftwareUpdateConfigurationOnClient(tapEnv, device);
+	    LOGGER.info(
+		    "Getting the currently flashed file name from cdl_flashed_file_name to configure the same build name in mock xconf so that CDL won't start");
+	    String flashedFileName = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("File name obtained from cdl_flashed_file_name= " + flashedFileName);
+	    String firmwareVersion = CodeDownloadUtils.getCurrentRunningImageNameFromVersionTxtFile(device, tapEnv);
+	    LOGGER.info("File name obtained from /version.txt= " + firmwareVersion);
+	    LOGGER.info(
+		    "Checking whether the cdl_flashed_file_name and file name obtained from version.txt file are same of not. If they are not same then CDL might start");
+	    if (CommonMethods.isNotNull(flashedFileName) && CommonMethods.isNotNull(firmwareVersion)
+		    && flashedFileName.contains(firmwareVersion)) {
+		LOGGER.info("Version check successful. Proceeding with CDL configuration");
+		XConfUtils.configureXconfDownloadFirmwareDetails(device, flashedFileName, true,
+			BroadBandTestConstants.FIRMWARE_DOWNLOAD_PROTOCOL_HTTP);
+		status = true;
+	    } else {
+		LOGGER.error(
+			"Any one or more of the following criteria was not satisfied: 1) Build name from cdl_flashed_file_name is null or 2) Build name from /version.txt is null or 3) Build names obtained in 1 and 2 are not same");
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully configured mock xconf server url in swupdate.conf");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 9 : Reboot the device
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to perform reboot operation on the device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Reboot the device");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute Command: /sbin/reboot");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : Device should reboot and come up");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv)
+		    && BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : Successfully rebooted the device");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 10-12 : Verify RFC/CDL/DCM xconf query has &accountID=unknown in the curl request
+	     */
+	    getAccountIDAndVerifyFromXconfQuery(device, tapEnv, testCaseId, BroadBandTestConstants.CONSTANT_10,
+		    BroadBandTestConstants.STRING_UNKNOWN);
+
+	    /**
+	     * Step 13 : Update XCONF url in RFC properties
+	     */
+	    stepNumber = BroadBandTestConstants.CONSTANT_13;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to Update XCONF url in RFC properties";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION: Update XCONF url in RFC properties");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION: Copy and update XCONF url in RFC properties");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED: XCONF url should be updated in RFC properties");
+	    LOGGER.info("**********************************************************************************");
+	    if (BroadBandRfcFeatureControlUtils.copyRfcPropertiesFromEtcToNVRAM(device, tapEnv)) {
+		errorMessage = "Unable to override value of DCM_RFC_SERVER_URL in /nvram/rfc.properties";
+		status = BroadBandRfcFeatureControlUtils.copyAndUpdateRfcPropertiesNewXconfUrl(device, tapEnv,
+			AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_PROXY_XCONF_RFC_URL));
+	    }
+	    try {
+		tapEnv.executeCommandUsingSsh(device,
+			CommonMethods.concatStringUsingStringBuffer(BroadBandCommandConstants.SYSCFG_ACCOUNTID,
+				defaultAccountIdFromSystem, BroadBandTestConstants.SEMI_COLON,
+				BroadBandCommandConstants.CMD_FOR_SYSCFG_COMMIT));
+		status = BroadBandRfcFeatureControlUtils.setAccountIDInProxyXconf(device, defaultAccountIdFromSystem,
+			tapEnv);
+	    } catch (Exception e) {
+		LOGGER.error("Exception while setting account ID in RFC");
+	    }
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL: Status of updating RFC properties with XCONF url: "
+			+ status);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    /**
+	     * Step 14 : Restart rfc-config.service to fetch the RFC settings from the mock xconf
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to restart rfc service";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Restart rfc-config.service to fetch the RFC settings from the mock xconf");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : sh /lib/rdk/RFCbase.sh");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : rfc service should be restarted successfully");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : rfc-config service has been restarted successfully");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 15 : Reboot the device
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to perform reboot operation on the device";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Reboot the device");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute Command: /sbin/reboot");
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : Device should reboot and come up");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv)
+		    && BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : Successfully rebooted the device");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 16: Verify Accountid is set in syscfg.db file using syscfg get command and cross validate via dmcli
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to Verify Accountid is set in syscfg.db file using syscfg get command";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify Accountid is set in syscfg.db file using syscfg get command");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : 1. cat /nvram/syscfg.db | grep Account");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Successfully verified that AccountId is set in syscfg.db file");
+	    LOGGER.info("**********************************************************************************");
+	    accountIdFromSystem = tapEnv
+		    .executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+			    BroadBandCommandConstants.CMD_FOR_SYSCFG_GET, BroadBandCommandConstants.CMD_FOR_ACCOUNTID))
+		    .trim();
+	    accountIdFromWebpa = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(accountIdFromSystem) && CommonMethods.isNotNull(accountIdFromWebpa)
+		    && CommonUtils.patternSearchFromTargetString(accountIdFromSystem, defaultAccountIdFromSystem)
+		    && CommonUtils.patternSearchFromTargetString(accountIdFromSystem, accountIdFromWebpa);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that AccountId is set in syscfg.db file");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 17-19 : Verify RFC/CDL/DCM xconf query has &accountID=<accountID> in the curl request
+	     */
+	    getAccountIDAndVerifyFromXconfQuery(device, tapEnv, testCaseId, BroadBandTestConstants.CONSTANT_17,
+		    defaultAccountIdFromSystem);
+
+	    /**
+	     * Step 20 : Verify that invalid accountId with special characters is not set via webPa
+	     */
+	    stepNumber = BroadBandTestConstants.CONSTANT_20;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to verify webpa parameter for invalid accountId with special characters has not been set";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify that invalid accountId with special characters has not been set  via "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute webpa command : "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : " + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID
+		    + "  parameter  should not be set with invalid AccountId");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID, BroadBandTestConstants.CONSTANT_3,
+			BroadBandTestConstants.INVALID_ACCOUNTID_VALUE_WITH_SPECIAL_CHARS);
+	    } catch (Exception exception) {
+		errorMessage += exception.getMessage();
+		LOGGER.error("Failed to set invalid AccountID : " + errorMessage);
+	    }
+	    if (!status) {
+		status = true;
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : Successfully verified invalid AccountID with special characters is not set via wepa");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 21 : Verify invalid AccountID with special characters is not allowed to set
+	     * Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to Verify invalid AccoundID is not present  via webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify invalid AccoundID with special characters that is set is not present in the xconf query's via webpa");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute webpa command: "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : " + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID
+		    + " parameter and its value should be equal to accountId value");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(response)
+		    && CommonUtils.patternSearchFromTargetString(response, defaultAccountIdFromSystem);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Invalid AccountId with special characters  has not been set via "
+			+ BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 22 : Verify that invalid accountId with above 32 chars is not set via webPa
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Failed to verify tr181 parameter for invalid accountId with above 32 chars has not been set";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify that invalid accountId with above 32 chars has not been set  via "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute webpa command: "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber + " : EXPECTED : EXPECTED : "
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID
+		    + "  parameter  should not be set with invalid AccountId");
+	    LOGGER.info("**********************************************************************************");
+	    try {
+		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+			BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID, BroadBandTestConstants.CONSTANT_3,
+			BroadBandTestConstants.INVALID_ACCOUNTID_MORE_THAN_THIRTY_TWO);
+	    } catch (Exception exception) {
+		errorMessage += exception.getMessage();
+		LOGGER.error("Failed to set invalid AccountID : " + errorMessage);
+	    }
+	    if (!status) {
+		status = true;
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL : Successfully verified invalid AccountID with above 32 chars is not set via webPa");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 23 : Verify invalid AccountID with above 32 is not allowed to set
+	     * Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to Verify invalid AccoundID is not present  via dmcli command";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify invalid AccoundID that is set is not present in the xconf query's via dmcli command");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Execute webpa command:"
+		    + BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID  parameter and its value should be equal to accountId value");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(response)
+		    && CommonUtils.patternSearchFromTargetString(response, defaultAccountIdFromSystem);
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ ": ACTUAL : Invalid AccountId  has not been set in tr181 Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 24 : Factory reset the device
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to perform wifi factory reset operation on the device. hence blocking the execution.";
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Perform factory reset on the device.");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : Perform factory reset using webpa.");
+	    LOGGER.info("STEP " + stepNumber + " : EXPTECTED : Device must undergo factory reset.");
+	    LOGGER.info("**********************************************************************************");
+	    status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
+		    BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
+	    if (status) {
+		isReset = status;
+		LOGGER.info("STEP " + stepNumber + " : ACTUAL : Factory reset successfully performed.");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	    /**
+	     * Step 25 : Verify Accountid is set back to default value in syscfg.db file
+	     */
+	    stepNumber++;
+	    stepNum = "S" + stepNumber;
+	    errorMessage = "Unable to Verify Accountid is set in syscfg.db file using syscfg get command";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : DESCRIPTION : Verify Accountid is set in syscfg.db file using syscfg get command and cross validate via webPa");
+	    LOGGER.info("STEP " + stepNumber + " : ACTION : 1. cat /nvram/syscfg.db | grep Account");
+	    LOGGER.info("STEP " + stepNumber
+		    + " : EXPECTED : Successfully verified that AccountId is set in syscfg.db file");
+	    LOGGER.info("**********************************************************************************");
+	    long startTime = System.currentTimeMillis();
+	    do {
+		accountIdFromSystem = tapEnv.executeCommandUsingSsh(device,
+			BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_FOR_SYSCFG_GET,
+				BroadBandCommandConstants.CMD_FOR_ACCOUNTID));
+		accountIdFromWebpa = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+			BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+		status = CommonMethods.isNotNull(accountIdFromSystem) && CommonMethods.isNotNull(accountIdFromWebpa)
+			&& CommonMethods.patternMatcher(accountIdFromSystem,
+				BroadBandTestConstants.PATTERN_FOR_ACCOUNTID)
+			&& CommonUtils.patternSearchFromTargetString(accountIdFromSystem, accountIdFromWebpa);
+	    } while (!status && ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS)
+		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+	    if (status) {
+		LOGGER.info("STEP " + stepNumber
+			+ " : ACTUAL :Successfully verified that AccountId is set in syscfg.db file");
+	    } else {
+		LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	    }
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+	    if (isReset) {
+		LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+		BroadBandPostConditionUtils.executePostConditionToReActivateDevice(device, tapEnv, false,
+			BroadBandTestConstants.CONSTANT_1);
+		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	    }
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-RFC-1200");
+  }
+
+  /**
+   * method to retrieve AccountID from Xconf query and validate it with given parameter
+   * 
+   * @param device
+   *            Dut object
+   * @param tapEnv
+   *            AutomaticsTapApi object
+   * @param testCaseId
+   *            testCaseID
+   * @param stepNumber
+   *            Step Number
+   * @param accountIdFromSystem
+   *            response from syscfg.db file
+   * @refactor Said Hisham
+   */
+
+  public static void getAccountIDAndVerifyFromXconfQuery(Dut device, AutomaticsTapApi tapEnv, String testCaseId,
+	    int stepNumber, String accountIdFromSystem) {
+	String stepNum = null;
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	boolean isUnknown = false;
+	/**
+	 * Step : Verify RFC xconf query has &accountID=<accountID> in the curl request
+	 */
+
+	stepNum = "S" + stepNumber;
+	status = false;
+	if (stepNumber == BroadBandTestConstants.CONSTANT_2 || stepNumber == BroadBandTestConstants.CONSTANT_17) {
+	    isUnknown = true;
+	}
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Verify xconf query has & accountID = "
+		+ (isUnknown ? BroadBandTestConstants.STRING_UNKNOWN : accountIdFromSystem) + " in the curl request");
+	LOGGER.info(
+		"STEP " + stepNumber + " : ACTION : Execute command:1) cat /rdklogs/logs/dcmrfc.log |grep -i Account ");
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : The RFC curl request should have accountID = "
+		+ (isUnknown ? BroadBandTestConstants.STRING_UNKNOWN : accountIdFromSystem) + " appended in it.");
+	LOGGER.info("**********************************************************************************");
+	errorMessage = "accountID = " + (isUnknown ? BroadBandTestConstants.STRING_UNKNOWN : accountIdFromSystem)
+		+ " is not being sent in DCM xconf request";
+	response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID,
+			isUnknown ? BroadBandTestConstants.STRING_UNKNOWN : accountIdFromSystem));
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber
+		    + " : ACTUAL :Successfully verified that RFC curl request  has accountId as "
+		    + (isUnknown ? BroadBandTestConstants.STRING_UNKNOWN : accountIdFromSystem) + " appended in it");
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("**********************************************************************************");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	/**
+	 * Step : Verify CDL xconf query has &accountID=<accountID> in the curl request
+	 */
+	stepNumber++;
+	stepNum = "S" + stepNumber;
+	errorMessage = "accountID = " + accountIdFromSystem + " is not being sent in DCM xconf request";
+	status = false;
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Verify xconf query has & accountID = "
+		+ accountIdFromSystem + " in the curl request");
+	LOGGER.info(
+		"STEP " + stepNumber + " : ACTION : Execute command:1) cat /rdklogs/logs/xconf.txt.0 |grep -i Account");
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : The CDL curl request should have accountID = "
+		+ accountIdFromSystem + " appended in it.");
+	LOGGER.info("**********************************************************************************");
+	long startTime = System.currentTimeMillis();
+	do {
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.XCONF_CURL_ACCOUNTID);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID,
+			    accountIdFromSystem));
+	} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS && !status
+		&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : The CDL curl request has as AccountID as "
+		    + accountIdFromSystem + "  appended in it.");
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("**********************************************************************************");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	/**
+	 * Step : Verify DCM xconf query has &accountID=<accountID> in the curl request
+	 */
+	stepNumber++;
+	stepNum = "S" + stepNumber;
+	errorMessage = "accountID = " + accountIdFromSystem + " is not being sent in DCM xconf request";
+	status = false;
+	LOGGER.info("**********************************************************************************");
+	LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Verify xconf query has & accountID = "
+		+ accountIdFromSystem + " in the curl request");
+	LOGGER.info("STEP " + stepNumber
+		+ " : ACTION : Execute command:1) cat /rdklogs/logs/dcmscript.log |grep -i Account");
+	LOGGER.info("STEP " + stepNumber + " : EXPECTED : The dcm curl request should have accountID = "
+		+ accountIdFromSystem + " appended in it.");
+	LOGGER.info("**********************************************************************************");
+	boolean isTelemetryEnabled = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+		BroadBandWebPaConstants.WEBPA_PARAM_FOR_TELEMETRY_2_0_ENABLE, BroadBandTestConstants.TRUE,
+		BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+	startTime = System.currentTimeMillis();
+	String logFile = !isTelemetryEnabled ? BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT
+		: BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0;
+	String expectedText = !isTelemetryEnabled ? BroadBandCommandConstants.CMD_CURL
+		: BroadBandTraceConstants.TRACE_LOG_TELEMETRY_2;
+	do {
+	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, expectedText, logFile);
+	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID,
+			    accountIdFromSystem));
+	    if (!status) {
+		status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(
+			response, CommonMethods.concatStringUsingStringBuffer("\"", "AccountId", "\"", ":", "\"",
+				accountIdFromSystem, "\""));
+	    }
+	} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS && !status
+		&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+	if (status) {
+	    LOGGER.info("STEP " + stepNumber + " : ACTUAL : The dcm curl request has as AccountID as "
+		    + accountIdFromSystem + "  appended in it.");
+	} else {
+	    LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+	}
+	LOGGER.info("**********************************************************************************");
+	tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+  }
+
+  /**
+   * Test to Verify that xconf requests contain accountId
+   *
+   * <ol>
+   * <li>1. Store AccountId from /opt/RFC/tr181store.ini,
+   * Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID</li>
+   * <li>2. Set the accountId value using WebPA</li>
+   * <li>3. Verify that the device appends \"accountId=<account id>\" in RFC requests when the accountId has been set
+   * via WebPA</li>
+   * <li>4. Verify that the accountId value has been stored in persistent memory in the tr181 object
+   * Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID</li>
+   * <li>5. Verify that the device now appends \"accountId=<account id>\" in cdl xconf requests when the accountId has
+   * been set via WebPA</li>
+   * <li>6. Reboot the device</li>
+   * <li>7. Perform a webpa GET operation and verify that accountId has been set successfully</li>
+   * <li>8. Verify that the device now appends \"accountId=<account id>\" in cdl xconf requests</li>
+   * <li>9. Verify that the device now appends \"accountId=<account id>\" in dcm requests</li>
+   * </ol>
+   * 
+   * @author Prince ArunRaj
+   * @refactor Said Hisham
+   */
+  @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+  @TestDetails(testUID = "TC-RDKB-RFC-1201")
+  public void testToVerifyAccountIdFromWebPASetAndGet(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-RFC-201";
+	String stepNum = "s1";
+	String errorMessage = null;
+	boolean status = false;
+	String response = null;
+	String accountId = null;
+	// Variable Declaration Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-RFC-1201");
+	LOGGER.info("TEST DESCRIPTION:Test to Verify that xconf requests contain accountId ");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("1. Store AccountId from Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	LOGGER.info("2. Set the accountId value using WebPA");
+	LOGGER.info(
+		"3. Verify that the device appends \"accountId=<account id>\" in RFC requests when the accountId has been set via WebPA");
+	LOGGER.info(
+		"4. Verify that the accountId value has been stored in persistent memory in the tr181 object Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	LOGGER.info(
+		"5. Verify that the device now appends \"accountId=<account id>\" in cdl xconf requests when the accountId has been set via WebPA");
+	LOGGER.info("6. Reboot the device");
+	LOGGER.info("7. Perform a webpa GET operation and verify that accountId has been set successfully");
+	LOGGER.info("8. Verify that the device now appends \"accountId=<account id>\" in cdl xconf requests");
+	LOGGER.info("9. Verify that the device now appends \"accountId=<account id>\" in dcm requests");
+	LOGGER.info("#######################################################################################");
+	try {
+
+	    stepNum = "s1";
+	    errorMessage = "tr181 parameter for accountId has not been stored in tr181store.ini file";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Verify that the accountId value has been stored in persistent memory in the tr181 object Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute command:dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : tr181store.ini file should contain \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID \" parameter and its value should be equal to accountId value");
+	    LOGGER.info("**********************************************************************************");
+	    accountId = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    errorMessage = "Failed to get the AccountID from Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID";
+	    status = CommonMethods.isNotNull(accountId)
+		    && CommonMethods.patternMatcher(accountId, BroadBandTestConstants.PATTERN_FOR_ACCOUNTID);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : AccountId has been found in tr181 Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "failed to set Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID parameter through webpa";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 2: DESCRIPTION : Set the accountId value using WebPA");
+	    LOGGER.info(
+		    "STEP 2: ACTION : curl -H \"Authorization:Bearer <Sat>\" -X PATCH <WEBPA URL>/device/mac:<mac>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID\",\"value\":\"<accountID\"}]}\"");
+	    LOGGER.info("STEP 2: EXPECTED : WebPA Set operation should be successful");
+	    LOGGER.info("**********************************************************************************");
+	    status = WebPACommonUtils.setWebPaParameter(tapEnv, device,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID, accountId,
+		    BroadBandTestConstants.CONSTANT_0);
+	    if (status) {
+		LOGGER.info(
+			"STEP 2: ACTUAL : WebPa Set operation is successful for parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "AccountId is not updated in rfc curl request";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 3: DESCRIPTION : Verify that the device appends \"accountId=<account id>\" in RFC requests when the accountId has been set via WebPA");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Execute command:1) sh /lib/rdk/RFCbase.sh\n 2) cat /rdklogs/logs/dcmrfc.log |grep -i Account");
+	    LOGGER.info(
+		    "STEP 3: EXPECTED : The RFC curl request should have \"&accountId=<account id>\" appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
+	    if (CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED)) {
+		tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTES);
+		response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+			BroadBandCommandConstants.CMD_CURL, BroadBandCommandConstants.FILE_DCMRFC_LOG,
+			BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+		status = CommonMethods.patternMatcher(response, CommonMethods
+			.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId));
+	    } else {
+		LOGGER.error("Failed to restart RFC server");
+	    }
+	    if (!status) {
+		try {
+		    response = tapEnv.searchAndGetTraceLineWithMatchingString(device, CommonMethods
+			    .concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId),
+			    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+		    status = CommonMethods.isNotNull(response)
+			    && CommonMethods.patternMatcher(response, BroadBandCommandConstants.CMD_CURL);
+		} catch (Exception e) {
+		    LOGGER.error("Exception occured while validating device trace " + e.getMessage());
+		}
+
+	    }
+
+	    if (status) {
+		LOGGER.info("STEP 3: ACTUAL : The RFC curl request has \"&accountId=<account id>\" appended in it.");
+	    } else {
+		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "Failed to get the AccountID from Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 4: DESCRIPTION : Verify that the accountId value has been stored in persistent memory in the tr181 object Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info(
+		    "STEP 4: ACTION : Execute command:dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info(
+		    "STEP 4: EXPECTED : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID \" parameter and its value should be equal to accountId value");
+	    LOGGER.info("**********************************************************************************");
+	    accountId = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(accountId)
+		    && CommonMethods.patternMatcher(accountId, BroadBandTestConstants.PATTERN_FOR_ACCOUNTID);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 4: ACTUAL : AccountId has been found in tr181 Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    } else {
+		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "AccountId is not updated in cdl curl request";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 5: DESCRIPTION : Verify that the device now appends \"accountId=<account id>\" in cdl xconf requests when the accountId has been set via WebPA");
+	    LOGGER.info(
+		    "STEP 5: ACTION : 1) sh /etc/firmwareDwnld.sh 0\n 2) cat /rdklogs/logs/xconf.txt.0 |grep -i Account");
+	    LOGGER.info(
+		    "STEP 5: EXPECTED : The cdl xconf curl request should have \"&accountId=<account id>\" appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("Updating mock xconf url in swupdate.conf file");
+	    BroadBandXconfCdlUtils.updateSoftwareUpdateConfigurationOnClient(tapEnv, device);
+	    LOGGER.info(
+		    "Getting the currently flashed file name from /opt/cdl_flashed_file_name to configure the same build name in mock xconf so that CDL won't start");
+	    String flashedFileName = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+	    LOGGER.info("File name obtained from /opt/cdl_flashed_file_name=" + flashedFileName);
+	    String firmwareVersion = CodeDownloadUtils.getCurrentRunningImageNameFromVersionTxtFile(device, tapEnv);
+	    LOGGER.info("File name obtained from /version.txt=" + firmwareVersion);
+	    LOGGER.info(
+		    "Checking whether the cdl_flashed_file_name and file name obtained from version.txt file are same of not. If they are not same then CDL might start");
+	    if (CommonMethods.isNotNull(flashedFileName) && CommonMethods.isNotNull(firmwareVersion)
+		    && flashedFileName.contains(firmwareVersion)) {
+		LOGGER.info("Version check successful. Proceeding with CDL configuration");
+		XConfUtils.configureXconfDownloadFirmwareDetails(device, flashedFileName, true,
+			BroadBandTestConstants.FIRMWARE_DOWNLOAD_PROTOCOL_HTTP);
+		status = true;
+	    } else {
+		LOGGER.error(
+			"Any one or more of the following criteria was not satisfied: 1) Build name from /opt/cdl_flashed_file_name is null or 2) Build name from /version.txt is null or 3) Build names obtained in 1 and 2 are not same(signed,unsigned doesn't matter)");
+	    }
+	    if (status) {
+		LOGGER.info("STEP 5: ACTUAL : Successfully Configured mock xconf");
+	    } else {
+		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Device could not be rebooted successfully";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Reboot the device");
+	    LOGGER.info("STEP 6: ACTION : Execute Command: /sbin/reboot");
+	    LOGGER.info("STEP 6: EXPECTED : Device should reboot and come up");
+	    LOGGER.info("**********************************************************************************");
+	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+	    if (status) {
+		LOGGER.info("STEP 6: ACTUAL : Successfully rebooted the device");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    errorMessage = "WebPA GET request on parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID is not returning expected account id";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 7: DESCRIPTION : Perform a webpa GET operation and verify that accountId has been set successfully");
+	    LOGGER.info(
+		    "STEP 7: ACTION : curl -i -H \"Authorization: Bearer <SAT>\" <WEBPA URL>/device/mac:<MAC>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID");
+	    LOGGER.info(
+		    "STEP 7: EXPECTED : WebPA GET request on accountId parameter should return the correct accountId");
+	    LOGGER.info("**********************************************************************************");
+	    response = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.TR181_PARAM_TO_GET_ACCOUNT_ID);
+	    status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(accountId);
+	    if (status) {
+		LOGGER.info(
+			"STEP 7: ACTUAL : Webpa get operation is successful for parameter Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.AccountInfo.AccountID ");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    errorMessage = "\"accountId=unknown\" is not being sent in CDL xconf request";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 8: DESCRIPTION : Verify that when accountId is not configured, device sends \"accountId=unknown\" in CDL xconf request");
+	    LOGGER.info(
+		    "STEP 8: ACTION : Execute command:i) Configure mock xconf url in swupdate.conf echo <MOCK XCONF URL> > /nvram/swupdate.conf ii) sh /etc/firmwareDwnld.sh 0 iii) cat /rdklogs/logs/xconf.txt.0 |grep -i Account");
+	    LOGGER.info("STEP 8: EXPECTED : The CDL curl request should have \"accountId=accountId\" appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTES);
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.XCONF_CURL_ACCOUNTID, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonUtils.isGivenStringAvailableInCommandOutput(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId));
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL :The CDL curl request has \"accountId=accountId\" appended in it.");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "AccountId is not updated in dcm curl request";
+	    status = false;
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 9: DESCRIPTION : Verify that the device now appends \"accountId=<account id>\" in dcm requests when the accountId has been set via WebPA");
+	    LOGGER.info("STEP 9: ACTION : cat /rdklogs/logs/dcmscript.log |grep -i Account");
+	    LOGGER.info(
+		    "STEP 9: EXPECTED : The dcm curl request should have \"&accountId=<account id>\" appended in it.");
+	    LOGGER.info("**********************************************************************************");
+	    response = CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device, BroadBandCommandConstants.CMD_CURL,
+		    BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+	    status = CommonMethods.patternMatcher(response,
+		    CommonMethods.concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId));
+	    if (!status) {
+		try {
+		    response = tapEnv.searchAndGetTraceLineWithMatchingString(device, CommonMethods
+			    .concatStringUsingStringBuffer(BroadBandTestConstants.STRING_ACCOUNTID, accountId),
+			    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+		    status = CommonMethods.isNotNull(response)
+			    && CommonMethods.patternMatcher(response, BroadBandCommandConstants.CMD_CURL);
+		} catch (Exception e) {
+		    LOGGER.error("Exception occured while validating device trace " + e.getMessage());
+		}
+
+	    }
+	    if (status) {
+		LOGGER.info("STEP 9: ACTUAL :The dcm curl request has \"&accountId=<account id>\" appended in it.");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-RFC-1201");
+  }
+   
+
 
   /**
    * Test to Verify that RFC requests contain accountId Unknown on Every powercycle

@@ -9643,7 +9643,7 @@ public class BroadBandTr69Test extends AutomaticsTestBase {
 			} else {
 				radioName = BroadbandPropertyFileHandler.getRadioName5BasedOnModel(device);
 			}
-			LOGGER.info("the radio name obtained for properties :" + radioName);// added
+			LOGGER.info("the radio name obtained for properties :" + radioName);
 			status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON, radioName,
 					response);
 			message = "The Webpa response for the parameter " + objectName + ": " + response + " Expected value: "
