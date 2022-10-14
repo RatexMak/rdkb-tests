@@ -85,6 +85,7 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 								LOGGER.info("response :"+response);
 							} catch (Exception e) {
 								LOGGER.info("failed to execute commands");
+								
 							}
 						}else {
 							LOGGER.error("no linux device");
