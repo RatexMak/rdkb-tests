@@ -76,9 +76,12 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 
 							try {
 								String connectToLinux = "nmcli d wifi connect <ssid> password <password>";
+								String password = "rdk@1234";
 								String[] commands = {BroadBandCommandConstants.CMD_SUDO + connectToLinux
 										.replaceAll("<ssid>", ssidName).replaceAll("<password>", passPhraseName),"rdk@1234"};
-								response = execute(clientSettop, commands);
+								String command = BroadBandCommandConstants.CMD_SUDO + connectToLinux
+										.replaceAll("<ssid>", ssidName).replaceAll("<password>", passPhraseName);
+								response = execute(clientSettop, commands, command, password);
 								LOGGER.info("response :"+response);
 							} catch (Exception e) {
 								LOGGER.info("failed to execute commands");
@@ -114,14 +117,16 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
      * @param options
      * @return response string
      */
-    public String execute(Dut dut, String[] commands) {
+    public String execute(Dut dut, String[] commands, String command, String password) {
 	String response = "";
 	LOGGER.info("execute method invoked with device,commands: " + commands);
 	SshConnection conn = new SshConnection(dut.getHostIpAddress());
 
 	try {
 //	    response = conn.send(command, expectStr, options);
-		conn.sendToShell(commands);
+		conn.sendAsRoot(command);
+		conn.sendCommand(password, 1000);
+//		conn.sendToShell(commands);
 		conn.bufferResponse();
 		
 	} catch (Exception ex) {
