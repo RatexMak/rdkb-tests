@@ -213,7 +213,7 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 		try {
 			String host = client.getHostIpAddress();
 			LOGGER.info("host :" + host);
-			String userName = client.findExtraProperty("username");
+			String userName = "teuser";
 			LOGGER.info("username :" + userName);
 			String password = "tel1234#";
 			int port = 22;
@@ -228,7 +228,7 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 	}
 
 	public void close() {
-		LOGGER.info("doconnectiing ssh connection :");
+		LOGGER.info("disconnectiing ssh connection :");
 		sessionConnection.disconnect();
 	}
 
