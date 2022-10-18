@@ -102,11 +102,11 @@ public class TestExpectFuctionality extends AutomaticsTestBase {
 										.replaceAll("<ssid>", ssidName).replaceAll("<password>", passPhraseName);
 
 //								response = execute(clientSettop, commands, command, password);
-								String errormssage = connect(clientSettop);
+								String errormssage = connect(ecastSettop);
 								if (errormssage != null) {
 									LOGGER.info("connect failed :" + errormssage);
 								}
-								String responseCommand = sendCommand(clientSettop, command, password);
+								String responseCommand = sendCommand(ecastSettop, command, password);
 								LOGGER.info("response of command 1 :" + responseCommand);
 								close();
 
