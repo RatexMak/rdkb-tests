@@ -2480,8 +2480,8 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 	 * 
 	 * @param settop             instance of {@link Dut}
 	 * @param testId             Test case ID
-	 * @param isPaceOrTcbrDevice flag value for pace or Technicolor CBr device
-	 *                           models
+	 * @param isFiberDevice
+	 * @param isSpecificDevice flag value for Bussinessclass device models
 	 * 
 	 * @refactor Athira
 	 * 

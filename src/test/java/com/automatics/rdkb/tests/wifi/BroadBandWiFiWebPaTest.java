@@ -1087,6 +1087,9 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 			"2.4GHz Private MACAddress retrieved using device command =" + macAddressObtainedFromDevice);
 		if (CommonMethods.isNotNull(macAddressObtainedFromDevice)) {
 		    status = macAddressObtainedFromDevice.contains(macAddressFromWebPa);
+		    if(!status) {
+			status = macAddressObtainedFromDevice.equalsIgnoreCase(macAddressFromWebPa);
+		    }
 		    errorMessage = "2.4GHz Private MACAddress using device command doesn't matches with name retrieved from WebPA command. ACTUAL : MAC Address from device command = "
 			    + macAddressObtainedFromDevice
 			    + " , MACAddress from 'Device.WiFi.SSID.10001.MACAddress' using WebPA command = "

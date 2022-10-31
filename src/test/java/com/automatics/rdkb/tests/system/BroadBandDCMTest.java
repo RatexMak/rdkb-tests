@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.HttpStatus;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 import org.codehaus.jettison.json.JSONArray;
@@ -35,6 +36,7 @@ import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.TestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
@@ -1887,4 +1889,349 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 	LOGGER.info("#######################################################################################");
     }
 
+    /**
+     * Test to verify RFC reports feature instance
+     * <ol>
+     * <li>Verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable without
+     * override using tr181 command</li>
+     * <li>Verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL without override
+     * using tr181 command</li>
+     * <li>Set feature instance name and value to TelemetryEndPoint feature</li>
+     * <li>Reboot the device</li>
+     * <li>Verify FeatureInstance name is updated in dcmrfc.log instead of feature name</li>
+     * <li>Set alternate feature instance name to TelemetryEndPoint feature</li>
+     * <li>Reboot the device</li>
+     * <li>Verify FeatureInstance name is updated in dcmrfc.log instead of feature name</li>
+     * <li>Verify the new feature instance name in telemetry data</li>
+     * </ol>
+     * 
+     * @author  Betel Costrow
+	 * @refactor Rakesh C N
+     */
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+    @TestDetails(testUID = "TC-RDKB-RFC_FEATUREINSTANCE-1001")
+    public void testToVerifyRfcFeatureInstance(Dut device) {
+
+	// Variable Declaration begins
+	String testCaseId = "TC-RDKB-RFC_FEATUREINSTANCE-001";
+	String stepNum = "s1";
+	String errorMessage = "Failed to verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable using tr181 command without override";
+	boolean status = false;
+	String telemetryEndPointUrl = null;
+	String defaultEnableValue = null;
+	// Variable Declation Ends
+
+	LOGGER.info("#######################################################################################");
+	LOGGER.info("STARTING TEST CASE: TC-RDKB-RFC_FEATUREINSTANCE-1001");
+	LOGGER.info("TEST DESCRIPTION: Test to verify RFC reports feature instance");
+
+	LOGGER.info("TEST STEPS : ");
+	LOGGER.info("PRE-CONDITION 1: Disable Codebig first by using webpa");
+	LOGGER.info(
+		"1. Verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable without override using tr181 command");
+	LOGGER.info(
+		"2. Verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL without override using tr181 command");
+	LOGGER.info("3. Set feature instance name and value to TelemetryEndPoint feature");
+	LOGGER.info("4. Reboot the device ");
+	LOGGER.info("5. Verify FeatureInstance name is updated in dcmrfc.log instead of feature name");
+	LOGGER.info("6. Set alternate feature instance name to TelemetryEndPoint feature");
+	LOGGER.info("7. Reboot the device ");
+	LOGGER.info("8. Verify FeatureInstance name is updated in dcmrfc.log instead of feature name");
+	LOGGER.info("9. Verify the new feature instance name in telemetry data");
+
+	LOGGER.info("#######################################################################################");
+
+	try {
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 1: DESCRIPTION : Verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable without override using tr181 command");
+	    LOGGER.info(
+		    "STEP 1: ACTION : Execute tr181 -g Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable Command");
+	    LOGGER.info(
+		    "STEP 1: EXPECTED : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable should return TRUE/FALSE");
+	    LOGGER.info("**********************************************************************************");
+
+	    defaultEnableValue = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_ENDPOINT_ENABLE);
+	    status = CommonMethods.isNotNull(defaultEnableValue);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 1: ACTUAL : Successfully verified default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable");
+	    } else {
+		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s2";
+	    errorMessage = "Failed to verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL using tr181 command without override";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 2: DESCRIPTION : Verify default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL without override using tr181 command");
+	    LOGGER.info(
+		    "STEP 2: ACTION : Execute tr181 -g Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL Command");
+	    LOGGER.info(
+		    "STEP 2: EXPECTED : Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL should return null/value");
+	    LOGGER.info("**********************************************************************************");
+
+	    telemetryEndPointUrl = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+		    BroadBandWebPaConstants.WEBPA_PARAM_WIFI_TELEMETRY_ENDPOINTURL);
+	    status = CommonMethods.isNotNull(telemetryEndPointUrl) || CommonMethods.isNull(telemetryEndPointUrl);
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 2: ACTUAL : Successfully verified default value Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL");
+	    } else {
+		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s3";
+	    errorMessage = "Failed to update value to TelemetryEndPoint ";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 3: DESCRIPTION : Set feature instance name and value to TelemetryEndPoint feature");
+	    LOGGER.info(
+		    "STEP 3: ACTION : Using any rest client post the below content to RFC mock server: proxyDcmServerUpdateUrl+{\"estbMacAddress\":\"<MAC_ADDRESS>\",\"features\":[{\"name\":\"TelemetryNewEndpoint\",\"featureInstance\":\"TMEndpoint1\",\"effectiveImmediate\":true,\"enable\":true,\"configData\":{\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable\":\"true\",\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL\":\"stbrtl.stb.r53.xcal.tv\"}}]}and perform an RFC service restart ");
+	    LOGGER.info("STEP 3: EXPECTED : TelemetryEndPoint value must be updated using RFC");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (defaultEnableValue.trim().equalsIgnoreCase(BroadBandTestConstants.TRUE)
+		    && CommonMethods.isNotNull(telemetryEndPointUrl)) {
+		errorMessage = "TelemetryEndpoint feature has been enabled in device.So skipping this step.";
+		LOGGER.info(errorMessage);
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+	    } else {
+		if (BroadBandRfcFeatureControlUtils.enableOrDisableFeatureInProxyXconf(tapEnv, device,
+			BroadBandTestConstants.CONFIGURABLE_TELEMETRY_ENDPOINT2, true)) {
+		    if (BroadBandRfcFeatureControlUtils.copyRfcPropertiesFromEtcToNVRAM(device, tapEnv)) {
+			status = BroadBandRfcFeatureControlUtils.copyAndUpdateRfcPropertiesNewXconfUrl(device, tapEnv,
+				AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_PROXY_XCONF_RFC_URL));
+			tapEnv.executeCommandUsingSsh(device, BroadBandRfcFeatureControlUtils.CMD_CLEAR_HASH_VALUE);
+		    }
+		}
+
+		if (status) {
+		    LOGGER.info("STEP 3: ACTUAL : Enabled TelemetryEndPoint feature with feature instance name.");
+		} else {
+		    LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s4";
+	    errorMessage = "After reboot the device went to bad state";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 4: DESCRIPTION : Reboot the device ");
+	    LOGGER.info("STEP 4: ACTION : /sbin/reboot");
+	    LOGGER.info("STEP 4: EXPECTED : Device should back to online after reoot");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (defaultEnableValue.trim().equalsIgnoreCase(BroadBandTestConstants.TRUE)
+		    && CommonMethods.isNotNull(telemetryEndPointUrl)) {
+		errorMessage = "TelemetryEndpoint feature has been enabled in device.So skipping this step.";
+		LOGGER.info(errorMessage);
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+	    } else {
+		status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+
+		if (status) {
+		    LOGGER.info("STEP 4: ACTUAL : Device is online after reboot");
+		} else {
+		    LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s5";
+	    errorMessage = "Failed to verify the default feature instance name in Features Enabled block";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 5: DESCRIPTION : Verify FeatureInstance name is updated in dcmrfc.log instead of feature name");
+	    LOGGER.info("STEP 5: ACTION : Execute:grep -I \"TMEndpoint1\" /opt/logs/dcmrfc.log");
+	    LOGGER.info(
+		    "STEP 5: EXPECTED :  Inside Features Enabled block \"TMEndpoint1=true\" should present in the device");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (defaultEnableValue.trim().equalsIgnoreCase(BroadBandTestConstants.TRUE)
+		    && CommonMethods.isNotNull(telemetryEndPointUrl)) {
+		errorMessage = "TelemetryEndpoint feature has been enabled in device.So skipping this step.";
+		LOGGER.info(errorMessage);
+		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+			errorMessage, false);
+	    } else {
+		status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+			BroadBandTraceConstants.NEW_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
+			BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+			BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+		if (status) {
+		    LOGGER.info(
+			    "STEP 5: ACTUAL : Feature instance name is appeared in /rdklogs/logs/dcmrfc.log instead of feature name.");
+		} else {
+		    LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+		}
+
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s6";
+	    errorMessage = "Failed to update Alternate TelemetryEndPoint feature instance name using RFC ";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 6: DESCRIPTION : Set alternate feature instance name to TelemetryEndPoint feature");
+	    LOGGER.info(
+		    "STEP 6: ACTION : Using any rest client post the below content to RFC mock server: proxyDcmServerUpdateUrl/featureControl/updateSettings{\"estbMacAddress\":\"<MAC_ADDRESS>\",\"features\":[{\"name\":\"TelemetryNewEndpoint\",\"featureInstance\":\"TMEndpoint2\",\"effectiveImmediate\":true,\"enable\":true,\"configData\":{\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.Enable\":\"true\",\"tr181.Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.TelemetryEndpoint.URL\":\"stbrtl.stb.r53.xcal.tv\"}}]}and perform an RFC service restart ");
+	    LOGGER.info(
+		    "STEP 6: EXPECTED : Alternate TelemetryEndPoint feature instance name must be updated using RFC");
+	    LOGGER.info("**********************************************************************************");
+
+	    if (BroadBandRfcFeatureControlUtils.enableOrDisableFeatureInProxyXconf(tapEnv, device,
+		    BroadBandTestConstants.CONFIGURABLE_TELEMETRY_ENDPOINT2, false)) {
+		if (BroadBandRfcFeatureControlUtils.copyRfcPropertiesFromEtcToNVRAM(device, tapEnv)) {
+		    status = BroadBandRfcFeatureControlUtils.copyAndUpdateRfcPropertiesNewXconfUrl(device, tapEnv,
+			    AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_PROXY_XCONF_RFC_URL));
+		    tapEnv.executeCommandUsingSsh(device, BroadBandRfcFeatureControlUtils.CMD_CLEAR_HASH_VALUE);
+		}
+	    }
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 6: ACTUAL : Successfully posted alternate feature instance name to TelemetryEndPoint feature.");
+	    } else {
+		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s7";
+	    errorMessage = "After reboot the device went to bad state";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 7: DESCRIPTION : Reboot the device ");
+	    LOGGER.info("STEP 7: ACTION : /sbin/reboot");
+	    LOGGER.info("STEP 7: EXPECTED : Device should back to online after reoot");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+
+	    if (status) {
+		LOGGER.info("STEP 7: ACTUAL : Device is online");
+	    } else {
+		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s8";
+	    errorMessage = "Failed to verify the default feature instance name in Features Enabled block";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info(
+		    "STEP 8: DESCRIPTION : Verify FeatureInstance name is updated in dcmrfc.log instead of feature name");
+	    LOGGER.info("STEP 8: ACTION : Execute:cat /rdklogs/logs/dcmrfc.log | grep -I \"Features Enabled\"");
+	    LOGGER.info(
+		    "STEP 8: EXPECTED :  Inside Features Enabled block \"TMEndpoint2=true\" should present in the device");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+		    BroadBandTraceConstants.OVERRIDE_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
+		    BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info("STEP 8: ACTUAL : Alternative feature instance name overrided in /rdklogs/logs/dcmrfc.log");
+	    } else {
+		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	    stepNum = "s9";
+	    errorMessage = "Failed to include new instance name in telemetry data to be uploaded to server.";
+	    status = false;
+
+	    LOGGER.info("**********************************************************************************");
+	    LOGGER.info("STEP 9: DESCRIPTION : Verify the new feature instance name in telemetry data");
+	    LOGGER.info("STEP 9: ACTION : Execute:grep -I TMEndpoint2 /rdklogs/logs/dcmscript.log");
+	    LOGGER.info(
+		    "STEP 9: EXPECTED : The telemetry data should contain new instance name to be uploaded to server");
+	    LOGGER.info("**********************************************************************************");
+
+	    status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+		    BroadBandTraceConstants.OVERRIDE_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
+		    BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT, BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS,
+		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+	    if (status) {
+		LOGGER.info(
+			"STEP 9: ACTUAL : Successfully verified feature instance name in /rdklogs/logs/dcmscript.log");
+	    } else {
+		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+	    }
+
+	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+	    LOGGER.info("**********************************************************************************");
+
+	} catch (Exception e) {
+	    errorMessage = errorMessage + e.getMessage();
+	    LOGGER.error(errorMessage);
+	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+		    false);
+	} finally {
+
+	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+	    LOGGER.info("POST-CONDITION STEPS");
+	    LOGGER.info("POST-CONDITION : DESCRIPTION : Clear the rfc configurations posted above");
+	    LOGGER.info("POST-CONDITION : ACTION : 1) Clear the new RFC configuraitons from automatics xconf2) Reboot");
+	    LOGGER.info("POST-CONDITION : EXPECTED : Cleared RFC configurations successfully");
+
+	    String[] featureNames = { BroadBandTestConstants.CONFIGURABLE_TELEMETRY_ENDPOINT2,
+		    BroadBandTestConstants.CONFIGURABLE_TELEMETRY_ENDPOINT };
+	    if ((HttpStatus.SC_OK == CommonMethods.clearParamsInServer(device, tapEnv, false,
+		    featureNames, BroadBandTestConstants.INTEGER_VALUE_2))) {
+		status = BroadBandRfcFeatureControlUtils.removeNvramOverrideForRfc(device, tapEnv);
+	    }
+
+	    if (status) {
+		LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+	    } else {
+		LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+	    }
+	    LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+	    LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+	}
+	LOGGER.info("ENDING TEST CASE: TC-RDKB-RFC_FEATUREINSTANCE-1001");
+    }
 }
