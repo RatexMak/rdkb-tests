@@ -4343,9 +4343,9 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			try {
 
-				boolean isCbrDevice = DeviceModeHandler.isBusinessClassDevice(device);
+				boolean isBusinessClassDevice = DeviceModeHandler.isBusinessClassDevice(device);
 
-				status = lanSidePageNavigation.navigateToPartnerNetworkPage(device, tapEnv, webDriver, isCbrDevice);
+				status = lanSidePageNavigation.navigateToPartnerNetworkPage(device, tapEnv, webDriver, isBusinessClassDevice);
 			} catch (Exception e) {
 				LOGGER.error("Exception while Launching the Network page from Admin UI page");
 			}

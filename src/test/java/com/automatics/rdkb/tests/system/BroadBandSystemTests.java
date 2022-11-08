@@ -6139,7 +6139,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 4: DESCRIPTION: Change  RFC_CONFIG_SERVER_URL value in rfc.properties file with valid MOCK server URL ");
 	    LOGGER.info(
-		    "STEP 4: ACTION: Change the value of RFC_CONFIG_SERVER_URL to an valid mock server url :https://rdkautotool.ccp.xcal.tv/featureControl/getSettings");
+		    "STEP 4: ACTION: Change the value of RFC_CONFIG_SERVER_URL to an valid mock server url :proxyDcmServerUpdateUrl/featureControl/getSettings");
 	    LOGGER.info(
 		    "STEP 4: EXPECTED: The RFC_CONFIG_SERVER_URL in  rfc.properties should be updated to valid mock server url successfully");
 	    LOGGER.info("******************************************************************************");

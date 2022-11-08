@@ -1004,6 +1004,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	 * <li>Verify the Admin status can be retrieved using SNMP</li>
 	 * </ol>
 	 * 
+	 * @author SATHYA KISHORE
 	 * @refactor Athira
 	 */
 	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SNMP_OPERATIONS)
@@ -1046,13 +1047,13 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 					BroadBandTestConstants.BINARY_BUILD_IMAGE_EXTENSION);
 
 			String snmpSetResponse = BroadBandSnmpUtils.snmpSetOnEcm(tapEnv, device,
-					BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid() + ".0", SnmpDataType.STRING, fileName);
+					BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid(), SnmpDataType.STRING, fileName);
 
 			errorMessage = "snmpset on docsDevSwFilename(1.3.6.1.2.1.69.1.3.2.0) with current1 image version as file name failed";
 			if (CommonMethods.isNotNull(snmpSetResponse) && snmpSetResponse.equalsIgnoreCase(fileName)) {
 
 				response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
-						BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid() + ".0");
+						BroadBandSnmpMib.ECM_DOCS_DEV_SW_FILE_NAME.getOid());
 
 				status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(fileName);
 				errorMessage = "Software Version retrieved from SNMP is null/invalid. Value retrieved from SNMP : "
@@ -1079,7 +1080,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
-					BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid() + ".0");
+					BroadBandSnmpMib.ECM_SERVER_TRANSPORT_PROTOCOL.getOid());
 
 			status = CommonMethods.isNotNull(response)
 					&& (response.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
@@ -1108,7 +1109,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
-					BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid() + ".0");
+					BroadBandSnmpMib.ECM_SERVER_ADDRESS_TYPE_CDL.getOid());
 
 			status = CommonMethods.isNotNull(response) && (response.equalsIgnoreCase(BroadBandTestConstants.STRING_ZERO)
 					|| response.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
@@ -1137,7 +1138,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device,
-					BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid() + ".0");
+					BroadBandSnmpMib.ECM_DOCS_DEVSW_ADMIN_STATAUS.getOid());
 
 			status = CommonMethods.isNotNull(response)
 					&& (response.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)

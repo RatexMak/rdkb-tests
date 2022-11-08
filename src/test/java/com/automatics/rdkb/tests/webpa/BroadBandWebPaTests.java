@@ -10775,7 +10775,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ":DESCRIPTION: Verify the default number of allowed clients for 2.4 GHz PublicWiFi Secure SSID using WebPA");
 			LOGGER.info("STEP " + stepNumber
-					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k https://api.webpa.comcast.net:8090/api/v2/device/mac:<CM_MAC>/config?names=Device.WiFi.AccessPoint.10005.X_CISCO_COM_BssMaxNumSta");
+					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><CM_MAC>/config?names=Device.WiFi.AccessPoint.10005.X_CISCO_COM_BssMaxNumSta");
 			LOGGER.info("STEP " + stepNumber
 					+ ":EXPECTED: The returned value should be 5 for Residential Gateways and 15 for Commercial Gateways");
 			LOGGER.info("**********************************************************************************");
@@ -10805,7 +10805,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ":DESCRIPTION: Verify the default number of allowed clients for 5 GHz PublicWiFi Secure SSID using WebPA");
 			LOGGER.info("STEP " + stepNumber
-					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k https://api.webpa.comcast.net:8090/api/v2/device/mac:<CM_MAC>/config?names=Device.WiFi.AccessPoint.10105.X_CISCO_COM_BssMaxNumSta");
+					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><CM_MAC>/config?names=Device.WiFi.AccessPoint.10105.X_CISCO_COM_BssMaxNumSta");
 			LOGGER.info("STEP " + stepNumber
 					+ ":EXPECTED: The returned value should be 5 for Residential Gateways and 15 for Commercial Gateways");
 			LOGGER.info("**********************************************************************************");
@@ -10835,7 +10835,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ": DESCRIPTION: Verify the default number of allowed clients for 2.4 GHz open SSID using WebPA");
 			LOGGER.info("STEP " + stepNumber
-					+ ":ACTION: Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k https://api.webpa.comcast.net:8090/api/v2/device/mac:<CM_MAC>/config?names=Device.WiFi.AccessPoint.10003.X_CISCO_COM_BssMaxNumSta");
+					+ ":ACTION: Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><CM_MAC>/config?names=Device.WiFi.AccessPoint.10003.X_CISCO_COM_BssMaxNumSta");
 			LOGGER.info("STEP " + stepNumber
 					+ ":EXPECTED: The returned value should be 5 for Residential Gateways and 15 for Commercial Gateways");
 			LOGGER.info("**********************************************************************************");
@@ -10865,7 +10865,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ":DESCRIPTION: Verify the default number of allowed clients for 5 GHz open SSID using WebPA");
 			LOGGER.info("STEP " + stepNumber
-					+ ":ACTION: Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k https://api.webpa.comcast.net:8090/api/v2/device/mac:<CM_MAC>/config?names=Device.WiFi.AccessPoint.10103.X_CISCO_COM_BssMaxNumSta");
+					+ ":ACTION: Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL><CM_MAC>/config?names=Device.WiFi.AccessPoint.10103.X_CISCO_COM_BssMaxNumSta");
 			LOGGER.info("STEP " + stepNumber
 					+ ": EXPECTED: The returned value should be 5 for Residential Gateways and 15 for Commercial Gateways");
 			LOGGER.info("**********************************************************************************");
@@ -10897,7 +10897,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ":DESCRIPTION: Verify the default number of allowed clients for 2.4 GHz Private SSID using WebPA");
 			LOGGER.info("STEP " + stepNumber
-					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k https://api.webpa.comcast.net:8090/api/v2/device/mac:/config?names=Device.WiFi.AccessPoint.10005.X_CISCO_COM_BssMaxNumSta");
+					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL>/config?names=Device.WiFi.AccessPoint.10005.X_CISCO_COM_BssMaxNumSta");
 			LOGGER.info("STEP " + stepNumber + ":EXPECTED: The returned value should be 64");
 			LOGGER.info("**********************************************************************************");
 			if (isDSL) {
@@ -10938,7 +10938,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ":DESCRIPTION: Verify the default number of allowed clients for 5 GHz Private SSID using WebPA");
 			LOGGER.info("STEP " + stepNumber
-					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k https://api.webpa.comcast.net:8090/api/v2/device/mac:/config?names=Device.WiFi.AccessPoint.10105.X_CISCO_COM_BssMaxNumSta");
+					+ ":ACTION:Execute the command: curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA_URL>/config?names=Device.WiFi.AccessPoint.10105.X_CISCO_COM_BssMaxNumSta");
 			LOGGER.info("STEP " + stepNumber + ":EXPECTED: The returned value should be 64");
 			LOGGER.info("**********************************************************************************");
 			if (isDSL) {
@@ -11332,5 +11332,1020 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("******************************************************************");
 		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	}
+	
+	/**
+	 * DSCP Marking validation in Device
+	 * <ol>
+	 * <li>Verify syndicate flow control status using webpa</li>
+	 * <li>Validate syndication flow control in syscfg file</li>
+	 * <li>Validate Initialforwardmark and Initialoutputmark in
+	 * partners_defaults.json</li>
+	 * <li>Validate Initialforwardmark and Initialoutputmark using webpa</li>
+	 * <li>Validate Initialforwardmark and Initialoutputmark in
+	 * partners_defaults.json</li>
+	 * <li>Enable syndication flow control using webpa</li>
+	 * <li>Validate syndication flow control in syscfg file should be true</li>
+	 * <li>Validate Initialforwardmark and Initialoutputmark using webpa</li> *
+	 * <li>Validate the value of SyndicationFlowControl TR181 parameter when enabled
+	 * via WEBPA</li>
+	 * <li>Disable syndication flow control using webpa</li>
+	 * <li>Validate the value of SyndicationFlowControl TR181 parameter when
+	 * disabled via WEBPA</li>
+	 * <li>Validate the IP table when SyndicatoinFlowControl is disabled</li>
+	 * </ol>
+	 * 
+	 * @param device
+	 * 
+	 * @author prasanthreddy.a, Vignesh Ravichandran
+	 * @refactor Athira
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-DSCP-MARK-CHK-1001")
+	public void testToVerifySyndicateFlowControlDefaultValues(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-DSCP-MARK-CHK-101";
+		String stepNum = null;
+		String errorMessage = null;
+		boolean status = false;
+		boolean status1 = false;
+		boolean status2 = false;
+		int count = BroadBandTestConstants.CONSTANT_0;
+		// Variable Declation Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-DSCP-MARK-CHK-1001");
+		LOGGER.info("TEST DESCRIPTION: DSCP Marking validation in Device");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify syndicate flow control status using webpa");
+		LOGGER.info("2. Validate syndication flow control in syscfg file");
+		LOGGER.info("3. Validate Initialforwardmark and Initialoutputmark in partners_defaults.json");
+		LOGGER.info("4. Validate Initialforwardmark and Initialoutputmark using webpa");
+		LOGGER.info("5. Validate Initialforwardmark and Initialoutputmark in partners_defaults.json");
+		LOGGER.info("6. Enable syndication flow control using webpa");
+		LOGGER.info("7. Validate syndication flow control in syscfg file should be true");
+		LOGGER.info("8. Validate Initialforwardmark and Initialoutputmark using webpa");
+		LOGGER.info("9. Validate the value of SyndicationFlowControl TR181 parameter when enabled via WEBPA");
+		LOGGER.info("10. Disable syndication flow control using webpa");
+		LOGGER.info("11. Validate the value of SyndicationFlowControl TR181 parameter when disabled via WEBPA ");
+		LOGGER.info("12. Validate the IP table when SyndicatoinFlowControl is disabled");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+			stepNum = "S1";
+			errorMessage = "Unable to validate syndication flow control value using webpa";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Verify syndicate flow control status using webpa");
+			LOGGER.info(
+					"STEP 1: ACTION : Execute webpa :Default should be falseParam:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.Enable");
+			LOGGER.info("STEP 1: EXPECTED : Successfully validated syndication flow control value as \"false\"");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+			LOGGER.info("Status of step 1 is " + status);
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Successfully validated syndicate flow control status using webpa");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S2";
+			errorMessage = "Unable to validate syndication flow control value in syscfg file";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : Validate syndication flow control in syscfg file");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute :cat /opt/secure/data/syscfg.db | grep SyndicationFlowControl Default should be false");
+			LOGGER.info("STEP 2: EXPECTED : Successfully validated syndication flow control value as \"false\"");
+			LOGGER.info("**********************************************************************************");
+
+			String response = tapEnv.executeCommandUsingSsh(device,
+					BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS);
+			status = CommonUtils.patternSearchFromTargetString(response,
+					BroadBandTestConstants.STRING_SYNDICATION_FLOW_CONTROL
+							.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.FALSE));
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Successfully validated syndicate flow control status in syscfg");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S3";
+			errorMessage = "Unable to validate values from property file";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 3: DESCRIPTION : Validate Initialforwardmark and Initialoutputmark in partners_defaults.json");
+			LOGGER.info(
+					"STEP 3: ACTION : Execute :cat /nvram/partners_defaults.json\"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMark\":      <EXPECTED>,   \"Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark\": <EXPECTED>Validate for :ComcastInitialForwardedMark:cs0InitialOutputMark:af22RogersInitialForwardedMark:cs0InitialOutputMark:cs3CoxInitialForwardedMark: cs0InitialOutputMark: af32ShawInitialForwardedMark: cs0InitialOutputMark:af22VideotronInitialForwardedMark: cs0InitialOutputMark: af22");
+			LOGGER.info("STEP 3: EXPECTED : Validation of initial forward and output mark is successful");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandCommonUtils.verifySyndicateFlowControlValuesInDevice(device, tapEnv);
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Validation of initial forward and output mark is successful");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S4";
+			errorMessage = "Unable to validate values using webpa";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION : Validate Initialforwardmark and Initialoutputmark using webpa");
+			LOGGER.info(
+					"STEP 4: ACTION : Execute : Params and validate default valuesDevice.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMarkDevice.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark");
+			LOGGER.info("STEP 4: EXPECTED : Validation of initial forward and output mark is successful");
+			LOGGER.info("**********************************************************************************");
+
+			String webpaMapResponse = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_INITIAL_FORWARD_MARK);
+			LOGGER.info(" webpaMapResponse is ", webpaMapResponse);
+			String paramsToWebpa = BroadBandWebPaConstants.DSCP_FORWARD_MARK;
+			LOGGER.info(" paramsToWebpa is ", paramsToWebpa);
+			status1 = webpaMapResponse.equals(paramsToWebpa);
+
+			webpaMapResponse = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_INITIAL_OUTPUT_MARK);
+			LOGGER.info(" webpaMapResponse is ", webpaMapResponse);
+			paramsToWebpa = BroadBandWebPaConstants.DSCP_OUTPUT_MARK;
+			LOGGER.info(" paramsToWebpa is ", paramsToWebpa);
+			status2 = webpaMapResponse.equals(paramsToWebpa);
+
+			status = status1 && status2;
+			if (status) {
+				LOGGER.info(
+						"STEP 4: ACTUAL : Successfully validated default values of Initialforwardmark and Initialoutputmark");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S5";
+			errorMessage = "Unable to validate values in syscfg ";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 5: DESCRIPTION : Validate Initialforwardmark and Initialoutputmark in partners_defaults.json");
+			LOGGER.info(
+					"STEP 5: ACTION : Execute :cat /opt/secure/data/syscfg.db | grep DSCPDefault values DSCP_InitialForwardedMark=cs0,DSCP_InitialOutputMark=af22");
+			LOGGER.info("STEP 5: EXPECTED : Validation of initial forward and output mark is successful");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandUsingSsh(device,
+					BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_DSCP_VALUES);
+			if (CommonMethods.isNotNull(response)) {
+				status = CommonUtils.patternSearchFromTargetString(response,
+						BroadBandTestConstants.DSCP_INITIAL_FORWARDED_MARK.replace(
+								BroadBandTestConstants.STRING_REPLACE, BroadBandWebPaConstants.DSCP_FORWARD_MARK))
+						&& CommonUtils.patternSearchFromTargetString(response,
+								BroadBandTestConstants.DSCP_INITIAL_OUTPUT_MARK.replace(
+										BroadBandTestConstants.STRING_REPLACE,
+										BroadBandWebPaConstants.DSCP_OUTPUT_MARK));
+			}
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : Successfully validated default values from partners_defaults");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S6";
+			errorMessage = "Unable to execute webpa set request";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Enable syndication flow control using webpa");
+			LOGGER.info(
+					"STEP 6: ACTION : Param:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.Enablevalue : true");
+			LOGGER.info("STEP 6: EXPECTED : Webpa set should be successful with 200 Ok message");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.TRUE, BroadBandTestConstants.THREE_SECOND_IN_MILLIS,
+					BroadBandTestConstants.THREE_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL : Successfully enabled syndication flow control using webpa");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S7";
+			errorMessage = "Unable to validate syndication flow control value in syscfg file";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Validate syndication flow control in syscfg file should be true");
+			LOGGER.info("STEP 7: ACTION : Execute :cat /opt/secure/data/syscfg.db | grep SyndicationFlowControl ");
+			LOGGER.info("STEP 7: EXPECTED : Successfully validated syndication flow control value as \"true\"");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandUsingSsh(device,
+					BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS);
+			status = CommonUtils.patternSearchFromTargetString(response,
+					BroadBandTestConstants.STRING_SYNDICATION_FLOW_CONTROL
+							.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.TRUE));
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : Successfully validated syndication flow control value as \"true\"");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S8";
+			errorMessage = "Unable to validate values using webpa";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Validate Initialforwardmark and Initialoutputmark using webpa");
+			LOGGER.info(
+					"STEP 8: ACTION : Execute : Params and validate default valuesDevice.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialForwardedMarkDevice.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.InitialOutputMark");
+			LOGGER.info("STEP 8: EXPECTED : Validation of initial forward and output mark is successful");
+			LOGGER.info("**********************************************************************************");
+
+			webpaMapResponse = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_INITIAL_FORWARD_MARK);
+			LOGGER.info(" webpaMapResponse is ", webpaMapResponse);
+			paramsToWebpa = BroadBandWebPaConstants.DSCP_FORWARD_MARK;
+			LOGGER.info(" paramsToWebpa is ", paramsToWebpa);
+			status1 = webpaMapResponse.equals(paramsToWebpa);
+
+			webpaMapResponse = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_INITIAL_OUTPUT_MARK);
+			LOGGER.info(" webpaMapResponse is ", webpaMapResponse);
+			paramsToWebpa = BroadBandWebPaConstants.DSCP_OUTPUT_MARK;
+			LOGGER.info(" paramsToWebpa is ", paramsToWebpa);
+			status2 = webpaMapResponse.equals(paramsToWebpa);
+
+			status = status1 && status2;
+
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Successfully validated initial forward and output mark ");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S9";
+			errorMessage = "Unable to validate syndication flow control value through WEBPA";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION : Validate the value of SyndicationFlowControl TR181 parameter when enabled via WEBPA ");
+			LOGGER.info(
+					"STEP 9: ACTION : Param:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.Enablevalue : true");
+			LOGGER.info("STEP 9: EXPECTED : Successfully validated syndication flow control value as \"true\"");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL, BroadBandTestConstants.TRUE);
+			if (status) {
+				LOGGER.info("STEP 9: ACTUAL : Successfully validated syndication flow control as true using WEBPA");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S10";
+			errorMessage = "Unable to disable syndication flow control as false using webpa";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Disable syndication flow control using webpa via WEBPA ");
+			LOGGER.info(
+					"STEP 10: ACTION : Param:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.Enablevalue : false");
+			LOGGER.info("STEP 10: EXPECTED : Webpa set should be successful with 200 Ok message");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.FALSE, BroadBandTestConstants.THREE_SECOND_IN_MILLIS,
+					BroadBandTestConstants.THREE_SECOND_IN_MILLIS);
+			if (status) {
+				LOGGER.info("STEP 10: ACTUAL : Successfully disabled syndication flow control using webpa");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S11";
+			errorMessage = "Unable to validate the value of SyndicationFlowControl TR181 parameter when disabled via WEBPA ";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 11: DESCRIPTION : Validate the value of SyndicationFlowControl TR181 parameter when disabled via WEBPA ");
+			LOGGER.info(
+					"STEP 11: ACTION : Param:Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.SyndicationFlowControl.Enablevalue : false");
+			LOGGER.info("STEP 11: EXPECTED : Successfully validated syndication flow control value as \"false\"");
+			LOGGER.info("**********************************************************************************");
+			status = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcliAndVerify(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL, BroadBandTestConstants.FALSE);
+			if (status) {
+				LOGGER.info("STEP 11: ACTUAL : Successfully validated syndication flow control as true using WEBPA");
+			} else {
+				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S12";
+			errorMessage = "Unable to Validate the IP table when SyndicationFlowControl is disabled  ";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 12: DESCRIPTION : Validate the IP table when SyndicationFlowControl is disabled ");
+			LOGGER.info("STEP 12: ACTION : Execute command : iptables-save | grep DSCP ");
+			LOGGER.info("STEP 12: EXPECTED : iptables value for the syndication partner retrieved successfully");
+			LOGGER.info("**********************************************************************************");
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.IP_TABLE);
+			for (String valueToBeValidate : BroadBandTraceConstants.LOG_MESSAGE_PATTERN_IN_IPTABLE) {
+				if (CommonUtils.patternSearchFromTargetString(response, valueToBeValidate)) {
+					count += BroadBandTestConstants.CONSTANT_1;
+				}
+			}
+			status = (count == BroadBandTraceConstants.LOG_MESSAGE_PATTERN_IN_IPTABLE.size());
+			if (!status) {
+				for (String valueToBeValidate : BroadBandTraceConstants.LOG_MESSAGE_PATTERN_IN_IPTABLE_OLD) {
+					if (CommonUtils.patternSearchFromTargetString(response, valueToBeValidate)) {
+						count += BroadBandTestConstants.CONSTANT_1;
+					}
+				}
+				status = (count == BroadBandTraceConstants.LOG_MESSAGE_PATTERN_IN_IPTABLE_OLD.size());
+			}
+			if (status) {
+				LOGGER.info("STEP 12: ACTUAL : Successfully validated iptables for syndication partner: " + response);
+			} else {
+				LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			LOGGER.info("POST-CONDITION : DESCRIPTION : Revert Syndicate flow control using webpa");
+			LOGGER.info("POST-CONDITION : ACTION : Execute param "
+					+ BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL);
+			LOGGER.info("POST-CONDITION : EXPECTED : WEBPA set should be successful");
+
+			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_SYNDICATION_FLOW_CONTROL, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.FALSE, BroadBandTestConstants.THREE_SECOND_IN_MILLIS,
+					BroadBandTestConstants.THREE_SECOND_IN_MILLIS);
+
+			if (status) {
+				LOGGER.info("POST-CONDITION : ACTUAL : Post condition executed successfully");
+			} else {
+				LOGGER.error("POST-CONDITION : ACTUAL : Post condition failed");
+			}
+			LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-DSCP-MARK-CHK-1001");
+	}
+	
+	/**
+	 * Verify implementation of broadband functionalities for parodus client and
+	 * Verify implementation of wrp-c library so that WebPA requests can be encoded
+	 * and decoded
+	 * <ol>
+	 * <li>PRE CONDITION 1:Verify whether WebPA is Up and Running in the
+	 * Device.</li>
+	 * <li>Verify WEBPAlog.txt.0 Logs for "oldFirmwareVer :" and "cur_firmware_ver
+	 * value : " log in the Atom Console.</li>
+	 * <li>Verify WEBPAlog.txt.0 Logs for "Component caching is completed" log in
+	 * the Atom Console.</li>
+	 * <li>Verify libwrp-c.so should be present in /usr/lib on device</li>
+	 * <li>Verify parodus process is running both on ARM and ATOM side.</li>
+	 * <li>Verify the WebPA GET command can be executed successfully</li>
+	 * <li>Verify WEBPA GET request log message is present in WEBPAlog.txt.0</li>
+	 * <li>Verify the WebPA SET command can be executed successfully</li>
+	 * <li>Verify WEBPA SET request log message is present in WEBPAlog.txt.0</li>
+	 * <li>Verify the WEBPA POST command can be executed successfully</li>
+	 * <li>Verify WEBPA POST request log message is present in WEBPAlog.txt.0</li>
+	 * <li>Verify the WEBPA PUT command can be executed successfully</li>
+	 * <li>Verify WEBPA PUT request log message is present in WEBPAlog.txt.0</li>
+	 * <li>Verify the WEBPA DELETE command can be executed successfully</li>
+	 * <li>Verify WEBPA DELETE request log message is present in WEBPAlog.txt.0</li>
+	 * <li>POST CONDITION 1:Verify the WEBPA Set command is executed for default
+	 * value.</li>
+	 * </ol>
+	 * 
+	 * @author Prashant Mishra
+	 * @refactor Alan_Bivera, yamini.s
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-WEBPA-1009")
+	public void ToVerifyBroadbandFunctionalities(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "";
+		String stepNum = "";
+		String errorMessage = "";
+		boolean status = false;
+		String currentImageName = null;
+		String latestImageName = null;
+		boolean upgradeDevice = false;
+		String imageToCDLPostCondition = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+		// Variable Declaration Ends
+
+		testCaseId = "TC-RDKB-WEBPA-109";
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-WEBPA-1009");
+		LOGGER.info(
+				"TEST DESCRIPTION: Verify implementation of broadband functionalities for parodus client and Verify implemention of wrp-c library so that WebPA requests can be encoded and decoded");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("PRE CONDITION 1. Verify whether WebPA is Up and Running in the Device.");
+		LOGGER.info(
+				"1. Verify WEBPAlog.txt.0 Logs for \"oldFirmwareVer :\" and \"cur_firmware_ver value :\" log in the Atom Console.");
+		LOGGER.info("2. Verify WEBPAlog.txt.0 Logs for \"Component caching is completed\" log in the Atom Console.");
+		LOGGER.info("3. Verify libwrp-c.so should be present in /usr/lib on device");
+		LOGGER.info("4. Verify parodus process is running both on ARM and ATOM side.");
+		LOGGER.info("5. Verify the WebPA GET command can be executed successfully");
+		LOGGER.info("6. Verify WEBPA GET request log message is present in WEBPAlog.txt.0 ");
+		LOGGER.info("7. Verify the WebPA SET command can be executed successfully");
+		LOGGER.info("8. Verify WEBPA SET request log message is present in WEBPAlog.txt.0 ");
+		LOGGER.info("9. Verify the WEBPA POST command can be executed successfully");
+		LOGGER.info("10. Verify WEBPA POST request log message is present in WEBPAlog.txt.0 ");
+		LOGGER.info("11. Verify the WEBPA PUT command can be executed successfully");
+		LOGGER.info("12. Verify WEBPA PUT request log message is present in WEBPAlog.txt.0 ");
+		LOGGER.info("13. Verify the WEBPA DELETE command can be executed successfully");
+		LOGGER.info("14. Verify WEBPA DELETE request log message is present in WEBPAlog.txt.0 ");
+		LOGGER.info("POST CONDITION 1. Verify the WEBPA Set command is executed for default value.");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+			LOGGER.info("PRE-CONDITION STEPS");
+
+			LOGGER.info("PRE-CONDITION 1 : DESCRIPTION : Verify whether WebPA is Up and Running in the Device.");
+			LOGGER.info(
+					"PRE-CONDITION 1 : ACTION : Verifying Successful webpa Get response ,in case of failure rechecking for 8 minutes.");
+			LOGGER.info("PRE-CONDITION 1 : EXPECTED : WebPA should be Up and Running in the Device.");
+			errorMessage = "WebPA is not Up and not Running in the Device.";
+			try {
+				status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("PRE-CONDITION 1 : ACTUAL : WebPA is Up and Running in the Device.");
+			} else {
+				throw new TestException(
+						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 1 : FAILED : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "S1";
+			errorMessage = "WEBPA.txt.0 doesnt conatain the expected string \"oldFirmwareVer :\" and \"cur_firmware_ver value : \"";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 1: DESCRIPTION : Verify WEBPAlog.txt.0 Logs for \"oldFirmwareVer :\" and \"cur_firmware_ver value : \" message in the Atom Console.");
+			LOGGER.info(
+					"STEP 1: ACTION : Execute the below command: ssh <atom ip> and then execute tail -f rdklogs/logs/WEBPAlog.txt.0");
+			LOGGER.info(
+					"STEP 1: EXPECTED : Following should be displayed in log: [mod=WEBPA, lvl=INFO]oldFirmwareVer :<version>, cur_firmware_ver value :<version>");
+			LOGGER.info("**********************************************************************************");
+			String oldFirmwareLogInWebpa = BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
+					BroadBandTraceConstants.LOG_MESSAGE_OLD_FIRMWARE, BroadBandCommandConstants.LOG_FILE_WEBPA,
+					BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+			String currentFirmwareLogInWebpa = BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
+					BroadBandTraceConstants.LOG_MESSAGE_CURRENT_FIRMWARE, BroadBandCommandConstants.LOG_FILE_WEBPA,
+					BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+			status = CommonMethods.isNotNull(oldFirmwareLogInWebpa)
+					&& CommonMethods.isNotNull(currentFirmwareLogInWebpa);
+			if (!status) {
+				currentImageName = FirmwareDownloadUtils.getCurrentFirmwareFileNameForCdl(tapEnv, device);
+				LOGGER.info("Current Image Name: " + currentImageName);
+				
+				latestImageName = tapEnv.getLatestBuildImageVersionForCdlTrigger(device, false);
+				LOGGER.info("LATEST FIRMWARE VERSION: " + latestImageName);
+				if (CommonMethods.isNull(latestImageName)) {
+					LOGGER.info(
+							" GA image obtained from deployed version service is null. Hence getting the image from property file ");
+					latestImageName = BroadbandPropertyFileHandler.getAutomaticsPropsValueByResolvingPlatform(device,
+							BroadBandPropertyKeyConstants.PARTIAL_PROPERTY_KEY_FOR_GA_IMAGE);
+				}
+				LOGGER.info("Latest Image Name: " + latestImageName);
+
+				LOGGER.info("Upgrading device to latest image available");
+				upgradeDevice = FirmwareDownloadUtils.triggerCdlUsingTr181OrTftp(tapEnv, device, latestImageName);
+				if (upgradeDevice) {
+					oldFirmwareLogInWebpa = BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
+							BroadBandTraceConstants.LOG_MESSAGE_OLD_FIRMWARE, BroadBandCommandConstants.LOG_FILE_WEBPA,
+							BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+							BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+					currentFirmwareLogInWebpa = BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv,
+							device, BroadBandTraceConstants.LOG_MESSAGE_CURRENT_FIRMWARE,
+							BroadBandCommandConstants.LOG_FILE_WEBPA, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+							BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+					status = CommonMethods.isNotNull(oldFirmwareLogInWebpa)
+							&& CommonMethods.isNotNull(currentFirmwareLogInWebpa);
+				}
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 1: ACTUAL : WEBPA.txt.0 conatains the expected string \"oldFirmwareVer :\" and \"cur_firmware_ver value : \"");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "S2";
+			errorMessage = "WEBPAlog.txt.0 log file doesnt contain the required String \"Component caching is completed\".";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION : Verify WEBPAlog.txt.0 Logs for \"Component caching is completed\" log in the Atom Console.");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute command: ssh <atom ip> and then execute tail -f rdklogs/logs/WEBPAlog.txt.0");
+			LOGGER.info("STEP 2: EXPECTED : Webpa log should contain \"Component caching is completed\"");
+			LOGGER.info("**********************************************************************************");
+			if (!upgradeDevice) {
+				LOGGER.info("Rebooting device.");
+				status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+				if (status) {
+					LOGGER.info("Device Rebooted Successfully");
+				} else {
+					LOGGER.info("Device Reboot failed");
+				}
+			}
+			status = verifyWebpaLogtxt(device, tapEnv);
+			if (status) {
+				LOGGER.info(
+						"STEP 2: ACTUAL : WEBPAlog.txt.0 log file contains the required String \"Component caching is completed\"");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S3";
+			errorMessage = "Process libwrp-c.so is not up and running in the device.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION : Verify libwrp-c.so should be present in /usr/lib on device");
+			LOGGER.info(
+					"STEP 3: ACTION : Execute following command: root@Docsis-Gateway:/usr/lib# ls -lr libwrp-c.so ");
+			LOGGER.info("STEP 3: EXPECTED : libwrp-c.so should be present in /usr/lib on device");
+			LOGGER.info("**********************************************************************************");
+			status = CommonUtils.isFileExists(device, tapEnv, BroadBandCommandConstants.FILE_LIB_LIBWRP_C_SO);
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Process libwrp-c.so is  up and running in the device.");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S4";
+			errorMessage = "Parodus Process details is not displayed as (/usr/bin/parodus). ";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION : Verify parodus process is running both on ARM and ATOM side.");
+			LOGGER.info(
+					"STEP 4: ACTION : Execute the below command in ARM console and ATOM  console: Command: root@Docsis-Gateway:/rdklogs/logs # ps | grep parodus ");
+			LOGGER.info("STEP 4: EXPECTED : parodus process details should be displayed as (/usr/bin/parodus). ");
+			LOGGER.info("**********************************************************************************");
+			status = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_GET_PARODUS_PROCESS)
+					.contains(BroadBandTestConstants.PARODUS_PROCESS_OUTPUT);
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Parodus Process details displayed as (/usr/bin/parodus).");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			/* Method to check Webpa GET SET PUT DELETE */
+			verifyWebPaRestOps(device, tapEnv, testCaseId, BroadBandTestConstants.CONSTANT_5);
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					true);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("POST-CONDITION 1:DESCRIPTION :Verify the WEBPA Set command is executed for default value.");
+			LOGGER.info("POST-CONDITION 1:ACTION : Verify the WEBPA Set command is executed for default value");
+			LOGGER.info("POST-CONDITION 1:EXPECTED: Should be able to WEBPA Set the default value");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to set the status of Xdns as 'false'";
+			BroadBandPostConditionUtils.executePostConditionToDisableXdnsStatus(device, tapEnv,
+					BroadBandTestConstants.CONSTANT_1);
+			status = true;
+			if (status) {
+				LOGGER.info("POST-CONDITION 1 : ACTUAL : WEBPA Set to the default value of Xdns Status as 'false'");
+			} else {
+				LOGGER.info("POST-CONDITION 1 : " + errorMessage);
+			}
+			if (upgradeDevice) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("POST-CONDITION 2:DESCRIPTION :Revert the Firmware of Device.");
+				LOGGER.info("POST-CONDITION 2:ACTION : Revert the firmware of device to previous build.");
+				LOGGER.info("POST-CONDITION 2:EXPECTED: Device should be reverted to Previous build.");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "Unable to revert to previous build.";
+
+				// POST CONDITION
+				// Since box has gone for Reboot, waiting for the box to come up.
+				CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+				// Reverting back to the default image in post condition
+				LOGGER.info("Reverting back to the default image:");
+				LOGGER.info("Image for CDL is:" + imageToCDLPostCondition);
+				FirmwareDownloadUtils.deleteSoftwareUpdateConfigurationFile(tapEnv, device);
+
+				status = FirmwareDownloadUtils.triggerCdlUsingTr181OrTftp(tapEnv, device, imageToCDLPostCondition);
+				errorMessage = "Failed to downgrade image to default image";
+				FirmwareDownloadUtils.deleteSoftwareUpdateConfigurationFile(tapEnv, device);
+
+				if (status) {
+					LOGGER.info("POST-CONDITION 2 : ACTUAL : Device reverted to Previous build.");
+				} else {
+					LOGGER.info("POST-CONDITION 2 : ACTUAL :" + errorMessage);
+				}
+			}
+
+			LOGGER.info("POST-CONFIGURATIONS : FINAL STATUS - " + status);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-WEBPA-1009");
+	}
+
+	/**
+	 * Method to verifyWebPa Rest Operations (GET, SET, PUT, POST, DELETE)
+	 * 
+	 * @param device {@link Dut}
+	 * @param tapEnv AutomaticsTapApi instance
+	 * @param testId Test Case Id
+	 * @throws Exception
+	 * @refactor Alan_Bivera
+	 * 
+	 */
+
+	public static void verifyWebPaRestOps(Dut device, AutomaticsTapApi tapEnv, String testId, int testStepInitialNumber)
+			throws Exception {
+		boolean status = false;
+		// stores the webPaServer Response
+		WebPaServerResponse webPaServerResponse = null;
+		// stores the current device time stamp
+		String currentDeviceTimeStamp = null;
+		String errorMessage = null;
+		String testStepNumber = null;
+		int stepNumber = testStepInitialNumber;
+
+		try {
+			/**
+			 * Verify the WebPA GET command can be executed successfully
+			 * 
+			 */
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + stepNumber + " :DESCRIPTION: Verify the WebPA GET command can be executed successfully");
+			LOGGER.info("STEP " + stepNumber
+					+ " :ACTION: Execute the TR-181 parameter-Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS to retrieve status of XDNS by WebPA");
+			LOGGER.info("STEP " + stepNumber
+					+ " :EXPECTED: WEBPA request should respond with success message and status code 200");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to retrieve the status of XDNS 'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS' using WebPA command.";
+			currentDeviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDeviceFromAtomorArmConsole(tapEnv,
+					device);
+			String xDNSStatus = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS);
+			LOGGER.info("Xdns status retrieved using WebPa = " + xDNSStatus);
+			status = CommonMethods.isNotNull(xDNSStatus) && (xDNSStatus.equalsIgnoreCase(BroadBandTestConstants.TRUE)
+					|| xDNSStatus.equalsIgnoreCase(BroadBandTestConstants.FALSE));
+			if (status) {
+				LOGGER.info("S" + stepNumber
+						+ " ACTUAL: Successfully retrieved  the status of XDNS 'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS' using WebPA command.");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify WEBPA GET request log message is present in WEBPAlog.txt.0
+			 *
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " DESCRIPTION : Verify WEBPA GET request log message is present in WEBPAlog.txt.0 ");
+			LOGGER.info("STEP " + stepNumber
+					+ " Execute command: grep -i \"WDMP-C: Request\" /rdklogs/logs/Consolelog.txt.0");
+			LOGGER.info("STEP " + stepNumber + " Webpa Log messages should present in WEBPAlog.txt.0");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Failed to get the log message under /rdklogs/logs/WEBPAlog.txt.0 ";
+			status = BroadBandSystemUtils.verifyWebpaNotificationForPollingTime(tapEnv, device,
+					BroadBandTraceConstants.WEBPA_GET_NOTIFICATION, currentDeviceTimeStamp);
+			if (status) {
+				LOGGER.info("S" + stepNumber + " ACTUAL: WEBPA GET request log message is present in WEBPAlog.txt.0");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify the WebPA SET command can be executed successfully
+			 * 
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + stepNumber + " DESCRIPTION: Verify the WebPA SET command can be executed successfully");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION: Execute the TR-181 parameter-Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS to set the  status of XDNS as 'true' by WebPA");
+			LOGGER.info("STEP " + stepNumber
+					+ " EXPECTED: WEBPA request should respond with success message and status code 200");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to set the status of XDNS 'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS' as 'true'using WebPA command..";
+			currentDeviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDeviceFromAtomorArmConsole(tapEnv,
+					device);
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_XDNS_FEATURE_STATUS, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.TRUE);
+			if (status) {
+				LOGGER.info("S" + stepNumber
+						+ " ACTUAL: Successfully able to set the webpa parameter  'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS' as 'true' using WebPA command.");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify WEBPA SET request log message is present in WEBPAlog.txt.0
+			 *
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " DESCRIPTION : Verify WEBPA SET request log message is present in WEBPAlog.txt.0 ");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION : Execute command: 1. grep -i \"WDMP-C: SET Request\" /rdklogs/logs/Consolelog.txt.0");
+			LOGGER.info("STEP " + stepNumber + " EXPECTED : Log message should present in WEBPAlog.txt.0");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Failed to get the  log message under /rdklogs/logs/WEBPAlog.txt.0 ";
+			status = BroadBandSystemUtils.verifyWebpaNotificationForPollingTime(tapEnv, device,
+					BroadBandTraceConstants.WEBPA_SET_NOTIFICATION, currentDeviceTimeStamp);
+			if (status) {
+				LOGGER.info("S" + stepNumber + " ACTUAL: WEBPA SET request log message is present in WEBPAlog.txt.0");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify the WEBPA PUT command can be executed successfully
+			 * 
+			 * 
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + stepNumber + " DESCRIPTION: Verify the WEBPA PUT command can be executed successfully");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION: Execute the TR-181 parameter-Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS to put the table entry in XDNS by WebPA");
+			LOGGER.info(
+					"STEP " + stepNumber + " EXPECTED: should be able to put the table entry in XDNS table by WebPA");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to put the  table entry using the webpa parameter  'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS'  using WebPA command.";
+			// Instance to store webPaServerResponse
+			currentDeviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDeviceFromAtomorArmConsole(tapEnv,
+					device);
+			webPaServerResponse = BroadBandWebPaUtils.invokeRestCallToXDNS(tapEnv, device,
+					BroadBandTestConstants.STRING_PUT);
+			if (webPaServerResponse != null) {
+				status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			}
+			if (status) {
+				LOGGER.info("S" + stepNumber
+						+ " ACTUAL: Successfully able to put the table entry using the webpa parameter  'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS'' using WebPA command.");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify WEBPA PUT request log message is present in WEBPAlog.txt.0
+			 *
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " DESCRIPTION : Verify WEBPA PUT request log message is present in WEBPAlog.txt.0 ");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION : Execute command: 1. grep -i \"WDMP-C: REPLACE_ROWS Request\" /rdklogs/logs/Consolelog.txt.0");
+			LOGGER.info("STEP " + stepNumber + " EXPECTED : Log message should present in WEBPAlog.txt.0");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Failed to get the  log message under /rdklogs/logs/WEBPAlog.txt.0 ";
+			status = BroadBandSystemUtils.verifyWebpaNotificationForPollingTime(tapEnv, device,
+					BroadBandTraceConstants.WEBPA_PUT_NOTIFICATION, currentDeviceTimeStamp);
+			if (status) {
+				LOGGER.info("S" + stepNumber + " ACTUAL: WEBPA PUT Log message should present in WEBPAlog.txt.0");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify the WEBPA POST command can be executed successfully
+			 * 
+			 * 
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + stepNumber + " DESCRIPTION :Verify the WEBPA POST command can be executed successfully");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION: Execute the TR-181 parameter-Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS to post the table entry in XDNS by WebPA");
+			LOGGER.info(
+					"STEP " + stepNumber + " EXPECTED: should be able to post the table entry in XDNS table by WebPA");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to post the  the table entry using the webpa parameter  'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS'' using WebPA command.";
+			currentDeviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDeviceFromAtomorArmConsole(tapEnv,
+					device);
+			webPaServerResponse = BroadBandWebPaUtils.invokeRestCallToXDNS(tapEnv, device,
+					BroadBandTestConstants.STRING_POST);
+			LOGGER.info("webPaServerResponse is" + webPaServerResponse.getMessage());
+			String tableRowNumber = webPaServerResponse.getRow();
+			LOGGER.info("tableRowNumber is" + tableRowNumber);
+			status = webPaServerResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+			if (status) {
+				LOGGER.info("S" + stepNumber
+						+ " ACTUAL: Successfully able to post the table entry using the webpa parameter  'Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS'' using WebPA command.");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify WEBPA POST request log message is present in WEBPAlog.txt.0
+			 *
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " DESCRIPTION : Verify WEBPA POST request log message is present in WEBPAlog.txt.0 ");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION : Execute command: 1. grep -i \"WDMP-C: ADD_ROW Request\" /rdklogs/logs/Consolelog.txt.0");
+			LOGGER.info("STEP " + stepNumber + " EXPECTED : Log message should present in WEBPAlog.txt.0");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Failed to get the  log message under /rdklogs/logs/WEBPAlog.txt.0 ";
+			status = BroadBandSystemUtils.verifyWebpaNotificationForPollingTime(tapEnv, device,
+					BroadBandTraceConstants.WEBPA_POST_NOTIFICATION, currentDeviceTimeStamp);
+			if (status) {
+				LOGGER.info("S" + stepNumber + " ACTUAL: WEBPA POST Log message should present in WEBPAlog.txt.0");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * Verify the WEBPA DELETE command can be executed successfully
+			 *
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " DESCRIPTION: Verify the WEBPA DELETE command can be executed successfully");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION: Execute the TR-181 parameter-Device.DeviceInfo.X_RDKCENTRAL-COM_EnableXDNS to delete the table entry in XDNS by WebPA");
+			LOGGER.info("STEP " + stepNumber
+					+ " EXPECTED: should be able to delete the table entry in XDNS table by WebPA");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Null response obtained for using delete by webpa";
+			currentDeviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDeviceFromAtomorArmConsole(tapEnv,
+					device);
+			WebPaServerResponse deleteResponse = tapEnv.deleteTableRowUsingRestApi(device, tableRowNumber);
+			if (CommonMethods.isNotNull(deleteResponse.getMessage())) {
+				status = deleteResponse.getMessage().equalsIgnoreCase(BroadBandTestConstants.SUCCESS_TXT);
+				errorMessage = "Unable to delete the table row using webpa";
+			}
+			if (status) {
+				LOGGER.info("S" + stepNumber + " ACTUAL: table row deleted succesfully using webpa");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage + " ACTUAL RESPONSE: "
+						+ deleteResponse.getMessage());
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * Verify WEBPA DELETE request log message is present in WEBPAlog.txt.0
+			 *
+			 */
+			stepNumber++;
+			testStepNumber = "S" + stepNumber;
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " DESCRIPTION : Verify WEBPA DELETE request log message is present in WEBPAlog.txt.0 ");
+			LOGGER.info("STEP " + stepNumber
+					+ " ACTION : Execute command: 1. grep -i \"WDMP-C: DELETE_ROW Request\" /rdklogs/logs/Consolelog.txt.0");
+			LOGGER.info("STEP " + stepNumber + " EXPECTED : Log message should present in WEBPAlog.txt.0");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Failed to get the  log message under /rdklogs/logs/WEBPAlog.txt.0 ";
+			status = BroadBandSystemUtils.verifyWebpaNotificationForPollingTime(tapEnv, device,
+					BroadBandTraceConstants.WEBPA_DELETE_NOTIFICATION, currentDeviceTimeStamp);
+			if (status) {
+				LOGGER.info("S" + stepNumber + " ACTUAL: WEBPA DELETE Log message should present in WEBPAlog.txt.0");
+			} else {
+				LOGGER.error("S" + stepNumber + " ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} catch (TestException exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error("Exception occured during execution !!!!" + errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testId, testStepNumber, status, errorMessage,
+					true);
+		}
+	}
+
+	/**
+	 * Method to verifyWebpaLogtxt for message "Component caching is completed"
+	 * 
+	 * @param device {@link Dut}
+	 * @param tapEnv AutomaticsTapApi instance
+	 * @return webpaLogVerify Show whether Message is present in log or not
+	 * @throws Exception
+	 */
+
+	public static boolean verifyWebpaLogtxt(Dut device, AutomaticsTapApi tapEnv) throws Exception {
+		boolean webpaLogVerify = false;
+		boolean result = false;
+
+		/* Checking for file WEBPAlog.txt.0 in /rdklogs/logs/ folder */
+		long pollDuration = BroadBandTestConstants.TEN_MINUTE_IN_MILLIS;
+		long startTime = System.currentTimeMillis();
+		do {
+			LOGGER.info("GOING TO WAIT FOR 15 seconds.");
+			tapEnv.waitTill(BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+			BroadBandResultObject objResult = BroadBandCommonUtils.doesFileExistInAtomConsole(device, tapEnv,
+					BroadBandCommandConstants.LOG_FILE_WEBPA);
+			if (null != objResult) {
+				result = objResult.isStatus();
+			}
+		} while ((System.currentTimeMillis() - startTime) < pollDuration && !result);
+		/* Checking for required String in WEBPAlog.txt.0 */
+		if (result) {
+			String searchWebpaLogResponse = BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
+					BroadBandTraceConstants.LOG_MESSAGE_COMP_CACHING, BroadBandCommandConstants.LOG_FILE_WEBPA,
+					BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS);
+			webpaLogVerify = CommonMethods.isNotNull(searchWebpaLogResponse);
+
+		}
+		return webpaLogVerify;
 	}
 }

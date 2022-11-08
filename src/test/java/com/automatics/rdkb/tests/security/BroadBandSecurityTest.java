@@ -172,7 +172,9 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			} else {
 				message = "Build does not contain latest available openSSL version";
 				LOGGER.error(message);
+
 			}
+			tapEnv.updateExecutionStatus(device, testId, step, status, message, true);
 
 			/*
 			 * STEP 2: Execute the command to get the openSSL version used in libssl.so "
@@ -185,7 +187,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("EXPECTED: Command should return latest openSSL version");
 			LOGGER.info("**********************************************************************************");
 			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_FETCH_LIBSSL_FILE);
-			response = "/usr/lib/"+response;
+			response = "/usr/lib/" + response;
 			LOGGER.info("LIBSSL used in build is: " + response);
 			if (CommonMethods.isNotNull(response)) {
 				response = tapEnv.executeCommandUsingSsh(device,
@@ -193,7 +195,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + response.trim()
 								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER
 								+ BroadBandTestConstants.POSTFIX_COMMAND_TO_READ_OPENSSL_OF_SSL_LIBRARY);
-			
+
 				LOGGER.info("openSSL version used in libssl is: " + response);
 
 				if (CommonMethods.isNotNull(response) && response.contains(latestOpensslVersion)) {
@@ -202,42 +204,10 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 				} else {
 					message = "libssl.so donot contain latest available openSSL version";
 					LOGGER.error(message);
-				}
-			} else {
-				message = "Failed in executing command to  fetch libssl";
-				LOGGER.error(message);
-			}
-			tapEnv.updateExecutionStatus(device, testId, step, status, message, false);
-	    /*
-	     * STEP 3: Execute the command to get the openSSL version used in libcrypto.so " EXPECTED: Command should
-	     * return latest openSSL version
-	     */
-	    step = "s3";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 3: Execute command to check the version of OpenSSL present in libcrypto.so");
-	    LOGGER.info("EXPECTED: Command should return latest openSSL version");
-	    LOGGER.info("**********************************************************************************");
-	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_FETCH_LIBCRYPTO_FILE);
-	    response = "/usr/lib/"+response;
-	    LOGGER.info("libcrypto used in build is : " + response);
-	    if (CommonMethods.isNotNull(response)) {
-		response = tapEnv.executeCommandUsingSsh(device,
-			BroadBandTestConstants.PREFIX_COMMAND_TO_READ_OPENSSL_OF_SSL_LIBRARY
-				+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + response.trim()
-				+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER
-				+ BroadBandTestConstants.POSTFIX_COMMAND_TO_READ_OPENSSL_OF_SSL_LIBRARY);
-		LOGGER.info("openSSL version used in libcrypto is: " + response);
-		if (CommonMethods.isNotNull(response) && response.contains(latestOpensslVersion)) {
-		    status = true;
-		    LOGGER.info("libcrypto.so contains latest available openSSL version");
-		} else {
-		    message = "libcrypto.so donot contain latest available openSSL version";
-		    LOGGER.error(message);
 
 				}
 			} else {
-				message = "Failed in executing command to  fetch libcrypto";
+				message = "Failed in executing command to  fetch libssl";
 				LOGGER.error(message);
 			}
 			tapEnv.updateExecutionStatus(device, testId, step, status, message, false);
@@ -253,6 +223,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("EXPECTED: Command should return latest openSSL version");
 			LOGGER.info("**********************************************************************************");
 			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_FETCH_LIBCRYPTO_FILE);
+			response = "/usr/lib/" + response;
 			LOGGER.info("libcrypto used in build is : " + response);
 			if (CommonMethods.isNotNull(response)) {
 				response = tapEnv.executeCommandUsingSsh(device,
@@ -6185,7 +6156,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 
 				String curlResponse = tapEnv.executeCommandUsingSsh(device, command);
 				LOGGER.info("Response from Jump Server is " + curlResponse);
-				errorMessage = "No response for the command " + command ;
+				errorMessage = "No response for the command " + command;
 				if (CommonMethods.isNotNull(curlResponse)) {
 					errorMessage = "\"X-CSRF-Protection:\" is not present in response. Response is - " + curlResponse;
 					String csrfProtectionValue = CommonMethods.patternFinder(curlResponse,
@@ -6239,5 +6210,251 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 		} finally {
 			LOGGER.info("ENDING TESTCASE: TC-RDKB-CSRF-1101");
 		}
-	}   
+	}
+
+	/**
+	 * Disable forwardSSH via RFC and verify whether we can do forwardSSH
+	 * <ol>
+	 * <li>Set ForwardSSH.Enable to false via RFC</li>
+	 * <li>using ReverseSSH, Find the RFC log to verify the new value and old value
+	 * of ForwardSSH.Enable. Reboot the device.</li>
+	 * <li>using webPA, verify the current value of ForwardSSH.Enable is false</li>
+	 * <li>Verify whether Device is accessible using forwardSSH. Wait for 10 mins to
+	 * get the connection time out response</li>
+	 * <li>using ReverseSSH, Verify the /rdklogs/logs/FirewallDebug.txt log to find
+	 * the ForwardSSH disabled logs</li>
+	 * <li>using webPA, set ForwardSSH to True. Reboot the device and verify the
+	 * device is accessible.</li>
+	 * 
+	 * @author Dipankar Nalui
+	 * @refactor Said Hisham
+	 * 
+	 *           </ol>
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-SECURITY-2002")
+	public void testToVerifyForwardSshByDisable(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-SECURITY-202";
+		String stepNum = null;
+		String errorMessage = null;
+		boolean status = false;
+		String response = null;
+		BroadBandReverseSshUtils broadBandReverseSshUtilsObject = new BroadBandReverseSshUtils();
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-SECURITY-2002");
+		LOGGER.info("TEST DESCRIPTION: Disable forwardSSH via RFC and verify whether we can do forwardSSH");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Set ForwardSSH.Enable to false via RFC");
+		LOGGER.info(
+				"2. using ReverseSSH, Find the RFC log to verify the new value and old value of ForwardSSH.Enable. Reboot the device.");
+		LOGGER.info("3. using webPA, verify the current value of ForwardSSH.Enable is false");
+		LOGGER.info(
+				"4. Verify whether Device is accesible using forwardSSH. Wait for 10 mins to get the connection time out response");
+		LOGGER.info(
+				"5. using ReverseSSH, Verify the /rdklogs/logs/FirewallDebug.txt log to find the ForwardSSH disabled logs");
+		LOGGER.info("6. using webPA, set ForwardSSH to True. Reboot the device and verify the device is accessible.");
+		LOGGER.info("#######################################################################################");
+
+		try {
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s1";
+			errorMessage = "Failed to Set ForwardSSH.Enable to false via RFC";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Set ForwardSSH.Enable to false via RFC");
+			LOGGER.info("STEP 1: ACTION : Using POST method send JSON Payload data to RFC Config API Server.");
+			LOGGER.info("STEP 1: EXPECTED : ForwardSSH.Enable should be set to false via RFC");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandRfcFeatureControlUtils.enableOrDisableForwardSshUsingRfc(tapEnv, device,
+					BroadBandTestConstants.FEATURE_NAME_FORWARD_SSH, false);
+
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : ForwardSSH.Enable was set to false via RFC");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s2";
+			errorMessage = "RFC log is not found to verify the new value and old value of ForwardSSH.Enable";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION : using ReverseSSH, Find the RFC log to verify the new value and old value of ForwardSSH.Enable. Reboot the device.");
+			LOGGER.info(
+					"STEP 2: ACTION : Execute the following commands:1. grep -i \"Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.ForwardSSH.Enable /rdklogs/logs/dcmrfc.log\"");
+			LOGGER.info(
+					"STEP 2: EXPECTED : RFC log should be found to verify the new value and old value of ForwardSSH.Enable. Reboot should be successful.");
+			LOGGER.info("**********************************************************************************");
+
+			response = BroadBandReverseSshUtils.searchLogFilesWithPollingIntervalUsingReverseSsh(tapEnv, device,
+					BroadBandTraceConstants.LOG_MESSAGE_FORWARD_SSH_VALUE_UPDATED_FALSE,
+					BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			LOGGER.info("response LOG_MESSAGE_FORWARD_SSH_VALUE_UPDATED_FALSE" + response);
+			if (CommonMethods.isNotNull(response)) {
+				status = true;
+			} else {
+				status = CommonMethods
+						.isNotNull(BroadBandReverseSshUtils.searchLogFilesWithPollingIntervalUsingReverseSsh(tapEnv,
+								device, BroadBandTraceConstants.LOG_MESSAGE_FORWARD_SSH_VALUE_SAME_FALSE,
+								BroadBandCommandConstants.FILE_DCMRFC_LOG, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+				LOGGER.info("response LOG_MESSAGE_FORWARD_SSH_VALUE_SAME_FALSE" + response);
+			}
+			if (status) {
+				errorMessage = "Reboot was not successful";
+				status = broadBandReverseSshUtilsObject.rebootWithoutWaitAndGetTheRebootStatusUsingReverseSsh(tapEnv,
+						device);
+				LOGGER.info("post reboot status is " + status);
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 2: ACTUAL : RFC log was found to verify the new value and old value of ForwardSSH.Enable. Reboot was successful.");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s3";
+			errorMessage = "Current value of ForwardSSH.Enable is not false";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION : using webPA, verify the current value of ForwardSSH.Enable is false");
+			LOGGER.info(
+					"STEP 3: ACTION : Execute the following command:curl -H \"Authorization: Bearer <SAT_TOKEN>\" -k <WEBPA URL>/device/mac:<ECM_MAC>/config?names=Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.ForwardSSH.Enable");
+			LOGGER.info("STEP 3: EXPECTED : The current value of ForwardSSH.Enable should be false");
+			LOGGER.info("**********************************************************************************");
+
+			status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_FEATURE_FORWARD_SSH, BroadBandTestConstants.FALSE,
+					BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : The current value of ForwardSSH.Enable is false");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s4";
+			errorMessage = "Device is accessible using forwardSSH";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 4: DESCRIPTION : Verify whether Device is accessible using forwardSSH. Wait for 10 mins to get the connection time out response");
+			LOGGER.info("STEP 4: ACTION : Execute the following commands:1. sudo stbsshv6 <device ip>");
+			LOGGER.info("STEP 4: EXPECTED : Device should not be accessible using forwardSSH");
+			LOGGER.info("**********************************************************************************");
+
+			status = !CommonMethods.isSTBAccessible(device);
+
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Device is not accesible using forwardSSH");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s5";
+			errorMessage = "ForwardSSH disabled log is not found in /rdklogs/logs/FirewallDebug.txt";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 5: DESCRIPTION : using ReverseSSH, Verify the /rdklogs/logs/FirewallDebug.txt log to find the ForwardSSH disabled logs");
+			LOGGER.info(
+					"STEP 5: ACTION : Execute the following commands:1. grep -i \"SSH: Forward SSH changed to disabled\" /rdklogs/logs/FirewallDebug.txt");
+			LOGGER.info(
+					"STEP 5: EXPECTED : ForwardSSH disabled log should be found in /rdklogs/logs/FirewallDebug.txt");
+			LOGGER.info("**********************************************************************************");
+
+			status = CommonMethods.isNotNull(BroadBandReverseSshUtils.searchLogFilesWithPollingIntervalUsingReverseSsh(
+					tapEnv, device, BroadBandTraceConstants.LOG_MESSAGE_TO_CHECK_FORWARD_SSH_DISABLED,
+					BroadBandTestConstants.FIREWALLDEBUG_FILE, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : ForwardSSH disabled log is found in /rdklogs/logs/FirewallDebug.txt");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s6";
+			errorMessage = "Failed to set ForwardSSH to True and Reboot.";
+			status = false;
+
+			LOGGER.info(
+					"STEP 6 : DESCRIPTION : using webPA, set ForwardSSH to True. Reboot the device and verify the device is accessible.");
+			LOGGER.info(
+					"STEP 6 : ACTION : Execute the following command: 1. curl -H \"Authorization: Bearer <SAT_TOKEN> -X PATCH <WEBPA URL>/device/mac:<ECM_MAC>/config -d \"{\"parameters\":[{\"dataType\":0,\"name\":\"Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.ForwardSSH.Enable\",\"value\":\"true\"}]}\"");
+			LOGGER.info(
+					"STEP 6 : EXPECTED : ForwardSSH should be set to True and Reboot should be successful. Device should be accessible.");
+
+			if (BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_FEATURE_FORWARD_SSH, BroadBandTestConstants.CONSTANT_3,
+					BroadBandTestConstants.TRUE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS)) {
+				if (broadBandReverseSshUtilsObject.rebootWithoutWaitAndGetTheRebootStatusUsingReverseSsh(tapEnv,
+						device)) {
+					errorMessage = "Device is not accessible.";
+					status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+				}
+			}
+
+			if (status) {
+				LOGGER.info(
+						"STEP 6 : ACTUAL : ForwardSSH was set to True. Reboot was successful. Device was accessible.");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			BroadBandPostConditionUtils.executePostConditionToSetForwardSshviaRFC(device, tapEnv,
+					BroadBandTestConstants.CONSTANT_1);
+			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-SECURITY-2002");
+	}
+
 }

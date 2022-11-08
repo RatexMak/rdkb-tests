@@ -252,8 +252,8 @@ public class BroadBandStaticIPTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    String commandPath = DeviceModeHandler.isBusinessClassDevice(device)
-		    ? BroadBandTestConstants.PATH_BWG_CCSP_BUS_CLIENT_TOOL
-		    : BroadBandTestConstants.PATH_CBR_CCSP_BUS_CLIENT_TOOL;
+		    ? BroadBandTestConstants.PATH_BUSINESSGW_CCSP_BUS_CLIENT_TOOL
+		    : BroadBandTestConstants.PATH_BUSSINESSCLASS_CCSP_BUS_CLIENT_TOOL;
 	    response = tapEnv.executeCommandUsingSsh(device,
 		    commandPath + BroadBandCommandConstants.COMMAND_APPLY_STATIC_IP_CONF);
 	    status = response.contains(BroadBandTestConstants.RESPONSE_EXECUTION_SUCCEED);
