@@ -12857,6 +12857,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("#######################################################################################");
 			errorMessage = "Failed to verify IDS syscfg parameter is removed";
 			response = tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_TO_GREP_IDS_IN_SYSCFG_DB);
+			LOGGER.info("response :"+response);
+			if(response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+				response = tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getCommandForIDSinSyscfg());
+			}
 			LOGGER.info("response is " + response);
 			status = CommonMethods.isNull(response);
 
@@ -12867,6 +12871,9 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 				if (BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device)) {
 					response = tapEnv.executeCommandInSettopBox(device,
 							BroadBandCommandConstants.CMD_TO_GREP_IDS_IN_SYSCFG_DB);
+					if(response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+						response = tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getCommandForIDSinSyscfg());
+					}
 					LOGGER.info("response is " + response);
 					status = CommonMethods.isNull(response);
 
