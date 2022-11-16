@@ -3418,10 +3418,9 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 					try {
 						LOGGER.info("GOING TO WAIT FOR 2 MINUTE.");
 						tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
-//						response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
-//								BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(),
-//								SnmpDataType.INTEGER, BroadBandTestConstants.STRING_VALUE_THREE);
-						response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv, BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER, BroadBandTestConstants.STRING_VALUE_THREE, BroadBandTestConstants.STRING_VALUE_ZERO);
+						response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
+								BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(),
+								SnmpDataType.INTEGER, BroadBandTestConstants.STRING_VALUE_THREE);
 
 						if (CommonMethods.isNotNull(response)) {
 							errorMessage = "Failed to set resourceUsageComputeWindow value as 3 using snmp mib  .1.3.6.1.4.1.17270.44.1.1.7.0 ";
