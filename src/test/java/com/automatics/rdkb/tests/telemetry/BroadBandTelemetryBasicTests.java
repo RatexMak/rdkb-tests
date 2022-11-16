@@ -32,6 +32,7 @@ import com.automatics.constants.LinuxCommandConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
 import com.automatics.enums.TR69ParamDataType;
+import com.automatics.enums.WebPaDataType;
 import com.automatics.exceptions.TestException;
 import com.automatics.providers.tr69.Parameter;
 import com.automatics.rdkb.BroadBandResultObject;
@@ -2176,29 +2177,37 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, true);
 
-//			step = "s7";
-//			errorMessage = "Unable to retrieve timestamp from the device";
-//			result = false;
-//			LOGGER.info("**********************************************************************************");
-//			LOGGER.info("STEP 7: DESCRIPTION : Retrieve timestamp from the device and reboot");
-//			LOGGER.info("STEP 7: ACTION : Execute command: date +%y%m%d-%H:%M:%S and reboot the device");
-//			LOGGER.info("STEP 7: EXPECTED : Obtained timestamp from device and rebooted successfully");
-//			LOGGER.info("**********************************************************************************");
-//
-//			deviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
+			step = "s7";
+			errorMessage = "Unable to retrieve timestamp from the device";
+			result = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Retrieve timestamp from the device and reboot");
+			LOGGER.info("STEP 7: ACTION : Execute command: date +%y%m%d-%H:%M:%S and reboot the device");
+			LOGGER.info("STEP 7: EXPECTED : Obtained timestamp from device and rebooted successfully");
+			LOGGER.info("**********************************************************************************");
+
+			deviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
 //			if (CommonMethods.isNotNull(deviceTimeStamp)) {
 //				errorMessage = "Unable to reboot the device";
 //				result = BroadBandTelemetryUtils.rebootAndWaitForDeviceAccessible(tapEnv, device,
-//						tapEnv.getWaitValue(device, AVConstants.PROP_KEY_WAIT_AFTER_HARD_REBOOT_INITIATED));
+//						tapEnv.getWaitValue(device, AVConstants.PROP_KEY_WAIT_AFTER_HARD_REBOOT_INITIATED));//ADDED
 //			}
-//			if (result) {
+			if (CommonMethods.isNotNull(deviceTimeStamp)) {
+				errorMessage = "Unable to set the retriev now";
+				result = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, BroadBandTestConstants.INTEGER_VALUE_2,
+						BroadBandTestConstants.STRING_VALUE_ONE);
+				tapEnv.waitTill(BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
+			}
+			if (result) {
 //				LOGGER.info("STEP 7: ACTUAL :Obtained timestamp from device and rebooted successfully");
-//			} else {
-//				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
-//			}
-//
-//			LOGGER.info("**********************************************************************************");
-//			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, true);
+				LOGGER.info("STEP 7: ACTUAL :Obtained timestamp from device and set RFC control successfully");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, true);
 
 			step = "s8";
 			result = false;
