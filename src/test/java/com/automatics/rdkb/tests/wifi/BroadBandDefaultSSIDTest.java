@@ -26,6 +26,7 @@ import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.TestGroup;
+import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants;
@@ -119,13 +120,14 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 					"STEP 1 : EXPTECTED : WebPA request must return success message with default SSID value for 2.4Ghz.");
 			LOGGER.info("**********************************************************************************");
 
-			/*if (DeviceModeHandler.isRPIDevice(device)) {
-				defaultSSIDName2dot4Ghz = BroadbandPropertyFileHandler.getDefaultSsid24AfterFR();
-			} else {*/
+			/*
+			 * if (DeviceModeHandler.isRPIDevice(device)) { defaultSSIDName2dot4Ghz =
+			 * BroadbandPropertyFileHandler.getDefaultSsid24AfterFR(); } else {
+			 */
 
-				defaultSSIDName2dot4Ghz = tapEnv.executeWebPaCommand(device,
-						BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ);
-			//}
+			defaultSSIDName2dot4Ghz = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_2_4_GHZ);
+			// }
 			LOGGER.info("Default SSID for 2.4 Ghz of the device is " + defaultSSIDName2dot4Ghz);
 			status = CommonMethods.isNotNull(defaultSSIDName2dot4Ghz);
 			errorMessage = "Failed to get default SSID using WebPa parameter "
@@ -152,13 +154,14 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 					"STEP 2 : EXPTECTED : WebPA request must return success message with default SSID value for 5Ghz.");
 			LOGGER.info("**********************************************************************************");
 
-			/*if (DeviceModeHandler.isRPIDevice(device)) {
-				defaultSSIDName5Ghz = BroadbandPropertyFileHandler.getDefaultSsid5AfterFR();
-			} else {*/
+			/*
+			 * if (DeviceModeHandler.isRPIDevice(device)) { defaultSSIDName5Ghz =
+			 * BroadbandPropertyFileHandler.getDefaultSsid5AfterFR(); } else {
+			 */
 
-				defaultSSIDName5Ghz = tapEnv.executeWebPaCommand(device,
-						BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ);
-			//}
+			defaultSSIDName5Ghz = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_DEFAULT_SSID_NAME_5_GHZ);
+			// }
 			LOGGER.info("Default SSID for 5 Ghz of the device is " + defaultSSIDName5Ghz);
 			status = CommonMethods.isNotNull(defaultSSIDName5Ghz);
 			errorMessage = "Failed to get default SSID using WebPa parameter "
@@ -247,8 +250,10 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 4 : EXPTECTED : WebPA request should return success message");
 			LOGGER.info("**********************************************************************************");
 
-			//status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
-			
+			// status =
+			// BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv,
+			// device);
+
 			status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
 					BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
 
@@ -309,7 +314,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 				response = tapEnv.executeWebPaCommand(device,
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_NAME);
 				LOGGER.info("SSID for 5 Ghz of the device is " + response);
-				status = CommonMethods.isNotNull(response) && response.equals(defaultSSIDName5Ghz);
+				status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(defaultSSIDName5Ghz);
 			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS && !status
 					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
 			if (status) {
@@ -424,14 +429,15 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 			LOGGER.info("#######################################################################################");
 			errorMessage = "SNMP process is not Initialized";
 			status = BroadBandSnmpUtils.validateSnmpProcessIsInitialized(tapEnv, device);
-			
-			if(!status)
-			{
-			
-				LOGGER.info("Status is false, changed to true");
-				status = true;
+
+			if (!status) {
+				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.PS_COMMAND_FOR_SNMP_PROCESS);
+				status = (CommonUtils.patternSearchFromTargetString(response,
+						BroadBandTestConstants.STRING_SNMP_D_PROCESS)
+						&& CommonUtils.patternSearchFromTargetString(response,
+								BroadBandTestConstants.STRING_SNMP_SUBAGENT_PROCESS));
 			}
-			
+
 			if (status) {
 				LOGGER.info("PRE-CONDITION " + preConStepNumber + " : ACTUAL :  SNMP process is Initialized");
 			} else {
@@ -573,8 +579,10 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNum + " : EXPECTED : WebPA request should return success message");
 			LOGGER.info("**********************************************************************************");
 
-			//status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device);
-			
+			// status =
+			// BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv,
+			// device);
+
 			status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
 					BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
 
@@ -610,7 +618,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 				response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device, BroadBandSnmpMib.ECM_CURRENT_SSID.getOid(),
 						BroadBandWebPaConstants.WEBPA_INDEX_2_4_GHZ_PRIVATE_SSID);
 				LOGGER.info("SSID for 2.4 Ghz of the device using SNMP is " + response);
-				status = CommonMethods.isNotNull(response) && response.equals(defaultSSIDName2Dot4Ghz);
+				status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(defaultSSIDName2Dot4Ghz);
 			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS && !status
 					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
 			errorMessage = "Failed to get SSID using the SNMP OID " + BroadBandSnmpMib.ECM_CURRENT_SSID.getOid() + "."
@@ -648,7 +656,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 				response = BroadBandSnmpUtils.snmpGetOnEcm(tapEnv, device, BroadBandSnmpMib.ECM_CURRENT_SSID.getOid(),
 						BroadBandWebPaConstants.WEBPA_INDEX_5_GHZ_PRIVATE_SSID);
 				LOGGER.info("SSID for 5 Ghz of the device using SNMP  is " + response);
-				status = CommonMethods.isNotNull(response) && response.equals(defaultSSIDName5Ghz);
+				status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(defaultSSIDName5Ghz);
 			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS && !status
 					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
 			errorMessage = "Failed to get SSID using the SNMP OID " + BroadBandSnmpMib.ECM_CURRENT_SSID.getOid() + "."
