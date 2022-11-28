@@ -5968,7 +5968,9 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 									BroadBandTestConstants.STRING_DEVICE_NAME.toLowerCase()))) {
 				errorMessage = "Unable to trigger RFC checkin or reboot successfully";
 				if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
-					status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+					status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+							WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN,
+							BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_VALUE_ONE);
 				}
 			}
 
