@@ -52,6 +52,7 @@ import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.AutomaticsPropertyUtility;
 import com.automatics.utils.CommonMethods;
+import com.splunk.modularinput.Argument.DataType;
 
 /**
  * Class for Enable Disable Feature Via DCM
@@ -2071,6 +2072,9 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 						errorMessage, false);
 			} else {
 				status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+				BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, BroadBandTestConstants.CONSTANT_2,
+						BroadBandTestConstants.STRING_VALUE_ONE);
 
 				if (status) {
 					LOGGER.info("STEP 4: ACTUAL : Device is online after reboot");
@@ -2160,6 +2164,9 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+			BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.STRING_VALUE_ONE);
 
 			if (status) {
 				LOGGER.info("STEP 7: ACTUAL : Device is online");
