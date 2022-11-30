@@ -161,11 +161,11 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("STEP 3: ACTION : Device should be reachable ");
 			LOGGER.info("STEP 3: EXPECTED : Device should be accessible after reboot");
 			LOGGER.info("**********************************************************************************");
-			if (CommonMethods.isSTBRebooted(tapEnv, settop, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
-					BroadBandTestConstants.CONSTANT_6)) {
+//			if (CommonMethods.isSTBRebooted(tapEnv, settop, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+//					BroadBandTestConstants.CONSTANT_6)) {  // temporarily conmmented
 				errorMessage = "Device did not come up after webpa reboot";
 				status = CommonMethods.waitForEstbIpAcquisition(tapEnv, settop);
-			}
+//			}
 			if (status) {
 				LOGGER.info("STEP 3: ACTUAL : Device is accessible after reboot");
 			} else {
