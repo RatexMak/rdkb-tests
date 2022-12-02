@@ -655,7 +655,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase{
 	LOGGER.debug("Entering checkConnectivityOfDevice");
 	String commandResponse = null;
 	String command = ((Device) device).getOsType().equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-		? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+		? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("<INTERFACE>",
+				BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 		: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 	commandResponse = tapEnv.executeCommandOnOneIPClients(device, command);
 	LOGGER.info("Curl response from device - " + commandResponse);

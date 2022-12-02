@@ -1462,24 +1462,30 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION : Verify whether interface  get the correct IPv6  address.");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Get the device IPv6 address using below command Linux : ifconfig wlan0 |grep -i \"inet6 addr:\" Windows:ipconfig |grep -A 10 \"Wireless LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\" ");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Interface IPv6 address should  be shown");
-			LOGGER.info("***************************************************************************************");
-			errorMessage = "interface  didnt got the correct IPV6 address";
-			String osType = ((Device) connectedDeviceActivated).getOsType();
-			status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType,
-					connectedDeviceActivated, tapEnv);
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + " : ACTUAL : Interface  got the correct IPv6 address");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("***************************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : Verify whether interface  get the correct IPv6  address.");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : Get the device IPv6 address using below command Linux : ifconfig wlan0 |grep -i \"inet6 addr:\" Windows:ipconfig |grep -A 10 \"Wireless LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\" ");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : Interface IPv6 address should  be shown");
+				LOGGER.info("***************************************************************************************");
+				errorMessage = "interface  didnt got the correct IPV6 address";
+				String osType = ((Device) connectedDeviceActivated).getOsType();
+				status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(
+						osType, connectedDeviceActivated, tapEnv);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : Interface  got the correct IPv6 address");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 4 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * STEP 5:Verify whether you have connectivity using that particular interface
@@ -1498,8 +1504,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("***************************************************************************************");
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("<INTERFACE>",
-									BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
+							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+									.replace("<INTERFACE>", BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			errorMessage = "Connectivty check using IPV4 address failed";
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
@@ -1528,41 +1534,42 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			
-			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : Verify whether there is  connectivity using that particular interface using IPV6 ");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Execute command : Linux :  curl -6 -v --interface wlan0 'www.google.com' | grep '200 OK' Windows:curl -6 -v 'www.google.com' | grep '200 OK");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Connectivity check should return status as 200");
-			LOGGER.info("***************************************************************************************");
-			errorMessage = "Connectivty check using IPV6 address failed";
-			command = ((Device) connectedDeviceActivated).getOsType()
-					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV6_ADDRESS
-							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV6_ADDRESS;
-			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
-			if (CommonMethods.isNotNull(response)) {
-				status = response.contains(BroadBandConnectedClientTestConstants.RESPONSE_STATUS_OK);
-				if (!status) {
-					errorMessage = "Expected 200 OK as response .But obtained " + response;
-				}
-			} else {
-				errorMessage = "Unable to execute curl command for IPv6 on connected client device. Please check the connectivity between connected client and Jump server.";
-			}
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+
+				LOGGER.info("***************************************************************************************");
 				LOGGER.info("STEP " + stepNumber
-						+ " : ACTUAL : Successfully Verified the internet connectivity using that particular interface using IPV6");
+						+ ": DESCRIPTION : Verify whether there is  connectivity using that particular interface using IPV6 ");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : Execute command : Linux :  curl -6 -v --interface wlan0 'www.google.com' | grep '200 OK' Windows:curl -6 -v 'www.google.com' | grep '200 OK");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : Connectivity check should return status as 200");
+				LOGGER.info("***************************************************************************************");
+				errorMessage = "Connectivty check using IPV6 address failed";
+				command = ((Device) connectedDeviceActivated).getOsType()
+						.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
+								? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV6_ADDRESS
+								: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV6_ADDRESS;
+				response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
+				if (CommonMethods.isNotNull(response)) {
+					status = response.contains(BroadBandConnectedClientTestConstants.RESPONSE_STATUS_OK);
+					if (!status) {
+						errorMessage = "Expected 200 OK as response .But obtained " + response;
+					}
+				} else {
+					errorMessage = "Unable to execute curl command for IPv6 on connected client device. Please check the connectivity between connected client and Jump server.";
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : Successfully Verified the internet connectivity using that particular interface using IPV6");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-			}else {
 				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
-				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
 
 			/**
@@ -1791,24 +1798,30 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info(
-					"STEP " + stepNumber + ": DESCRIPTION : Verify whether interface  get the correct IPv6  address.");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Get the device IPv6 address using below command Linux : ifconfig wlan0 |grep -i \"inet6 addr:\" Windows:ipconfig |grep -A 10 \"Wireless LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\" ");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Interface IPv6 address should  be shown");
-			LOGGER.info("***************************************************************************************");
-			errorMessage = "interface  didnt got the correct IPV6 address";
-			String osType = ((Device) connectedDeviceActivated).getOsType();
-			status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType,
-					connectedDeviceActivated, tapEnv);
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + " : ACTUAL : Interface  got the correct IPv6 address");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("***************************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : Verify whether interface  get the correct IPv6  address.");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : Get the device IPv6 address using below command Linux : ifconfig wlan0 |grep -i \"inet6 addr:\" Windows:ipconfig |grep -A 10 \"Wireless LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\" ");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : Interface IPv6 address should  be shown");
+				LOGGER.info("***************************************************************************************");
+				errorMessage = "interface  didnt got the correct IPV6 address";
+				String osType = ((Device) connectedDeviceActivated).getOsType();
+				status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(
+						osType, connectedDeviceActivated, tapEnv);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : Interface  got the correct IPv6 address");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 4 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * STEP 5:Verify whether you have connectivity using that particular interface
@@ -1827,8 +1840,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("***************************************************************************************");
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("<INTERFACE>",
-									BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
+							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+									.replace("<INTERFACE>", BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			errorMessage = "Connectivty check using IPV4 address failed";
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
@@ -1857,40 +1870,40 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : Verify whether there is  connectivity using that particular interface using IPV6 ");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Execute command : Linux :  curl -6 -v --interface wlan0 'www.google.com' | grep '200 OK' Windows:curl -6 -v 'www.google.com' | grep '200 OK");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Connectivity check should return status as 200");
-			LOGGER.info("***************************************************************************************");
-			errorMessage = "Connectivty check using IPV6 address failed";
-			command = ((Device) connectedDeviceActivated).getOsType()
-					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV6_ADDRESS
-							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV6_ADDRESS;
-			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
-			if (CommonMethods.isNotNull(response)) {
-				status = response.contains(BroadBandConnectedClientTestConstants.RESPONSE_STATUS_OK);
-				if (!status) {
-					errorMessage = "Expected 200 OK as response .But obtained " + response;
-				}
-			} else {
-				errorMessage = "Unable to execute curl command for IPv6 on connected client device. Please check the connectivity between connected client and Jump server.";
-			}
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("***************************************************************************************");
 				LOGGER.info("STEP " + stepNumber
-						+ " : ACTUAL : Successfully Verified the internet connectivity using that particular interface using IPV6");
+						+ ": DESCRIPTION : Verify whether there is  connectivity using that particular interface using IPV6 ");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : Execute command : Linux :  curl -6 -v --interface wlan0 'www.google.com' | grep '200 OK' Windows:curl -6 -v 'www.google.com' | grep '200 OK");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : Connectivity check should return status as 200");
+				LOGGER.info("***************************************************************************************");
+				errorMessage = "Connectivty check using IPV6 address failed";
+				command = ((Device) connectedDeviceActivated).getOsType()
+						.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
+								? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV6_ADDRESS
+								: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV6_ADDRESS;
+				response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
+				if (CommonMethods.isNotNull(response)) {
+					status = response.contains(BroadBandConnectedClientTestConstants.RESPONSE_STATUS_OK);
+					if (!status) {
+						errorMessage = "Expected 200 OK as response .But obtained " + response;
+					}
+				} else {
+					errorMessage = "Unable to execute curl command for IPv6 on connected client device. Please check the connectivity between connected client and Jump server.";
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : Successfully Verified the internet connectivity using that particular interface using IPV6");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-			}
-			else {
 				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
-				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
 
 			/**
@@ -3885,6 +3898,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
 							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+									.replace("<INTERFACE>", BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
 			status = !(CommonMethods.isNotNull(response)
@@ -5534,6 +5548,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
 							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+									.replace("<INTERFACE>", BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
 			status = !(CommonMethods.isNotNull(response)
@@ -6635,7 +6650,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		LOGGER.debug("Entering checkConnectivityOfDevice");
 		String commandResponse = null;
 		String command = ((Device) device).getOsType().equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-				? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+				? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("<INTERFACE>",
+						BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 				: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 		commandResponse = tapEnv.executeCommandOnOneIPClients(device, command);
 		LOGGER.info("Curl response from device - " + commandResponse);
@@ -10637,6 +10653,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
 							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+									.replace("<INTERFACE>", BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
 			status = !(CommonMethods.isNotNull(response)
@@ -11218,6 +11235,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
 							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+									.replace("<INTERFACE>", BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
 			status = !(CommonMethods.isNotNull(response)
