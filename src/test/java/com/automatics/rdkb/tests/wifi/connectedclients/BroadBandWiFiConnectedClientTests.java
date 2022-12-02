@@ -1827,7 +1827,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("***************************************************************************************");
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("<INTERFACE>",
+									BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			errorMessage = "Connectivty check using IPV4 address failed";
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
