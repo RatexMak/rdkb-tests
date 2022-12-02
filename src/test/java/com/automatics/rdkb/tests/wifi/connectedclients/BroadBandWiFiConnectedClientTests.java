@@ -1856,6 +1856,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			LOGGER.info("***************************************************************************************");
 			LOGGER.info("STEP " + stepNumber
 					+ ": DESCRIPTION : Verify whether there is  connectivity using that particular interface using IPV6 ");
@@ -1885,6 +1886,11 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("***************************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}
+			else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+			}
 
 			/**
 			 * STEP 7:Connect the connected client device to 5 GHz SSID and verify
