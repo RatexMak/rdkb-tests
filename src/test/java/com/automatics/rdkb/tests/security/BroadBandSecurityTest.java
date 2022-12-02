@@ -6147,7 +6147,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("Expected Result - \"X-CSRF-Protection: OWASP CSRFP 1.0.0\" should be present in response.");
 			LOGGER.info(
 					"**********************************************************************************************");
-			if (!CommonMethods.isRunningEthwanMode()) {
+			if (!CommonMethods.isRunningEthwanMode() && !DeviceModeHandler.isRPIDevice(device)) {
 				String command = BroadBandCommonUtils.concatStringUsingStringBuffer(
 						BroadBandCommandConstants.CMD_CURL_I_K_S_G, BroadBandWebGuiTestConstant.STRING_HTTP,
 						BroadBandWebGuiTestConstant.OPEN_SQUARE_BRACKET,
@@ -6199,7 +6199,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
 				LOGGER.info(
-						"S3: Verify WebUi pages are CSRF protected & S4: Verify WebUi pages are csrfp_token protected NA for ETHWAN");
+						"S3: Verify WebUi pages are CSRF protected & S4: Verify WebUi pages are csrfp_token protected NA for ETHWAN and RPI");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.Not_Applicable_For_Ethwan, false);
 			}
