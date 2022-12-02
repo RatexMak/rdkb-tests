@@ -2730,6 +2730,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "s7";
 			status = false;
 			errorMessage = "interface  didnt got the correct IPV6 address";
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			String ipv6AddressRetrievedFromClient = BroadBandConnectedClientUtils
 					.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedDeviceActivated, tapEnv);
 			status = CommonMethods.isIpv6Address(ipv6AddressRetrievedFromClient);
@@ -2740,6 +2741,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("#####################################################################################");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+			}
 
 			/**
 			 * STEP 8:Verify whether you have connectivity using that particular interface
@@ -2777,6 +2782,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("#####################################################################################");
 			status = false;
 			testStepNumber = "s9";
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
 					connectedDeviceActivated, BroadBandTestConstants.URL_GOOGLE, BroadBandTestConstants.IP_VERSION6);
 			status = result.isStatus();
@@ -2788,6 +2794,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("#####################################################################################");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		}else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 9 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+		}
 
 		} catch (Exception exception) {
 			LOGGER.error("Exception occured during execution !!!!" + exception.getMessage());
@@ -3110,6 +3120,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "s7";
 			status = false;
 			errorMessage = "interface  didnt got the correct IPV6 address";
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			String ipv6AddressRetrievedFromClient = BroadBandConnectedClientUtils
 					.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedDeviceActivated, tapEnv);
 			status = CommonMethods.isIpv6Address(ipv6AddressRetrievedFromClient);
@@ -3120,6 +3131,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("#####################################################################################");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 7 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+			}
 
 			/**
 			 * STEP 8:Verify whether you have connectivity using that particular interface
@@ -3157,6 +3172,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("#####################################################################################");
 			status = false;
 			testStepNumber = "s9";
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
 					connectedDeviceActivated, BroadBandTestConstants.URL_GOOGLE, BroadBandTestConstants.IP_VERSION6);
 			status = result.isStatus();
@@ -3168,6 +3184,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("#####################################################################################");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		}else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+		}
 
 		} catch (Exception exception) {
 			LOGGER.error("Exception occured during execution !!!!" + exception.getMessage());
