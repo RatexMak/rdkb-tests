@@ -1498,7 +1498,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("***************************************************************************************");
 			command = ((Device) connectedDeviceActivated).getOsType()
 					.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
+							? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("INTERFACE",
+									BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
 							: BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 			errorMessage = "Connectivty check using IPV4 address failed";
 			response = tapEnv.executeCommandOnOneIPClients(connectedDeviceActivated, command);
@@ -1527,6 +1528,9 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			testStepNumber = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
+			
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
+
 			LOGGER.info("***************************************************************************************");
 			LOGGER.info("STEP " + stepNumber
 					+ ": DESCRIPTION : Verify whether there is  connectivity using that particular interface using IPV6 ");
@@ -1556,6 +1560,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("***************************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+			}
 
 			/**
 			 * STEP 7:Connect the connected client device to 2.4 GHz SSID and verify
@@ -6320,10 +6328,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
 					operatingStandard);
-			//for including devices working in g,n operating standard
-			if(!status) {
+			// for including devices working in g,n operating standard
+			if (!status) {
 				operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N.getOperatingmode();
-				
+
 				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
 						operatingStandard);
@@ -12857,9 +12865,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("#######################################################################################");
 			errorMessage = "Failed to verify IDS syscfg parameter is removed";
 			response = tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_TO_GREP_IDS_IN_SYSCFG_DB);
-			LOGGER.info("response :"+response);
-			if(response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
-				response = tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getCommandForIDSinSyscfg());
+			LOGGER.info("response :" + response);
+			if (response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+				response = tapEnv.executeCommandInSettopBox(device,
+						BroadbandPropertyFileHandler.getCommandForIDSinSyscfg());
 			}
 			LOGGER.info("response is " + response);
 			status = CommonMethods.isNull(response);
@@ -12871,8 +12880,9 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 				if (BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv, device)) {
 					response = tapEnv.executeCommandInSettopBox(device,
 							BroadBandCommandConstants.CMD_TO_GREP_IDS_IN_SYSCFG_DB);
-					if(response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
-						response = tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getCommandForIDSinSyscfg());
+					if (response.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+						response = tapEnv.executeCommandInSettopBox(device,
+								BroadbandPropertyFileHandler.getCommandForIDSinSyscfg());
 					}
 					LOGGER.info("response is " + response);
 					status = CommonMethods.isNull(response);
