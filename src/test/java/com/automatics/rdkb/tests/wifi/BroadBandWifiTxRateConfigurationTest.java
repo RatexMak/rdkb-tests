@@ -2650,16 +2650,7 @@ public class BroadBandWifiTxRateConfigurationTest extends AutomaticsTestBase {
 					"TEST DESCRIPTION: Verify the configuration of Transmission Control Rate for both 2.4 GHz Radio and 5GHz Radio using TR-69.");
 
 			// Invoke Pre-Condition Method.
-			// executePreConditions(tapEnv, device);
-
-			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
-			LOGGER.info("PRE-CONDITION STEPS");
-			/**
-			 * PRE-CONDITION 1 : PERFORM FACTORY RESET ON THE DEVICE
-			 */
-			BroadBandPreConditionUtils.executePreConditionToFactoryResetDevice(device, tapEnv, 1);
-
-			LOGGER.info("################### ENDING PRE-CONFIGURATIONS ###################");
+			 executePreConditions(tapEnv, device);
 
 			int stepNumber = 1;
 			step = "S" + stepNumber;
