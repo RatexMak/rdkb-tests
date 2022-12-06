@@ -10634,6 +10634,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = false;
 			stepNumber++;
 			stepNum = "S" + stepNumber;
+			
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP : " + stepNumber
 					+ " : DESCRIPTION : Verify whether interface did'nt get the correct IPv6  address.");
@@ -10652,7 +10654,11 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			}
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, stepNum, status, errorMessage, false);
-
+			} else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 8 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
 			/**
 			 * STEP 9:Verify whether there is no connectivity using that particular
 			 * interface using IPV4.
@@ -10694,6 +10700,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = false;
 			stepNumber++;
 			stepNum = "S" + stepNumber;
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP : " + stepNumber
 					+ " : DESCRIPTION : Verify whether there is no  connectivity using that particular interface using IPV6");
@@ -10719,6 +10726,12 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, stepNum, status, errorMessage, false);
 
+			} else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 10 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
+			
 			/**
 			 * STEP 11:Connect the connected client device whose wifi Mac address is not
 			 * added in the MAC Filter to 2.4 GHz SSID and verify connection status
