@@ -190,7 +190,7 @@ public class BroadBandWifiSSIDPerformanceTest extends AutomaticsTestBase{
 		if (connectedSetop != null) {
 		    errorMessage = "Unable to disconnect connected client from wifi network";
 		    ssidName = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
-			    WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+			    WiFiFrequencyBand.WIFI_BAND_2_GHZ);
 		    if (ConnectedNattedClientsUtils.disconnectSSID(connectedSetop, tapEnv, ssidName)) {
 			LOGGER.info("ITERATION :" + iteration
 				+ " STEP 5 ACUTAL : Connected client disconnected from Wi-Fi network successfully");
