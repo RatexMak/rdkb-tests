@@ -3260,6 +3260,7 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 
 			testStepNumber = "s6";
 			status = false;
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 6: DESCRIPTION : Check if 'erouter0' IP is released ");
 			LOGGER.info("STEP 6: ACTION : Execute command ifconfig | grep -i erouer0 and verify ip address");
@@ -3276,6 +3277,12 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			}
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			} else {
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
+			
 		} catch (Exception exception) {
 			errorMessage = "Exception occurred during execution : " + exception.getMessage();
 			LOGGER.error(errorMessage);
