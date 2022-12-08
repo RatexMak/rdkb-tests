@@ -1343,6 +1343,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    testStepNumber = "S" + stepNumber;
 	    executionStatus = false;
 	    errorMessage = null;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info(
 		    "STEP " + stepNumber + ": DESCRIPTION : Verify response by querying IPv6 enabled external server");
@@ -1381,6 +1382,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, executionStatus, errorMessage, false);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 5 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 	} catch (Exception e) {
 	    errorMessage = e.getMessage();
 	    LOGGER.error(errorMessage);
