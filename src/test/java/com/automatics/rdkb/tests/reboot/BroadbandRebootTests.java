@@ -2012,6 +2012,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    stepNum = "S3";
 	    errorMessage = "Interface brlan0 is not assigned with valid DHCPv6 address.";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 3: DESCRIPTION : Verify whether brlan0 is assigned properly with valid DHCPv6 address.");
 	    LOGGER.info(
@@ -2026,6 +2027,11 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 3 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	    stepNum = "S4";
 	    errorMessage = "Unable to bring brlan0 interface status to down.";
@@ -2147,6 +2153,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    stepNum = "S8";
 	    errorMessage = "Interface brlan0 is not assigned with valid DHCPv6 address.";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 8: DESCRIPTION : Verify whether brlan0 is assigned properly with valid DHCPv6 address.");
 	    LOGGER.info(
@@ -2163,6 +2170,12 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 8 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+	    
 	} catch (Exception exception) {
 	    LOGGER.error("Exception occured.");
 	    errorMessage = errorMessage + exception.getMessage();
