@@ -28,12 +28,14 @@ import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Device;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
@@ -1395,6 +1397,7 @@ public class BroadbandIntranetConnectivityTest  extends AutomaticsTestBase {
 	     */
 	    testStepNumber = "s4";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 4: Verify the IPv6 Address is retrieved  from the client connected to 2.4GHz Private Wi-Fi Network");
@@ -1412,6 +1415,11 @@ public class BroadbandIntranetConnectivityTest  extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("#####################################################################################");
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 4 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	    /**
 	     * Step 5: Verify the internet is accessible in the client connected to 2.4 GHz Private Wi-Fi Network
@@ -1500,6 +1508,7 @@ public class BroadbandIntranetConnectivityTest  extends AutomaticsTestBase {
 	     */
 	   testStepNumber = "s8";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 8: Verify the IPv6 Address is retrieved  from the client connected to 5 GHz Private Wi-Fi Network");
@@ -1517,6 +1526,11 @@ public class BroadbandIntranetConnectivityTest  extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("#####################################################################################");
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 8 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	    /**
 	     * Step 9: Verify the internet is accessible in the client connected to 5 GHz Private Wi-Fi Network
