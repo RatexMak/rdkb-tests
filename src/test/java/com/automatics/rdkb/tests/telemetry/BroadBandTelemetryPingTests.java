@@ -39,6 +39,7 @@ import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
@@ -145,6 +146,11 @@ public class BroadBandTelemetryPingTests extends AutomaticsTestBase {
 	    String deviceModelFromSettop = device.getModel();
 	    // Variable to hold the ecmMac
 	    String ecmMacFromBHC = ((Device) device).getEcmMac();
+	    
+	    if(DeviceModeHandler.isRPIDevice(device)) {
+	    	ecmMacFromBHC = ((Device) device).getHostMacAddress();
+	    	LOGGER.info("mac address :"+ecmMacFromBHC);
+	    }
 	    // Variable to hold the DeviceId
 	    String deviceIdFromSettop = device.getSerialNumber();
 

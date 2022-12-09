@@ -37,6 +37,7 @@ import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
+import com.automatics.enums.WebPaDataType;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
@@ -5715,6 +5716,12 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    String response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
 	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
 		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+		if (!status) {
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, WebPaDataType.UNSIGNED_INT.getValue(),
+					BroadBandTestConstants.STRING_VALUE_ONE);
+		}
+
 	    if (status) {
 		LOGGER.info("STEP 2: ACTUAL : RFC service restart has been successfully trigerred");
 	    } else {
@@ -5885,6 +5892,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
 	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
 		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (!status) {
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, WebPaDataType.UNSIGNED_INT.getValue(),
+					BroadBandTestConstants.STRING_VALUE_ONE);
+		}
 	    if (status) {
 		LOGGER.info("STEP 9: ACTUAL : RFC service restart has been successfully trigerred");
 	    } else {
