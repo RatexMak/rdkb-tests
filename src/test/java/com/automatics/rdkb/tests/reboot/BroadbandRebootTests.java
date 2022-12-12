@@ -2117,11 +2117,11 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 					status = CommonMethods.isNotNull(interfaceBrlan0Status) && interfaceBrlan0Status
 							.equalsIgnoreCase(BroadBandConnectedClientTestConstants.RADIO_STATUS_DOWN);
 				}
-				
-			    else {
+
+				else {
 					LOGGER.error("Command to bring interface brlan0 down not executed successfully.");
-				    }
-				
+				}
+
 			}
 
 			if (status) {
@@ -2171,13 +2171,23 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 6: EXPECTED : Required log mentioned above should be present in /rdklogs/logs/SelfHealAggressive.txt.0 log file.");
 			LOGGER.info("**********************************************************************************");
-			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_GET_PROCESS_CRASH_LOGS);
-			status = CommonMethods.isNotNull(response)
-					&& (CommonMethods.patternMatcher(response, BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_01)
-							|| CommonMethods.patternMatcher(response,
-									BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_02)
-							|| CommonMethods.patternMatcher(response,
-									BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_03));
+
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_BRLAN_DOWN_LOGS);
+				status = CommonMethods.isNotNull(response)
+						&& response.contains(BroadBandTestConstants.STRING_BRLAN_DOWN_SELF_HEAL_LOG);
+			}
+
+			else {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandTestConstants.COMMAND_TO_GET_PROCESS_CRASH_LOGS);
+				status = CommonMethods.isNotNull(response) && (CommonMethods.patternMatcher(response,
+						BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_01)
+						|| CommonMethods.patternMatcher(response,
+								BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_02)
+						|| CommonMethods.patternMatcher(response,
+								BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_03));
+			}
 			if (status) {
 				LOGGER.info(
 						"STEP 6: ACTUAL : Required log verified succesfully in /rdklogs/logs/SelfHealAggressive.txt.0 log file.");
