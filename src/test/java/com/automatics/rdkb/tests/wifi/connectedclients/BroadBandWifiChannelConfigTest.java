@@ -242,9 +242,9 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 		    "STEP " + stepNumber + ": EXPECTED : THE WI-FI CONNECTED CLIENT SHOULD BE IN DISCONNECTED STATE");
 	    LOGGER.info("#######################################################################################");
 	    try {
-		errorMessage = "The Wifi connected client is still connected to the 2.4GHz SSID";
+		errorMessage = "The Wifi connected client is still connected to the 5GHz SSID";
 		ssid = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
-			WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+			WiFiFrequencyBand.WIFI_BAND_5_GHZ);
 		status = ConnectedNattedClientsUtils.verifyConnectToSSID(wifiClientDevice, tapEnv, ssid, false);
 	    } catch (TestException exp) {
 		errorMessage = exp.getMessage();
