@@ -2764,7 +2764,10 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 				if (BroadBandRfcFeatureControlUtils.executePreconditionForRfcTests(device, tapEnv,
 						payload.replace(BroadBandTestConstants.STRING_REPLACE, jsonObject.toString()))) {
 					errorMessage = "Unable to reboot device successfully";
-					status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv)
+//					status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv)
+//							&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device,
+//									BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+					status = CommonUtils.rebootAndWaitForIpAcquisition(tapEnv, device) 
 							&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device,
 									BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
 					enabledByRfc = status;
