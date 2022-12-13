@@ -7142,7 +7142,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 					WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getOperatingmode());
 			if (!status && DeviceModeHandler.isRPIDevice(device)) {
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
 						WebPaDataTypes.STRING.getValue(), BroadbandPropertyFileHandler.get5GhzOperatingModeForRPi());
 			}
 			if (status) {
