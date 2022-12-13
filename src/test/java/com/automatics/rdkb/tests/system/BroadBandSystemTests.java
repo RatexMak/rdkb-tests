@@ -5803,6 +5803,8 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    "STEP 6: ACTION : Check console logs for logging on ZRAM enable using \"cat /rdklogs/logs/zram.log | grep zram\" command");
 	    LOGGER.info("STEP 6: EXPECTED : ZRAM enable should be logged under cat /rdklogs/logs/zram.log");
 	    LOGGER.info("**********************************************************************************");
+	    if(DeviceModeHandler.isRPIDevice(device)) {
+	    	
 	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 		    ? tapEnv.executeCommandOnAtom(device,
 			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
@@ -5818,6 +5820,10 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }else {
+	    	LOGGER.info("/rdklogs/logs/zram.log not applicable for RPi : Skipping TestStep...");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+	    }
 
 	    stepNum = "s7";
 	    errorMessage = "Unable to check ZRAM partition in the device";
@@ -5827,6 +5833,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 7: ACTION : Check for the ZRAM partitions in the device using \"cat /proc/swaps\"");
 	    LOGGER.info("STEP 7: EXPECTED : ZRAM partitions should be present in the device");
 	    LOGGER.info("**********************************************************************************");
+	    if(DeviceModeHandler.isRPIDevice(device)) {
 	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 		    ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION)
 		    : tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION);
@@ -5847,6 +5854,10 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }else {
+	    	LOGGER.info("ZRAM partitions not applicable for RPi : Skipping TestStep...");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+	    }
 
 	    stepNum = "S8";
 	    errorMessage = "Unable to post the RFC payload data to Proxy Xconf DCM Server";
@@ -5977,6 +5988,8 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 13: ACTION : Check console logs for logging on ZRAM enable");
 	    LOGGER.info("STEP 13: EXPECTED : ZRAM disable should be logged under cat /rdklogs/logs/zram.log");
 	    LOGGER.info("**********************************************************************************");
+	    
+	    if(DeviceModeHandler.isRPIDevice(device)) {
 	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 		    ? tapEnv.executeCommandOnAtom(device,
 			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
@@ -5992,6 +6005,10 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }else {
+	    	LOGGER.info("ZRAM /rdklogs/logs/zram.log not applicable for RPi : Skipping TestStep...");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+	    }
 
 	} catch (Exception e) {
 	    errorMessage = errorMessage + e.getMessage();
