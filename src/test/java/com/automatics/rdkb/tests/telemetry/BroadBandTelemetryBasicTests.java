@@ -2187,11 +2187,6 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			deviceTimeStamp = BroadBandCommonUtils.getCurrentTimeStampOnDevice(tapEnv, device);
-//			if (CommonMethods.isNotNull(deviceTimeStamp)) {
-//				errorMessage = "Unable to reboot the device";
-//				result = BroadBandTelemetryUtils.rebootAndWaitForDeviceAccessible(tapEnv, device,
-//						tapEnv.getWaitValue(device, AVConstants.PROP_KEY_WAIT_AFTER_HARD_REBOOT_INITIATED));//ADDED
-//			}
 			if (CommonMethods.isNotNull(deviceTimeStamp)) {
 				errorMessage = "Unable to set the retriev now";
 				result = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
@@ -2200,7 +2195,6 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 				tapEnv.waitTill(BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
 			}
 			if (result) {
-//				LOGGER.info("STEP 7: ACTUAL :Obtained timestamp from device and rebooted successfully");
 				LOGGER.info("STEP 7: ACTUAL :Obtained timestamp from device and set RFC control successfully");
 			} else {
 				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
