@@ -233,6 +233,7 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 	    testStepNumber = "S" + stepNumber;
 	    status = false;
 	    String ssid = null;
+	    String response = null;
 	    LOGGER.info("#######################################################################################");
 	    LOGGER.info("STEP " + stepNumber
 		    + " : DESCRIPTION : VERIFY THE WI-FI CONNECTED CLIENT IS IN DISCONNECTED STATE.");
@@ -243,9 +244,11 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 	    LOGGER.info("#######################################################################################");
 	    try {
 		errorMessage = "The Wifi connected client is still connected to the 5GHz SSID";
-		ssid = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
-			WiFiFrequencyBand.WIFI_BAND_5_GHZ);
-		status = ConnectedNattedClientsUtils.verifyConnectToSSID(wifiClientDevice, tapEnv, ssid, false);
+		
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_WINDOWS_SHOW_INTERFACES);
+		status = CommonMethods.isNotNull(response)
+				&& response.contains(BroadBandTestConstants.STRING_CONSTANT_CONNECTED);
+		
 	    } catch (TestException exp) {
 		errorMessage = exp.getMessage();
 		LOGGER.error(errorMessage);
