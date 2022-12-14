@@ -2209,26 +2209,33 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 			errorMessage = "Failed to include new instance name in telemetry data to be uploaded to server.";
 			status = false;
 
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 9: DESCRIPTION : Verify the new feature instance name in telemetry data");
-			LOGGER.info("STEP 9: ACTION : Execute:grep -I TMEndpoint2 /rdklogs/logs/dcmscript.log");
-			LOGGER.info(
-					"STEP 9: EXPECTED : The telemetry data should contain new instance name to be uploaded to server");
-			LOGGER.info("**********************************************************************************");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 
-			status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
-					BroadBandTraceConstants.OVERRIDE_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
-					BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT, BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-
-			if (status) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 9: DESCRIPTION : Verify the new feature instance name in telemetry data");
+				LOGGER.info("STEP 9: ACTION : Execute:grep -I TMEndpoint2 /rdklogs/logs/dcmscript.log");
 				LOGGER.info(
-						"STEP 9: ACTUAL : Successfully verified feature instance name in /rdklogs/logs/dcmscript.log");
-			} else {
-				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
-			}
+						"STEP 9: EXPECTED : The telemetry data should contain new instance name to be uploaded to server");
+				LOGGER.info("**********************************************************************************");
 
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+				status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+						BroadBandTraceConstants.OVERRIDE_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
+						BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT, BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+
+				if (status) {
+					LOGGER.info(
+							"STEP 9: ACTUAL : Successfully verified feature instance name in /rdklogs/logs/dcmscript.log");
+				} else {
+					LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+				}
+
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			} else {
+				LOGGER.info("STEP 9: Not Applicable for RPi");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
 
 			LOGGER.info("**********************************************************************************");
 
