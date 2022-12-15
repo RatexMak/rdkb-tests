@@ -119,7 +119,7 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 				    BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
 				    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 			}
-			if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
+//			if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
 			    status = BroadBandRfcFeatureControlUtils
 				    .verifyParameterUpdatedByRfc(device, tapEnv,
 					    BroadBandTestConstants.TELEMETRY_2_WEBPA_SETTINGS.FEATURE_ENABLE.getParam(),
@@ -152,7 +152,7 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 				    && isSTBAccessible && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
 					    BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
 
-			}
+//			}
 		    }
 		}
 		isTelemetryVerTwoProcessUp = status;
