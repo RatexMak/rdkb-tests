@@ -1056,24 +1056,23 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_PARAMS);
 			try {
 				JSONArray responseInJson = new JSONArray(response);
-				
+
 				LOGGER.info("JSONResponse is " + responseInJson.length());
-				
-				if(DeviceModeHandler.isRPIDevice(device)) {		
-					if(!(responseInJson.length()==0)) {
+
+				if (DeviceModeHandler.isRPIDevice(device)) {
+					if (!(responseInJson.length() == 0)) {
 						passCount = responseInJson.length();
-						LOGGER.info("passcount in RPi : "+ passCount);
+						LOGGER.info("passcount in RPi : " + passCount);
 					}
-				}
-				else {
-				int counter = 0;
-				for (counter = 0; counter < responseInJson.length(); counter++) {
-					JSONObject json = responseInJson.getJSONObject(counter);
-					String name = json.getString(BroadBandTestConstants.STRING_NAME);
-					if (CommonMethods.isNotNull(name)) {
-						passCount++;
+				} else {
+					int counter = 0;
+					for (counter = 0; counter < responseInJson.length(); counter++) {
+						JSONObject json = responseInJson.getJSONObject(counter);
+						String name = json.getString(BroadBandTestConstants.STRING_NAME);
+						if (CommonMethods.isNotNull(name)) {
+							passCount++;
+						}
 					}
-				}
 				}
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage());
@@ -1271,18 +1270,25 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("******************************************************");
 
 			radioStepNumber = "s" + stepNumberss[1];
-			status = false;
-			status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType,
-					connectedDeviceActivated, tapEnv);
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				status = false;
+				status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(
+						osType, connectedDeviceActivated, tapEnv);
 
-			if (status) {
-				LOGGER.info("STEP " + stepNumberss[1] + ":  ACTUAL RESULT : Interface got the correct IPv6 address.");
+				if (status) {
+					LOGGER.info(
+							"STEP " + stepNumberss[1] + ":  ACTUAL RESULT : Interface got the correct IPv6 address.");
+				} else {
+					LOGGER.info("STEP " + stepNumberss[1] + ":  ACTUAL RESULT :" + errorMessage);
+				}
+
+				LOGGER.info("******************************************************");
+				tapEnv.updateExecutionStatus(device, testId, radioStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.info("STEP " + stepNumberss[1] + ":  ACTUAL RESULT :" + errorMessage);
+				LOGGER.info("IPv6 is not Available/disabled : skipping teststep ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, radioStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-
-			LOGGER.info("******************************************************");
-			tapEnv.updateExecutionStatus(device, testId, radioStepNumber, status, errorMessage, false);
 		} else {
 			LOGGER.info("This function is meant for executing 2 steps.Current steps passed are " + stepNumberss.length);
 		}
@@ -5722,7 +5728,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 
 		try {
 
-			LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-WEBPA-4005");
+			LOGGER.info("STARTING TEST CASE: TC-RDKB-WIFI-4005");
 
 			LOGGER.info("**************************************************************");
 			LOGGER.info("TEST DESCRIPTION: Verify Security Mode for Wifi frequency band using tr69 params ");

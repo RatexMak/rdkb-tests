@@ -1071,7 +1071,8 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 							BroadBandTestConstants.CONSTANT_LIGHTTPD_CONF);
 			if (CommonMethods.isNotNull(response)) {
 				response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_SERVER_TAG);
-				status = CommonMethods.isNotNull(response) && response.equalsIgnoreCase(
+				LOGGER.info("RESPONSE : "+response);
+				status = CommonMethods.isNotNull(response) && response.contains(
 						AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_CONSTANT_SERVER_TAG));
 			}
 			if (status) {
