@@ -123,8 +123,8 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("**********************************************************************************");
 			tapEnv.executeCommandUsingSsh(settop, BroadBandCommandConstants.CMD_TO_FORCE_REMOVE_DCM_SETTINGS);
 			status = BroadBandTelemetryUtils.verifyLogServerUrl(settop, tapEnv,
-					BroadBandTelemetryConstants.DCM_PROPERTIES_FILE_ETC_FOLDER,
-					BroadBandTelemetryConstants.PROP_KEY_DEFAULT_XCONF_LOGUPLOAD_URL);
+					BroadBandTelemetryConstants.DCM_PROPERTIES_FILE_ETC_FOLDER, AutomaticsTapApi
+							.getSTBPropsValue(BroadBandTelemetryConstants.PROP_KEY_DEFAULT_XCONF_LOGUPLOAD_URL));
 			LOGGER.info("Status of verification of DCM Log Server Url in /etc/dcm.properties: " + status);
 			if (status) {
 				LOGGER.info("STEP 1: ACTUAL : DCM endpoint is present in /etc/dcm.properties");
@@ -163,8 +163,8 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("**********************************************************************************");
 //			if (CommonMethods.isSTBRebooted(tapEnv, settop, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
 //					BroadBandTestConstants.CONSTANT_6)) {  // temporarily conmmented
-				errorMessage = "Device did not come up after webpa reboot";
-				status = CommonMethods.waitForEstbIpAcquisition(tapEnv, settop);
+			errorMessage = "Device did not come up after webpa reboot";
+			status = CommonMethods.waitForEstbIpAcquisition(tapEnv, settop);
 //			}
 			if (status) {
 				LOGGER.info("STEP 3: ACTUAL : Device is accessible after reboot");
@@ -252,11 +252,11 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("**********************************************************************************");
 			String actualErouterIpv6Address = telemetryData
 					.getString(BroadBandTelemetryConstants.JSON_MARKER_IPV6_ADDRESS);
-			
+
 			if (CommonMethods.isNull(actualErouterIpv6Address) && DeviceModeHandler.isRPIDevice(settop)) {
 				LOGGER.info("IPv6 is not enabled for RPI device");
 				status = true;
-				
+
 			} else {
 				LOGGER.info(actualErouterIpv6Address);
 				String expectedErouterIpv6Address = CommonMethods.patternFinder(ifConfigErouterResponse,

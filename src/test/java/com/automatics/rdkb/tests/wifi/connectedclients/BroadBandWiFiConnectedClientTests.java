@@ -1056,7 +1056,16 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_PARAMS);
 			try {
 				JSONArray responseInJson = new JSONArray(response);
+				
 				LOGGER.info("JSONResponse is " + responseInJson.length());
+				
+				if(DeviceModeHandler.isRPIDevice(device)) {		
+					if(!(responseInJson.length()==0)) {
+						passCount = responseInJson.length();
+						LOGGER.info("passcount in RPi : "+ passCount);
+					}
+				}
+				else {
 				int counter = 0;
 				for (counter = 0; counter < responseInJson.length(); counter++) {
 					JSONObject json = responseInJson.getJSONObject(counter);
@@ -1064,6 +1073,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 					if (CommonMethods.isNotNull(name)) {
 						passCount++;
 					}
+				}
 				}
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage());
