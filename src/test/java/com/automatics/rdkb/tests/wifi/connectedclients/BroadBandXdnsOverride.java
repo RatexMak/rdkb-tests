@@ -246,6 +246,9 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			testStep = "s4";
 			openDnsIP = DeviceModeHandler.isDSLDevice(device) ? BroadBandTestConstants.STRING_OPEN_DNS_IP_DSL
 					: BroadBandTestConstants.STRING_OPEN_DNS_IP_75_76;
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				openDnsIP = "";
+			}
 			LOGGER.info("##########################################################################");
 			LOGGER.info("STEP 4 : DESCRIPTION :EXECUTE nslookup amazon.com " + openDnsIP
 					+ " WIFI CONNECTED CLIENT AND VERIFY OUTPUT");
@@ -258,7 +261,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					wifiConnectedClient, BroadBandTestConstants.NSLOOKUP_FOR_AMAZON, openDnsIP,
 					BroadBandTestConstants.NSLOOKUP_FOR_AMAZON);
 			if (status) {
-				LOGGER.info("STEP 4:ACTUAL :Nslookup validation is successful with DNS 75.75.76.76");
+				LOGGER.info("STEP 4:ACTUAL :Nslookup validation is successful with DNS" + openDnsIP);
 			} else {
 				LOGGER.error("STEP 4:ACTUAL :" + errorMessage);
 			}
@@ -4057,8 +4060,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 5: DESCRIPTION : Valdiate DNS packets being routed to akamai server");
-			LOGGER.info(
-					"STEP 5: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <IP>|grep -I <IP>");
+			LOGGER.info("STEP 5: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <IP>|grep -I <IP>");
 			LOGGER.info("STEP 5: EXPECTED : DNS packets must be routed to akamai server");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "DNS packets are not routed to akamai server";
@@ -4315,8 +4317,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 13: DESCRIPTION : Valdiate DNS packets are not being routed to akamai server");
-			LOGGER.info(
-					"STEP 13: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <IP>|grep -I <IP>");
+			LOGGER.info("STEP 13: ACTION : cat /tmp/akakami.pcap|grep -I eenadu.net|grep -I <IP>|grep -I <IP>");
 			LOGGER.info("STEP 13: EXPECTED : DNS packets must not be routed to akamai server");
 			LOGGER.info("**********************************************************************************");
 			errorMessage = "DNS packets are routed to akamai server";
