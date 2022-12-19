@@ -3756,7 +3756,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			if (DeviceModeHandler.isRPIDevice(device)) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP " + stepNumber
 						+ ": DESCRIPTION : Verify dev interface scope link in ip route response at ARM/ATOM console");
