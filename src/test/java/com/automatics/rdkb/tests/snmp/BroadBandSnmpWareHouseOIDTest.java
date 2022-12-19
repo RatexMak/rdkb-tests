@@ -748,6 +748,7 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
 	LOGGER.info("#######################################################################################");
 	try {
 	    LOGGER.info("################################# STARTING PRE-CONFIGURATIONS #############################");
+	    
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "PRE-CONDITION 1: DESCRIPTION: Verify getting current Enable/Disable status for all SSIDs and SSID, Password.");

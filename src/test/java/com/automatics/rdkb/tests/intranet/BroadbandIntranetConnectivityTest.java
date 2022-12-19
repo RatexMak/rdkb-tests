@@ -398,7 +398,8 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 10: EXPECTED: Ping Connection should be successful from 2.4GHz Wi-Fi client to 5GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
-					ipv4AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFrom5GHzClient,
+					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from 2.4GHz Wi-Fi client to 5GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info(
@@ -456,7 +457,8 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 12: EXPECTED: Ping Connection should be successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient5GHzDut, tapEnv,
-					ipv4AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFrom2GHzClient,
+					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info(
@@ -676,23 +678,30 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s4";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 4: Verify the IPv6 Address is retrieved  from the client connected to 2.4GHz Private Wi-Fi Network");
-			LOGGER.info(
-					"STEP 4: ACTION : Get the device IPv6 address using below commandLinux : ifconfig wlan0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Wireless LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\"");
-			LOGGER.info("STEP 4: EXPECTED: Local IPv6 Address assigned to the client should be retrieved successfully");
-			String ipv6AddressRetrievedFrom2GHzClient = BroadBandConnectedClientUtils
-					.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClient2GHzDut, tapEnv);
-			status = CommonMethods.isIpv6Address(ipv6AddressRetrievedFrom2GHzClient);
-			errorMessage = "Client connected to 2.4 GHz private Wi-Fi haven't received valid IP Address from Gateway";
-			if (status) {
-				LOGGER.info("S4 ACTUAL: Local IPv6 Address assigned to the client is retrieved successfully");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 4: Verify the IPv6 Address is retrieved  from the client connected to 2.4GHz Private Wi-Fi Network");
+				LOGGER.info(
+						"STEP 4: ACTION : Get the device IPv6 address using below commandLinux : ifconfig wlan0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Wireless LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\"");
+				LOGGER.info(
+						"STEP 4: EXPECTED: Local IPv6 Address assigned to the client should be retrieved successfully");
+				String ipv6AddressRetrievedFrom2GHzClient = BroadBandConnectedClientUtils
+						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClient2GHzDut, tapEnv);
+				status = CommonMethods.isIpv6Address(ipv6AddressRetrievedFrom2GHzClient);
+				errorMessage = "Client connected to 2.4 GHz private Wi-Fi haven't received valid IP Address from Gateway";
+				if (status) {
+					LOGGER.info("S4 ACTUAL: Local IPv6 Address assigned to the client is retrieved successfully");
+				} else {
+					LOGGER.error("S4 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 			} else {
-				LOGGER.error("S4 ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 4 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
 			/**
 			 * Step 5: Verify the internet is accessible in the client connected to 2.4 GHz
@@ -761,24 +770,30 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s7";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 7: DESCRIPTION : Verify the IPv6 Address is retrieved  from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 7: ACTION : Get the device IPv6 address using below commandLinux : ifconfig eth0 |grep -i \"inet addr6:\"Windows: ipconfig |grep -A 10 \"Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\"");
-			LOGGER.info(
-					"STEP 7: EXPECTED : Local IPv6 Address assigned to the client should be retrieved successfully");
-			String ipv6AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
-					.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClientEthernetDut, tapEnv);
-			status = CommonMethods.isIpv6Address(ipv6AddressRetrievedFromEthernetClient);
-			errorMessage = "Client connected to ethernet haven't received valid IPv6 Address from Gateway";
-			if (status) {
-				LOGGER.info("S7 ACTUAL: Local IPv6 Address assigned to the client is retrieved successfully");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 7: DESCRIPTION : Verify the IPv6 Address is retrieved  from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 7: ACTION : Get the device IPv6 address using below commandLinux : ifconfig eth0 |grep -i \"inet addr6:\"Windows: ipconfig |grep -A 10 \"Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv6 Address\"");
+				LOGGER.info(
+						"STEP 7: EXPECTED : Local IPv6 Address assigned to the client should be retrieved successfully");
+				String ipv6AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
+						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClientEthernetDut, tapEnv);
+				status = CommonMethods.isIpv6Address(ipv6AddressRetrievedFromEthernetClient);
+				errorMessage = "Client connected to ethernet haven't received valid IPv6 Address from Gateway";
+				if (status) {
+					LOGGER.info("S7 ACTUAL: Local IPv6 Address assigned to the client is retrieved successfully");
+				} else {
+					LOGGER.error("S7 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 			} else {
-				LOGGER.error("S7 ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 7 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
 			/**
 			 * Step 8: Verify the internet is accessible in the client connected to Ethernet
@@ -818,7 +833,8 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 9: EXPECTED : Ping Connection should be successful from 2.4GHz Wi-Fi client to Ethernet client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
-					ipv4AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFromEthernetClient,
+					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from 2.4GHz Wi-Fi client to Ethernet client";
 			if (status) {
 				LOGGER.info(
@@ -836,24 +852,33 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s10";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 10: DESCRIPTION : Verify the Ping Connection for IPv6 Address is successful from 2.4GHz Wi-Fi client to Ethernet Client");
-			LOGGER.info(
-					"STEP 10: ACTION : Execute the command from the client connected to 2.4GHz : For Windows: ping –n 300 <IPv6 Address of Ethernet client>For Linux : ping –c 300 <IPv6 Address of Ethernet client>");
-			LOGGER.info(
-					"STEP 10: EXPECTED : Ping Connection should be successful from 2.4GHz Wi-Fi client to Ethernet client");
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
-					ipv6AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
-			errorMessage = "Ping Connection for IPv6 Address is not successful from 2.4GHz Wi-Fi client to Ethernet client";
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S10 ACTUAL: Ping Connection for IPv6 Address is successful from 2.4GHz Wi-Fi client to Ethernet client");
+						"STEP 10: DESCRIPTION : Verify the Ping Connection for IPv6 Address is successful from 2.4GHz Wi-Fi client to Ethernet Client");
+				LOGGER.info(
+						"STEP 10: ACTION : Execute the command from the client connected to 2.4GHz : For Windows: ping –n 300 <IPv6 Address of Ethernet client>For Linux : ping –c 300 <IPv6 Address of Ethernet client>");
+				LOGGER.info(
+						"STEP 10: EXPECTED : Ping Connection should be successful from 2.4GHz Wi-Fi client to Ethernet client");
+				String ipv6AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
+						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClientEthernetDut, tapEnv);
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
+						ipv6AddressRetrievedFromEthernetClient,
+						/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+				errorMessage = "Ping Connection for IPv6 Address is not successful from 2.4GHz Wi-Fi client to Ethernet client";
+				if (status) {
+					LOGGER.info(
+							"S10 ACTUAL: Ping Connection for IPv6 Address is successful from 2.4GHz Wi-Fi client to Ethernet client");
+				} else {
+					LOGGER.error("S10 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S10 ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 10 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * Step 11: Verify the Ping Connection for IPv4 Address is successful from
@@ -870,7 +895,8 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 11: EXPECTED : Ping Connection should be successful from Etherent client to 2.4GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
-					ipv4AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFrom2GHzClient,
+					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from Ethernet client to 2.4GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info(
@@ -888,26 +914,32 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s12";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 12: DESCRIPTION : Verify the Ping Connection  for IPv6 Address is successful from Ethernet client to 2.4GHz Wi-Fi client");
-			LOGGER.info(
-					"STEP 12: ACTION : Execute the command from the client connected to Ethernet : For Windows: ping –n 300 <IPv6 Address of 2.4 GHz client>For Linux : ping –c 300 <IPv6 Address of 2.4GHz client>");
-			LOGGER.info(
-					"STEP 12: EXPECTED : Ping Connection should be successful from Ethernet client to 2.4GHz Wi-Fi client");
-			ipv6AddressRetrievedFrom2GHzClient = BroadBandConnectedClientUtils
-					.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClient2GHzDut, tapEnv);
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
-					ipv6AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
-			errorMessage = "Ping Connection for IPv6 Address is not successful from Ethernet client to 2.4GHz Wi-Fi client";
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S12 ACTUAL: Ping Connection for IPv6 Address is successful from Ethernet client to 2.4GHz Wi-Fi client");
+						"STEP 12: DESCRIPTION : Verify the Ping Connection  for IPv6 Address is successful from Ethernet client to 2.4GHz Wi-Fi client");
+				LOGGER.info(
+						"STEP 12: ACTION : Execute the command from the client connected to Ethernet : For Windows: ping –n 300 <IPv6 Address of 2.4 GHz client>For Linux : ping –c 300 <IPv6 Address of 2.4GHz client>");
+				LOGGER.info(
+						"STEP 12: EXPECTED : Ping Connection should be successful from Ethernet client to 2.4GHz Wi-Fi client");
+				String ipv6AddressRetrievedFrom2GHzClient = BroadBandConnectedClientUtils
+						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClient2GHzDut, tapEnv);
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
+						ipv6AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
+				errorMessage = "Ping Connection for IPv6 Address is not successful from Ethernet client to 2.4GHz Wi-Fi client";
+				if (status) {
+					LOGGER.info(
+							"S12 ACTUAL: Ping Connection for IPv6 Address is successful from Ethernet client to 2.4GHz Wi-Fi client");
+				} else {
+					LOGGER.error("S12 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S12 ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 12 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = testException.getMessage();
@@ -1237,7 +1269,8 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 9: EXPECTED : Ping Connection should be successful from 5 GHz Wi-Fi client to Ethernet client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient5GHzDut, tapEnv,
-					ipv4AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFromEthernetClient,
+					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from 5 GHz Wi-Fi client to Ethernet client";
 			if (status) {
 				LOGGER.info(
@@ -1297,7 +1330,8 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 11: EXPECTED : Ping Connection should be successful from Etherent client to 5 GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
-					ipv4AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFrom5GHzClient,
+					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from Ethernet client to 5 GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info(
@@ -1315,26 +1349,32 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s12";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 12: DESCRIPTION : Verify the Ping Connection  for IPv6 Address is successful from Ethernet client to 5 GHz Wi-Fi client");
-			LOGGER.info(
-					"STEP 12: ACTION : Execute the command from the client connected to Ethernet : For Windows: ping –n 300 <IPv6 Address of 5 GHz client>For Linux : ping –c 300 <IPv6 Address of 2.4GHz client>");
-			LOGGER.info(
-					"STEP 12: EXPECTED : Ping Connection should be successful from Ethernet client to 5 GHz Wi-Fi client");
-			String ipv6AddressRetrievedFrom5GHzClient = BroadBandConnectedClientUtils
-					.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClient5GHzDut, tapEnv);
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
-					ipv6AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
-			errorMessage = "Ping Connection for IPv6 Address is not successful from Ethernet client to 5 GHz Wi-Fi client";
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S12 ACTUAL: Ping Connection for IPv6 Address is successful from Ethernet client to 5 GHz Wi-Fi client");
+						"STEP 12: DESCRIPTION : Verify the Ping Connection  for IPv6 Address is successful from Ethernet client to 5 GHz Wi-Fi client");
+				LOGGER.info(
+						"STEP 12: ACTION : Execute the command from the client connected to Ethernet : For Windows: ping –n 300 <IPv6 Address of 5 GHz client>For Linux : ping –c 300 <IPv6 Address of 2.4GHz client>");
+				LOGGER.info(
+						"STEP 12: EXPECTED : Ping Connection should be successful from Ethernet client to 5 GHz Wi-Fi client");
+				String ipv6AddressRetrievedFrom5GHzClient = BroadBandConnectedClientUtils
+						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClient5GHzDut, tapEnv);
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
+						ipv6AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
+				errorMessage = "Ping Connection for IPv6 Address is not successful from Ethernet client to 5 GHz Wi-Fi client";
+				if (status) {
+					LOGGER.info(
+							"S12 ACTUAL: Ping Connection for IPv6 Address is successful from Ethernet client to 5 GHz Wi-Fi client");
+				} else {
+					LOGGER.error("S12 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S12 ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 12 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = testException.getMessage();
