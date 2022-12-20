@@ -270,7 +270,7 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			} else {
 				LOGGER.info("IPv6 is not enabled for RPI device : Skipping teststep ...");
 				tapEnv.updateExecutionForAllStatus(settop, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 
 			stepNum = "S7";
