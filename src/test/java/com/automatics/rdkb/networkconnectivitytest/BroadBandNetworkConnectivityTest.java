@@ -4177,6 +4177,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 	    testStepNumber = "s7";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 7: DESCRIPTION: Verify adding the IPV6 ping server table 1 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.1).");
@@ -4194,6 +4195,12 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    + (status ? "Successfully Added the IPV6 ping server table1 using SNMP" : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 7 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+
 	    /**
 	     * STEP 8:Verify setting the IPV6 ping server1 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.1) as
 	     * '2001::2002'.
@@ -4201,6 +4208,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	     */
 	    testStepNumber = "s8";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 8: DESCRIPTION: Verify setting  the IPV6 ping server 1 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.1) as '2001::2002'.");
@@ -4219,6 +4227,12 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			    : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
+	} else {
+		LOGGER.info("IPv6 is not available/disabled : Skipping Step 8 ...");
+		tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+				errorMessage, false);
+	}
+	
 	    /**
 	     * STEP 9:Verify adding the IPV6 ping server table 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.2).
 	     * 
@@ -4226,6 +4240,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 	    testStepNumber = "s9";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 9: DESCRIPTION: Verify adding the IPV6 ping server table 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.2).");
@@ -4243,6 +4258,12 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    + (status ? "Successfully Added the IPV6 ping server table2 using SNMP" : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 9 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+
 	    /**
 	     * STEP 10:Verify setting the IPV6 ping server2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.2) as
 	     * '2002::2003'
@@ -4250,6 +4271,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	     */
 	    testStepNumber = "s10";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 10: DESCRIPTION: Verify setting  the IPV6 ping server 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.2) as '2002::2003'");
@@ -4268,6 +4290,12 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    + (status ? "Successfully set the IPV6 ping server table2 using SNMP as '2002::2003' "
 			    : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 10 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+
 
 	    /**
 	     * STEP 11:Verify adding the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.3).
@@ -4276,6 +4304,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 	    testStepNumber = "s11";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 11: DESCRIPTION: Verify adding the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.3).");
@@ -4292,6 +4321,12 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP 11: ACTUAL : "
 		    + (status ? "Successfully Added the IPV6 ping server table3 using SNMP" : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 11 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+
 
 	    /**
 	     * STEP 12:Verify setting the IPV4 ping server3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.1.1.2.1) to
@@ -4300,6 +4335,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	     */
 	    testStepNumber = "s12";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 12: DESCRIPTION: Verify setting  the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.1.1.2.1)");
@@ -4315,6 +4351,11 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP 12: ACTUAL : "
 		    + (status ? "Successfully set the IPV6 ping server in table3 using SNMP" : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 12 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	    /**
 	     * STEP 13 :verify whether "PING_FAILED:1.2.3.4" message is present in self heallog.txt.0 after the setting
@@ -4388,6 +4429,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	     */
 	    testStepNumber = "s15";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 15: DESCRIPTION:  verify whether 'PING_FAILED:2001::2002' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
@@ -4414,6 +4456,11 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    + (status ? " 'PING_FAILED:2001:2002' failure message is logged in the next self heal window"
 			    : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 15 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	    /**
 	     * STEP 16 :verify whether "PING_FAILED:2002::2003" message is present in self heallog.txt.0 after the
@@ -4421,6 +4468,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 	     */
 	    testStepNumber = "s16";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("#####################################################################################");
 	    LOGGER.info(
 		    "STEP 16: DESCRIPTION:  verify whether 'PING_FAILED:2002::2003' message  is present in self heallog.txt.0  after the setting the InValid  servers.");
@@ -4447,6 +4495,11 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 		    + (status ? " 'PING_FAILED:2002:2003' failure message is logged in the next self heal window"
 			    : errorMessage));
 	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 16 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	    /**
 	     * STEP 17 :verify whether "Connectivity successfull" message is present in rdklogs/logs/selfheallog.txt.0
