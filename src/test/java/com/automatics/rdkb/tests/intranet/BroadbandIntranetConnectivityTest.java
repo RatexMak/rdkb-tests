@@ -1790,7 +1790,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 					"STEP 11: EXPECTED : Iperf traffic should be successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient5GHzDut, tapEnv,
 					ipv4AddressRetrievedFrom2GHzClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_9);
+					BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Iperf traffic is not successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info("S11 ACTUAL: Iperf traffic is successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client");
@@ -1856,7 +1856,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 					"STEP 13: EXPECTED : Iperf traffic should be successful from 2.4GHz Wi-Fi client to 5GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient2GHzDut, tapEnv,
 					ipv4AddressRetrievedFrom5GHzClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+					BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Iperf traffic is not successful from 2.4 GHz Wi-Fi client to 5 GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info("S13 ACTUAL: Iperf traffic is successful from 2.4 GHz Wi-Fi client to 5 GHz Wi-Fi client");

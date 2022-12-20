@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
@@ -253,24 +254,24 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			String actualErouterIpv6Address = telemetryData
 					.getString(BroadBandTelemetryConstants.JSON_MARKER_IPV6_ADDRESS);
 
-			if (CommonMethods.isNull(actualErouterIpv6Address) && DeviceModeHandler.isRPIDevice(settop)) {
-				LOGGER.info("IPv6 is not enabled for RPI device");
-				status = true;
-
-			} else {
+			if (!DeviceModeHandler.isRPIDevice(settop)) {
 				LOGGER.info(actualErouterIpv6Address);
 				String expectedErouterIpv6Address = CommonMethods.patternFinder(ifConfigErouterResponse,
 						BroadBandTestConstants.INET_V6_ADDRESS_PATTERN);
 				status = CommonMethods.isNotNull(expectedErouterIpv6Address)
 						&& expectedErouterIpv6Address.equalsIgnoreCase(actualErouterIpv6Address);
-			}
-			if (status) {
-				LOGGER.info("STEP 6: ACTUAL :  erouterIpv6 is populated in the telemetry logs");
+				if (status) {
+					LOGGER.info("STEP 6: ACTUAL :  erouterIpv6 is populated in the telemetry logs");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not enabled for RPI device : Skipping teststep ...");
+				tapEnv.updateExecutionForAllStatus(settop, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, true);
 
 			stepNum = "S7";
 			errorMessage = "Device populating wrong or no PartnerId details";
