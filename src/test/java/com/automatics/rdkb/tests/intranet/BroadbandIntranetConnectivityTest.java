@@ -768,7 +768,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 			/**
@@ -855,7 +855,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 
@@ -1214,7 +1214,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 
 			/**
@@ -1301,7 +1301,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 
@@ -2208,7 +2208,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 
@@ -2396,7 +2396,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 
@@ -2704,7 +2704,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 
@@ -2893,7 +2893,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 
 			}
 
