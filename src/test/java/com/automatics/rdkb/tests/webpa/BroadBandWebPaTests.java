@@ -2253,7 +2253,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 2: EXPECTED : Rebooted device using WebPA successfully");
 			LOGGER.info("**********************************************************************************");
 
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+//			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM, BroadBandTestConstants.TEN_SECOND_IN_MILLIS);
 			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
 			tapEnv.executeCommandUsingSsh(device,
 					(CommonMethods.isAtomSyncAvailable(device, tapEnv)
