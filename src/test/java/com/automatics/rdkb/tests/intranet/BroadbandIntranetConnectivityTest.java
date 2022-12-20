@@ -745,25 +745,32 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			connectedClientEthernetDut = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
 			status = null != connectedClientEthernetDut;
 			errorMessage = "Unable to retrieve the client connected to Ethernet";
+
 			String ipv4AddressRetrievedFromEthernetClient = null;
 			if (status) {
 				ipv4AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
 						.getIpv4AddressFromConnClient(tapEnv, device, connectedClientEthernetDut);
-//				status = CommonMethods.isIpv4Address(ipv4AddressRetrievedFromEthernetClient)
-//						&& BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
-//								device, connectedClientEthernetDut);
-				status = CommonMethods.isIpv4Address(ipv4AddressRetrievedFromEthernetClient);
+			}
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = CommonMethods.isIpv4Address(ipv4AddressRetrievedFromEthernetClient)
+						&& BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
+								device, connectedClientEthernetDut);
 				errorMessage = "Client connected to the Ethernet haven't received valid IPv4 Address from Gateway";
-			}
-			if (status) {
-				LOGGER.info(
-						"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
-			} else {
-				LOGGER.error("S6 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+				if (status) {
+					LOGGER.info(
+							"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				} else {
+					LOGGER.error("S6 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
+			} else {
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
+			}
 			/**
 			 * Step 7: Verify the IPv6 Address is retrieved from the client connected to
 			 * Ethernet
@@ -826,25 +833,31 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s9";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 9: DESCRIPTION : Verify the Ping Connection for IPv4 Address is successful from 2.4GHz Wi-Fi client to Ethernet Client");
-			LOGGER.info(
-					"STEP 9: ACTION : Execute the command from the client connected to 2.4GHz : For Windows: ping –n 300 <IPv4 Address of Ethernet client>For Linux : ping –c 300 <IPv4 Address of 5Ethernet client>");
-			LOGGER.info(
-					"STEP 9: EXPECTED : Ping Connection should be successful from 2.4GHz Wi-Fi client to Ethernet client");
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
-					ipv4AddressRetrievedFromEthernetClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
-			errorMessage = "Ping Connection for IPv4 Address is not successful from 2.4GHz Wi-Fi client to Ethernet client";
-			if (status) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S9 ACTUAL: Ping Connection for IPv4 Address is successful from 2.4GHz Wi-Fi client to Ethernet client");
+						"STEP 9: DESCRIPTION : Verify the Ping Connection for IPv4 Address is successful from 2.4GHz Wi-Fi client to Ethernet Client");
+				LOGGER.info(
+						"STEP 9: ACTION : Execute the command from the client connected to 2.4GHz : For Windows: ping –n 300 <IPv4 Address of Ethernet client>For Linux : ping –c 300 <IPv4 Address of 5Ethernet client>");
+				LOGGER.info(
+						"STEP 9: EXPECTED : Ping Connection should be successful from 2.4GHz Wi-Fi client to Ethernet client");
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
+						ipv4AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
+				errorMessage = "Ping Connection for IPv4 Address is not successful from 2.4GHz Wi-Fi client to Ethernet client";
+				if (status) {
+					LOGGER.info(
+							"S9 ACTUAL: Ping Connection for IPv4 Address is successful from 2.4GHz Wi-Fi client to Ethernet client");
+				} else {
+					LOGGER.error("S9 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S9 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * Step 10: Verify the Ping Connection for IPv6 Address is successful from
@@ -864,8 +877,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 				String ipv6AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
 						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(connectedClientEthernetDut, tapEnv);
 				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient2GHzDut, tapEnv,
-						ipv6AddressRetrievedFromEthernetClient,
-						/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+						ipv6AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
 				errorMessage = "Ping Connection for IPv6 Address is not successful from 2.4GHz Wi-Fi client to Ethernet client";
 				if (status) {
 					LOGGER.info(
@@ -896,8 +908,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 11: EXPECTED : Ping Connection should be successful from Etherent client to 2.4GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
-					ipv4AddressRetrievedFrom2GHzClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+					ipv4AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from Ethernet client to 2.4GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info(
@@ -1186,19 +1197,25 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			if (status) {
 				ipv4AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
 						.getIpv4AddressFromConnClient(tapEnv, device, connectedClientEthernetDut);
+			}
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				status = CommonMethods.isIpv4Address(ipv4AddressRetrievedFromEthernetClient)
 						&& BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
 								device, connectedClientEthernetDut);
 				errorMessage = "Client connected to the Ethernet haven't received valid IPv4 Address from Gateway";
-			}
-			if (status) {
-				LOGGER.info(
-						"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				if (status) {
+					LOGGER.info(
+							"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				} else {
+					LOGGER.error("S6 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 			} else {
-				LOGGER.error("S6 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
 			/**
 			 * Step 7: Verify the IPv6 Address is retrieved from the client connected to
@@ -1262,25 +1279,31 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s9";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 9: DESCRIPTION : Verify the Ping Connection for IPv4 Address is successful from 5 GHz Wi-Fi client to Ethernet Client");
-			LOGGER.info(
-					"STEP 9: ACTION : Execute the command from the client connected to 5 GHz : For Windows: ping –n 300 <IPv4 Address of Ethernet client>For Linux : ping –c 300 <IPv4 Address of 5Ethernet client>");
-			LOGGER.info(
-					"STEP 9: EXPECTED : Ping Connection should be successful from 5 GHz Wi-Fi client to Ethernet client");
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient5GHzDut, tapEnv,
-					ipv4AddressRetrievedFromEthernetClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
-			errorMessage = "Ping Connection for IPv4 Address is not successful from 5 GHz Wi-Fi client to Ethernet client";
-			if (status) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S9 ACTUAL: Ping Connection for IPv4 Address is successful from 5 GHz Wi-Fi client to Ethernet client");
+						"STEP 9: DESCRIPTION : Verify the Ping Connection for IPv4 Address is successful from 5 GHz Wi-Fi client to Ethernet Client");
+				LOGGER.info(
+						"STEP 9: ACTION : Execute the command from the client connected to 5 GHz : For Windows: ping –n 300 <IPv4 Address of Ethernet client>For Linux : ping –c 300 <IPv4 Address of 5Ethernet client>");
+				LOGGER.info(
+						"STEP 9: EXPECTED : Ping Connection should be successful from 5 GHz Wi-Fi client to Ethernet client");
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClient5GHzDut, tapEnv,
+						ipv4AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
+				errorMessage = "Ping Connection for IPv4 Address is not successful from 5 GHz Wi-Fi client to Ethernet client";
+				if (status) {
+					LOGGER.info(
+							"S9 ACTUAL: Ping Connection for IPv4 Address is successful from 5 GHz Wi-Fi client to Ethernet client");
+				} else {
+					LOGGER.error("S9 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S9 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * Step 10: Verify the Ping Connection for IPv6 Address is successful from 5 GHz
@@ -1331,8 +1354,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 11: EXPECTED : Ping Connection should be successful from Etherent client to 5 GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientEthernetDut, tapEnv,
-					ipv4AddressRetrievedFrom5GHzClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+					ipv4AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Ping Connection for IPv4 Address is not successful from Ethernet client to 5 GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info(
@@ -1790,8 +1812,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 11: EXPECTED : Iperf traffic should be successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient5GHzDut, tapEnv,
-					ipv4AddressRetrievedFrom2GHzClient,
-					BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Iperf traffic is not successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info("S11 ACTUAL: Iperf traffic is successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client");
@@ -1856,8 +1877,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 13: EXPECTED : Iperf traffic should be successful from 2.4GHz Wi-Fi client to 5GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient2GHzDut, tapEnv,
-					ipv4AddressRetrievedFrom5GHzClient,
-					BroadBandTestConstants.THIRTY_SECONDS);
+					ipv4AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Iperf traffic is not successful from 2.4 GHz Wi-Fi client to 5 GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info("S13 ACTUAL: Iperf traffic is successful from 2.4 GHz Wi-Fi client to 5 GHz Wi-Fi client");
@@ -2171,19 +2191,26 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			if (status) {
 				ipv4AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
 						.getIpv4AddressFromConnClient(tapEnv, device, connectedClientEthernetDut);
+			}
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				status = CommonMethods.isIpv4Address(ipv4AddressRetrievedFromEthernetClient)
 						&& BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
 								device, connectedClientEthernetDut);
 				errorMessage = "Client connected to the Ethernet haven't received valid IPv4 Address from Gateway";
-			}
-			if (status) {
-				LOGGER.info(
-						"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				if (status) {
+					LOGGER.info(
+							"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				} else {
+					LOGGER.error("S6 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 			} else {
-				LOGGER.error("S6 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
 			/**
 			 * Step 7: Verify the IPv6 Address is retrieved from the client connected to
@@ -2295,8 +2322,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 10: EXPECTED : Iperf traffic should be successful from Ethernet client to 2.4GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClientEthernetDut, tapEnv,
-					ipv4AddressRetrievedFrom2GHzClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+					ipv4AddressRetrievedFrom2GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Iperf traffic is not successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info("S10 ACTUAL: Iperf traffic is successful from 5GHz Wi-Fi client to 2.4GHz Wi-Fi client");
@@ -2349,24 +2375,30 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s12";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 12: DESCRIPTION : Verify the Iperf traffic is successful from 2.4GHz Wi-Fi client to Ethernet client");
-			LOGGER.info(
-					"STEP 12: ACTION : Execute the command from the client connected to 2.4GHz : iperf3 -c <IP Address of Ethernet client> -t300");
-			LOGGER.info(
-					"STEP 12: EXPECTED : Iperf traffic should be successful from 2.4GHz Wi-Fi client to Ethernet client");
-			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient2GHzDut, tapEnv,
-					ipv4AddressRetrievedFromEthernetClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
-			errorMessage = "Iperf traffic is not successful from 2.4 GHz Wi-Fi client to Ethernet client";
-			if (status) {
-				LOGGER.info("S12 ACTUAL: Iperf traffic is successful from 2.4 GHz Wi-Fi client to Ethernet client");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 12: DESCRIPTION : Verify the Iperf traffic is successful from 2.4GHz Wi-Fi client to Ethernet client");
+				LOGGER.info(
+						"STEP 12: ACTION : Execute the command from the client connected to 2.4GHz : iperf3 -c <IP Address of Ethernet client> -t300");
+				LOGGER.info(
+						"STEP 12: EXPECTED : Iperf traffic should be successful from 2.4GHz Wi-Fi client to Ethernet client");
+				status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient2GHzDut, tapEnv,
+						ipv4AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
+				errorMessage = "Iperf traffic is not successful from 2.4 GHz Wi-Fi client to Ethernet client";
+				if (status) {
+					LOGGER.info("S12 ACTUAL: Iperf traffic is successful from 2.4 GHz Wi-Fi client to Ethernet client");
+				} else {
+					LOGGER.error("S12 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S12 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = testException.getMessage();
@@ -2655,19 +2687,26 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			if (status) {
 				ipv4AddressRetrievedFromEthernetClient = BroadBandConnectedClientUtils
 						.getIpv4AddressFromConnClient(tapEnv, device, connectedClientEthernetDut);
+			}
+			if (DeviceModeHandler.isRPIDevice(device)) {
 				status = CommonMethods.isIpv4Address(ipv4AddressRetrievedFromEthernetClient)
 						&& BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
 								device, connectedClientEthernetDut);
 				errorMessage = "Client connected to the Ethernet haven't received valid IPv4 Address from Gateway";
-			}
-			if (status) {
-				LOGGER.info(
-						"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				if (status) {
+					LOGGER.info(
+							"S6 ACTUAL: Client connected to the Ethernet is assigned with the IPv4 Address between DHCP Range");
+				} else {
+					LOGGER.error("S6 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 			} else {
-				LOGGER.error("S6 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
 			/**
 			 * Step 7: Verify the IPv6 Address is retrieved from the client connected to
@@ -2780,8 +2819,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 10: EXPECTED : Iperf traffic should be successful from Ethernet client to 5GHz Wi-Fi client");
 			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClientEthernetDut, tapEnv,
-					ipv4AddressRetrievedFrom5GHzClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
+					ipv4AddressRetrievedFrom5GHzClient, BroadBandTestConstants.THIRTY_SECONDS);
 			errorMessage = "Iperf traffic is not successful from 5GHz Wi-Fi client to 5GHz Wi-Fi client";
 			if (status) {
 				LOGGER.info("S10 ACTUAL: Iperf traffic is successful from 5GHz Wi-Fi client to 5GHz Wi-Fi client");
@@ -2834,24 +2872,30 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s12";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 12: DESCRIPTION : Verify the Iperf traffic is successful from 5GHz Wi-Fi client to Ethernet client");
-			LOGGER.info(
-					"STEP 12: ACTION : Execute the command from the client connected to 5GHz : iperf3 -c <IP Address of Ethernet client> -t300");
-			LOGGER.info(
-					"STEP 12: EXPECTED : Iperf traffic should be successful from 5GHz Wi-Fi client to Ethernet client");
-			status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient5GHzDut, tapEnv,
-					ipv4AddressRetrievedFromEthernetClient,
-					/* BroadBandTestConstants.THIRTY_SECONDS */BroadBandTestConstants.STRING_VALUE_FIVE);
-			errorMessage = "Iperf traffic is not successful from 5 GHz Wi-Fi client to Ethernet client";
-			if (status) {
-				LOGGER.info("S12 ACTUAL: Iperf traffic is successful from 5 GHz Wi-Fi client to Ethernet client");
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 12: DESCRIPTION : Verify the Iperf traffic is successful from 5GHz Wi-Fi client to Ethernet client");
+				LOGGER.info(
+						"STEP 12: ACTION : Execute the command from the client connected to 5GHz : iperf3 -c <IP Address of Ethernet client> -t300");
+				LOGGER.info(
+						"STEP 12: EXPECTED : Iperf traffic should be successful from 5GHz Wi-Fi client to Ethernet client");
+				status = ConnectedNattedClientsUtils.verifyIperfConnection(connectedClient5GHzDut, tapEnv,
+						ipv4AddressRetrievedFromEthernetClient, BroadBandTestConstants.THIRTY_SECONDS);
+				errorMessage = "Iperf traffic is not successful from 5 GHz Wi-Fi client to Ethernet client";
+				if (status) {
+					LOGGER.info("S12 ACTUAL: Iperf traffic is successful from 5 GHz Wi-Fi client to Ethernet client");
+				} else {
+					LOGGER.error("S12 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S12 ACTUAL: " + errorMessage);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, true);
+
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = testException.getMessage();
