@@ -2142,7 +2142,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("IPv6 not available/disabled : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 
 			/**
@@ -2241,7 +2241,7 @@ public class BroadbandIntranetConnectivityTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.info("IPv6 not available/disabled : skipping teststep...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 			/**
 			 * Step 8: Verify the internet is accessible in the client connected to Ethernet
