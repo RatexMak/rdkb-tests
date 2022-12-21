@@ -139,6 +139,8 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase{
 		defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N;
 	    } else if (BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)) {
 		defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N_AC_AX;
+	    }else if (DeviceModeHandler.isRPIDevice(device)) {
+	    	defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_AC;
 	    } else {
 		defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
 	    }
