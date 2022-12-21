@@ -6404,7 +6404,11 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 				operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode();
 
 			} else {
-				operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N_AX.getOperatingmode();
+				if (DeviceModeHandler.isRPIDevice(device)) {
+					operatingStandard = BroadbandPropertyFileHandler.get2GhzOperatingModeForRPi();
+				} else {
+					operatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N_AX.getOperatingmode();
+				}
 			}
 
 			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
