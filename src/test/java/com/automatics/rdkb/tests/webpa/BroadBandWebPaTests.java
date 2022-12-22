@@ -2254,7 +2254,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 //			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM, BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
 			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
 			tapEnv.executeCommandUsingSsh(device,
 					(CommonMethods.isAtomSyncAvailable(device, tapEnv)

@@ -3340,8 +3340,12 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			errorMessage = "Unable to connect to Ethernet client";
 			if (ethernetClient != null) {
 				errorMessage = "Unable to retreive the MAC address of the ethernet client";
-				macAddressRetrievedFromClient = BroadBandConnectedClientUtils
-						.getConnectedClientIpOrMacFromTheDevice(device, ethernetClient, tapEnv, false);
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					macAddressRetrievedFromClient = BroadBandConnectedClientUtils
+							.getConnectedClientIpOrMacFromTheDevice(device, ethernetClient, tapEnv, false);
+				} else {
+					macAddressRetrievedFromClient = ethernetClient.getHostMacAddress();
+				}
 				LOGGER.info("macAddressRetrievedFrom Ethernet Client is " + macAddressRetrievedFromClient);
 				status = CommonMethods.isNotNull(macAddressRetrievedFromClient);
 			}

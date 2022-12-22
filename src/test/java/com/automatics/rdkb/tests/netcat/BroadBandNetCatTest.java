@@ -42,483 +42,494 @@ import com.automatics.test.AutomaticsTestBase;
 
 public class BroadBandNetCatTest extends AutomaticsTestBase {
 
-    /**
-     * This test is to verify that secure "nc" utility is implemented on Atom Console platforms to run only in client
-     * mode.
-     * <ol>
-     * <li>Verify that "nc" utility is implemented on the device.</li>
-     * <li>Verify that Netcat (\"nc\") utility does not support listening capability.</li>
-     * <li>Verify that nc utility does not support execute capability.</li>
-     * <li>Verify that nc does not support connection to any Private IP other than the range 172.31.255.x</li>
-     * <li>Verify that nc cannot connect directly to any host outside of device.</li>
-     * <li>Verify nc connection to the local host.</li>
-     * 
-     * @author Prince ArunRaj
-     * @refactor Said Hisham
-     *           </ol>
-     */
-    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
-	    BroadBandTestGroup.SECURITY })
-    @TestDetails(testUID = "TC-RDKB-NetCat-1003")
-    public void netCatAtomTest(Dut device) {
+	/**
+	 * This test is to verify that secure "nc" utility is implemented on Atom
+	 * Console platforms to run only in client mode.
+	 * <ol>
+	 * <li>Verify that "nc" utility is implemented on the device.</li>
+	 * <li>Verify that Netcat (\"nc\") utility does not support listening
+	 * capability.</li>
+	 * <li>Verify that nc utility does not support execute capability.</li>
+	 * <li>Verify that nc does not support connection to any Private IP other than
+	 * the range 172.31.255.x</li>
+	 * <li>Verify that nc cannot connect directly to any host outside of
+	 * device.</li>
+	 * <li>Verify nc connection to the local host.</li>
+	 * 
+	 * @author Prince ArunRaj
+	 * @refactor Said Hisham
+	 *           </ol>
+	 */
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = {
+			BroadBandTestGroup.SECURITY })
+	@TestDetails(testUID = "TC-RDKB-NetCat-1003")
+	public void netCatAtomTest(Dut device) {
 
-	// Variable Declaration begins
-	String testCaseId = "TC-RDKB-NetCat-103";
-	String stepNum = "s1";
-	String errorMessage = null;
-	boolean status = false;
-	String response = null;
-	// Variable Declaration Ends
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-NetCat-103";
+		String stepNum = "s1";
+		String errorMessage = null;
+		boolean status = false;
+		String response = null;
+		// Variable Declaration Ends
 
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-RDKB-NetCat-1003");
-	LOGGER.info(
-		"TEST DESCRIPTION: This test is to verify that secure \"nc\" utility is implemented on Atom Console platforms to run only in client mode.");
-
-	LOGGER.info("TEST STEPS : ");
-	LOGGER.info("1. Verify that \"nc\" utility is implemented on the device.");
-	LOGGER.info("2. Verify that Netcat (\"nc\") utility does not support listening capability.");
-	LOGGER.info("3. Verify that nc utility does not support execute capability.");
-	LOGGER.info(
-		"4. Verify that nc does not support connection to any Private IP other than the range 172.31.255.x");
-	LOGGER.info("5. Verify that nc cannot connect directly to any host outside of device.");
-	LOGGER.info("6. Verify nc connection to the local host.");
-
-	LOGGER.info("#######################################################################################");
-
-	try {
-
-	    // Pre conditionS
-
-	    LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
-
-	    BroadBandPreConditionUtils.executePreconditionForBandSteering(tapEnv, device);
-
-	    // Enable BandSteering
-
-	    LOGGER.info("#######################################################################################");
-	    LOGGER.info("PRE-CONDITION 2 : DESCRIPTION  : ENABLE BANDSTEERING");
-	    LOGGER.info("PRE-CONDITION 2 : ACTION: EXECUTE WEBPA COMMAND");
-	    LOGGER.info("PRE-CONDITION 2 : EXPECTED: BANDSTEERING SHOULD BE ENABLED");
-	    LOGGER.info("#######################################################################################");
-	    errorMessage = "UNABLE TO ENABLE BANDSTEERING !!!";
-	    try {
-		status = BroadBandBandSteeringUtils.enableDisableBandSteeringViaWebPa(device, tapEnv, true);
-	    } catch (Exception e) {
-		errorMessage = "EXCEPTION WHILE ENABLING BANDSTEERING." + e.getMessage();
-	    }
-	    if (status) {
-		LOGGER.info("PRE-CONDITION 2 : ACTUAL : SUCCESSFULLY ENABLED BANDSTEERING");
-	    } else {
-		LOGGER.error("PRE-CONDITION 2 : ACTUAL :" + errorMessage);
-		throw new TestException(
-			BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 2 : FAILED : " + errorMessage);
-	    }
-	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
-
-	    stepNum = "s1";
-	    errorMessage = "Netcat is not implemented on device";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 1: DESCRIPTION : Verify that \"nc\" utility is implemented on the device.");
-	    LOGGER.info("STEP 1: ACTION : Execute command in atomconsole:nc -v");
-	    LOGGER.info("STEP 1: EXPECTED : Netcat busybox v1.22.1 should be implemented on the device.");
-	    LOGGER.info("**********************************************************************************");
-
-	    response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NETCAT_VERSION);
-	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-		    BroadBandTestConstants.NETCAT_VERSION);
-
-	    if (status) {
-		LOGGER.info("STEP 1: ACTUAL : Netcat busybox is installed in the device");
-	    } else {
-		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-	    }
-
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-	    LOGGER.info("**********************************************************************************");
-
-	    stepNum = "s2";
-	    errorMessage = "Invalid option -- \"I\" error is not found";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP 2: DESCRIPTION : Verify that Netcat (\"nc\") utility does not support listening capability.");
-	    LOGGER.info("STEP 2: ACTION : Execute command in atomconsole:nc -l 2222nc -nvlp 443");
-	    LOGGER.info("STEP 2: EXPECTED : Both the commands should throw error \" invalid option -- \"l\"");
-	    LOGGER.info("**********************************************************************************");
-
-	    response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LISTENING);
-	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-		    BroadBandTestConstants.NC_INVALID_OPTION_L);
-
-	    if (status) {
-		LOGGER.info("STEP 2: ACTUAL : commands throws error \" invalid option -- \"l\"");
-	    } else {
-		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-	    }
-
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    LOGGER.info("**********************************************************************************");
-
-	    stepNum = "s3";
-	    errorMessage = "error \"invalid option -- \"e\" \" is not found";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 3: DESCRIPTION : Verify that nc utility does not support execute capability.");
-	    LOGGER.info("STEP 3: ACTION : Execute command in atomconsole:nc -e /bin/sh");
-	    LOGGER.info("STEP 3: EXPECTED : The command should throw error \"invalid option -- \"e\" \"");
-	    LOGGER.info("**********************************************************************************");
-
-	    response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_EXECUTE);
-	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-		    BroadBandTestConstants.NC_INVALID_OPTION_E);
-
-	    if (status) {
-		LOGGER.info("STEP 3: ACTUAL : The command throws error \"invalid option -- \"e\" ");
-	    } else {
-		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-	    }
-
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    LOGGER.info("**********************************************************************************");
-
-	    stepNum = "s4";
-	    errorMessage = " error \"Bad Host\" is not found";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP 4: DESCRIPTION : Verify that nc does not support connection to any Private IP other than the range 172.31.255.x");
-	    LOGGER.info(
-		    "STEP 4: ACTION : Execute command in atomconsole with any Private IP other than the range 172.31.255.x");
-	    LOGGER.info("STEP 4: EXPECTED : All the commands should throw error \"Bad Host\"");
-	    LOGGER.info("**********************************************************************************");
-
-	    response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_BAD_HOST);
-	    tapEnv.waitTill(30000);
-	    status = CommonMethods.isNotNull(response)
-		    && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-			    BroadBandTestConstants.NC_CONNECTION_ERROR_LAN_IP)
-		    && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-			    BroadBandTestConstants.NC_CONNECTION_ERROR_IP_192)
-		    && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-			    BroadBandTestConstants.NC_CONNECTION_ERROR_IP_169)
-		    && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-			    BroadBandTestConstants.NC_CONNECTION_ERROR_IP_147);
-
-	    if (status) {
-		LOGGER.info("STEP 4: ACTUAL : All the commands throws error \"Bad Host\"");
-	    } else {
-		LOGGER.error("STEP 4: ACTUAL : " + response + "\n error message : " + errorMessage);
-	    }
-
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    LOGGER.info("**********************************************************************************");
-
-	    stepNum = "s5";
-	    errorMessage = "error \"Bad Host\" is not found";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 5: DESCRIPTION : Verify that nc cannot connect directly to any host outside of device.");
-	    LOGGER.info("STEP 5: ACTION : Execute command in atomconsole:nc 10.0.0.23 7767");
-	    LOGGER.info("STEP 5: EXPECTED : The command should throw error \"Bad Host\"");
-	    LOGGER.info("**********************************************************************************");
-
-	    response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_OUTSIDE_HOST);
-	    tapEnv.waitTill(30000);
-	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-		    BroadBandTestConstants.NC_CONNECTION_ERROR_IP_10);
-
-	    if (status) {
-		LOGGER.info("STEP 5: ACTUAL : The command throws error \"Bad Host\" 10.0.0.23");
-	    } else {
-		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
-	    }
-
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    LOGGER.info("**********************************************************************************");
-
-	    stepNum = "s6";
-	    errorMessage = "Netcat console is not invoked";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 6: DESCRIPTION : Verify nc connection to the local host.");
-	    LOGGER.info("STEP 6: ACTION : Execute command in atomconsole:nc 127.0.0.1 7787");
-	    LOGGER.info(
-		    "STEP 6: EXPECTED : Netcat should be invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] Port[7787]\"");
-	    LOGGER.info("**********************************************************************************");
-
-	    response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LOCAL_HOST);
-	    tapEnv.waitTill(30000);
-	    status = CommonMethods.isNotNull(response)
-		    && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-			    BroadBandTestConstants.NC_NETCAT_INVOKED)
-		    || CommonUtils.isGivenStringAvailableInCommandOutput(response,
-			    BroadBandTraceConstants.LOG_MESSAGE_NC_NETCAT_INVOKED);
-
-	    if (status) {
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-NetCat-1003");
 		LOGGER.info(
-			"STEP 6: ACTUAL : Netcat invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] "
-				+ "Use `dbg here' to see log messages; other dbg cmds for log level");
-	    } else {
-		LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-	    }
+				"TEST DESCRIPTION: This test is to verify that secure \"nc\" utility is implemented on Atom Console platforms to run only in client mode.");
 
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify that \"nc\" utility is implemented on the device.");
+		LOGGER.info("2. Verify that Netcat (\"nc\") utility does not support listening capability.");
+		LOGGER.info("3. Verify that nc utility does not support execute capability.");
+		LOGGER.info(
+				"4. Verify that nc does not support connection to any Private IP other than the range 172.31.255.x");
+		LOGGER.info("5. Verify that nc cannot connect directly to any host outside of device.");
+		LOGGER.info("6. Verify nc connection to the local host.");
 
-	    LOGGER.info("**********************************************************************************");
+		LOGGER.info("#######################################################################################");
 
-	} catch (Exception e) {
-	    errorMessage = errorMessage + e.getMessage();
-	    LOGGER.error(errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
-		    false);
-	} finally {
-	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
-	    BroadBandPostConditionUtils.executePostconditionForBandSteering(tapEnv, device);
+		try {
+
+			// Pre conditionS
+
+			LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+
+			BroadBandPreConditionUtils.executePreconditionForBandSteering(tapEnv, device);
+
+			// Enable BandSteering
+
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("PRE-CONDITION 2 : DESCRIPTION  : ENABLE BANDSTEERING");
+			LOGGER.info("PRE-CONDITION 2 : ACTION: EXECUTE WEBPA COMMAND");
+			LOGGER.info("PRE-CONDITION 2 : EXPECTED: BANDSTEERING SHOULD BE ENABLED");
+			LOGGER.info("#######################################################################################");
+			errorMessage = "UNABLE TO ENABLE BANDSTEERING !!!";
+			try {
+				status = BroadBandBandSteeringUtils.enableDisableBandSteeringViaWebPa(device, tapEnv, true);
+			} catch (Exception e) {
+				errorMessage = "EXCEPTION WHILE ENABLING BANDSTEERING." + e.getMessage();
+			}
+			if (status) {
+				LOGGER.info("PRE-CONDITION 2 : ACTUAL : SUCCESSFULLY ENABLED BANDSTEERING");
+			} else {
+				LOGGER.error("PRE-CONDITION 2 : ACTUAL :" + errorMessage);
+				throw new TestException(
+						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 2 : FAILED : " + errorMessage);
+			}
+			LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+
+			stepNum = "s1";
+			errorMessage = "Netcat is not implemented on device";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Verify that \"nc\" utility is implemented on the device.");
+			LOGGER.info("STEP 1: ACTION : Execute command in atomconsole:nc -v");
+			LOGGER.info("STEP 1: EXPECTED : Netcat busybox v1.22.1 should be implemented on the device.");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NETCAT_VERSION);
+			status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.NETCAT_VERSION);
+
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Netcat busybox is installed in the device");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s2";
+			errorMessage = "Invalid option -- \"I\" error is not found";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION : Verify that Netcat (\"nc\") utility does not support listening capability.");
+			LOGGER.info("STEP 2: ACTION : Execute command in atomconsole:nc -l 2222nc -nvlp 443");
+			LOGGER.info("STEP 2: EXPECTED : Both the commands should throw error \" invalid option -- \"l\"");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LISTENING);
+			status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.NC_INVALID_OPTION_L);
+
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : commands throws error \" invalid option -- \"l\"");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s3";
+			errorMessage = "error \"invalid option -- \"e\" \" is not found";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION : Verify that nc utility does not support execute capability.");
+			LOGGER.info("STEP 3: ACTION : Execute command in atomconsole:nc -e /bin/sh");
+			LOGGER.info("STEP 3: EXPECTED : The command should throw error \"invalid option -- \"e\" \"");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_EXECUTE);
+			status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.NC_INVALID_OPTION_E);
+
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : The command throws error \"invalid option -- \"e\" ");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s4";
+			errorMessage = " error \"Bad Host\" is not found";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 4: DESCRIPTION : Verify that nc does not support connection to any Private IP other than the range 172.31.255.x");
+			LOGGER.info(
+					"STEP 4: ACTION : Execute command in atomconsole with any Private IP other than the range 172.31.255.x");
+			LOGGER.info("STEP 4: EXPECTED : All the commands should throw error \"Bad Host\"");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_BAD_HOST);
+			tapEnv.waitTill(30000);
+			status = CommonMethods.isNotNull(response)
+					&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+							BroadBandTestConstants.NC_CONNECTION_ERROR_LAN_IP)
+					&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+							BroadBandTestConstants.NC_CONNECTION_ERROR_IP_192)
+					&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+							BroadBandTestConstants.NC_CONNECTION_ERROR_IP_169)
+					&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+							BroadBandTestConstants.NC_CONNECTION_ERROR_IP_147);
+
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : All the commands throws error \"Bad Host\"");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + response + "\n error message : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s5";
+			errorMessage = "error \"Bad Host\" is not found";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION : Verify that nc cannot connect directly to any host outside of device.");
+			LOGGER.info("STEP 5: ACTION : Execute command in atomconsole:nc 10.0.0.23 7767");
+			LOGGER.info("STEP 5: EXPECTED : The command should throw error \"Bad Host\"");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_OUTSIDE_HOST);
+			tapEnv.waitTill(30000);
+			status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.NC_CONNECTION_ERROR_IP_10);
+
+			if (status) {
+				LOGGER.info("STEP 5: ACTUAL : The command throws error \"Bad Host\" 10.0.0.23");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+			stepNum = "s6";
+			errorMessage = "Netcat console is not invoked";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION : Verify nc connection to the local host.");
+			LOGGER.info("STEP 6: ACTION : Execute command in atomconsole:nc 127.0.0.1 7787");
+			LOGGER.info(
+					"STEP 6: EXPECTED : Netcat should be invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] Port[7787]\"");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LOCAL_HOST);
+			tapEnv.waitTill(30000);
+			status = CommonMethods.isNotNull(response)
+					&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+							BroadBandTestConstants.NC_NETCAT_INVOKED)
+					|| CommonUtils.isGivenStringAvailableInCommandOutput(response,
+							BroadBandTraceConstants.LOG_MESSAGE_NC_NETCAT_INVOKED);
+
+			if (status) {
+				LOGGER.info(
+						"STEP 6: ACTUAL : Netcat invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] "
+								+ "Use `dbg here' to see log messages; other dbg cmds for log level");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			LOGGER.info("**********************************************************************************");
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			BroadBandPostConditionUtils.executePostconditionForBandSteering(tapEnv, device);
+		}
+
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-NetCat-1003");
 	}
 
-	LOGGER.info("ENDING TEST CASE: TC-RDKB-NetCat-1003");
-    }
+	/**
+	 * This test is to verify that secure "nc" utility is implemented on Dev images
+	 * for Specific Devices.
+	 * <ol>
+	 * <li>Verify that "nc" utility is implemented on the device.</li>
+	 * <li>Verify that Netcat (\"nc\") utility does not support listening
+	 * capability.</li>
+	 * <li>Verify that nc utility does not support execute capability.</li>
+	 * <li>Verify that nc does not support connection to any Private IP other than
+	 * the range <range of IP></li>
+	 * <li>Verify that nc cannot connect directly to any host outside of
+	 * device.</li>
+	 * <li>Verify nc connection to the local host.</li>
+	 * <li>Verify nc connection to the Private IP <IP> for CM console access:</li>
+	 * </ol>
+	 * 
+	 * @author Prince ArunRaj
+	 * @refactor Said Hisham
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SECURITY)
+	@TestDetails(testUID = "TC-RDKB-NetCat-1001")
+	public void netCatTest(Dut device) {
 
-    /**
-     * This test is to verify that secure "nc" utility is implemented on Dev images for Specific Devices.
-     * <ol>
-     * <li>Verify that "nc" utility is implemented on the device.</li>
-     * <li>Verify that Netcat (\"nc\") utility does not support listening capability.</li>
-     * <li>Verify that nc utility does not support execute capability.</li>
-     * <li>Verify that nc does not support connection to any Private IP other than the range <range of IP></li>
-     * <li>Verify that nc cannot connect directly to any host outside of device.</li>
-     * <li>Verify nc connection to the local host.</li>
-     * <li>Verify nc connection to the Private IP <IP> for CM console access:</li>
-     * </ol>
-     * 
-     * @author Prince ArunRaj
-     * @refactor Said Hisham
-     */
-    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SECURITY)
-    @TestDetails(testUID = "TC-RDKB-NetCat-1001")
-    public void netCatTest(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-NetCat-101";
+		String stepNum = "s1";
+		String errorMessage = null;
+		boolean status = false;
+		String response = null;
+		boolean isAtomDevice = false;
+		// Variable Declaration Ends
 
-	// Variable Declaration begins
-	String testCaseId = "TC-RDKB-NetCat-101";
-	String stepNum = "s1";
-	String errorMessage = null;
-	boolean status = false;
-	String response = null;
-	boolean isAtomDevice = false;
-	// Variable Declaration Ends
-
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-RDKB-NetCat-1001");
-	LOGGER.info(
-		"TEST DESCRIPTION: This test is to verify that secure \"nc\" utility is implemented on Dev images for specific Devices. ");
-	LOGGER.info("TEST STEPS : ");
-	LOGGER.info("1. Verify that \"nc\" utility is implemented on the device.");
-	LOGGER.info("2. Verify that Netcat (\"nc\") utility does not support listening capability.");
-	LOGGER.info("3. Verify that nc utility does not support execute capability.");
-	LOGGER.info(
-		"4. Verify that nc does not support connection to any Private IP other than the range <range of IP>");
-	LOGGER.info("5. Verify that nc cannot connect directly to any host outside of device.");
-	LOGGER.info("6. Verify nc connection to the local host.");
-	LOGGER.info("7. Verify nc connection to the Private IP \"<PRIVATE IP>\" for CM console access");
-	LOGGER.info("#######################################################################################");
-
-	try {
-	    isAtomDevice = CommonMethods.isAtomSyncAvailable(device, tapEnv);
-	    stepNum = "s1";
-	    errorMessage = "Netcat is not implemented on device";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 1: DESCRIPTION : Verify that \"nc\" utility is implemented on the device.");
-	    LOGGER.info("STEP 1: ACTION : nc -v ");
-	    LOGGER.info("STEP 1: EXPECTED : Netcat busybox v1.22.1 should be implemented on the device.");
-	    LOGGER.info("**********************************************************************************");
-	    response = isAtomDevice ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NETCAT_VERSION)
-		    : tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NETCAT_VERSION);
-	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
-		    BroadBandTestConstants.NETCAT_VERSION);
-	    if (status) {
-		LOGGER.info("STEP 1: ACTUAL : Netcat busybox is installed in the device");
-	    } else {
-		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    LOGGER.info("isDSLDevice(device) :" + DeviceModeHandler.isDSLDevice(device));
-	    if (!DeviceModeHandler.isDSLDevice(device)) {
-		stepNum = "s2";
-		errorMessage = "Invalid option -- \"I\" error is not found";
-		status = false;
-		LOGGER.info("**********************************************************************************");
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-NetCat-1001");
 		LOGGER.info(
-			"STEP 2: DESCRIPTION : Verify that Netcat (\"nc\") utility does not support listening capability.");
-		LOGGER.info("STEP 2: ACTION : nc -l <PORT> ; nc -nvlp <PORT>");
-		LOGGER.info("STEP 2: EXPECTED : Both the commands should throw error \" invalid option -- \"l\"");
-		LOGGER.info("**********************************************************************************");
-		response = isAtomDevice
-			? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LISTENING)
-			: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NC_LISTENING);
-		status = CommonMethods.isNotNull(response) && CommonUtils
-			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_INVALID_OPTION_L);
-		if (status) {
-		    LOGGER.info("STEP 2: ACTUAL : commands throws error \" invalid option -- \"l\"");
-		} else {
-		    LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-		stepNum = "s3";
-		errorMessage = "error \"invalid option -- \"e\" \" is not found";
-		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP 3: DESCRIPTION : Verify that nc utility does not support execute capability.");
-		LOGGER.info("STEP 3: ACTION : nc -e /bin/sh");
-		LOGGER.info("STEP 3: EXPECTED : The command should throw error \"invalid option -- \"e\" \"");
-		LOGGER.info("**********************************************************************************");
-		response = isAtomDevice ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_EXECUTE)
-			: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NC_EXECUTE);
-		status = CommonMethods.isNotNull(response) && CommonUtils
-			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_INVALID_OPTION_E);
-		if (status) {
-		    LOGGER.info("STEP 3: ACTUAL : The command throws error \"invalid option -- \"e\" ");
-		} else {
-		    LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-		stepNum = "s4";
-		errorMessage = " error \"Bad Host\" is not found";
-		status = false;
-		LOGGER.info("**********************************************************************************");
+				"TEST DESCRIPTION: This test is to verify that secure \"nc\" utility is implemented on Dev images for specific Devices. ");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify that \"nc\" utility is implemented on the device.");
+		LOGGER.info("2. Verify that Netcat (\"nc\") utility does not support listening capability.");
+		LOGGER.info("3. Verify that nc utility does not support execute capability.");
 		LOGGER.info(
-			"STEP 4: DESCRIPTION : Verify that nc does not support connection to any Private IP other than the range <range of IP>");
-		LOGGER.info(
-			"STEP 4: ACTION : Try below commands:nc <PRIVATE IP OUTSIDE RANGE> <PORT> ; nc <PRIVATE IP OUTSIDE RANGE> <PORT> ; nc <PRIVATE IP OUTSIDE RANGE> <PORT> ; nc <PRIVATE IP OUTSIDE RANGE>");
-		LOGGER.info("STEP 4: EXPECTED : All the commands should throw error \"Bad Host\"");
-		LOGGER.info("**********************************************************************************");
-		response = isAtomDevice
-			? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCBadHostIp())
-			: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCBadHostIp());
-		status = CommonMethods.isNotNull(response)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_LAN_IP)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_IP_1)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_IP_2)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_IP_3);
-		if (status) {
-		    LOGGER.info("STEP 4: ACTUAL : All the commands throws error \"Bad Host\"");
-		} else {
-		    LOGGER.error("STEP 4: ACTUAL : " + response + "\n error message : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+				"4. Verify that nc does not support connection to any Private IP other than the range <range of IP>");
+		LOGGER.info("5. Verify that nc cannot connect directly to any host outside of device.");
+		LOGGER.info("6. Verify nc connection to the local host.");
+		LOGGER.info("7. Verify nc connection to the Private IP \"<PRIVATE IP>\" for CM console access");
+		LOGGER.info("#######################################################################################");
 
-		stepNum = "s5";
-		errorMessage = "error \"Bad Host\" is not found";
-		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info(
-			"STEP 5: DESCRIPTION : Verify that nc cannot connect directly to any host outside of device.");
-		LOGGER.info("STEP 5: ACTION : nc <IP OUTSIDE DEVICE> <PORT>");
-		LOGGER.info("STEP 5: EXPECTED : The command should throw error \"Bad Host\" <IP OUTSIDE DEVICE>");
-		LOGGER.info("**********************************************************************************");
-		response = isAtomDevice
-			? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCOutsideHostIp())
-			: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCOutsideHostIp());
-		status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(
-			response, BroadBandTestConstants.NC_CONNECTION_ERROR_IP_4);
-		if (status) {
-		    LOGGER.info("STEP 5: ACTUAL : The command throws error \"Bad Host\" <IP OUTSIDE DEVICE>");
-		} else {
-		    LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		try {
+			isAtomDevice = CommonMethods.isAtomSyncAvailable(device, tapEnv);
+			stepNum = "s1";
+			errorMessage = "Netcat is not implemented on device";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Verify that \"nc\" utility is implemented on the device.");
+			LOGGER.info("STEP 1: ACTION : nc -v ");
+			LOGGER.info("STEP 1: EXPECTED : Netcat busybox v1.22.1 should be implemented on the device.");
+			LOGGER.info("**********************************************************************************");
+			response = isAtomDevice ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NETCAT_VERSION)
+					: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NETCAT_VERSION);
+			status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
+					BroadBandTestConstants.NETCAT_VERSION);
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Netcat busybox is installed in the device");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
-		stepNum = "s6";
-		errorMessage = "Netcat is not invoked";
-		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP 6: DESCRIPTION : Verify nc connection to the local host.");
-		LOGGER.info("STEP 6: ACTION : nc 127.0.0.1 <PORT>");
-		LOGGER.info(
-			"STEP 6: EXPECTED : Netcat should be invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] Port[LOCAL PORT]\"");
-		LOGGER.info("**********************************************************************************");
-		response = isAtomDevice
-			? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LOCAL_HOST)
-			: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NC_LOCAL_HOST);
-		status = CommonMethods.isNotNull(response) && CommonUtils
-			.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_NETCAT_INVOKED);
-		if (status) {
-		    LOGGER.info(
-			    "STEP 6: ACTUAL : Netcat invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] ");
-		} else {
-		    LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			LOGGER.info("isDSLDevice(device) :" + DeviceModeHandler.isDSLDevice(device));
+			if (!DeviceModeHandler.isDSLDevice(device)) {
+				stepNum = "s2";
+				errorMessage = "Invalid option -- \"I\" error is not found";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 2: DESCRIPTION : Verify that Netcat (\"nc\") utility does not support listening capability.");
+				LOGGER.info("STEP 2: ACTION : nc -l <PORT> ; nc -nvlp <PORT>");
+				LOGGER.info("STEP 2: EXPECTED : Both the commands should throw error \" invalid option -- \"l\"");
+				LOGGER.info("**********************************************************************************");
+				response = isAtomDevice
+						? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LISTENING)
+						: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NC_LISTENING);
+				status = CommonMethods.isNotNull(response) && CommonUtils
+						.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_INVALID_OPTION_L);
+				if (status) {
+					LOGGER.info("STEP 2: ACTUAL : commands throws error \" invalid option -- \"l\"");
+				} else {
+					LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
-		stepNum = "s7";
-		errorMessage = "Netcat is not invoked ";
-		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info(
-			"STEP 7: DESCRIPTION : Verify nc connection to the Private IP \"<PRIVATE IP>\" for CM console");
-		LOGGER.info("STEP 7: ACTION : nc <PRIVATE IP> <PORT>");
-		LOGGER.info("STEP 7: EXPECTED : Netcat should be invoked with [tcp]mode Host[<PRIVATE IP>] ");
-		LOGGER.info("**********************************************************************************");
-		response = isAtomDevice
-			? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCPrivateHostIp())
-			: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCPrivateHostIp());
-		LOGGER.info("response : " + response);
-		status = CommonMethods.isNotNull(response)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_NETCAT_INVOKED)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_NETCAT_CONSOLE);
-		if (status) {
-		    LOGGER.info("STEP 7: ACTUAL : Netcat invoked with [tcp]mode Host[<PRIVATE IP>]");
-		} else {
-		    LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				stepNum = "s3";
+				errorMessage = "error \"invalid option -- \"e\" \" is not found";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 3: DESCRIPTION : Verify that nc utility does not support execute capability.");
+				LOGGER.info("STEP 3: ACTION : nc -e /bin/sh");
+				LOGGER.info("STEP 3: EXPECTED : The command should throw error \"invalid option -- \"e\" \"");
+				LOGGER.info("**********************************************************************************");
+				response = isAtomDevice ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_EXECUTE)
+						: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NC_EXECUTE);
+				status = CommonMethods.isNotNull(response) && CommonUtils
+						.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_INVALID_OPTION_E);
+				if (status) {
+					LOGGER.info("STEP 3: ACTUAL : The command throws error \"invalid option -- \"e\" ");
+				} else {
+					LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s4";
+				errorMessage = " error \"Bad Host\" is not found";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 4: DESCRIPTION : Verify that nc does not support connection to any Private IP other than the range <range of IP>");
+				LOGGER.info(
+						"STEP 4: ACTION : Try below commands:nc <PRIVATE IP OUTSIDE RANGE> <PORT> ; nc <PRIVATE IP OUTSIDE RANGE> <PORT> ; nc <PRIVATE IP OUTSIDE RANGE> <PORT> ; nc <PRIVATE IP OUTSIDE RANGE>");
+				LOGGER.info("STEP 4: EXPECTED : All the commands should throw error \"Bad Host\"");
+				LOGGER.info("**********************************************************************************");
+				response = isAtomDevice
+						? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCBadHostIp())
+						: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCBadHostIp());
+				status = CommonMethods.isNotNull(response)
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTestConstants.NC_CONNECTION_ERROR_LAN_IP)
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTestConstants.NC_ERROR_BAD_HOST
+										+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange1())
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTestConstants.NC_ERROR_BAD_HOST
+										+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange2())
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTestConstants.NC_ERROR_BAD_HOST
+										+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange3());
+				if (status) {
+					LOGGER.info("STEP 4: ACTUAL : All the commands throws error \"Bad Host\"");
+				} else {
+					LOGGER.error("STEP 4: ACTUAL : " + response + "\n error message : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s5";
+				errorMessage = "error \"Bad Host\" is not found";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 5: DESCRIPTION : Verify that nc cannot connect directly to any host outside of device.");
+				LOGGER.info("STEP 5: ACTION : nc <IP OUTSIDE DEVICE> <PORT>");
+				LOGGER.info("STEP 5: EXPECTED : The command should throw error \"Bad Host\" <IP OUTSIDE DEVICE>");
+				LOGGER.info("**********************************************************************************");
+				response = isAtomDevice
+						? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCOutsideHostIp())
+						: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCOutsideHostIp());
+				status = CommonMethods.isNotNull(response) && CommonUtils
+						.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_ERROR_BAD_HOST
+								+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange4());
+				if (status) {
+					LOGGER.info("STEP 5: ACTUAL : The command throws error \"Bad Host\" <IP OUTSIDE DEVICE>");
+				} else {
+					LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s6";
+				errorMessage = "Netcat is not invoked";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 6: DESCRIPTION : Verify nc connection to the local host.");
+				LOGGER.info("STEP 6: ACTION : nc 127.0.0.1 <PORT>");
+				LOGGER.info(
+						"STEP 6: EXPECTED : Netcat should be invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] Port[LOCAL PORT]\"");
+				LOGGER.info("**********************************************************************************");
+				response = isAtomDevice
+						? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_NC_LOCAL_HOST)
+						: tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_NC_LOCAL_HOST);
+				status = CommonMethods.isNotNull(response) && CommonUtils
+						.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_NETCAT_INVOKED);
+				if (status) {
+					LOGGER.info(
+							"STEP 6: ACTUAL : Netcat invoked with below log.\"Netcat invoked with [tcp]mode Host[127.0.0.1] ");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				stepNum = "s7";
+				errorMessage = "Netcat is not invoked ";
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info(
+						"STEP 7: DESCRIPTION : Verify nc connection to the Private IP \"<PRIVATE IP>\" for CM console");
+				LOGGER.info("STEP 7: ACTION : nc <PRIVATE IP> <PORT>");
+				LOGGER.info("STEP 7: EXPECTED : Netcat should be invoked with [tcp]mode Host[<PRIVATE IP>] ");
+				LOGGER.info("**********************************************************************************");
+				response = isAtomDevice
+						? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCPrivateHostIp())
+						: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCPrivateHostIp());
+				LOGGER.info("response : " + response);
+				status = CommonMethods.isNotNull(response)
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTestConstants.NC_NETCAT_INVOKED)
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTestConstants.NC_NETCAT_CONSOLE);
+				if (status) {
+					LOGGER.info("STEP 7: ACTUAL : Netcat invoked with [tcp]mode Host[<PRIVATE IP>]");
+				} else {
+					LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			} else {
+				errorMessage = BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES;
+				int stepNumber = 1;
+				while (stepNumber < 7) {
+					stepNumber++;
+					stepNum = "S" + stepNumber;
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+				}
+			}
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
 		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-	    } else {
-		errorMessage = BroadBandTestConstants.NA_MSG_FOR_DSL_DEVICES;
-		int stepNumber = 1;
-		while (stepNumber < 7) {
-		    stepNumber++;
-		    stepNum = "S" + stepNumber;
-		    LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-		    LOGGER.info("**********************************************************************************");
-		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-			    errorMessage, false);
-		}
-	    }
-	} catch (Exception e) {
-	    errorMessage = errorMessage + e.getMessage();
-	    LOGGER.error(errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
-		    false);
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-NetCat-1001");
 	}
-	LOGGER.info("ENDING TEST CASE: TC-RDKB-NetCat-1001");
-    }
 }
