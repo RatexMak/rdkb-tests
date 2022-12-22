@@ -3199,8 +3199,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_DNS_PRIMARY_IP_TCPDUMP);
+			status = CommonUtils.searchLogFiles(tapEnv, device, BroadbandPropertyFileHandler.getDNSPrimaryIpTcpDump());
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3322,7 +3321,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_DNS_SECONDARY_IP_TCPDUMP);
+					BroadbandPropertyFileHandler.getDNSSecondaryIpTcpDump());
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3529,7 +3528,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_INVALID_DNS_PRIMARY_IP_TCPDUMP);
+					BroadbandPropertyFileHandler.getInvalidDNSPrimaryIpTcpDump());
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
