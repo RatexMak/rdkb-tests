@@ -4115,7 +4115,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS,
 					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_SCHEMA };
 			String[] defaultvalues = new String[] { BroadBandTestConstants.FALSE, BroadBandTestConstants.STRING_ZERO,
-					BroadBandTestConstants.NULL_MAC_ADDRESS_WITHOUT_DELIMETER,
+					DeviceModeHandler.isRPIDevice(device)? null : BroadBandTestConstants.NULL_MAC_ADDRESS_WITHOUT_DELIMETER,
 					BroadBandTestConstants.WIFICLIENT_SCHEMA_TYPE };
 			status = BroadBandWebPaUtils.verifyWiFiClientDataModelDefaultValues(device, tapEnv, parameters,
 					defaultvalues);
