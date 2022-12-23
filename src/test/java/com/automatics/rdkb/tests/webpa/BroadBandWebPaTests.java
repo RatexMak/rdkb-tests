@@ -1008,8 +1008,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 					"*********************************************************************************************");
 			errorMessage = "Unable to retrieve IPv4 address from nslookup response";
 			try {
-				response = tapEnv.executeCommandUsingSshConnection(
-						WhiteListServer.getInstance(tapEnv, "localhost"),
+				response = tapEnv.executeCommandUsingSshConnection(WhiteListServer.getInstance(tapEnv, "localhost"),
 						BroadBandCommonUtils.concatStringUsingStringBuffer(
 								BroadBandCommandConstants.CMD_NSLOOKUP_WITH_PATH_FOR_IPV4_ADDRESS,
 								BroadBandTestConstants.NSLOOKUP_FOR_FACEBOOK));
@@ -2254,9 +2253,12 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			if (DeviceModeHandler.isRPIDevice(device)) {
-				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
-				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
-				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
 			} else {
 				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
 				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
@@ -2290,7 +2292,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 3: EXPECTED : Device rebooted successfully and verified 404 response during reboot");
 			LOGGER.info("**********************************************************************************");
 
-			if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+			if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.TEN_SECOND_IN_MILLIS,
 					BroadBandTestConstants.CONSTANT_6)) {
 				errorMessage = "Failed to receive 404 response during reboot for webpa command";
 				webpaResponse = tapEnv.getTR69ParameterValuesUsingWebPA(device,
@@ -2298,7 +2300,9 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				if (null != webpaResponse) {
 					statusCode = webpaResponse.getStatusCode();
 					LOGGER.info("STATUS CODE: " + statusCode);
-					if (statusCode == HttpStatus.SC_NOT_FOUND) {
+					LOGGER.info("STATUS MESSAGE: " + webpaResponse.getMessage());
+					if (statusCode == HttpStatus.SC_NOT_FOUND
+							|| webpaResponse.getMessage().contains(BroadBandTestConstants.STATUS_FAILED)) {
 						errorMessage = "Device did not come up after webpa reboot";
 						status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
 					}
@@ -2536,12 +2540,21 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 11: EXPECTED : Successfully simulated syseventd process crash");
 			LOGGER.info("**********************************************************************************");
 
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device,
-					(CommonMethods.isAtomSyncAvailable(device, tapEnv)
-							? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
-							: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+			} else {
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device,
+						(CommonMethods.isAtomSyncAvailable(device, tapEnv)
+								? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
+								: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			}
 			status = CommonMethods.restartProcess(device, tapEnv, ProcessRestartOption.KILL_11,
 					BroadBandTestConstants.PROCESS_NAME_SYSEVENTD);
 
@@ -4115,7 +4128,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS,
 					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_SCHEMA };
 			String[] defaultvalues = new String[] { BroadBandTestConstants.FALSE, BroadBandTestConstants.STRING_ZERO,
-					DeviceModeHandler.isRPIDevice(device)? null : BroadBandTestConstants.NULL_MAC_ADDRESS_WITHOUT_DELIMETER,
+					DeviceModeHandler.isRPIDevice(device) ? null
+							: BroadBandTestConstants.NULL_MAC_ADDRESS_WITHOUT_DELIMETER,
 					BroadBandTestConstants.WIFICLIENT_SCHEMA_TYPE };
 			status = BroadBandWebPaUtils.verifyWiFiClientDataModelDefaultValues(device, tapEnv, parameters,
 					defaultvalues);
