@@ -2253,14 +2253,18 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 2: EXPECTED : Rebooted device using WebPA successfully");
 			LOGGER.info("**********************************************************************************");
 
-//			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM,
-					BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device,
-					(CommonMethods.isAtomSyncAvailable(device, tapEnv)
-							? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
-							: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM);
+			} else {
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device,
+						(CommonMethods.isAtomSyncAvailable(device, tapEnv)
+								? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
+								: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			}
 			status = BroadBandWiFiUtils.setWebPaParams(device,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_CONTROL_DEVICE_REBOOT, BroadBandTestConstants.DEVICE,
 					BroadBandTestConstants.CONSTANT_0);
@@ -8165,40 +8169,33 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			stepNumber++;
 			step = "S" + stepNumber;
 			status = false;
-			if (!DeviceModeHandler.isRPIDevice(device)) {
-				if (!isBusinessDevice && !isDSL) {
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info("STEP " + stepNumber
-							+ ": DESCRIPTION : Set MoCA Logging parameter to true and verify MoCA Logging telemetry is enabled");
-					LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
-							+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY);
-					LOGGER.info("STEP " + stepNumber
-							+ ": EXPECTED : WebPA request should return success message and MoCA logging parameter should be set to true");
-					LOGGER.info("**********************************************************************************");
-					status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
-							BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY,
-							BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
-							BroadBandTestConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-					if (status) {
-						LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfully enabled MoCA logging telemetry");
-					} else {
-						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-					}
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+			if (!isBusinessDevice && !isDSL) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : Set MoCA Logging parameter to true and verify MoCA Logging telemetry is enabled");
+				LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
+						+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY);
+				LOGGER.info("STEP " + stepNumber
+						+ ": EXPECTED : WebPA request should return success message and MoCA logging parameter should be set to true");
+				LOGGER.info("**********************************************************************************");
+				status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY,
+						BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+						BroadBandTestConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + ": ACTUAL : Successfully enabled MoCA logging telemetry");
 				} else {
-					LOGGER.info("STEP " + stepNumber
-							+ " : ACTUAL : Moca is not applicable for business class devices and DSL devices");
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-							BroadBandTestConstants.NA_MSG_FOR_RESIDENTIAL_CLASS_DEVICES, false);
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
 				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 			} else {
-				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
-				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
-						false);
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Moca is not applicable for business class devices and DSL devices");
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+						BroadBandTestConstants.NA_MSG_FOR_RESIDENTIAL_CLASS_DEVICES, false);
 			}
-
 			/**
 			 * Step 6 : Enable finger printing in device
 			 */
@@ -8688,55 +8685,35 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 
 			step = "S" + stepNumber;
-			status = false;
-			if (!DeviceModeHandler.isRPIDevice(device)) {
-				if (!isBusinessDevice && !isDSL) {
-					errorMessage = "Failed to verify MoCA logging telemetry is in disabled state after reset";
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info("STEP " + stepNumber
-							+ ": DESCRIPTION : Get MoCA Logging parameter and verify MoCA Logging telemetry is disabled");
-					LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
-							+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY);
-					LOGGER.info("STEP " + stepNumber
-							+ ": EXPECTED : WebPA request should return success message and MoCA logging paramater should be false after reset");
-					LOGGER.info("**********************************************************************************");
-					status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-							BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY,
-							BroadBandTestConstants.FALSE);
-					if (status) {
-						LOGGER.info("STEP " + stepNumber
-								+ ": ACTUAL : Successfully verified MoCA logging telemetry is in disabled state after reset");
-					} else {
-						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-					}
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
-				} else {
-					while (stepNumber <= BroadBandTestConstants.CONSTANT_23) {
-						step = "s" + stepNumber;
-						errorMessage = "STEP " + stepNumber
-								+ "  Moca and wifi personizzation is not applicable for business class devices";
-						LOGGER.info("******************************************************************");
-						LOGGER.info("STEP " + stepNumber + ": ACTUAL :" + errorMessage);
-						tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-								errorMessage, false);
-						stepNumber++;
 
-					}
-				}
-			} else {
-				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
-				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
-						false);
-			}
-
-			/**
-			 * Step 23 : Verify wi-fi personalization status as true
-			 */
-			stepNumber++;
-			step = "S" + stepNumber;
 			status = false;
 			if (!isBusinessDevice && !isDSL) {
+				errorMessage = "Failed to verify MoCA logging telemetry is in disabled state after reset";
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : Get MoCA Logging parameter and verify MoCA Logging telemetry is disabled");
+				LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
+						+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY);
+				LOGGER.info("STEP " + stepNumber
+						+ ": EXPECTED : WebPA request should return success message and MoCA logging paramater should be false after reset");
+				LOGGER.info("**********************************************************************************");
+				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY, BroadBandTestConstants.FALSE);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTUAL : Successfully verified MoCA logging telemetry is in disabled state after reset");
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+
+				/**
+				 * Step 23 : Verify wi-fi personalization status as true
+				 */
+				stepNumber++;
+				step = "S" + stepNumber;
+				status = false;
 				errorMessage = "Unable to verify wi-fi personalization status as true";
 				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP " + stepNumber
@@ -8900,49 +8877,37 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				 * disabled after reset
 				 */
 				stepNumber++;
-				if (!DeviceModeHandler.isRPIDevice(device)) {
-					if (!isBusinessDevice) {
-						step = "S" + stepNumber;
-						status = false;
-						errorMessage = "Failed to verify MoCA logging telemetry is in disabled state after reset";
-						LOGGER.info(
-								"**********************************************************************************");
+				if (!isBusinessDevice) {
+					step = "S" + stepNumber;
+					status = false;
+					errorMessage = "Failed to verify MoCA logging telemetry is in disabled state after reset";
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info("STEP " + stepNumber
+							+ ": DESCRIPTION : Get MoCA Logging parameter and verify MoCA Logging telemetry is disabled");
+					LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
+							+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY);
+					LOGGER.info("STEP " + stepNumber
+							+ ": EXPECTED : WebPA request should return success message and MoCA logging paramater should be false after reset");
+					LOGGER.info("**********************************************************************************");
+					status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY,
+							BroadBandTestConstants.FALSE);
+					if (status) {
 						LOGGER.info("STEP " + stepNumber
-								+ ": DESCRIPTION : Get MoCA Logging parameter and verify MoCA Logging telemetry is disabled");
-						LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
-								+ BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY);
-						LOGGER.info("STEP " + stepNumber
-								+ ": EXPECTED : WebPA request should return success message and MoCA logging paramater should be false after reset");
-						LOGGER.info(
-								"**********************************************************************************");
-						status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-								BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_LOGGING_TELEMETRY,
-								BroadBandTestConstants.FALSE);
-						if (status) {
-							LOGGER.info("STEP " + stepNumber
-									+ ": ACTUAL : Successfully verified MoCA logging telemetry is in disabled state after reset");
-						} else {
-							LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-						}
-						LOGGER.info(
-								"**********************************************************************************");
-						tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+								+ ": ACTUAL : Successfully verified MoCA logging telemetry is in disabled state after reset");
 					} else {
-
-						LOGGER.info(
-								"STEP " + stepNumber + " : ACTUAL : Moca is not applicable for business class devices");
-						LOGGER.info(
-								"**********************************************************************************");
-						tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-								BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
-
+						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
 					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 				} else {
-					LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
-					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-							errorMessage, false);
-				}
 
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : Moca is not applicable for business class devices");
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+							BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
+
+				}
 				/**
 				 * Step 29 : Verify default CPU Memory fragmentation interval
 				 */
@@ -9335,48 +9300,40 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 			stepNumber++;
 			step = "S" + stepNumber;
-			if (!DeviceModeHandler.isRPIDevice(device)) {
-				if (!isBusinessDevice && !isDSL) {
-					status = false;
-					LOGGER.info("**********************************************************************************");
+			if (!isBusinessDevice && !isDSL) {
+				status = false;
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber + "DESCRIPTION : VERIFY THE DEFAULT VALUE OF MoCA FORCE ENABLE FLAG.");
+				LOGGER.info("STEP " + stepNumber
+						+ " - EXPECTED - DEFAULT VALUE OF MoCA FORCE ENABLE FLAG MUST BE 'FALSE'.");
+				LOGGER.info("**********************************************************************************");
+
+				LOGGER.info(
+						"Verifying the presence of /tmp/moca_initialized before validating the default MOCA FORCE ENABLE value");
+				BroadBandCommonUtils.doesFileExistPreCondition(tapEnv, device,
+						BroadBandTestConstants.PATH_FOR_MOCA_INITIALIZED_FILE);
+				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_INTERFACE_FORCE_ENABLE,
+						BroadBandTestConstants.FALSE);
+				errorMessage = "Default value of MoCA Force Enable Flag is not 'FALSE'";
+
+				if (status) {
 					LOGGER.info(
-							"STEP " + stepNumber + "DESCRIPTION : VERIFY THE DEFAULT VALUE OF MoCA FORCE ENABLE FLAG.");
-					LOGGER.info("STEP " + stepNumber
-							+ " - EXPECTED - DEFAULT VALUE OF MoCA FORCE ENABLE FLAG MUST BE 'FALSE'.");
-					LOGGER.info("**********************************************************************************");
-
-					LOGGER.info(
-							"Verifying the presence of /tmp/moca_initialized before validating the default MOCA FORCE ENABLE value");
-					BroadBandCommonUtils.doesFileExistPreCondition(tapEnv, device,
-							BroadBandTestConstants.PATH_FOR_MOCA_INITIALIZED_FILE);
-					status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-							BroadBandWebPaConstants.WEBPA_PARAM_FOR_MOCA_INTERFACE_FORCE_ENABLE,
-							BroadBandTestConstants.FALSE);
-					errorMessage = "Default value of MoCA Force Enable Flag is not 'FALSE'";
-
-					if (status) {
-						LOGGER.info("STEP " + stepNumber
-								+ ": ACTUAL : DEFAULT VALUE OF MoCA FORCE ENABLE FLAG IS 'FALSE'.");
-					} else {
-						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-					}
-
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+							"STEP " + stepNumber + ": ACTUAL : DEFAULT VALUE OF MoCA FORCE ENABLE FLAG IS 'FALSE'.");
 				} else {
-
-					LOGGER.info("STEP " + stepNumber
-							+ " : ACTUAL : Moca is not applicable for business class devices and DSL devices");
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-							BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
 				}
-			} else {
-				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
-				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
-						false);
-			}
 
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+			} else {
+
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : Moca is not applicable for business class devices and DSL devices");
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+						BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
+			}
 			/**
 			 * Step 40 :Verification of Number of pings per server using the TR181
 			 * parameter-Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_NumPingsPerServer
@@ -11114,38 +11071,32 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 
 			step = "S" + stepNumber;
-			if (!DeviceModeHandler.isRPIDevice(device)) {
-				if (!isBusinessDevice && !isDSL) {
-					status = false;
-					errorMessage = "Unable to verify the MoCA status as enabled by default";
-					LOGGER.info("**********************************************************************************");
+			if (!isBusinessDevice && !isDSL) {
+				status = false;
+				errorMessage = "Unable to verify the MoCA status as enabled by default";
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : Verify MoCA status is enabled by default after reset using webpa");
+				LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
+						+ BroadBandWebPaConstants.WEBPA_PARAM_ENABLE_MOCA);
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : Must return MoCA status as enabled by default");
+				LOGGER.info("**********************************************************************************");
+				status = MocaUtils.validateMocaStatusWithWaitTime(tapEnv, device, BroadBandTestConstants.TRUE);
+				if (status) {
 					LOGGER.info("STEP " + stepNumber
-							+ ": DESCRIPTION : Verify MoCA status is enabled by default after reset using webpa");
-					LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa command :"
-							+ BroadBandWebPaConstants.WEBPA_PARAM_ENABLE_MOCA);
-					LOGGER.info("STEP " + stepNumber + ": EXPECTED : Must return MoCA status as enabled by default");
-					LOGGER.info("**********************************************************************************");
-					status = MocaUtils.validateMocaStatusWithWaitTime(tapEnv, device, BroadBandTestConstants.TRUE);
-					if (status) {
-						LOGGER.info("STEP " + stepNumber
-								+ ": ACTUAL : Successfully verified  MoCA status as enabled by default after reset");
-					} else {
-						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-					}
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+							+ ": ACTUAL : Successfully verified  MoCA status as enabled by default after reset");
 				} else {
-
-					LOGGER.info("STEP " + stepNumber + " : ACTUAL : Moca is not applicable for business class devices");
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-							BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
-
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
 				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 			} else {
-				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+
+				LOGGER.info("STEP " + stepNumber + " : ACTUAL : Moca is not applicable for business class devices");
+				LOGGER.info("**********************************************************************************");
 				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, false);
+						BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
+
 			}
 
 			/**
@@ -11247,7 +11198,6 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 
 			step = "S" + stepNumber;
-			if (!DeviceModeHandler.isRPIDevice(device)) {
 			if (!isBusinessDevice && !isDSL) {
 				status = false;
 				errorMessage = "Unable to verify the default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.IPv6onMoCA.Enable as true ";
@@ -11278,12 +11228,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.NA_MSG_FOR_RESIDENTIAL_CLASS_DEVICES, false);
 
-			}}
-			 else {
-					LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
-					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
-							errorMessage, false);
-	}
+			}
 
 			/**
 			 * STEP 97 : VERIFY DEFER FIRMWARE DOWNLOAD REBOOT DEFAULT VALUE
@@ -11311,9 +11256,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 
-		} catch (
-
-		Exception testException) {
+		} catch (Exception testException) {
 			errorMessage = "Exception occured while checking the default Values: " + testException.getMessage();
 			LOGGER.error(errorMessage);
 			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
