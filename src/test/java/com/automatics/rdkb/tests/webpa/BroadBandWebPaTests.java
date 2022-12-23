@@ -1009,7 +1009,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			errorMessage = "Unable to retrieve IPv4 address from nslookup response";
 			try {
 				response = tapEnv.executeCommandUsingSshConnection(
-						WhiteListServer.getInstance(tapEnv, BroadbandPropertyFileHandler.getReverseSshJumpServer()),
+						WhiteListServer.getInstance(tapEnv, "localhost"),
 						BroadBandCommonUtils.concatStringUsingStringBuffer(
 								BroadBandCommandConstants.CMD_NSLOOKUP_WITH_PATH_FOR_IPV4_ADDRESS,
 								BroadBandTestConstants.NSLOOKUP_FOR_FACEBOOK));
@@ -2254,9 +2254,9 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			if (DeviceModeHandler.isRPIDevice(device)) {
-				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
-				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
-				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
 			} else {
 				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
 				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
