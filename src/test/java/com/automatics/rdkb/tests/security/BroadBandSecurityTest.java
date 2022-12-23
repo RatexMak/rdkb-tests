@@ -1071,7 +1071,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 							BroadBandTestConstants.CONSTANT_LIGHTTPD_CONF);
 			if (CommonMethods.isNotNull(response)) {
 				response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_SERVER_TAG);
-				LOGGER.info("RESPONSE : "+response);
+				LOGGER.info("RESPONSE : " + response);
 				status = CommonMethods.isNotNull(response) && response.contains(
 						AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_CONSTANT_SERVER_TAG));
 			}
@@ -4586,27 +4586,33 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			 */
 			stepNumber = "s11";
 			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 11: DESCRIPTION: Verify the MoCA can be enabled");
-			LOGGER.info("STEP 11: ACTION: Execute webpa commands to enable MOCA");
-			LOGGER.info("STEP 11: EXPECTED: Value of  Private Wi-Fi passphrase of 5GHz Radio should be modified");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "MoCA can not be enabled using WebPa Parameter: "
-					+ WebPaParamConstants.WEBPA_PARAM_ENABLE_MOCA_STATUS;
-			if (!DeviceModeHandler.isDSLDevice(device)) {
-				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-						WebPaParamConstants.WEBPA_PARAM_ENABLE_MOCA_STATUS, AutomaticsConstants.CONSTANT_3,
-						AutomaticsConstants.TRUE);
-				if (status) {
-					LOGGER.info("STEP 11: ACTUAL : MoCA has been enabled");
-				} else {
-					LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
-				}
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+				LOGGER.info("STEP 11: DESCRIPTION: Verify the MoCA can be enabled");
+				LOGGER.info("STEP 11: ACTION: Execute webpa commands to enable MOCA");
+				LOGGER.info("STEP 11: EXPECTED: Value of  Private Wi-Fi passphrase of 5GHz Radio should be modified");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "MoCA can not be enabled using WebPa Parameter: "
+						+ WebPaParamConstants.WEBPA_PARAM_ENABLE_MOCA_STATUS;
+				if (!DeviceModeHandler.isDSLDevice(device)) {
+					status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+							WebPaParamConstants.WEBPA_PARAM_ENABLE_MOCA_STATUS, AutomaticsConstants.CONSTANT_3,
+							AutomaticsConstants.TRUE);
+					if (status) {
+						LOGGER.info("STEP 11: ACTUAL : MoCA has been enabled");
+					} else {
+						LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
+				} else {
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+							"This test step is not applicable for DSL Devices", false);
+				}
 			} else {
-				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
-						"This test step is not applicable for DSL Devices", false);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
 
 			/**
@@ -4615,40 +4621,48 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			 */
 			stepNumber = "s12";
 			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 12: DESCRIPTION: Verify the gateway doesn't log Passphrase in MOCAlog.txt");
-			LOGGER.info(
-					"STEP 12: ACTION: Execute commands to Verify whether the gateway doesn't log Passphrase in MOCAlog.txt");
-			LOGGER.info("STEP 12: EXPECTED: It should not contain Passphrase");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "Passphrase is logged in MOCAlog.txt";
 
-			if (!DeviceModeHandler.isDSLDevice(device)) {
-				response = isAtom
-						? BroadBandCommonUtils.searchAtomConsoleLogs(tapEnv, device,
-								BroadBandTestConstants.KEY_PASSPHRASE, BroadBandTestConstants.LOG_FILE_MOCA_TEXT)
-						: BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.KEY_PASSPHRASE,
-								BroadBandTestConstants.LOG_FILE_MOCA_TEXT);
-				status = CommonMethods.isNull(response) || (CommonMethods.isNotNull(response)
-						&& !CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.PATTERN_TO_EXTRACT_PASSPHRASE_FROM_MOCA_LOG)
-						&& !CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.NO_ROUTE_TO_HOST)
-						&& !CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.ACCESS_TO_URL_USING_CURL_CONNECTION_TIMEOUT_MESSAGE)
-						&& !CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.STRING_CONNECTION_REFUSED)
-						&& !CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.AUTHENTICATION_FAILED));
-				if (status) {
-					LOGGER.info("STEP 12: ACTUAL : Passphrase is not logged in MOCAlog.txt");
-				} else {
-					LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
-				}
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+				LOGGER.info("STEP 12: DESCRIPTION: Verify the gateway doesn't log Passphrase in MOCAlog.txt");
+				LOGGER.info(
+						"STEP 12: ACTION: Execute commands to Verify whether the gateway doesn't log Passphrase in MOCAlog.txt");
+				LOGGER.info("STEP 12: EXPECTED: It should not contain Passphrase");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "Passphrase is logged in MOCAlog.txt";
+
+				if (!DeviceModeHandler.isDSLDevice(device)) {
+					response = isAtom
+							? BroadBandCommonUtils.searchAtomConsoleLogs(tapEnv, device,
+									BroadBandTestConstants.KEY_PASSPHRASE, BroadBandTestConstants.LOG_FILE_MOCA_TEXT)
+							: BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.KEY_PASSPHRASE,
+									BroadBandTestConstants.LOG_FILE_MOCA_TEXT);
+					status = CommonMethods.isNull(response) || (CommonMethods.isNotNull(response)
+							&& !CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.PATTERN_TO_EXTRACT_PASSPHRASE_FROM_MOCA_LOG)
+							&& !CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.NO_ROUTE_TO_HOST)
+							&& !CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.ACCESS_TO_URL_USING_CURL_CONNECTION_TIMEOUT_MESSAGE)
+							&& !CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.STRING_CONNECTION_REFUSED)
+							&& !CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.AUTHENTICATION_FAILED));
+					if (status) {
+						LOGGER.info("STEP 12: ACTUAL : Passphrase is not logged in MOCAlog.txt");
+					} else {
+						LOGGER.error("STEP 12: ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+				} else {
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+							"This test step is not applicable for DSL Devices", false);
+				}
 			} else {
-				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
-						"This test step is not applicable for DSL Devices", false);
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
 
 			/**
@@ -5970,8 +5984,8 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 				errorMessage = "Unable to trigger RFC checkin or reboot successfully";
 				if (CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
 					status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
-							WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN,
-							BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_VALUE_ONE);
+							WebPaParamConstants.WEBPA_PARAM_IMMEDIATE_RFC_CHECK_IN, BroadBandTestConstants.CONSTANT_2,
+							BroadBandTestConstants.STRING_VALUE_ONE);
 				}
 			}
 
