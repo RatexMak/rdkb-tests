@@ -782,7 +782,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 					LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
 				}
 				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 				/**
 				 * STEP 5:Verification of adding valid Ipv6 ping server in table row 2 by using
@@ -816,7 +816,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 					LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
 				}
 				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 				/**
 				 * STEP 6:Verification of adding valid Ipv6 ping server in table row 3 by using
@@ -851,11 +851,11 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
 				}
 				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
 				LOGGER.info("Ipv6 not available/disabled : skipping teststeps ...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 
 			/**
