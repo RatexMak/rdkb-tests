@@ -2292,21 +2292,25 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 3: EXPECTED : Device rebooted successfully and verified 404 response during reboot");
 			LOGGER.info("**********************************************************************************");
 
-			if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.TEN_SECOND_IN_MILLIS,
-					BroadBandTestConstants.CONSTANT_6)) {
-				errorMessage = "Failed to receive 404 response during reboot for webpa command";
-				webpaResponse = tapEnv.getTR69ParameterValuesUsingWebPA(device,
-						BroadBandWebPaConstants.TR69_PARAM_SERIAL_NUMBER);
-				if (null != webpaResponse) {
-					statusCode = webpaResponse.getStatusCode();
-					LOGGER.info("STATUS CODE: " + statusCode);
-					LOGGER.info("STATUS MESSAGE: " + webpaResponse.getMessage());
-					if (statusCode == HttpStatus.SC_NOT_FOUND
-							|| webpaResponse.getMessage().contains(BroadBandTestConstants.STATUS_FAILED)) {
-						errorMessage = "Device did not come up after webpa reboot";
-						status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.TEN_SECOND_IN_MILLIS,
+						BroadBandTestConstants.CONSTANT_6)) {
+					errorMessage = "Failed to receive 404 response during reboot for webpa command";
+					webpaResponse = tapEnv.getTR69ParameterValuesUsingWebPA(device,
+							BroadBandWebPaConstants.TR69_PARAM_SERIAL_NUMBER);
+					if (null != webpaResponse) {
+						statusCode = webpaResponse.getStatusCode();
+						LOGGER.info("STATUS CODE: " + statusCode);
+						LOGGER.info("STATUS MESSAGE: " + webpaResponse.getMessage());
+						if (statusCode == HttpStatus.SC_NOT_FOUND
+								|| webpaResponse.getMessage().contains(BroadBandTestConstants.STATUS_FAILED)) {
+							errorMessage = "Device did not come up after webpa reboot";
+							status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+						}
 					}
 				}
+			} else {
+				status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
 			}
 
 			if (status) {
