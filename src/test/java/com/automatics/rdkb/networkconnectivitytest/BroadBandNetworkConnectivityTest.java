@@ -2075,6 +2075,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 
 			testStepNumber = "s8";
 			status = false;
+			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
 			LOGGER.info("#####################################################################################");
 			LOGGER.info(
 					"STEP 8:Verify setting  the IPV6 ping server table 1 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.1)");
@@ -2088,7 +2089,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			errorMessage = "unable to set the IPV6 ping server in table1 using SNMP command";
 			LOGGER.info("S8 ACTUAL : "
 					+ (status ? "Successfully set the IPV6 ping server in table1 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * STEP 9:Verify adding the IPV6 ping server table 2 using SNMP OID
@@ -2111,7 +2112,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			errorMessage = "Unable to Add the IPV6 ping server table2 using SNMP";
 			LOGGER.info("S9 ACTUAL : "
 					+ (status ? "Successfully Added the IPV6 ping server table2 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * STEP 10:Verify setting the IPV6 ping server2 using SNMP OID
@@ -2132,7 +2133,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			errorMessage = "unable to set the IPV6 ping server in table2 using SNMP command";
 			LOGGER.info("S10 ACTUAL : "
 					+ (status ? "Successfully set the IPV6 ping server in table2 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * STEP 11:Verify adding the IPV6 ping server table 3 using SNMP OID
@@ -2155,7 +2156,7 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			errorMessage = "Unable to Add the IPV6 ping server table3 using SNMP";
 			LOGGER.info("S11 ACTUAL : "
 					+ (status ? "Successfully Added the IPV6 ping server table3 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * STEP 12:Verify setting the IPV6 ping server3 using SNMP OID
@@ -2176,7 +2177,11 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			errorMessage = "unable to set the IPV6 ping server in table3 using SNMP command";
 			LOGGER.info("S12 ACTUAL : "
 					+ (status ? "Successfully set the IPV6 ping server in table3 using SNMP " : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			}else {
+				LOGGER.info("IPv6 is not available/disabled : skipping teststeps...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+			}
 
 			/**
 			 * STEP 13 :verify whether "Connectivity Test is Successfull" message is present
