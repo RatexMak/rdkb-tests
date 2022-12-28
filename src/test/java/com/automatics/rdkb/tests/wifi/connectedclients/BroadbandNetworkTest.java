@@ -264,8 +264,8 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 				webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device,
 						BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS);
 			} else {
-				String[] webpaParameter = { BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_DNS };
-				webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device, webpaParameter);
+				webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_DNS_RPI);
 			}
 			status = (!webpaResponseMap.isEmpty() && (null != webpaResponseMap)
 					&& BroadBandWebPaUtils.getAndVerifyMapValueIsNotNullOrEmpty(webpaResponseMap));
@@ -472,13 +472,27 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 			response = tapEnv.executeCommandOnOneIPClients(connectedClient, command);
 			LOGGER.info("response on step " + stepNumber + " is " + response);
 			if (CommonMethods.isNotNull(response)) {
-				for (String key : BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS) {
-					LOGGER.info("Key on step " + stepNumber + " is " + key);
-					LOGGER.info("webpaResponseMap.get(key) on step " + stepNumber + " is " + webpaResponseMap.get(key));
-					status = CommonUtils.patternSearchFromTargetString(response, webpaResponseMap.get(key));
-					LOGGER.info("status on step " + stepNumber + " is " + status);
-					if (!status) {
-						break;
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					for (String key : BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS) {
+						LOGGER.info("Key on step " + stepNumber + " is " + key);
+						LOGGER.info(
+								"webpaResponseMap.get(key) on step " + stepNumber + " is " + webpaResponseMap.get(key));
+						status = CommonUtils.patternSearchFromTargetString(response, webpaResponseMap.get(key));
+						LOGGER.info("status on step " + stepNumber + " is " + status);
+						if (!status) {
+							break;
+						}
+					}
+				} else {
+					for (String key : BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_DNS_RPI) {
+						LOGGER.info("Key on step " + stepNumber + " is " + key);
+						LOGGER.info(
+								"webpaResponseMap.get(key) on step " + stepNumber + " is " + webpaResponseMap.get(key));
+						status = CommonUtils.patternSearchFromTargetString(response, webpaResponseMap.get(key));
+						LOGGER.info("status on step " + stepNumber + " is " + status);
+						if (!status) {
+							break;
+						}
 					}
 				}
 			}
