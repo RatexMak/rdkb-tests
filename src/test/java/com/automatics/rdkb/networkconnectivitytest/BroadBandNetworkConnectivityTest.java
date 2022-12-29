@@ -41,6 +41,7 @@ import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.networkconnectivity.BroadBandNetworkConnectivityUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
@@ -1620,49 +1621,56 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 					+ " : EXPECTED - PING_FAILED:6  marker  should  get logged in the rdklogs/logs/dcmscript.log");
 			LOGGER.info("GOING TO SEARCH THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE");
 			LOGGER.info("******************************************************************************");
-			if (!isTelemetryEnabled) {
-				JSONObject telemetryPayloadData = BroadBandTelemetryUtils.getPayLoadDataAsJson(tapEnv, device,
-						BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE, true);
-				LOGGER.info("SEARCHED THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE: "
-						+ (null != telemetryPayloadData));
-				errorMessage = "Telemetry Marker for Ping Failure is NOT present.";
-				if (null != telemetryPayloadData) {
-					String response = BroadBandTelemetryUtils.getPayloadParameterValue(telemetryPayloadData,
-							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
-					LOGGER.info("response is" + response);
-					status = CommonMethods.isNotNull(response) && BroadBandCommonUtils.compareValues("INT_COMPARISON",
-							BroadBandTestConstants.STRING_VALUE_SIX, response);
-					errorMessage = "Telemetry Marker for Ping Failure is  present BUT with inappropriate value";
-				}
-				if (!status) {
-					errorMessage = "Telemetry Marker for Ping Failure 4 and Ping Failure 2 arenot present";
-					status = BroadBandTelemetryUtils.verifyPingFailedPayloadParamFromDcmScript(tapEnv, device,
-							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
-				}
-				if (status) {
-					LOGGER.info(
-							"STEP " + stepNumber + " : ACTUAL : TELEMETRY MARKER FOR PING FAILURES IS BEEN PRESENT");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				if (!isTelemetryEnabled) {
+					JSONObject telemetryPayloadData = BroadBandTelemetryUtils.getPayLoadDataAsJson(tapEnv, device,
+							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE, true);
+					LOGGER.info("SEARCHED THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE: "
+							+ (null != telemetryPayloadData));
+					errorMessage = "Telemetry Marker for Ping Failure is NOT present.";
+					if (null != telemetryPayloadData) {
+						String response = BroadBandTelemetryUtils.getPayloadParameterValue(telemetryPayloadData,
+								BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
+						LOGGER.info("response is" + response);
+						status = CommonMethods.isNotNull(response) && BroadBandCommonUtils
+								.compareValues("INT_COMPARISON", BroadBandTestConstants.STRING_VALUE_SIX, response);
+						errorMessage = "Telemetry Marker for Ping Failure is  present BUT with inappropriate value";
+					}
+					if (!status) {
+						errorMessage = "Telemetry Marker for Ping Failure 4 and Ping Failure 2 arenot present";
+						status = BroadBandTelemetryUtils.verifyPingFailedPayloadParamFromDcmScript(tapEnv, device,
+								BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
+					}
+					if (status) {
+						LOGGER.info("STEP " + stepNumber
+								+ " : ACTUAL : TELEMETRY MARKER FOR PING FAILURES IS BEEN PRESENT");
+					} else {
+						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					}
 				} else {
-					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					errorMessage = "The count of PING_FAILED is less than 6";
+					int count = getTextCount(tapEnv, device,
+							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE,
+							BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+					if (count >= BroadBandTestConstants.CONSTANT_6) {
+						status = true;
+					}
+					if (status) {
+						LOGGER.info("STEP " + stepNumber
+								+ " : ACTUAL : For Telemetry 2.0 PING_FAILED count present in selfheal.log is :"
+								+ count);
+					} else {
+						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					}
 				}
+				LOGGER.info("******************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 			} else {
-				errorMessage = "The count of PING_FAILED is less than 6";
-				int count = getTextCount(tapEnv, device,
-						BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE,
-						BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
-						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-				if (count >= BroadBandTestConstants.CONSTANT_6) {
-					status = true;
-				}
-				if (status) {
-					LOGGER.info("STEP " + stepNumber
-							+ " : ACTUAL : For Telemetry 2.0 PING_FAILED count present in selfheal.log is :" + count);
-				} else {
-					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-				}
+				LOGGER.info("Skipping teststep ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+						false);
 			}
-			LOGGER.info("******************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = "Exception occured while checking the invalid ping server connectivity test by webpa"
@@ -2075,112 +2083,113 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 
 			testStepNumber = "s8";
 			status = false;
-			if(BroadbandPropertyFileHandler.isIpv6Enabled()) {
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 8:Verify setting  the IPV6 ping server table 1 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.1)");
-			LOGGER.info("EXPECTED-Should be able to set the IPV6 ping server table 1");
-			LOGGER.info("#####################################################################################");
-			ipv6PingServer = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 8:Verify setting  the IPV6 ping server table 1 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.1)");
+				LOGGER.info("EXPECTED-Should be able to set the IPV6 ping server table 1");
+				LOGGER.info("#####################################################################################");
+				ipv6PingServer = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
 
-			status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_ONE.getOid(), SnmpDataType.STRING, ipv6PingServer,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_ONE.getTableIndex());
-			errorMessage = "unable to set the IPV6 ping server in table1 using SNMP command";
-			LOGGER.info("S8 ACTUAL : "
-					+ (status ? "Successfully set the IPV6 ping server in table1 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+				status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_ONE.getOid(), SnmpDataType.STRING, ipv6PingServer,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_ONE.getTableIndex());
+				errorMessage = "unable to set the IPV6 ping server in table1 using SNMP command";
+				LOGGER.info("S8 ACTUAL : "
+						+ (status ? "Successfully set the IPV6 ping server in table1 using SNMP" : errorMessage));
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * STEP 9:Verify adding the IPV6 ping server table 2 using SNMP OID
-			 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.2).
-			 * 
-			 */
-			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			testStepNumber = "s9";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 9:Verify adding the IPV6 ping server table 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.2).");
-			LOGGER.info("EXPECTED-Should  be able to add the IPV6 ping server table 2");
-			LOGGER.info("#####################################################################################");
+				/**
+				 * STEP 9:Verify adding the IPV6 ping server table 2 using SNMP OID
+				 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.2).
+				 * 
+				 */
+				tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+				testStepNumber = "s9";
+				status = false;
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 9:Verify adding the IPV6 ping server table 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.2).");
+				LOGGER.info("EXPECTED-Should  be able to add the IPV6 ping server table 2");
+				LOGGER.info("#####################################################################################");
 
-			status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO_ADD.getOid(), SnmpDataType.INTEGER,
-					BroadBandTestConstants.CONSTANT_PING_SERVER_ADDTABLE,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO_ADD.getTableIndex());
-			errorMessage = "Unable to Add the IPV6 ping server table2 using SNMP";
-			LOGGER.info("S9 ACTUAL : "
-					+ (status ? "Successfully Added the IPV6 ping server table2 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+				status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO_ADD.getOid(), SnmpDataType.INTEGER,
+						BroadBandTestConstants.CONSTANT_PING_SERVER_ADDTABLE,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO_ADD.getTableIndex());
+				errorMessage = "Unable to Add the IPV6 ping server table2 using SNMP";
+				LOGGER.info("S9 ACTUAL : "
+						+ (status ? "Successfully Added the IPV6 ping server table2 using SNMP" : errorMessage));
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * STEP 10:Verify setting the IPV6 ping server2 using SNMP OID
-			 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.2) to valid ipv6 ping server.
-			 * 
-			 */
-			testStepNumber = "s10";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 10:Verify setting  the IPV6 ping server table 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.2)");
-			LOGGER.info("EXPECTED-Should be able to set the IPV6 ping server in table 2 ");
-			LOGGER.info("#####################################################################################");
+				/**
+				 * STEP 10:Verify setting the IPV6 ping server2 using SNMP OID
+				 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.2) to valid ipv6 ping server.
+				 * 
+				 */
+				testStepNumber = "s10";
+				status = false;
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 10:Verify setting  the IPV6 ping server table 2 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.2)");
+				LOGGER.info("EXPECTED-Should be able to set the IPV6 ping server in table 2 ");
+				LOGGER.info("#####################################################################################");
 
-			status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO.getOid(), SnmpDataType.STRING, ipv6PingServer,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO.getTableIndex());
-			errorMessage = "unable to set the IPV6 ping server in table2 using SNMP command";
-			LOGGER.info("S10 ACTUAL : "
-					+ (status ? "Successfully set the IPV6 ping server in table2 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+				status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO.getOid(), SnmpDataType.STRING, ipv6PingServer,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_TWO.getTableIndex());
+				errorMessage = "unable to set the IPV6 ping server in table2 using SNMP command";
+				LOGGER.info("S10 ACTUAL : "
+						+ (status ? "Successfully set the IPV6 ping server in table2 using SNMP" : errorMessage));
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * STEP 11:Verify adding the IPV6 ping server table 3 using SNMP OID
-			 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.3).
-			 * 
-			 */
-			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			testStepNumber = "s11";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 11:Verify adding the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.3).");
-			LOGGER.info("EXPECTED-Should  be able to add the IPV6 ping server table 3");
-			LOGGER.info("#####################################################################################");
+				/**
+				 * STEP 11:Verify adding the IPV6 ping server table 3 using SNMP OID
+				 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.3).
+				 * 
+				 */
+				tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+				testStepNumber = "s11";
+				status = false;
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 11:Verify adding the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.3.3).");
+				LOGGER.info("EXPECTED-Should  be able to add the IPV6 ping server table 3");
+				LOGGER.info("#####################################################################################");
 
-			status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE_ADD.getOid(), SnmpDataType.INTEGER,
-					BroadBandTestConstants.CONSTANT_PING_SERVER_ADDTABLE,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE_ADD.getTableIndex());
-			errorMessage = "Unable to Add the IPV6 ping server table3 using SNMP";
-			LOGGER.info("S11 ACTUAL : "
-					+ (status ? "Successfully Added the IPV6 ping server table3 using SNMP" : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+				status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE_ADD.getOid(), SnmpDataType.INTEGER,
+						BroadBandTestConstants.CONSTANT_PING_SERVER_ADDTABLE,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE_ADD.getTableIndex());
+				errorMessage = "Unable to Add the IPV6 ping server table3 using SNMP";
+				LOGGER.info("S11 ACTUAL : "
+						+ (status ? "Successfully Added the IPV6 ping server table3 using SNMP" : errorMessage));
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * STEP 12:Verify setting the IPV6 ping server3 using SNMP OID
-			 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.3) to valid ipv6 ping server.
-			 * 
-			 */
-			testStepNumber = "s12";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 12:Verify setting  the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.3)");
-			LOGGER.info("EXPECTED-Should be able to set the IPV6 ping server in table 3");
-			LOGGER.info("#####################################################################################");
+				/**
+				 * STEP 12:Verify setting the IPV6 ping server3 using SNMP OID
+				 * (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.3) to valid ipv6 ping server.
+				 * 
+				 */
+				testStepNumber = "s12";
+				status = false;
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 12:Verify setting  the IPV6 ping server table 3 using SNMP OID (.1.3.6.1.4.1.17270.44.1.1.6.2.1.2.3)");
+				LOGGER.info("EXPECTED-Should be able to set the IPV6 ping server in table 3");
+				LOGGER.info("#####################################################################################");
 
-			status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE.getOid(), SnmpDataType.STRING, ipv6PingServer,
-					BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE.getTableIndex());
-			errorMessage = "unable to set the IPV6 ping server in table3 using SNMP command";
-			LOGGER.info("S12 ACTUAL : "
-					+ (status ? "Successfully set the IPV6 ping server in table3 using SNMP " : errorMessage));
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-			}else {
+				status = BroadBandSnmpUtils.executeSnmpSetCommand(tapEnv, device,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE.getOid(), SnmpDataType.STRING, ipv6PingServer,
+						BroadBandSnmpMib.ECM_IPV6_PING_SERVER_TABLE_THREE.getTableIndex());
+				errorMessage = "unable to set the IPV6 ping server in table3 using SNMP command";
+				LOGGER.info("S12 ACTUAL : "
+						+ (status ? "Successfully set the IPV6 ping server in table3 using SNMP " : errorMessage));
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			} else {
 				LOGGER.info("IPv6 is not available/disabled : skipping teststeps...");
-				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
 
 			/**
@@ -3214,49 +3223,56 @@ public class BroadBandNetworkConnectivityTest extends AutomaticsTestBase {
 			LOGGER.info("EXPECTED - PING_FAILED:6  marker  should  get logged in the rdklogs/logs/dcmscript.log");
 			LOGGER.info("GOING TO SEARCH THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE");
 			LOGGER.info("******************************************************************************");
-			if (!isTelemetryEnabled) {
-				JSONObject telemetryPayloadData = BroadBandTelemetryUtils.getPayLoadDataAsJson(tapEnv, device,
-						BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE, true);
-				LOGGER.info("SEARCHED THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE: "
-						+ (null != telemetryPayloadData));
-				errorMessage = "Telemetry Marker for Ping Failure is NOT present.";
-				if (null != telemetryPayloadData) {
-					String response = BroadBandTelemetryUtils.getPayloadParameterValue(telemetryPayloadData,
-							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
-					LOGGER.info("response is" + response);
-					status = CommonMethods.isNotNull(response) && (BroadBandCommonUtils.compareValues("INT_COMPARISON",
-							BroadBandTestConstants.STRING_VALUE_SIX, response));
-					errorMessage = "Telemetry Marker for Ping Failure is  present BUT with inappropriate value";
-				}
-				if (!status) {
-					errorMessage = "Telemetry Marker for Ping Failure 4 & 2 is not present in dcmscript log";
-					status = BroadBandTelemetryUtils.verifyPingFailedPayloadParamFromDcmScript(tapEnv, device,
-							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
-				}
-				if (status) {
-					LOGGER.info(
-							"STEP " + stepNumber + " : ACTUAL : Telemetry marker for ping failures is been present");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				if (!isTelemetryEnabled) {
+					JSONObject telemetryPayloadData = BroadBandTelemetryUtils.getPayLoadDataAsJson(tapEnv, device,
+							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE, true);
+					LOGGER.info("SEARCHED THE DCMSCRIPT.LOG FOR TELEMETRY MARKER FOR PING FAILURE MESSAGE: "
+							+ (null != telemetryPayloadData));
+					errorMessage = "Telemetry Marker for Ping Failure is NOT present.";
+					if (null != telemetryPayloadData) {
+						String response = BroadBandTelemetryUtils.getPayloadParameterValue(telemetryPayloadData,
+								BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
+						LOGGER.info("response is" + response);
+						status = CommonMethods.isNotNull(response) && (BroadBandCommonUtils
+								.compareValues("INT_COMPARISON", BroadBandTestConstants.STRING_VALUE_SIX, response));
+						errorMessage = "Telemetry Marker for Ping Failure is  present BUT with inappropriate value";
+					}
+					if (!status) {
+						errorMessage = "Telemetry Marker for Ping Failure 4 & 2 is not present in dcmscript log";
+						status = BroadBandTelemetryUtils.verifyPingFailedPayloadParamFromDcmScript(tapEnv, device,
+								BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE);
+					}
+					if (status) {
+						LOGGER.info("STEP " + stepNumber
+								+ " : ACTUAL : Telemetry marker for ping failures is been present");
+					} else {
+						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					}
 				} else {
-					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					errorMessage = "The count of PING_FAILED is less than 6";
+					int count = getTextCount(tapEnv, device,
+							BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE,
+							BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
+							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+					if (count >= BroadBandTestConstants.CONSTANT_6) {
+						status = true;
+					}
+					if (status) {
+						LOGGER.info("STEP " + stepNumber
+								+ " : ACTUAL : For Telemetry 2.0 PING_FAILED count present in selfheal.log is :"
+								+ count);
+					} else {
+						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					}
 				}
+				LOGGER.info("******************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 			} else {
-				errorMessage = "The count of PING_FAILED is less than 6";
-				int count = getTextCount(tapEnv, device,
-						BroadBandTraceConstants.TELEMETRY_MARKER_FOR_PING_SERVER_FAILURE,
-						BroadBandCommandConstants.FILE_SELFHEAL_LOG, BroadBandTestConstants.FIVE_MINUTES,
-						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-				if (count >= BroadBandTestConstants.CONSTANT_6) {
-					status = true;
-				}
-				if (status) {
-					LOGGER.info("STEP " + stepNumber
-							+ " : ACTUAL : For Telemetry 2.0 PING_FAILED count present in selfheal.log is :" + count);
-				} else {
-					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-				}
+				LOGGER.info("skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+						false);
 			}
-			LOGGER.info("******************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 
 		}
 
