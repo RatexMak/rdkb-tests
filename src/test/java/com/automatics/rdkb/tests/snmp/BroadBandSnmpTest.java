@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.bcel.verifier.statics.LONG_Upper;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -1102,8 +1103,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			response = null;
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 3: DESCRIPTION : Verify the Server Address Type can be retrieved using SNMP");
-			LOGGER.info(
-					"STEP 3: ACTION : Execute the SNMP command to retrieve Server Address Type ");
+			LOGGER.info("STEP 3: ACTION : Execute the SNMP command to retrieve Server Address Type ");
 			LOGGER.info(
 					"STEP 3: EXPECTED : Server Address Type should be retrieved from SNMP, the value should be either 0(IPv4) or 1 (IPv6) or 2(Hexa Decimal)");
 			LOGGER.info("**********************************************************************************");
@@ -2382,15 +2382,15 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			deviceStatusResponse = BroadBandWebPaUtils.getMultipleParameterValuesUsingWebPaOrDmcli(device, tapEnv,
 					parametersArray);
 
-			List<String> securityNumberlist = Collections
-					.unmodifiableList(Arrays.asList(AutomaticsPropertyUtility
+			List<String> securityNumberlist = Collections.unmodifiableList(Arrays.asList(
+					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_1),
-							AutomaticsPropertyUtility
+					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_2),
-							AutomaticsPropertyUtility
+					AutomaticsPropertyUtility
 							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_3),
-							AutomaticsPropertyUtility
-							.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_4)));
+					AutomaticsPropertyUtility.getProperty(
+							BroadBandPropertyKeyConstants.PROP_KEY_SNMPV3_DH_KICK_START_SECURITY_NUMBER_4)));
 
 			validation = true;
 
@@ -2752,20 +2752,29 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 
 					webPaParam = BroadBandWebPaConstants.WEBPA_PARAM_SECURITY_MODE_OF_WIFI
 							.replace(BroadBandTestConstants.TR181_NODE_REF, replaceValue);
-
-					webPaResponse = tapEnv.executeWebPaCommand(device, webPaParam);
-					status = CommonMethods.isNotNull(webPaResponse);
-					if (status) {
-						webPaSecurityModevalue = BroadBandTestConstants.MAP_SECURITY_MODE_AND_KEY_TO_GET_POSSIBLE_SECURITY_MODE_VALUES
-								.get(webPaResponse);
-						LOGGER.info("STEP " + stepNumber
-								+ ": ACTUAL : Security mode value retieved successfully from WEBPA param "
-								+ webPaParam);
+					
+					if (DeviceModeHandler.isFibreDevice(device)
+							&& (replaceValue == "1006" || replaceValue == "1007" || replaceValue == "1008")) {
+						
+						LOGGER.info("Accesspoints not applicable for RPi : skipping teststep ...");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+								errorMessage, false);
 					} else {
-						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+						webPaResponse = tapEnv.executeWebPaCommand(device, webPaParam);
+						status = CommonMethods.isNotNull(webPaResponse);
+						if (status) {
+							webPaSecurityModevalue = BroadBandTestConstants.MAP_SECURITY_MODE_AND_KEY_TO_GET_POSSIBLE_SECURITY_MODE_VALUES
+									.get(webPaResponse);
+							LOGGER.info("STEP " + stepNumber
+									+ ": ACTUAL : Security mode value retieved successfully from WEBPA param "
+									+ webPaParam);
+						} else {
+							LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+						}
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 					}
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 					stepNumber++;
 					stepNum = "S" + stepNumber;
@@ -4395,8 +4404,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
-					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
+					BroadBandTestConstants.CONSTANT_0,
+					AutomaticsPropertyUtility.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 			if (status) {
 				LOGGER.info(
 						"STEP 1: ACTUAL : AAA server Primary IP address (IPv4 ) for 2.4GHz is configured successfully.");
@@ -4418,8 +4427,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_2_4GHZ_WIFI_10005_SECONDARY_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
-					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
+					BroadBandTestConstants.CONSTANT_0,
+					AutomaticsPropertyUtility.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 			if (status) {
 				LOGGER.info(
 						"STEP 2: ACTUAL : AAA server Secondary IP address (IPv4 ) for 2.4GHz is configured successfully.");
@@ -4440,8 +4449,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
-					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
+					BroadBandTestConstants.CONSTANT_0,
+					AutomaticsPropertyUtility.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 			if (status) {
 				LOGGER.info(
 						"STEP 3: ACTUAL : AAA server Primary IP address (IPv4 ) for 5GHz is configured successfully.");
@@ -4463,8 +4472,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_5GHZ_WIFI_10105_SECONDARY_RADIUSSERVERIPADDR,
-					BroadBandTestConstants.CONSTANT_0, AutomaticsPropertyUtility
-					.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
+					BroadBandTestConstants.CONSTANT_0,
+					AutomaticsPropertyUtility.getProperty(BroadBandPropertyKeyConstants.PROP_KEY_RADIUS_SERVER_IPADDR));
 
 			if (status) {
 				LOGGER.info(
@@ -4677,8 +4686,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
 					"STEP 3: DESCRIPTION : Verify SNMP MIB docsDevSwServerAddressType is set to IPv6 address type.");
-			LOGGER.info(
-					"STEP 3: ACTION : Execute SNMP SET command to set docsDevSwServerAddressType value to  2.");
+			LOGGER.info("STEP 3: ACTION : Execute SNMP SET command to set docsDevSwServerAddressType value to  2.");
 			LOGGER.info(
 					"STEP 3: EXPECTED : SNMP MIB  docsDevSwServerAddressType should be set to IPv6 address type(2).");
 			LOGGER.info("**********************************************************************************");
@@ -7039,8 +7047,8 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 			ssidNameFromWebPa = tapEnv.executeWebPaCommand(device,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PUBLIC_SSID);
 			LOGGER.info("5GHz Public SSID name retrieved using WebPa =" + ssidNameFromWebPa);
-			status = CommonMethods.isNotNull(ssidNameFromWebPa)
-					&& ssidNameFromWebPa.equals(AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));
+			status = CommonMethods.isNotNull(ssidNameFromWebPa) && ssidNameFromWebPa.equals(
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.PROP_KEY_PUBLIC_WIFI_SSID_5));
 
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : The 5 GHz SSID for public wifi is as expected");
@@ -7396,11 +7404,10 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 	 * <li>Verify retrieving the configuration of bssid MAC for 5Ghz webpa</li>
 	 * </ol>
 	 * 
-     * @param device
-     *            {@link Dut}
-     * 
-     * @author Joseph M
-     * @refactor Athira
+	 * @param device {@link Dut}
+	 * 
+	 * @author Joseph M
+	 * @refactor Athira
 	 */
 	@Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
 	@TestDetails(testUID = "TC-RDKB-WiFi-SNMP-1031")
@@ -8434,7 +8441,7 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 
 		}
 	}
-	
+
 	/**
 	 * Verify RFC control of SNMPv2
 	 * <ol>
