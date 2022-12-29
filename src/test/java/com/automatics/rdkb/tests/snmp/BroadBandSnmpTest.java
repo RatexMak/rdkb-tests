@@ -2752,29 +2752,25 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 
 					webPaParam = BroadBandWebPaConstants.WEBPA_PARAM_SECURITY_MODE_OF_WIFI
 							.replace(BroadBandTestConstants.TR181_NODE_REF, replaceValue);
+
+					webPaResponse = tapEnv.executeWebPaCommand(device, webPaParam);
 					
-					if (DeviceModeHandler.isFibreDevice(device)
-							&& (replaceValue == "1006" || replaceValue == "1007" || replaceValue == "1008")) {
-						
-						LOGGER.info("Accesspoints not applicable for RPi : skipping teststep ...");
-						tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-								errorMessage, false);
+					if (DeviceModeHandler.isRPIDevice(device) && CommonMethods.isNull(webPaResponse)) {
+						status = true;
 					} else {
-						webPaResponse = tapEnv.executeWebPaCommand(device, webPaParam);
 						status = CommonMethods.isNotNull(webPaResponse);
-						if (status) {
-							webPaSecurityModevalue = BroadBandTestConstants.MAP_SECURITY_MODE_AND_KEY_TO_GET_POSSIBLE_SECURITY_MODE_VALUES
-									.get(webPaResponse);
-							LOGGER.info("STEP " + stepNumber
-									+ ": ACTUAL : Security mode value retieved successfully from WEBPA param "
-									+ webPaParam);
-						} else {
-							LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-						}
-						LOGGER.info(
-								"**********************************************************************************");
-						tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 					}
+					if (status) {
+						webPaSecurityModevalue = BroadBandTestConstants.MAP_SECURITY_MODE_AND_KEY_TO_GET_POSSIBLE_SECURITY_MODE_VALUES
+								.get(webPaResponse);
+						LOGGER.info("STEP " + stepNumber
+								+ ": ACTUAL : Security mode value retieved successfully from WEBPA param "
+								+ webPaParam);
+					} else {
+						LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 					stepNumber++;
 					stepNum = "S" + stepNumber;
