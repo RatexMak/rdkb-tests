@@ -3912,10 +3912,17 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO a,n,ac");
 			LOGGER.info("#######################################################################################");
 			errorMessage = "UNABLE TO SET OPERATING STANDARD AS a,n,ac.";
+			if(!DeviceModeHandler.isRPIDevice(device)) {
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
 					WebPaDataTypes.STRING.getValue(),
 					WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getOperatingmode());
+			}else {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(),
+						BroadbandPropertyFileHandler.get5GhzOperatingModeForRPi());
+			}
 			if (status) {
 				LOGGER.info(
 						"STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS a,n,ac.");
@@ -3985,7 +3992,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			verifyConnectedclientDetails(device, testId, deviceConnectedWith2Ghz, BroadBandTestConstants.BAND_2_4GHZ,
 					BroadBandWebPaConstants.WEBPA_PARAM_2_4_GHZ_ASSOCIATED_DEVICES, deviceDateTime);
 			/**
-			 * STEP 11 : VERIFY 5GHz CONNECTED CLIENT'S MAC ADDRESS IN GATEWAY
+			 * STEP 11 : VERIFY 2GHz CONNECTED CLIENT'S MAC ADDRESS IN GATEWAY
 			 */
 			stepNumber++;
 			step = "S" + stepNumber;
