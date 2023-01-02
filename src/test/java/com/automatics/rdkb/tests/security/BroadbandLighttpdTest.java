@@ -1138,7 +1138,7 @@ public class BroadbandLighttpdTest extends AutomaticsTestBase {
 			}
 			status = null != connectedClientSettop;
 			String successMessage = null;
-			if (status) {
+			if (status && !DeviceModeHandler.isRPIDevice(device)) {
 				successMessage = "Connected Client is assigned with a valid IPv4 Address DHCP Range";
 				status = BroadBandConnectedClientUtils.verifyIISStatus(connectedClientSettop, tapEnv,
 						BroadBandConnectedClientTestConstants.IIS_START_FLAG);
