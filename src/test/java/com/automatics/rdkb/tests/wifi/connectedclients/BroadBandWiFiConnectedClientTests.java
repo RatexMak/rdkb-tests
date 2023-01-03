@@ -11763,8 +11763,7 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = false;
 			try {
 				errorMessage = "FAILED TO FACTORY RESET THE DEVICE";
-				if (BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
-						BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS)) {
+				if (BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device)) {
 					// Error message
 					errorMessage = "WEBPA SERVICE DIDN'T COMEUP AFTER FACTORY RESETTING THE DEVICE";
 					status = BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device, true);

@@ -4447,8 +4447,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 		LOGGER.info("PRE-CONDITION " + preConStepNumber + " : EXPTECTED : DEVICE MUST UNDERGO FACTORY RESET.");
 		LOGGER.info("#######################################################################################");
 		errorMessage = "UNABLE TO PERFORM WIFI FACTORY RESET OPERATION ON THE DEVICE. HENCE BLOCKING THE EXECUTION.";
-		status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
-				BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
+		status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 		if (status) {
 			LOGGER.info("PRE-CONDITION " + preConStepNumber + " : ACTUAL : FACTORY RESET SUCCESSFULLY PERFORMED.");
 		} else {
@@ -7482,10 +7481,16 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO b/g/n");
 			LOGGER.info("#######################################################################################");
 			errorMessage = "UNABLE TO SET OPERATING STANDARD AS b/g/n.";
-			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
-					WebPaDataTypes.STRING.getValue(),
-					WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode());
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(),
+						WifiOperatingStandard.OPERATING_STANDARD_B_G_N.getOperatingmode());
+			} else {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(), BroadbandPropertyFileHandler.get2GhzOperatingModeForRPi());
+			}
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS b/g/n.");
 			} else {
@@ -7573,9 +7578,15 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 									: WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
 			errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + defaultOperatingStandard.getOperatingmode();
 
-			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
-					WebPaDataTypes.STRING.getValue(), defaultOperatingStandard.getOperatingmode());
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(), defaultOperatingStandard.getOperatingmode());
+			} else {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(), BroadbandPropertyFileHandler.get5GhzOperatingModeForRPi());
+			}
 
 			if (status) {
 				LOGGER.info(
@@ -7823,7 +7834,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 2.4 GHZ SSID";
 			try {
 				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, deviceConnectedWith2Ghz,
-						BroadBandTestConstants.URL_HTTP_FACEBOOK);
+						BroadBandTestConstants.URL_W3SCHOOLS);
 				status = result.isStatus();
 				errorMessage = result.getErrorMessage();
 			} catch (Exception exception) {
@@ -7888,7 +7899,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 5 GHZ SSID";
 			try {
 				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, deviceConnectedWith5Ghz,
-						BroadBandTestConstants.URL_HTTP_FACEBOOK);
+						BroadBandTestConstants.URL_W3SCHOOLS);
 				status = result.isStatus();
 				errorMessage = result.getErrorMessage();
 			} catch (Exception exception) {
