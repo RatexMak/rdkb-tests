@@ -1802,7 +1802,7 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 
 	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, groups = {
 			TestGroup.WEBPA, TestGroup.WIFI }, dataProviderClass = AutomaticsTapApi.class)
-	@TestDetails(testUID = "TC-RDKB-DHCP-LANCLIENT-1001")
+	@TestDetails(testUID = "TC-RDKB-DHCP-LANCLIENT-1001 ")
 	public void testToVerifyDhcpLanClient(Dut device) {
 		// String to store the test case status
 		boolean status = false;

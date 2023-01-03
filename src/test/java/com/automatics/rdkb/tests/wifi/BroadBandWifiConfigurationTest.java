@@ -971,15 +971,16 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 					+ BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD);
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO n");
 			LOGGER.info("#######################################################################################");
-			if(!DeviceModeHandler.isRPIDevice(device)) {
-			defaultOperatingStandard = CommonMethods.isAtomSyncAvailable(deviceConnectedWith5Ghz, tapEnv)
-					|| DeviceModeHandler.isBusinessClassDevice(device) ? WifiOperatingStandard.OPERATING_STANDARD_A_N
-							: WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
-			errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + defaultOperatingStandard.getOperatingmode();
-			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
-					WebPaDataTypes.STRING.getValue(), defaultOperatingStandard.getOperatingmode());
-			}else {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				defaultOperatingStandard = CommonMethods.isAtomSyncAvailable(deviceConnectedWith5Ghz, tapEnv)
+						|| DeviceModeHandler.isBusinessClassDevice(device)
+								? WifiOperatingStandard.OPERATING_STANDARD_A_N
+								: WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
+				errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + defaultOperatingStandard.getOperatingmode();
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(), defaultOperatingStandard.getOperatingmode());
+			} else {
 				defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N;
 				errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + defaultOperatingStandard.getOperatingmode();
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
@@ -3805,8 +3806,13 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 					+ ": EXPECTED : MUST RETURN THE DEFAULT STATUS AS 'TRUE' 5GHZ RADIO AUTOMATIC CHANNEL SELECTION");
 			LOGGER.info("#######################################################################################");
 			errorMessage = "UNABLE TO RETIREVE THE DEFAULT VALUE FOR 5GHZ RADIO AUTOMATIC CHANNEL SELECTION.";
-			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_5_GHZ_CHANNEL_SELECTION_MODE, BroadBandTestConstants.TRUE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_5_GHZ_CHANNEL_SELECTION_MODE, BroadBandTestConstants.TRUE);
+			} else {
+				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_5_GHZ_CHANNEL_SELECTION_MODE, BroadBandTestConstants.FALSE);
+			}
 			if (status) {
 				LOGGER.info("STEP " + stepNumber
 						+ " : ACTUAL : SUCCESSFULLY RETIREVED THE FOR 5GHZ RADIO AUTOMATIC CHANNEL SELECTION.");
@@ -3912,16 +3918,15 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO a,n,ac");
 			LOGGER.info("#######################################################################################");
 			errorMessage = "UNABLE TO SET OPERATING STANDARD AS a,n,ac.";
-			if(!DeviceModeHandler.isRPIDevice(device)) {
-			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
-					WebPaDataTypes.STRING.getValue(),
-					WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getOperatingmode());
-			}else {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
 						WebPaDataTypes.STRING.getValue(),
-						BroadbandPropertyFileHandler.get5GhzOperatingModeForRPi());
+						WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getOperatingmode());
+			} else {
+				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+						WebPaDataTypes.STRING.getValue(), BroadbandPropertyFileHandler.get5GhzOperatingModeForRPi());
 			}
 			if (status) {
 				LOGGER.info(
