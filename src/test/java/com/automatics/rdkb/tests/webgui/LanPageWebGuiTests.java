@@ -338,7 +338,7 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("#################### ENDING TEST CASE: TC-RDKB-CHANNEL_BANDWIDTH-1001#####################");
 	}
-	
+
 	/**
 	 * Method to validate channel bandwidth options
 	 * 
@@ -2012,102 +2012,120 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 			stepNum = "S5";
 			errorMessage = "Unable to retrieve the valid Delegated Prefix Address (IPv6) from <PARTNER> Network page";
 			status = false;
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 5: DESCRIPTION : Verify the Delegated prefix (IPv6)");
-			LOGGER.info("STEP 5: ACTION : Retrive the Delegated prefix (IPv6) using the Xpath element.");
-			LOGGER.info("STEP 5: EXPECTED : Retrieving the Delegated prefix (IPv6) should be successful.");
-			LOGGER.info("**********************************************************************************");
-			try {
-				if (isBusinessDevice) {
-					delegatedPrefixRetrieved = webDriver
-							.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DELEGATED_PREFIX_IPV6_BUSINESS))
-							.getText();
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 5: DESCRIPTION : Verify the Delegated prefix (IPv6)");
+				LOGGER.info("STEP 5: ACTION : Retrive the Delegated prefix (IPv6) using the Xpath element.");
+				LOGGER.info("STEP 5: EXPECTED : Retrieving the Delegated prefix (IPv6) should be successful.");
+				LOGGER.info("**********************************************************************************");
+				try {
+					if (isBusinessDevice) {
+						delegatedPrefixRetrieved = webDriver
+								.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DELEGATED_PREFIX_IPV6_BUSINESS))
+								.getText();
+					} else {
+						delegatedPrefixRetrieved = webDriver
+								.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DELEGATED_PREFIX_IPV6))
+								.getText();
+					}
+					if (CommonMethods.isNotNull(delegatedPrefixRetrieved)) {
+						delegatedPrefixRetrieved = delegatedPrefixRetrieved.trim().split("/")[0];
+						LOGGER.info("Delegated prefix (IPv6) retrieved from Web GUI : " + delegatedPrefixRetrieved);
+						status = CommonMethods.isIpv6Address(delegatedPrefixRetrieved);
+					}
+				} catch (Exception e) {
+					status = false;
+					LOGGER.error(" Exception occured while getting Delegated prefix (IPv6) from <PARTNER> Network page"
+							+ e.getMessage());
+				}
+				if (status) {
+					LOGGER.info(
+							"STEP 5: ACTUAL :  Successfully retrieved a valid IPV6 adrress for Delegated Prefix from GUI");
 				} else {
-					delegatedPrefixRetrieved = webDriver
-							.findElement(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DELEGATED_PREFIX_IPV6)).getText();
+					LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
 				}
-				if (CommonMethods.isNotNull(delegatedPrefixRetrieved)) {
-					delegatedPrefixRetrieved = delegatedPrefixRetrieved.trim().split("/")[0];
-					LOGGER.info("Delegated prefix (IPv6) retrieved from Web GUI : " + delegatedPrefixRetrieved);
-					status = CommonMethods.isIpv6Address(delegatedPrefixRetrieved);
-				}
-			} catch (Exception e) {
-				status = false;
-				LOGGER.error(" Exception occured while getting Delegated prefix (IPv6) from <PARTNER> Network page"
-						+ e.getMessage());
-			}
-			if (status) {
-				LOGGER.info(
-						"STEP 5: ACTUAL :  Successfully retrieved a valid IPV6 adrress for Delegated Prefix from GUI");
+				LOGGER.info("**********************************************************************************");
+				BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+						status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 5 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
-					status, errorMessage, true);
 
 			stepNum = "S6";
 			errorMessage = "Unable to retrieve the Global Ipv6 address from the client";
 			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 6: DESCRIPTION : Retrieve the Ipv6 address from the client");
-			LOGGER.info("STEP 6: ACTION : Get the Ipv6 address from the client connected");
-			LOGGER.info("STEP 6: EXPECTED : Ipv6 Address must be retrieved from the client ");
-			LOGGER.info("**********************************************************************************");
-			Device connDevice = (Device) deviceConnected;
-			String connectionType = connDevice.getConnectedDeviceInfo().getConnectionType();
-			LOGGER.info("connection type :" + connectionType);
-			if (CommonMethods.isNotNull(connectionType)
-					&& BroadBandWebGuiTestConstant.CONNECTION_TYPE_WIFI.equalsIgnoreCase(connectionType)) {
-				ipv6AddressRetrievedFromClient = BroadBandConnectedClientUtils
-						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(deviceConnected, tapEnv);
-				LOGGER.info("ipv6 address retrieved from client if connection type is wifi :"
-						+ ipv6AddressRetrievedFromClient);
-			}
-			if (CommonMethods.isNotNull(connectionType)
-					&& BroadBandWebGuiTestConstant.CONNECTION_TYPE_ETHERNET.equalsIgnoreCase(connectionType)) {
-				ipv6AddressRetrievedFromClient = BroadBandConnectedClientUtils
-						.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(deviceConnected, tapEnv);
-				LOGGER.info("ipv6 address retrieved from client if connection type is ethernet :"
-						+ ipv6AddressRetrievedFromClient);
-			}
-			status = CommonMethods.isNotNull(ipv6AddressRetrievedFromClient)
-					&& CommonMethods.isIpv6Address(ipv6AddressRetrievedFromClient);
-			LOGGER.info("Ipv6AddressRetrievedFromClient-" + ipv6AddressRetrievedFromClient);
-			if (status) {
-				LOGGER.info("STEP 6: ACTUAL : Retrieval of Ipv6 address from the client is successful");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 6: DESCRIPTION : Retrieve the Ipv6 address from the client");
+				LOGGER.info("STEP 6: ACTION : Get the Ipv6 address from the client connected");
+				LOGGER.info("STEP 6: EXPECTED : Ipv6 Address must be retrieved from the client ");
+				LOGGER.info("**********************************************************************************");
+				Device connDevice = (Device) deviceConnected;
+				String connectionType = connDevice.getConnectedDeviceInfo().getConnectionType();
+				LOGGER.info("connection type :" + connectionType);
+				if (CommonMethods.isNotNull(connectionType)
+						&& BroadBandWebGuiTestConstant.CONNECTION_TYPE_WIFI.equalsIgnoreCase(connectionType)) {
+					ipv6AddressRetrievedFromClient = BroadBandConnectedClientUtils
+							.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(deviceConnected, tapEnv);
+					LOGGER.info("ipv6 address retrieved from client if connection type is wifi :"
+							+ ipv6AddressRetrievedFromClient);
+				}
+				if (CommonMethods.isNotNull(connectionType)
+						&& BroadBandWebGuiTestConstant.CONNECTION_TYPE_ETHERNET.equalsIgnoreCase(connectionType)) {
+					ipv6AddressRetrievedFromClient = BroadBandConnectedClientUtils
+							.retrieveIPv6AddressFromConnectedClientWithDeviceCOnnected(deviceConnected, tapEnv);
+					LOGGER.info("ipv6 address retrieved from client if connection type is ethernet :"
+							+ ipv6AddressRetrievedFromClient);
+				}
+				status = CommonMethods.isNotNull(ipv6AddressRetrievedFromClient)
+						&& CommonMethods.isIpv6Address(ipv6AddressRetrievedFromClient);
+				LOGGER.info("Ipv6AddressRetrievedFromClient-" + ipv6AddressRetrievedFromClient);
+				if (status) {
+					LOGGER.info("STEP 6: ACTUAL : Retrieval of Ipv6 address from the client is successful");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			stepNum = "S7";
 			errorMessage = "Ipv6  prefix is not as same as delegated prefix";
 			status = false;
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 7: DESCRIPTION : Verify ipv6 address obtained should contain the valid delegated prefix");
-			LOGGER.info(
-					"STEP 7: ACTION : Verifty the Ipv6 address from the below command \" EXECUTE COMMAND, WINDOWS : ipconfig |grep -A 10 \"Wireless adapter Wi-Fi\" |grep -i \"IPv6 Address\" or LINUX : ifconfig | grep \"inet6\" or ON THE CONNECTED CLIENT.\" and should be same as the retrieved delegated prefix ipv6 address");
-			LOGGER.info(
-					"STEP 7: EXPECTED : The LAN client generates its own IPv6 address  and should be same as the   delegated prefix ipv6 address  from the gateway . The prefix must be a /64 one");
-			LOGGER.info("**********************************************************************************");
-
-			status = CommonUtils.patternSearchFromTargetString(
-					ipv6AddressRetrievedFromClient.replace(BroadBandTestConstants.DELIMITER_COLON,
-							BroadBandTestConstants.EMPTY_STRING),
-					delegatedPrefixRetrieved.replace(BroadBandTestConstants.DELIMITER_COLON,
-							BroadBandTestConstants.EMPTY_STRING));
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
 				LOGGER.info(
-						"STEP 7: ACTUAL : Client generates its own IPv6 address  and should be same as the   delegated prefix ipv6 address  from the gateway");
+						"STEP 7: DESCRIPTION : Verify ipv6 address obtained should contain the valid delegated prefix");
+				LOGGER.info(
+						"STEP 7: ACTION : Verifty the Ipv6 address from the below command \" EXECUTE COMMAND, WINDOWS : ipconfig |grep -A 10 \"Wireless adapter Wi-Fi\" |grep -i \"IPv6 Address\" or LINUX : ifconfig | grep \"inet6\" or ON THE CONNECTED CLIENT.\" and should be same as the retrieved delegated prefix ipv6 address");
+				LOGGER.info(
+						"STEP 7: EXPECTED : The LAN client generates its own IPv6 address  and should be same as the   delegated prefix ipv6 address  from the gateway . The prefix must be a /64 one");
+				LOGGER.info("**********************************************************************************");
+
+				status = CommonUtils.patternSearchFromTargetString(
+						ipv6AddressRetrievedFromClient.replace(BroadBandTestConstants.DELIMITER_COLON,
+								BroadBandTestConstants.EMPTY_STRING),
+						delegatedPrefixRetrieved.replace(BroadBandTestConstants.DELIMITER_COLON,
+								BroadBandTestConstants.EMPTY_STRING));
+				if (status) {
+					LOGGER.info(
+							"STEP 7: ACTUAL : Client generates its own IPv6 address  and should be same as the   delegated prefix ipv6 address  from the gateway");
+				} else {
+					LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 7 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 		} catch (Exception e) {
 			errorMessage = errorMessage + e.getMessage();
@@ -4307,9 +4325,8 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP 6: DESCRIPTION : Launch admin GUI login page and verify login status");
-			LOGGER.info(
-					"STEP 6: ACTION : Launch the admin GUI login page using LOGIN CREDENTIALS :"
-							+ "  username: adminPassword: password");
+			LOGGER.info("STEP 6: ACTION : Launch the admin GUI login page using LOGIN CREDENTIALS :"
+					+ "  username: adminPassword: password");
 			LOGGER.info("STEP 6: EXPECTED : admin GUI page should be launched and login should be successful");
 			LOGGER.info("**********************************************************************************");
 
@@ -4345,7 +4362,8 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 
 				boolean isBusinessClassDevice = DeviceModeHandler.isBusinessClassDevice(device);
 
-				status = lanSidePageNavigation.navigateToPartnerNetworkPage(device, tapEnv, webDriver, isBusinessClassDevice);
+				status = lanSidePageNavigation.navigateToPartnerNetworkPage(device, tapEnv, webDriver,
+						isBusinessClassDevice);
 			} catch (Exception e) {
 				LOGGER.error("Exception while Launching the Network page from Admin UI page");
 			}
@@ -4455,8 +4473,8 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 				}
 			} catch (Exception e) {
 				status = false;
-				LOGGER.error(" Exception occured while getting Delegated prefix (IPv6) from Network page"
-						+ e.getMessage());
+				LOGGER.error(
+						" Exception occured while getting Delegated prefix (IPv6) from Network page" + e.getMessage());
 			}
 			if (status) {
 				LOGGER.info(
@@ -4489,9 +4507,8 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 				}
 			} catch (Exception e) {
 				status = false;
-				LOGGER.error(
-						" Exception occured while Retrieving the Primary DNS Server (IPv6) from Network page"
-								+ e.getMessage());
+				LOGGER.error(" Exception occured while Retrieving the Primary DNS Server (IPv6) from Network page"
+						+ e.getMessage());
 			}
 
 			if (status) {
@@ -4525,9 +4542,8 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 				}
 			} catch (Exception e) {
 				status = false;
-				LOGGER.error(
-						" Exception occured while Retrieving the Secondary DNS Server (IPv6) from Network page"
-								+ e.getMessage());
+				LOGGER.error(" Exception occured while Retrieving the Secondary DNS Server (IPv6) from Network page"
+						+ e.getMessage());
 			}
 			if (status) {
 				LOGGER.info(
@@ -4560,9 +4576,8 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 				}
 			} catch (Exception e) {
 				status = false;
-				LOGGER.error(
-						" Exception occured while Retrieving the WAN Link Local Address (IPv6) from Network page"
-								+ e.getMessage());
+				LOGGER.error(" Exception occured while Retrieving the WAN Link Local Address (IPv6) from Network page"
+						+ e.getMessage());
 			}
 			if (status) {
 				LOGGER.info(
