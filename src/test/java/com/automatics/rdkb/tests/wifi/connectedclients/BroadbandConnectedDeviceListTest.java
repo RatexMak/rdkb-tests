@@ -1898,7 +1898,7 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 			testStepNumber = "s3";
 			status = false;
 			result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
-					connectedClientSettop, BroadBandTestConstants.URL_HTTPS_FACEBOOK,
+					connectedClientSettop, BroadBandTestConstants.URL_W3SCHOOLS,
 					BroadBandTestConstants.IP_VERSION4);
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
