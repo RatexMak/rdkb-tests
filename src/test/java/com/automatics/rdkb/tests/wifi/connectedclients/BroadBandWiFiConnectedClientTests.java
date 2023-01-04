@@ -4416,53 +4416,69 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			 */
 			stepNumber = "s12";
 			status = false;
-			errorMessage = "Failed to get the response connected in /tmp/wifiMon file";
-			LOGGER.info("******************************************************************************");
-			LOGGER.info(
-					"STEP 12: DESCRIPTION: Verify client is connected with ath1 wifi interface in wifiMon log file");
-			LOGGER.info("STEP 12: ACTION: Execute command: grep -i connected /tmp/wifiMon | grep -I ap:1");
-			LOGGER.info("STEP 12: EXPECTED: Response should contain the log message and should connected with ap:1");
-			LOGGER.info("******************************************************************************");
-			response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
-					BroadBandTraceConstants.LOG_MESSAGE_CONNECTED, BroadBandCommandConstants.FILE_WIFI_MON,
-					BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			if (CommonMethods.isNotNull(response)) {
-				macAddress = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_CONNECTED_DEVICE_MAC);
-				status = CommonMethods.isNotNull(macAddress);
-			}
-			if (status) {
-				LOGGER.info("STEP 12: ACTUAL: Successfully verified log message for client connected with 5GHz SSID");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				errorMessage = "Failed to get the response connected in /tmp/wifiMon file";
+				LOGGER.info("******************************************************************************");
+				LOGGER.info(
+						"STEP 12: DESCRIPTION: Verify client is connected with ath1 wifi interface in wifiMon log file");
+				LOGGER.info("STEP 12: ACTION: Execute command: grep -i connected /tmp/wifiMon | grep -I ap:1");
+				LOGGER.info(
+						"STEP 12: EXPECTED: Response should contain the log message and should connected with ap:1");
+				LOGGER.info("******************************************************************************");
+				response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+						BroadBandTraceConstants.LOG_MESSAGE_CONNECTED, BroadBandCommandConstants.FILE_WIFI_MON,
+						BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				if (CommonMethods.isNotNull(response)) {
+					macAddress = CommonMethods.patternFinder(response,
+							BroadBandTestConstants.PATTERN_CONNECTED_DEVICE_MAC);
+					status = CommonMethods.isNotNull(macAddress);
+				}
+				if (status) {
+					LOGGER.info(
+							"STEP 12: ACTUAL: Successfully verified log message for client connected with 5GHz SSID");
+				} else {
+					LOGGER.error("STEP 12: ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("******************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 12: ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 12 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("******************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			/**
 			 * STEP 13 : Verify telemetry logging for 5GHz client in wifihealth.txt file
 			 */
 			stepNumber = "s13";
 			status = false;
-			errorMessage = "Failed to get the log message WIFI_RECONNECT in wifihealth.txt file or could not verify with emacAddress got in STEP 11 with the response from /rdklogs/logs/wifihealth.txt";
-			LOGGER.info("******************************************************************************");
-			LOGGER.info("STEP 13: DESCRIPTION: Verify telemetry logging for 5GHz client in wifihealth.txt file");
-			LOGGER.info("STEP 13: ACTION: Execute command: grep -i WIFI_RECONNECT /rdklogs/logs/wifihealth.txt");
-			LOGGER.info("STEP 13: EXPECTED: Response should contain the log message for 5GHz reconnect");
-			LOGGER.info("******************************************************************************");
-			response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
-					BroadBandTraceConstants.LOG_MESSAGE_WIFI_RECONNECT,
-					BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			status = CommonMethods.isNotNull(response) && CommonMethods.isNotNull(macAddress)
-					&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-							BroadBandTraceConstants.LOG_MESSAGE_WIFI_RECONNECT)
-					&& CommonUtils.isGivenStringAvailableInCommandOutput(response, macAddress);
-			if (status) {
-				LOGGER.info("STEP 13: ACTUAL: Successfully verified the telemetry log message in wifihealth.txt file");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				errorMessage = "Failed to get the log message WIFI_RECONNECT in wifihealth.txt file or could not verify with emacAddress got in STEP 11 with the response from /rdklogs/logs/wifihealth.txt";
+				LOGGER.info("******************************************************************************");
+				LOGGER.info("STEP 13: DESCRIPTION: Verify telemetry logging for 5GHz client in wifihealth.txt file");
+				LOGGER.info("STEP 13: ACTION: Execute command: grep -i WIFI_RECONNECT /rdklogs/logs/wifihealth.txt");
+				LOGGER.info("STEP 13: EXPECTED: Response should contain the log message for 5GHz reconnect");
+				LOGGER.info("******************************************************************************");
+				response = BroadBandCommonUtils.searchLogFilesInAtomOrArmConsoleByPolling(device, tapEnv,
+						BroadBandTraceConstants.LOG_MESSAGE_WIFI_RECONNECT,
+						BroadBandCommandConstants.LOCATION_WIFI_HEALTH_LOG, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				status = CommonMethods.isNotNull(response) && CommonMethods.isNotNull(macAddress)
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+								BroadBandTraceConstants.LOG_MESSAGE_WIFI_RECONNECT)
+						&& CommonUtils.isGivenStringAvailableInCommandOutput(response, macAddress);
+				if (status) {
+					LOGGER.info(
+							"STEP 13: ACTUAL: Successfully verified the telemetry log message in wifihealth.txt file");
+				} else {
+					LOGGER.error("STEP 13: ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("******************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 13: ACTUAL: " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step 13 ...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("******************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 		} catch (Exception exception) {
 			errorMessage = exception.getMessage();
 			LOGGER.error("Exception Occurred while Verifying wifi client connect disconnect events" + errorMessage);
