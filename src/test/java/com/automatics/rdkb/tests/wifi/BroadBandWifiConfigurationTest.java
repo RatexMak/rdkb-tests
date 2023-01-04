@@ -7824,31 +7824,37 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 2.4 GHZ SSID");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : EXECUTE COMMAND : curl --connect-timeout 20 -v https://www.facebook.com");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL");
-			LOGGER.info("#####################################################################################");
-			errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 2.4 GHZ SSID";
-			try {
-				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, deviceConnectedWith2Ghz,
-						BroadBandTestConstants.URL_W3SCHOOLS);
-				status = result.isStatus();
-				errorMessage = result.getErrorMessage();
-			} catch (Exception exception) {
-				// Log & Suppress the exception
-				errorMessage = exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + " : ACTUAL : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL .");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 2.4 GHZ SSID");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : EXECUTE COMMAND : curl --connect-timeout 20 -v https://www.facebook.com");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL");
+				LOGGER.info("#####################################################################################");
+				errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 2.4 GHZ SSID";
+				try {
+					result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv,
+							deviceConnectedWith2Ghz, BroadBandTestConstants.URL_W3SCHOOLS);
+					status = result.isStatus();
+					errorMessage = result.getErrorMessage();
+				} catch (Exception exception) {
+					// Log & Suppress the exception
+					errorMessage = exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL .");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("skipping teststep due to device setup dependency...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+						false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 
 			/**
 			 * Step 21 : CONNECT THE CONNECTED CLIENT IN THE SETUP TO 5 GHZ SSID WITH
@@ -7889,31 +7895,37 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 5 GHZ SSID");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : EXECUTE COMMAND : curl --connect-timeout 20 -v https://www.facebook.com");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL ");
-			LOGGER.info("#####################################################################################");
-			errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 5 GHZ SSID";
-			try {
-				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, deviceConnectedWith5Ghz,
-						BroadBandTestConstants.URL_W3SCHOOLS);
-				status = result.isStatus();
-				errorMessage = result.getErrorMessage();
-			} catch (Exception exception) {
-				// Log & Suppress the exception
-				errorMessage = exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + " : ACTUAL : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL .");
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 5 GHZ SSID");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : EXECUTE COMMAND : curl --connect-timeout 20 -v https://www.facebook.com");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL ");
+				LOGGER.info("#####################################################################################");
+				errorMessage = "INTERNET CONNECTION IS SUCCESSFUL WITH 5 GHZ SSID";
+				try {
+					result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv,
+							deviceConnectedWith5Ghz, BroadBandTestConstants.URL_W3SCHOOLS);
+					status = result.isStatus();
+					errorMessage = result.getErrorMessage();
+				} catch (Exception exception) {
+					// Log & Suppress the exception
+					errorMessage = exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : THE INTERNET CONNECTION MUST NOT BE SUCCESSFUL .");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("skipping teststep due to device setup dependency...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+						false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, true);
 
 		} catch (Exception exception) {
 			errorMessage = exception.getMessage();
