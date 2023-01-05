@@ -4348,9 +4348,15 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 				}
 			} else {
 				for (int iteration = BroadBandTestConstants.CONSTANT_0; iteration <= BroadBandTestConstants.CONSTANT_9; iteration++) {
+					if(!DeviceModeHandler.isRPIDevice(device)) {
 					response = tapEnv.executeCommandUsingSsh(device,
 							BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT);
 					status = CommonMethods.isNull(response);
+					}else {
+						response = tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+								+ BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT + BroadBandTestConstants.DOUBLE_QUOTE);
+						status = CommonMethods.isNull(response);
+					}
 				}
 			}
 			if (status) {
