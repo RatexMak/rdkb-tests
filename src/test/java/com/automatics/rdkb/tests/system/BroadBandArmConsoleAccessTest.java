@@ -338,34 +338,41 @@ public class BroadBandArmConsoleAccessTest extends AutomaticsTestBase {
 
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 			if (!(DeviceModeHandler.isDSLDevice(device) && DeviceModeHandler.isFibreDevice(device)
-					&& CommonMethods.isAtomSyncAvailable(device, tapEnv) && DeviceModeHandler.isRPIDevice(device))) {
+					&& CommonMethods.isAtomSyncAvailable(device, tapEnv))) {
 				/**
 				 * STEP : VERIFY THE CHAIN.CERT.PEM ON THE GATEWAY
 				 */
 				stepNum = "S6";
 				status = false;
 				errorMessage = "Failed to verify the chain.cert.pem on the Gateway";
-				LOGGER.info("**********************************************************************************");
-				LOGGER.info("STEP 6 : DESCRIPTION : Verify the chain.cert.pem on the Gateway");
-				LOGGER.info(
-						"STEP 6 : ACTION : Execute command:/usr/bin/openssl x509 -enddate -noout -in /tmp/lnf/certs/ca-chain.cert.pem");
-				LOGGER.info("STEP 6 : EXPECTED : Must return the chain.cert.pem");
-				LOGGER.info("**********************************************************************************");
-				try {
-					response = tapEnv.executeCommandUsingSsh(device,
-							BroadBandCommandConstants.CMD_TO_GET_CA_CHAIN_CERT_PEM);
-					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-							AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_GET_CA_CHAIN_CERT_PEM));
-				} catch (Exception e) {
-					LOGGER.error(errorMessage += e.getMessage());
-				}
-				if (status) {
-					LOGGER.info("STEP 6 : ACTUAL : Successfully verified the chain.cert.pem on the Gateway");
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info("STEP 6 : DESCRIPTION : Verify the chain.cert.pem on the Gateway");
+					LOGGER.info(
+							"STEP 6 : ACTION : Execute command:/usr/bin/openssl x509 -enddate -noout -in /tmp/lnf/certs/ca-chain.cert.pem");
+					LOGGER.info("STEP 6 : EXPECTED : Must return the chain.cert.pem");
+					LOGGER.info("**********************************************************************************");
+					try {
+						response = tapEnv.executeCommandUsingSsh(device,
+								BroadBandCommandConstants.CMD_TO_GET_CA_CHAIN_CERT_PEM);
+						status = CommonMethods.isNotNull(response)
+								&& CommonMethods.patternMatcher(response, AutomaticsTapApi
+										.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_GET_CA_CHAIN_CERT_PEM));
+					} catch (Exception e) {
+						LOGGER.error(errorMessage += e.getMessage());
+					}
+					if (status) {
+						LOGGER.info("STEP 6 : ACTUAL : Successfully verified the chain.cert.pem on the Gateway");
+					} else {
+						LOGGER.error("STEP 6 : ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 				} else {
-					LOGGER.error("STEP 6 : ACTUAL : " + errorMessage);
+					LOGGER.info("not applicable for RPi... skipping teststep ...");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
 				}
-				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 				/**
 				 * STEP : VERIFY THE RADIUSSRV.CERT.PEM ON THE GATEWAY
@@ -373,27 +380,34 @@ public class BroadBandArmConsoleAccessTest extends AutomaticsTestBase {
 				stepNum = "S7";
 				status = false;
 				errorMessage = "Failed to verify the radiussrv.cert.pem on the Gateway";
-				LOGGER.info("**********************************************************************************");
-				LOGGER.info("STEP 7 : DESCRIPTION : Verify the radiussrv.cert.pem on the Gateway");
-				LOGGER.info(
-						"STEP 7 : ACTION : Execute command:/usr/bin/openssl x509 -enddate -noout -in /tmp/lnf/certs/radiussrv.cert.pem");
-				LOGGER.info("STEP 7 : EXPECTED : Must return the chain.cert.pem");
-				LOGGER.info("**********************************************************************************");
-				try {
-					response = tapEnv.executeCommandUsingSsh(device,
-							BroadBandCommandConstants.CMD_TO_GET_RADIUSSRV_CERT_PEM);
-					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-							AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_GET_RADIUSSRV_CERT_PEM));
-				} catch (Exception e) {
-					LOGGER.error(errorMessage += e.getMessage());
-				}
-				if (status) {
-					LOGGER.info("STEP 7 : ACTUAL : Successfully verified the radiussrv.cert.pem on the Gateway");
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					LOGGER.info("**********************************************************************************");
+					LOGGER.info("STEP 7 : DESCRIPTION : Verify the radiussrv.cert.pem on the Gateway");
+					LOGGER.info(
+							"STEP 7 : ACTION : Execute command:/usr/bin/openssl x509 -enddate -noout -in /tmp/lnf/certs/radiussrv.cert.pem");
+					LOGGER.info("STEP 7 : EXPECTED : Must return the chain.cert.pem");
+					LOGGER.info("**********************************************************************************");
+					try {
+						response = tapEnv.executeCommandUsingSsh(device,
+								BroadBandCommandConstants.CMD_TO_GET_RADIUSSRV_CERT_PEM);
+						status = CommonMethods.isNotNull(response)
+								&& CommonMethods.patternMatcher(response, AutomaticsTapApi
+										.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_GET_RADIUSSRV_CERT_PEM));
+					} catch (Exception e) {
+						LOGGER.error(errorMessage += e.getMessage());
+					}
+					if (status) {
+						LOGGER.info("STEP 7 : ACTUAL : Successfully verified the radiussrv.cert.pem on the Gateway");
+					} else {
+						LOGGER.error("STEP 7 : ACTUAL : " + errorMessage);
+					}
+					LOGGER.info("**********************************************************************************");
+					tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 				} else {
-					LOGGER.error("STEP 7 : ACTUAL : " + errorMessage);
+					LOGGER.info("not applicable for RPi... skipping teststep ...");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
 				}
-				LOGGER.info("**********************************************************************************");
-				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
 				int stepNumber = 6;
 				while (stepNumber <= 7) {
