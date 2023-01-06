@@ -782,9 +782,10 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		boolean status = false;
 		WebDriver webDriver = null;
 		try {
-
-			BroadBandPreConditionUtils.executePreConditionToToggleMeshEnableOrDisableStatus(device, tapEnv,
-					BroadBandTestConstants.BOOLEAN_VALUE_FALSE, BroadBandTestConstants.CONSTANT_1);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				BroadBandPreConditionUtils.executePreConditionToToggleMeshEnableOrDisableStatus(device, tapEnv,
+						BroadBandTestConstants.BOOLEAN_VALUE_FALSE, BroadBandTestConstants.CONSTANT_1);
+			}
 
 			stepNum = "S1";
 			errorMessage = "Unable to navigate to Gateway page";
