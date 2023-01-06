@@ -272,28 +272,33 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 			stepNum = "s3";
 			status = false;
 			errorMessage = "Failed to verify the file with modified xconf url.";
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 3 : DESCRIPTION : Validate modified url in dcmscript.log file");
+				LOGGER.info("STEP 3 : ACTION : Execute the command: cat /rdklogs/logs/dcmscript.log");
+				LOGGER.info("STEP 3 : EXPECTED: File should have modified xconf url.");
+				LOGGER.info("**********************************************************************************");
 
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 3 : DESCRIPTION : Validate modified url in dcmscript.log file");
-			LOGGER.info("STEP 3 : ACTION : Execute the command: cat /rdklogs/logs/dcmscript.log");
-			LOGGER.info("STEP 3 : EXPECTED: File should have modified xconf url.");
-			LOGGER.info("**********************************************************************************");
+				try {
+					BroadBandTelemetryUtils.verifyXconfDcmConfigurationUrlAndDownloadStatusFromDcmScriptLogs(device,
+							tapEnv, BroadBandTestConstants.PROP_KEY_PROXY_XCONF_URL);
+					status = true;
+				} catch (TestException exception) {
+					errorMessage = exception.getMessage();
+				}
 
-			try {
-				BroadBandTelemetryUtils.verifyXconfDcmConfigurationUrlAndDownloadStatusFromDcmScriptLogs(device, tapEnv,
-						BroadBandTestConstants.PROP_KEY_PROXY_XCONF_URL);
-				status = true;
-			} catch (TestException exception) {
-				errorMessage = exception.getMessage();
-			}
-
-			if (status) {
-				LOGGER.info("STEP 3: ACTUAL : Successfully verified that File contans modified xconf url.");
+				if (status) {
+					LOGGER.info("STEP 3: ACTUAL : Successfully verified that File contans modified xconf url.");
+				} else {
+					LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+				LOGGER.info("modified xconf url not found RPi : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 			LOGGER.info("**********************************************************************************");
 
@@ -2340,7 +2345,8 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 
 			if (DeviceModeHandler.isBusinessClassDevice(device)) {
 
-				LOGGER.info("Steps 13 to 19 are not applicable for Business Class and Fiber Devices as TR69 is not present in BCI devices");
+				LOGGER.info(
+						"Steps 13 to 19 are not applicable for Business Class and Fiber Devices as TR69 is not present in BCI devices");
 				LOGGER.info("#######################################################################################");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, "s13", ExecutionStatus.NOT_APPLICABLE,
 						"N/A for Business class devices", false);
@@ -2426,169 +2432,217 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 
 					step = "s15";
 					result = false;
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info("STEP 15: DESCRIPTION : Set value of UniqueTelemetryId TagString parameter using tr69");
-					LOGGER.info("STEP 15: ACTION : Execute tr69 command to set value of "
-							+ "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.UniqueTelemetryId.TagString to Test_Telemetry_Tag");
-					LOGGER.info(
-							"STEP 15: EXPECTED : Tr69 set request success and parameter value is Test_Telemetry_Tag");
-					LOGGER.info("**********************************************************************************");
-					try {
-						errorMessage = "Unable to set value of UniqueTelemetryId TagString parameter using tr69";
-
-						Parameter setParam = new Parameter();
-
-						setParam.setDataType(TR69ParamDataType.STRING.get());
-						setParam.setParamName(BroadBandWebPaConstants.WEBPA_PARAM_UNIQUE_TELEMETRY_TAGSTRING);
-						setParam.setParamValue(BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG);
-						List<Parameter> parameters = new ArrayList<Parameter>();
-						parameters.add(setParam);
-						response = tapEnv.setTR69ParameterValues(device, parameters);
-						result = CommonMethods.isNotNull(response)
-								&& response.equalsIgnoreCase(AutomaticsConstants.SUCCESS);
-
-					} catch (Exception e) {
-						errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(errorMessage,
-								BroadBandTestConstants.COLON_AND_SPACE, e.getMessage());
-					}
-					if (result) {
+					if (BroadbandPropertyFileHandler.isTr69Enabled()) {
 						LOGGER.info(
-								"STEP 15: ACTUAL : Tr69 set request success and parameter value is Test_Telemetry_Tag");
-					} else {
-						LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
-					}
+								"**********************************************************************************");
+						LOGGER.info(
+								"STEP 15: DESCRIPTION : Set value of UniqueTelemetryId TagString parameter using tr69");
+						LOGGER.info("STEP 15: ACTION : Execute tr69 command to set value of "
+								+ "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.UniqueTelemetryId.TagString to Test_Telemetry_Tag");
+						LOGGER.info(
+								"STEP 15: EXPECTED : Tr69 set request success and parameter value is Test_Telemetry_Tag");
+						LOGGER.info(
+								"**********************************************************************************");
+						try {
+							errorMessage = "Unable to set value of UniqueTelemetryId TagString parameter using tr69";
 
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+							Parameter setParam = new Parameter();
 
-					step = "s16";
-					result = false;
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info(
-							"STEP 16: DESCRIPTION : Set value of UniqueTelemetryId TimingInterval parameter using tr69");
-					LOGGER.info("STEP 16: ACTION : Execute tr69 command to set value of "
-							+ "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.UniqueTelemetryId.TimingInterval to 10");
-					LOGGER.info("STEP 16: EXPECTED : Tr69 set request success and parameter value is 10");
-					LOGGER.info("**********************************************************************************");
-					try {
-						errorMessage = "Unable to set value of UniqueTelemetryId TimingInterval parameter using tr69";
+							setParam.setDataType(TR69ParamDataType.STRING.get());
+							setParam.setParamName(BroadBandWebPaConstants.WEBPA_PARAM_UNIQUE_TELEMETRY_TAGSTRING);
+							setParam.setParamValue(BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG);
+							List<Parameter> parameters = new ArrayList<Parameter>();
+							parameters.add(setParam);
+							response = tapEnv.setTR69ParameterValues(device, parameters);
+							result = CommonMethods.isNotNull(response)
+									&& response.equalsIgnoreCase(AutomaticsConstants.SUCCESS);
 
-						Parameter setParam = new Parameter();
-
-						setParam.setDataType(TR69ParamDataType.INT.get());
-						setParam.setParamName(BroadBandWebPaConstants.WEBPA_PARAM_UNIQUE_TELEMETRY_TIMINGINTERVAL);
-						setParam.setParamValue(BroadBandTestConstants.STRING_VALUE_TEN);
-						List<Parameter> parameters = new ArrayList<Parameter>();
-						parameters.add(setParam);
-						response = tapEnv.setTR69ParameterValues(device, parameters);
-						result = CommonMethods.isNotNull(response)
-								&& response.equalsIgnoreCase(AutomaticsConstants.SUCCESS);
-
-					} catch (Exception e) {
-						errorMessage = e.getMessage();
-					}
-					if (result) {
-						LOGGER.info("STEP 16: ACTUAL : Tr69 set request success and parameter value is 10");
-					} else {
-						LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
-					}
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-
-					step = "s17";
-					result = false;
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info("STEP 17: DESCRIPTION : Set value of UniqueTelemetryId Enable parameter using tr69");
-					LOGGER.info("STEP 17: ACTION : Execute tr69 command to set value of "
-							+ "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.UniqueTelemetryId.Enable to true");
-					LOGGER.info("STEP 17: EXPECTED : Tr69 set request success and parameter value is true");
-					LOGGER.info("**********************************************************************************");
-					try {
-						errorMessage = "Unable to set value of UniqueTelemetryId Enable parameter using tr69";
-
-						Parameter setParam = new Parameter();
-
-						setParam.setDataType(TR69ParamDataType.BOOLEAN.get());
-						setParam.setParamName(BroadBandWebPaConstants.WEBPA_PARAM_UNIQUE_TELEMETRY_ENABLE);
-						setParam.setParamValue(BroadBandTestConstants.TRUE);
-						List<Parameter> parameters = new ArrayList<Parameter>();
-						parameters.add(setParam);
-						response = tapEnv.setTR69ParameterValues(device, parameters);
-						result = CommonMethods.isNotNull(response)
-								&& response.equalsIgnoreCase(AutomaticsConstants.SUCCESS);
-
-					} catch (Exception e) {
-						errorMessage = e.getMessage();
-					}
-					if (result) {
-						LOGGER.info("STEP 17: ACTUAL : Tr69 set request success and parameter value is true");
-					} else {
-						LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
-					}
-
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-
-					step = "s18";
-					result = false;
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info("STEP 18: DESCRIPTION : Verify configured tag string is printed in Arm/Consolelog");
-					LOGGER.info(
-							"STEP 18: ACTION : Execute command: grep \"Test_Telemetry_Tag\" /rdklogs/logs/Consolelog.txt.0"
-									+ " (ArmConsolelog.txt.0 for Atom devices)");
-					LOGGER.info("STEP 18: EXPECTED : Configured log message is printed in Arm/Consolelog");
-					LOGGER.info("**********************************************************************************");
-					errorMessage = "Unable to find configured tag string printed in Arm/Consolelog";
-					startTime = System.currentTimeMillis();
-					do {
-						response = BroadBandCommonUtils.searchLogsInArmConsoleOrConsole(device, tapEnv,
-								BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG);
-						result = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-								BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG);
-					} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
-							&& !result && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
-									BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
-					if (result) {
-						LOGGER.info("STEP 18: ACTUAL : Configured log message is printed in Arm/Consolelog");
-					} else {
-						LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
-					}
-					LOGGER.info("**********************************************************************************");
-					tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
-
-					step = "s19";
-					result = false;
-					LOGGER.info("**********************************************************************************");
-					LOGGER.info("STEP 19: DESCRIPTION : Verify telemetry logging for configured tag in dcmscript.log"
-							+ " with timestamp later than timestamp obtained in step 14");
-					LOGGER.info(
-							"STEP 19: ACTION : Execute command: grep \"Test_Telemetry_Tag\" /rdklogs/logs/dcmscript.log");
-					LOGGER.info("STEP 19: EXPECTED : Telemetry log message is present for configured tag string"
-							+ " with timestamp later than timestamp in step 14");
-					LOGGER.info("**********************************************************************************");
-					errorMessage = "Unable to find telemetry logging in dcmscript log file for configured telemetry marker";
-					startTime = System.currentTimeMillis();
-					if (!isTelemetryEnabled) {
-						do {
-							result = BroadBandCommonUtils.verifyConsoleLogByPassingDateFormat(tapEnv, device,
-									BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG,
-									BroadBandTestConstants.DCMSCRIPT_LOG_FILE, deviceTimeStamp,
-									BroadBandTestConstants.PATTERN_MATCHER_TIMESTAMP_SPEEDTEST_LOG_MESSAGE,
-									BroadBandTestConstants.TIMESTAMP_FORMAT_SPEEDTEST_LOG_MESSAGE);
-						} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
-								&& !result && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
-										BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+						} catch (Exception e) {
+							errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer(errorMessage,
+									BroadBandTestConstants.COLON_AND_SPACE, e.getMessage());
+						}
 						if (result) {
 							LOGGER.info(
-									"STEP 19: ACTUAL : Telemetry log message is present for configured tag string with timestamp\"\r\n"
-											+ "					+ \" later than timestamp in step 14\"");
+									"STEP 15: ACTUAL : Tr69 set request success and parameter value is Test_Telemetry_Tag");
 						} else {
-							LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+							LOGGER.error("STEP 15: ACTUAL : " + errorMessage);
 						}
 
 						LOGGER.info(
 								"**********************************************************************************");
 						tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+					} else {
+						LOGGER.info("TR-69 is disabled/not available : skipping teststep ...");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								errorMessage, false);
+					}
+
+					step = "s16";
+					result = false;
+					if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+						LOGGER.info(
+								"**********************************************************************************");
+						LOGGER.info(
+								"STEP 16: DESCRIPTION : Set value of UniqueTelemetryId TimingInterval parameter using tr69");
+						LOGGER.info("STEP 16: ACTION : Execute tr69 command to set value of "
+								+ "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.UniqueTelemetryId.TimingInterval to 10");
+						LOGGER.info("STEP 16: EXPECTED : Tr69 set request success and parameter value is 10");
+						LOGGER.info(
+								"**********************************************************************************");
+						try {
+							errorMessage = "Unable to set value of UniqueTelemetryId TimingInterval parameter using tr69";
+
+							Parameter setParam = new Parameter();
+
+							setParam.setDataType(TR69ParamDataType.INT.get());
+							setParam.setParamName(BroadBandWebPaConstants.WEBPA_PARAM_UNIQUE_TELEMETRY_TIMINGINTERVAL);
+							setParam.setParamValue(BroadBandTestConstants.STRING_VALUE_TEN);
+							List<Parameter> parameters = new ArrayList<Parameter>();
+							parameters.add(setParam);
+							response = tapEnv.setTR69ParameterValues(device, parameters);
+							result = CommonMethods.isNotNull(response)
+									&& response.equalsIgnoreCase(AutomaticsConstants.SUCCESS);
+
+						} catch (Exception e) {
+							errorMessage = e.getMessage();
+						}
+						if (result) {
+							LOGGER.info("STEP 16: ACTUAL : Tr69 set request success and parameter value is 10");
+						} else {
+							LOGGER.error("STEP 16: ACTUAL : " + errorMessage);
+						}
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+					} else {
+						LOGGER.info("TR-69 is disabled/not available : skipping teststep ...");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								errorMessage, false);
+					}
+
+					step = "s17";
+					result = false;
+					if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+						LOGGER.info(
+								"**********************************************************************************");
+						LOGGER.info(
+								"STEP 17: DESCRIPTION : Set value of UniqueTelemetryId Enable parameter using tr69");
+						LOGGER.info("STEP 17: ACTION : Execute tr69 command to set value of "
+								+ "Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.UniqueTelemetryId.Enable to true");
+						LOGGER.info("STEP 17: EXPECTED : Tr69 set request success and parameter value is true");
+						LOGGER.info(
+								"**********************************************************************************");
+						try {
+							errorMessage = "Unable to set value of UniqueTelemetryId Enable parameter using tr69";
+
+							Parameter setParam = new Parameter();
+
+							setParam.setDataType(TR69ParamDataType.BOOLEAN.get());
+							setParam.setParamName(BroadBandWebPaConstants.WEBPA_PARAM_UNIQUE_TELEMETRY_ENABLE);
+							setParam.setParamValue(BroadBandTestConstants.TRUE);
+							List<Parameter> parameters = new ArrayList<Parameter>();
+							parameters.add(setParam);
+							response = tapEnv.setTR69ParameterValues(device, parameters);
+							result = CommonMethods.isNotNull(response)
+									&& response.equalsIgnoreCase(AutomaticsConstants.SUCCESS);
+
+						} catch (Exception e) {
+							errorMessage = e.getMessage();
+						}
+						if (result) {
+							LOGGER.info("STEP 17: ACTUAL : Tr69 set request success and parameter value is true");
+						} else {
+							LOGGER.error("STEP 17: ACTUAL : " + errorMessage);
+						}
+
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+					} else {
+						LOGGER.info("TR-69 is disabled/not available : skipping teststep ...");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								errorMessage, false);
+					}
+
+					step = "s18";
+					result = false;
+					if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+						LOGGER.info(
+								"**********************************************************************************");
+						LOGGER.info("STEP 18: DESCRIPTION : Verify configured tag string is printed in Arm/Consolelog");
+						LOGGER.info(
+								"STEP 18: ACTION : Execute command: grep \"Test_Telemetry_Tag\" /rdklogs/logs/Consolelog.txt.0"
+										+ " (ArmConsolelog.txt.0 for Atom devices)");
+						LOGGER.info("STEP 18: EXPECTED : Configured log message is printed in Arm/Consolelog");
+						LOGGER.info(
+								"**********************************************************************************");
+						errorMessage = "Unable to find configured tag string printed in Arm/Consolelog";
+						startTime = System.currentTimeMillis();
+						do {
+							response = BroadBandCommonUtils.searchLogsInArmConsoleOrConsole(device, tapEnv,
+									BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG);
+							result = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
+									BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG);
+						} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
+								&& !result && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+										BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+						if (result) {
+							LOGGER.info("STEP 18: ACTUAL : Configured log message is printed in Arm/Consolelog");
+						} else {
+							LOGGER.error("STEP 18: ACTUAL : " + errorMessage);
+						}
+						LOGGER.info(
+								"**********************************************************************************");
+						tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+					} else {
+						LOGGER.info("TR-69 is disabled/not available : skipping teststep ...");
+						tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+								errorMessage, false);
+					}
+
+					step = "s19";
+					result = false;
+					if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+						LOGGER.info(
+								"**********************************************************************************");
+						LOGGER.info(
+								"STEP 19: DESCRIPTION : Verify telemetry logging for configured tag in dcmscript.log"
+										+ " with timestamp later than timestamp obtained in step 14");
+						LOGGER.info(
+								"STEP 19: ACTION : Execute command: grep \"Test_Telemetry_Tag\" /rdklogs/logs/dcmscript.log");
+						LOGGER.info("STEP 19: EXPECTED : Telemetry log message is present for configured tag string"
+								+ " with timestamp later than timestamp in step 14");
+						LOGGER.info(
+								"**********************************************************************************");
+						errorMessage = "Unable to find telemetry logging in dcmscript log file for configured telemetry marker";
+						startTime = System.currentTimeMillis();
+						if (!isTelemetryEnabled) {
+							do {
+								result = BroadBandCommonUtils.verifyConsoleLogByPassingDateFormat(tapEnv, device,
+										BroadBandTestConstants.TELEMETRY_MARKER_TEST_TELEMETRY_TAG,
+										BroadBandTestConstants.DCMSCRIPT_LOG_FILE, deviceTimeStamp,
+										BroadBandTestConstants.PATTERN_MATCHER_TIMESTAMP_SPEEDTEST_LOG_MESSAGE,
+										BroadBandTestConstants.TIMESTAMP_FORMAT_SPEEDTEST_LOG_MESSAGE);
+							} while ((System.currentTimeMillis()
+									- startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS && !result
+									&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+											BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+							if (result) {
+								LOGGER.info(
+										"STEP 19: ACTUAL : Telemetry log message is present for configured tag string with timestamp\"\r\n"
+												+ "					+ \" later than timestamp in step 14\"");
+							} else {
+								LOGGER.error("STEP 19: ACTUAL : " + errorMessage);
+							}
+
+							LOGGER.info(
+									"**********************************************************************************");
+							tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+						} else {
+							LOGGER.info("TR-69 is disabled/not available : skipping teststep ...");
+							tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+									errorMessage, false);
+						}
 					} else {
 
 						errorMessage = "Test step not applicable when for telemtry 2.0 ";
@@ -2906,109 +2960,109 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-TELEMETRY-1003");
 		LOGGER.info("#######################################################################################");
 	}
-	
-    /**
-     * Method to verifyCronTabProcess
-     * 
-     * @param device
-     *            {@link Dut}
-     * @param testId
-     *            Test case ID
-     * @param stepNumber
-     *            Step Number
-     * @return boolean postExecution status
-     * 
-     * @Refactor Sruthi Santhosh
-     */
-    public static boolean verifyCronTabProcess(Dut device, String testCaseId, int stepNumber) throws TestException {
 
-    // Variable Declaration begins
-	String errorMessage = null;
-	boolean status = false;
-	String stepNum = null;
-	String response = null;
-	boolean postExecution = false;
-	long boxUpTimeInSeconds = 0;
-	boolean isSTBAccessible = false;
-	// Variable Declaration ends
-	try {
+	/**
+	 * Method to verifyCronTabProcess
+	 * 
+	 * @param device     {@link Dut}
+	 * @param testId     Test case ID
+	 * @param stepNumber Step Number
+	 * @return boolean postExecution status
+	 * 
+	 * @Refactor Sruthi Santhosh
+	 */
+	public static boolean verifyCronTabProcess(Dut device, String testCaseId, int stepNumber) throws TestException {
 
-	    /**
-	     * Step 10 : Verify cron job is scheduled
-	     */
-	    stepNumber++;
-	    stepNum = "s" + stepNumber;
-	    errorMessage = "Unable to retrieve crontab processes either from crontab -l/crotab -l -c /var/spool/cron/crontabs";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify  cron tab processes is running.");
-	    LOGGER.info("STEP " + stepNumber
-		    + ": ACTION : Execute command:crontab -l -c /var/spool/cron/crontabs and command:crontab -l");
-	    LOGGER.info("STEP " + stepNumber
-		    + ": EXPECTED : Response should contain cron tab processes and it should be same for both the commands executed.");
-	    LOGGER.info("**********************************************************************************");
-	    String cronTabResponse = null;
-	    errorMessage = "Failed to enable periodic firmware check";
-	    // to enable periodic firmware check is enabled to get firmware download process in crontab.
-	    try {
-		status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
-			BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE,
-			BroadBandTestConstants.BOOLEAN_VALUE_TRUE.toString(),
-			BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-		if (!status) {
-		    status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
-			    BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE,
-			    BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
-			    BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
-			    BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
-		    postExecution = status;
-		    // waiting for twenty seconds for rabid process disable changes to get reflected
-		    tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTE_IN_MILLIS);
+		// Variable Declaration begins
+		String errorMessage = null;
+		boolean status = false;
+		String stepNum = null;
+		String response = null;
+		boolean postExecution = false;
+		long boxUpTimeInSeconds = 0;
+		boolean isSTBAccessible = false;
+		// Variable Declaration ends
+		try {
+
+			/**
+			 * Step 10 : Verify cron job is scheduled
+			 */
+			stepNumber++;
+			stepNum = "s" + stepNumber;
+			errorMessage = "Unable to retrieve crontab processes either from crontab -l/crotab -l -c /var/spool/cron/crontabs";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify  cron tab processes is running.");
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : Execute command:crontab -l -c /var/spool/cron/crontabs and command:crontab -l");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED : Response should contain cron tab processes and it should be same for both the commands executed.");
+			LOGGER.info("**********************************************************************************");
+			String cronTabResponse = null;
+			errorMessage = "Failed to enable periodic firmware check";
+			// to enable periodic firmware check is enabled to get firmware download process
+			// in crontab.
+			try {
+				status = BroadBandWebPaUtils.getAndVerifyWebpaValueInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE,
+						BroadBandTestConstants.BOOLEAN_VALUE_TRUE.toString(),
+						BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				if (!status) {
+					status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_PERIODIC_FW_CHECK_ENABLE,
+							BroadBandTestConstants.CONSTANT_3, BroadBandTestConstants.TRUE,
+							BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+							BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
+					postExecution = status;
+					// waiting for twenty seconds for rabid process disable changes to get reflected
+					tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTE_IN_MILLIS);
+				}
+			} catch (Exception exception) {
+				LOGGER.error(errorMessage + " : " + exception.getMessage());
+			}
+			// while condition is to wait till the firmware download process is running in
+			// crontab processes
+			errorMessage = "Failed to get the crontab processes either in crontab -l or crontab -l -c /var/spool/cron/crontabs commands.";
+			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+			do {
+				isSTBAccessible = CommonMethods.isSTBAccessible(device);
+				if (!isSTBAccessible) {
+					LOGGER.error("Device is not accessible while checking for cron tab process is up and running");
+				}
+				boxUpTimeInSeconds = CommonUtils.getBoxUptimeInSeconds(device, tapEnv);
+				cronTabResponse = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommandConstants.CRONTAB_EXECUTE_COMMAND);
+				status = cronTabResponse.contains(BroadBandCommandConstants.FIRMWARE_SCRIPT_GENERIC_NAME);
+			} while (!status && (boxUpTimeInSeconds * 1000 < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS)
+					&& isSTBAccessible && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+							BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
+			// while condition status check is not required as the below command is to
+			// retrieve crontab processes using
+			// absolute path.
+			try {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommandConstants.CRONTAB_EXECUTE_ABSOLUTEPATH);
+				status = CommonMethods.isNotNull(cronTabResponse) && CommonMethods.isNotNull(response)
+						&& BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+								cronTabResponse, response);
+			} catch (Exception exception) {
+				status = false;
+				LOGGER.error(errorMessage + " : " + exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified cron tab process obtained from absolute path");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
 		}
-	    } catch (Exception exception) {
-		LOGGER.error(errorMessage + " : " + exception.getMessage());
-	    }
-	    // while condition is to wait till the firmware download process is running in crontab processes
-	    errorMessage = "Failed to get the crontab processes either in crontab -l or crontab -l -c /var/spool/cron/crontabs commands.";
-	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-	    do {
-		isSTBAccessible = CommonMethods.isSTBAccessible(device);
-		if (!isSTBAccessible) {
-		    LOGGER.error("Device is not accessible while checking for cron tab process is up and running");
-		}
-		boxUpTimeInSeconds = CommonUtils.getBoxUptimeInSeconds(device, tapEnv);
-		cronTabResponse = tapEnv.executeCommandUsingSsh(device,
-			BroadBandCommandConstants.CRONTAB_EXECUTE_COMMAND);
-		status = cronTabResponse.contains(BroadBandCommandConstants.FIRMWARE_SCRIPT_GENERIC_NAME);
-	    } while (!status && (boxUpTimeInSeconds * 1000 < BroadBandTestConstants.SIXTEEN_MINUTES_IN_MILLIS)
-		    && isSTBAccessible && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
-			    BroadBandTestConstants.FIFTEEN_SECONDS_IN_MILLIS));
-	    // while condition status check is not required as the below command is to retrieve crontab processes using
-	    // absolute path.
-	    try {
-		response = tapEnv.executeCommandUsingSsh(device,
-			BroadBandCommandConstants.CRONTAB_EXECUTE_ABSOLUTEPATH);
-		status = CommonMethods.isNotNull(cronTabResponse) && CommonMethods.isNotNull(response)
-			&& BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
-				cronTabResponse, response);
-	    } catch (Exception exception) {
-		status = false;
-		LOGGER.error(errorMessage + " : " + exception.getMessage());
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified cron tab process obtained from absolute path");
-	    } else {
-		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	} catch (Exception e) {
-	    errorMessage = errorMessage + e.getMessage();
-	    LOGGER.error(errorMessage);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
-		    false);
+		return postExecution;
 	}
-	return postExecution;
-    }
 }

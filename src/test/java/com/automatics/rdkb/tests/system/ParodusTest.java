@@ -27,6 +27,7 @@ import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -1314,6 +1315,15 @@ public class ParodusTest extends AutomaticsTestBase {
 					"STEP 6: ACTION : Execute webpa set operation for Device.NotifyComponent.X_RDKCENTRAL-COM_Connected-Client,attributes:{ notify: 1 }");
 			LOGGER.info("STEP 6: EXPECTED : The webpa command should Execute successfully");
 			LOGGER.info("***********************************************************");
+
+			JSONObject jsonAttribute = new JSONObject();
+			jsonAttribute.put(BroadBandTestConstants.NOTIFY, BroadBandTestConstants.CONSTANT_1);
+			status = BroadBandWebPaUtils.setWebPaAttribute(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_NOTIFY_COMPONENT_CONNECTED_CLIENT, jsonAttribute);
+			errorMessage = CommonUtils.concatStringUsingStringBuffer(
+					"Failed to Set Attribute value for WebPa parameter:",
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_NOTIFY_COMPONENT_CONNECTED_CLIENT,
+					"with set attribute as :", jsonAttribute.toString());
 
 			status = BroadBandWiFiUtils.setWebPaParams(device,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
