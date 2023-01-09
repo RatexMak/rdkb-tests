@@ -1943,15 +1943,15 @@ public class ParodusTest extends AutomaticsTestBase {
 			stepNum++;
 			stepNumber = "S" + stepNum;
 			status = false;
+
+			LOGGER.info("***********************************************************");
+			LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify minidumps file uploaded in core log file");
+			LOGGER.info("STEP " + stepNum
+					+ ": ACTION : Execute command:grep -i \"minidump Upload is successful\" /rdklogs/logs/core_log.txt");
+			LOGGER.info("STEP " + stepNum + ": EXPECTED : Response should contain the minidump upload success message");
+			LOGGER.info("***********************************************************");
+			errorMessage = "Failed to get the log message for minidump upload successful in core_log.txt";
 			if (!DeviceModeHandler.isRPIDevice(device)) {
-				LOGGER.info("***********************************************************");
-				LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify minidumps file uploaded in core log file");
-				LOGGER.info("STEP " + stepNum
-						+ ": ACTION : Execute command:grep -i \"minidump Upload is successful\" /rdklogs/logs/core_log.txt");
-				LOGGER.info(
-						"STEP " + stepNum + ": EXPECTED : Response should contain the minidump upload success message");
-				LOGGER.info("***********************************************************");
-				errorMessage = "Failed to get the log message for minidump upload successful in core_log.txt";
 				response = (isAtomSyncDevice ? BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
 						BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_SUCCESS,
 						BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
@@ -1963,8 +1963,10 @@ public class ParodusTest extends AutomaticsTestBase {
 								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
 				status = CommonMethods.isNotNull(response);
 			} else {
+				LOGGER.info("waiting 3 minutes...");
+				tapEnv.waitTill(BroadBandTestConstants.THIRTEEN_MINUTE_IN_MILLIS);
 				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
-						BroadBandCommandConstants.CMD_LS_L, BroadBandTestConstants.STRING_PARTITION_MINIDUMPS));
+						BroadBandCommandConstants.CMD_LS, BroadBandTestConstants.STRING_PARTITION_MINIDUMPS));
 				LOGGER.info("contents of minidump folder :" + response);
 				status = CommonMethods.isNotNull(response);
 			}
