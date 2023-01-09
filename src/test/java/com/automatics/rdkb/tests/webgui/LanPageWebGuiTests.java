@@ -3264,11 +3264,21 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("**********************************************************************************");
 
 		try {
-			String firewallHeader = webDriver
-					.findElement(By.xpath(BroadBandWebGuiElements.ELEMENT_XPATH_FIREWALL_STATUS_IN_HEADER)).getText();
-			LOGGER.info("firewallHeader" + firewallHeader);
-			status = CommonMethods.isNotNull(firewallHeader) && CommonUtils
-					.patternSearchFromTargetString(firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MAXIMUM_TEXT);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				String firewallHeader = webDriver
+						.findElement(By.xpath(BroadBandWebGuiElements.ELEMENT_XPATH_FIREWALL_STATUS_IN_HEADER))
+						.getText();
+				LOGGER.info("firewallHeader" + firewallHeader);
+				status = CommonMethods.isNotNull(firewallHeader) && CommonUtils.patternSearchFromTargetString(
+						firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MAXIMUM_TEXT);
+			} else {
+				String firewallHeader = webDriver
+						.findElement(By.xpath(BroadBandWebGuiElements.ELEMENT_XPATH_FIREWALL_STATUS_IN_HEADER_RPI))
+						.getText();
+				LOGGER.info("firewallHeader" + firewallHeader);
+				status = CommonMethods.isNotNull(firewallHeader) && CommonUtils.patternSearchFromTargetString(
+						firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MAXIMUM_TEXT);
+			}
 
 		} catch (Exception e) {
 			LOGGER.error("Exception caught while retrieving firewall status in UI " + e.getMessage());
