@@ -1707,6 +1707,13 @@ public class ParodusTest extends AutomaticsTestBase {
 			LOGGER.info("#######################################################################################");
 			isAtomSyncDevice = CommonMethods.isAtomSyncAvailable(device, tapEnv);
 			status = BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("clearing the minidumps folder if RPi device :");
+				tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_TO_REMOVE,
+								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+								BroadBandTestConstants.STRING_PARTITION_MINIDUMPS, "*dmp"));
+			}
 			if (status) {
 				LOGGER.info("PRE-CONDITION : ACTUAL : Device is rebooted successfully");
 			} else {
@@ -1936,23 +1943,32 @@ public class ParodusTest extends AutomaticsTestBase {
 			stepNum++;
 			stepNumber = "S" + stepNum;
 			status = false;
-			LOGGER.info("***********************************************************");
-			LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify minidumps file uploaded in core log file");
-			LOGGER.info("STEP " + stepNum
-					+ ": ACTION : Execute command:grep -i \"minidump Upload is successful\" /rdklogs/logs/core_log.txt");
-			LOGGER.info("STEP " + stepNum + ": EXPECTED : Response should contain the minidump upload success message");
-			LOGGER.info("***********************************************************");
-			errorMessage = "Failed to get the log message for minidump upload successful in core_log.txt";
-			response = (isAtomSyncDevice ? BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
-					BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_SUCCESS,
-					BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB, BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
-					BroadBandTestConstants.ONE_MINUTE_IN_MILLIS)
-					: BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-							BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_SUCCESS,
-							BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
-							BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
-							BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
-			status = CommonMethods.isNotNull(response);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("***********************************************************");
+				LOGGER.info("STEP " + stepNum + ": DESCRIPTION : Verify minidumps file uploaded in core log file");
+				LOGGER.info("STEP " + stepNum
+						+ ": ACTION : Execute command:grep -i \"minidump Upload is successful\" /rdklogs/logs/core_log.txt");
+				LOGGER.info(
+						"STEP " + stepNum + ": EXPECTED : Response should contain the minidump upload success message");
+				LOGGER.info("***********************************************************");
+				errorMessage = "Failed to get the log message for minidump upload successful in core_log.txt";
+				response = (isAtomSyncDevice ? BroadBandCommonUtils.searchLogFilesInAtomConsoleByPolling(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_SUCCESS,
+						BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
+						BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS)
+						: BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+								BroadBandTraceConstants.LOG_MESSAGE_UPLOAD_SUCCESS,
+								BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
+								BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS,
+								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
+				status = CommonMethods.isNotNull(response);
+			} else {
+				BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+						BroadBandCommandConstants.CMD_LS_L, BroadBandTestConstants.STRING_PARTITION_MINIDUMPS));
+				LOGGER.info("contents of minidump folder :" + response);
+				status = CommonMethods.isNotNull(response);
+			}
 			if (status) {
 				LOGGER.info(
 						"STEP " + stepNum + ": ACTUAL: Successfully verified crash file uploaded for webpa process");

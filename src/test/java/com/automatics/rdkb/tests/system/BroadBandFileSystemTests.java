@@ -44,6 +44,7 @@ import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWifiWhixUtils;
 import com.automatics.tap.AutomaticsTapApi;
@@ -1836,11 +1837,15 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 		String command = null;
 		// Integer to store step count
 		int stepCount = BroadBandTestConstants.CONSTANT_1;
+
+		List<String> binaryList = DeviceModeHandler.isRPIDevice(device)
+				? BroadBandCommandConstants.EXECUTABLE_BINARY_LIST_RPI
+				: BroadBandCommandConstants.EXECUTABLE_BINARY_LIST;
 		// variable declaration ends
 
 		// verify whether the atom sync is available in given device
 		isAtomSyncAvailable = CommonMethods.isAtomSyncAvailable(device, tapEnv);
-		for (String modules : BroadBandCommandConstants.EXECUTABLE_BINARY_LIST) {
+		for (String modules : binaryList) {
 			try {
 				stepNumber = "s" + stepCount;
 				status = false;
@@ -2767,9 +2772,8 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 //					status = BroadBandCommonUtils.rebootViaWebpaAndWaitForStbAccessible(device, tapEnv)
 //							&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device,
 //									BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
-					status = CommonUtils.rebootAndWaitForIpAcquisition(tapEnv, device) 
-							&& BroadBandWebPaUtils.verifyWebPaProcessIsUp(tapEnv, device,
-									BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+					status = CommonUtils.rebootAndWaitForIpAcquisition(tapEnv, device) && BroadBandWebPaUtils
+							.verifyWebPaProcessIsUp(tapEnv, device, BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
 					enabledByRfc = status;
 				}
 
