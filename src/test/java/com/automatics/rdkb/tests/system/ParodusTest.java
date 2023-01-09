@@ -1712,7 +1712,7 @@ public class ParodusTest extends AutomaticsTestBase {
 				tapEnv.executeCommandUsingSsh(device,
 						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_TO_REMOVE,
 								BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
-								BroadBandTestConstants.STRING_PARTITION_MINIDUMPS, "*dmp"));
+								BroadBandTestConstants.STRING_PARTITION_MINIDUMPS, "/*dmp"));
 			}
 			if (status) {
 				LOGGER.info("PRE-CONDITION : ACTUAL : Device is rebooted successfully");
@@ -1963,7 +1963,6 @@ public class ParodusTest extends AutomaticsTestBase {
 								BroadBandTestConstants.ONE_MINUTE_IN_MILLIS));
 				status = CommonMethods.isNotNull(response);
 			} else {
-				BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
 				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
 						BroadBandCommandConstants.CMD_LS_L, BroadBandTestConstants.STRING_PARTITION_MINIDUMPS));
 				LOGGER.info("contents of minidump folder :" + response);
