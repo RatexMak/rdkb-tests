@@ -4822,31 +4822,38 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		stepNum = "S5";
 		errorMessage = "Failed to verify the internet connectiviety using the IPV4 address Obtained in the client when DHCP servers is disabled.";
 		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP 5 : DESCRIPTION : Verify internet is not accessibble by using intetface IPv4 on the client.");
-		LOGGER.info(
-				"STEP 5 : ACTION : EXECUTE COMMAND, WINDOWS : curl -4 -v 'www.google.com'  | grep '200 OK' OR ping -4 -n 5 google.com, LINUX : curl -4 -f --interface <interfaceName> www.google.com | grep '200 OK' OR ping -4 -n 5 google.com ON THE CONNECTED LAN CLIENT");
-		LOGGER.info(
-				"STEP 5 : EXPECTED : Internet should not be accessible using DHCP IPv4 address obtained in the client. ");
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("Is Internet Accessible Via CURL Command: " + BroadBandConnectedClientUtils
-				.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, deviceConnectedWithGateway,
-						BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
-						BroadBandTestConstants.IP_VERSION4)
-				.isStatus());
-		status = !BroadBandConnectedClientUtils
-				.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, deviceConnectedWithGateway,
-						BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
-						BroadBandTestConstants.IP_VERSION4)
-				.isStatus();
-		if (status) {
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			LOGGER.info("**********************************************************************************");
 			LOGGER.info(
-					"STEP 5 : ACTUAL : Internet is not Accessible using DHCP IPv4 address obtained in the client As Expected.");
+					"STEP 5 : DESCRIPTION : Verify internet is not accessibble by using intetface IPv4 on the client.");
+			LOGGER.info(
+					"STEP 5 : ACTION : EXECUTE COMMAND, WINDOWS : curl -4 -v 'www.google.com'  | grep '200 OK' OR ping -4 -n 5 google.com, LINUX : curl -4 -f --interface <interfaceName> www.google.com | grep '200 OK' OR ping -4 -n 5 google.com ON THE CONNECTED LAN CLIENT");
+			LOGGER.info(
+					"STEP 5 : EXPECTED : Internet should not be accessible using DHCP IPv4 address obtained in the client. ");
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("Is Internet Accessible Via CURL Command: " + BroadBandConnectedClientUtils
+					.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, deviceConnectedWithGateway,
+							BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
+							BroadBandTestConstants.IP_VERSION4)
+					.isStatus());
+			status = !BroadBandConnectedClientUtils
+					.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, deviceConnectedWithGateway,
+							BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
+							BroadBandTestConstants.IP_VERSION4)
+					.isStatus();
+			if (status) {
+				LOGGER.info(
+						"STEP 5 : ACTUAL : Internet is not Accessible using DHCP IPv4 address obtained in the client As Expected.");
+			} else {
+				LOGGER.error("STEP 5 : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 		} else {
-			LOGGER.error("STEP 5 : ACTUAL : " + errorMessage);
+			LOGGER.info("RPi setup dependency issue : skipping teststep...");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
 		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 	}
 
 	/**

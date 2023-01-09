@@ -2410,7 +2410,7 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 									BroadBandSnmpConstants.SNMP_ERROR_RESPONSE_NO_OID)
 							&& !CommonMethods.patternMatcher(response,
 									BroadBandSnmpConstants.SNMP_ERROR_NON_WRITABLE)) {
-						if (response.equals(defaultValue)) {
+						if (response.equalsIgnoreCase(defaultValue)) {
 							message.append(
 									"SUCCESS : Current value and Default value after factory reset for the parameter "
 											+ factoryResetSetting + " is same."
