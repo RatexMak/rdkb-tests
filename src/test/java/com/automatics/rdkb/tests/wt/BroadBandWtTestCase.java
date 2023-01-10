@@ -63,6 +63,7 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 			wtSimulatorBaseUrl = extraProps.get("wtSimulatorBaseUrl");
 			wtSimulatorBaseUrl = "http://localhost:8081/test";
 			isWtClientPresent = CommonMethods.isNotNull(wtSimulatorBaseUrl);
+			LOGGER.info("wtSimulatorBaseUrl is " + wtSimulatorBaseUrl);
 
 		} catch (Exception e) {
 			LOGGER.error("Exception occured while trying to get URL from account", e);
