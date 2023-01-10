@@ -307,7 +307,9 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 			 */
 			channelBandwidthOptionsValidation(device, clientDut, lanSideWiFiPage, testId, lanDriver,
 					BroadBandTestConstants.INTEGER_VALUE_4, BroadBandTestConstants.STRING_VALUE_24GHZ_SSID1,
-					BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY1, BroadBandTestConstants.OPERATING_BANDWIDTH_40_MMZ,
+					BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY1,
+					DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.OPERATING_BANDWIDTH_20_MMZ
+							: BroadBandTestConstants.OPERATING_BANDWIDTH_40_MMZ,
 					wifi24GhzParamters, false, BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_2_GHZ,
 					BroadBandWebGuiElements.ELEMENT_ID_CHANNEL_40MHZ);
 
@@ -5127,14 +5129,16 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 			status = false;
 			channelBandwidthOptionsValidation(device, clientSettop, lanSideWiFiPage, testId, lanDriver, 4,
 					BroadBandTestConstants.STRING_VALUE_5GHZ_SSID1, BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY1,
-					BroadBandTestConstants.OPERATING_BANDWIDTH_40_MMZ, wifi24GhzParamters, true,
-					BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+					DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.OPERATING_BANDWIDTH_20_MMZ
+							: BroadBandTestConstants.OPERATING_BANDWIDTH_40_MMZ,
+					wifi24GhzParamters, true, BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
 					BroadBandWebGuiElements.ELEMENT_ID_CHANNEL_40MHZ_5Ghz);
 			status = false;
 			channelBandwidthOptionsValidation(device, clientSettop, lanSideWiFiPage, testId, lanDriver, 11,
 					BroadBandTestConstants.STRING_VALUE_5GHZ_SSID2, BroadBandTestConstants.STRING_VALUE_24_5GHZ_KEY2,
-					BroadBandTestConstants.OPERATING_BANDWIDTH_80_MMZ, wifi24GhzParamters, true,
-					BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
+					DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.OPERATING_BANDWIDTH_20_MMZ
+							: BroadBandTestConstants.OPERATING_BANDWIDTH_80_MMZ,
+					wifi24GhzParamters, true, BroadBandTestConstants.WiFiFrequencyBand.WIFI_BAND_5_GHZ,
 					BroadBandWebGuiElements.ELEMENT_ID_CHANNEL_80MHZ);
 			status = false;
 			channelBandwidthOptionsValidation(device, clientSettop, lanSideWiFiPage, testId, lanDriver, 18,
