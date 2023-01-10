@@ -61,6 +61,7 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 			// device)
 			extraProps = ((Device) device).getExtraProperties();
 			wtSimulatorBaseUrl = extraProps.get("wtSimulatorBaseUrl");
+			wtSimulatorBaseUrl = "http://localhost:8081/test";
 			isWtClientPresent = CommonMethods.isNotNull(wtSimulatorBaseUrl);
 
 		} catch (Exception e) {
@@ -97,6 +98,8 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 
 				// base url to wt-service will be fetched from AutomaticsProps
 				String wtBaseUrl = AutomaticsPropertyUtility.getProperty("wt.service.base.url");
+				
+				LOGGER.info("wtBaseUrl is " + wtBaseUrl);
 				
 				//Trying to get Station details before creating a Station
 				stations = WtClientUtils.getAllStationsDetails(wtSimulatorBaseUrl, wtBaseUrl);
