@@ -102,6 +102,9 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 				
 				LOGGER.info("wtBaseUrl is " + wtBaseUrl);
 				
+				wtBaseUrl = "https://automatics-apps.rdkcentral.com/WTService";
+				LOGGER.info("wtBaseUrl is - " + wtBaseUrl);
+				
 				//Trying to get Station details before creating a Station
 				stations = WtClientUtils.getAllStationsDetails(wtSimulatorBaseUrl, wtBaseUrl);
 				
