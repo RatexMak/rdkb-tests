@@ -66,6 +66,8 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 		} catch (Exception e) {
 			LOGGER.error("Exception occured while trying to get URL from account", e);
 		}
+		
+		isWtClientPresent = true;
 
 		String[] webpaList = { BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID,
 				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID,
@@ -112,13 +114,10 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 					LOGGER.info("Station parentDev: " + station.getParentDev());
 					LOGGER.info("Station ethernetInterface: " + station.getEthernetInterface());
 					
-					
 					LOGGER.info("************************");
 				}
 				
-
 				// create station
-
 				status = WtClientUtils.createNewStations(
 						webpaValues.get(BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID),
 						webpaValues.get(
@@ -181,7 +180,7 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 					}
 				}
 
-				//Trying to get Station details after deleating Stations
+				//Trying to get Station details after deleting Stations
 				stations = WtClientUtils.getAllStationsDetails(wtSimulatorBaseUrl, wtBaseUrl);
 				
 				for (Station station : stations) {
@@ -196,7 +195,6 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 					LOGGER.info("Station Down: " + station.getDownStatus());					
 					LOGGER.info("Station parentDev: " + station.getParentDev());
 					LOGGER.info("Station ethernetInterface: " + station.getEthernetInterface());
-					
 					
 					LOGGER.info("************************");
 				}
