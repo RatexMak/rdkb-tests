@@ -3340,8 +3340,11 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("STEP 8: EXPECTED : Ping should not be successful");
 		LOGGER.info("**********************************************************************************");
 
-		status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(connectedClient, tapEnv,
-				defaultGatewayWan, BroadBandTestConstants.IP_VERSION4);
+//		status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(connectedClient, tapEnv,
+//				defaultGatewayWan, BroadBandTestConstants.IP_VERSION4);
+
+		status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, defaultGatewayWan,
+				connectedClient);
 
 		if (status) {
 			LOGGER.info("STEP 8: ACTUAL : Successfully verified Connectivity status ");
@@ -3442,8 +3445,11 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("STEP 12: EXPECTED : Ping should be successful");
 		LOGGER.info("**********************************************************************************");
 
-		status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(connectedClient, tapEnv,
-				defaultGatewayWan, BroadBandTestConstants.IP_VERSION4);
+//		status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(connectedClient, tapEnv,
+//				defaultGatewayWan, BroadBandTestConstants.IP_VERSION4);
+		
+		status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, defaultGatewayWan,
+				connectedClient);
 
 		if (status) {
 			LOGGER.info("STEP 12: ACTUAL : Successfully verified connectivity status");

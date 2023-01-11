@@ -660,7 +660,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			status = false;
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-					BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE, BroadBandTestConstants.THREE_MINUTES,
+					BroadbandPropertyFileHandler.getGlobalDNSIpv6Value(), BroadBandTestConstants.THREE_MINUTES,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 			// Error message
 			errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
