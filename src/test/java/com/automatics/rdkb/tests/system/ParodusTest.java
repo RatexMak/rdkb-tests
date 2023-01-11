@@ -3681,8 +3681,7 @@ public class ParodusTest extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			if (CommonUtils.downloadFileUsingAutoVault(device, tapEnv,
-					BroadBandCommandConstants.FILE_PATH_AUTOVAULT_WBPA_CFG_JSON,
-					BroadBandCommandConstants.DIRECTORY_TMP)) {
+					BroadbandPropertyFileHandler.getWbpaCfgFileLocation(), BroadBandCommandConstants.DIRECTORY_TMP)) {
 				errorMessage = "Failed to find incorrect webpa url in /nvram/webpa_cfg.json after copying";
 				tapEnv.executeCommandUsingSsh(device,
 						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandCommandConstants.CMD_COPY,
