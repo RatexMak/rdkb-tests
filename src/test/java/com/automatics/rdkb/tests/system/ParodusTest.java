@@ -1378,20 +1378,27 @@ public class ParodusTest extends AutomaticsTestBase {
 
 			stepNumber = "s9";
 			status = false;
-			LOGGER.info("***********************************************************");
-			LOGGER.info("STEP 9: DESCRIPTION : Verify TEST and SET request logged in WEBPAlog.txt.0");
-			LOGGER.info("STEP 9: ACTION : Execute command:grep \"Test and Set Request\" /rdklogs/logs/WEBPAlog.txt.0");
-			LOGGER.info("STEP 9: EXPECTED : Response should contain Test and Set request log message");
-			LOGGER.info("***********************************************************");
-			errorMessage = "Failed to get the log message for TEST and SET request";
-			status = searchWebpaLogInArmOrAtom(device, BroadBandTraceConstants.LOG_MESSAGE_TEST_SET, isAtomSyncDevice);
-			if (status) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("***********************************************************");
+				LOGGER.info("STEP 9: DESCRIPTION : Verify TEST and SET request logged in WEBPAlog.txt.0");
 				LOGGER.info(
-						"STEP 9: ACTUAL: Successfully verified the log message for webpa TEST and SET in log message");
+						"STEP 9: ACTION : Execute command:grep \"Test and Set Request\" /rdklogs/logs/WEBPAlog.txt.0");
+				LOGGER.info("STEP 9: EXPECTED : Response should contain Test and Set request log message");
+				LOGGER.info("***********************************************************");
+				errorMessage = "Failed to get the log message for TEST and SET request";
+				status = searchWebpaLogInArmOrAtom(device, BroadBandTraceConstants.LOG_MESSAGE_TEST_SET,
+						isAtomSyncDevice);
+				if (status) {
+					LOGGER.info(
+							"STEP 9: ACTUAL: Successfully verified the log message for webpa TEST and SET in log message");
+				} else {
+					LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+				}
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			// ##################################################################################################//
 
 			stepNumber = "s10";
