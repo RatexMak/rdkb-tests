@@ -114,7 +114,7 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 
 				JSONObject objectName = new JSONObject(status1);
 				String status2 = objectName.getString("status");
-				LOGGER.info("status1 :  " + status1);
+				LOGGER.info("status2 :  " + status1);
 				
 				
 				//////////////////////////////////
