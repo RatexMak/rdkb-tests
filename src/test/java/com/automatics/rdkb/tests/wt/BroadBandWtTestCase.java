@@ -30,7 +30,7 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
     boolean isWtClientPresent = false;
     String wtSimulatorBaseUrl;
 
-    @Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
+    @Test(enabled = true, dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = BroadBandTestGroup.SYSTEM)
     @TestDetails(testUID = "TC-RDKB-WTTEST-1000")
 
     public void testVerifyWtClientConnection(Dut device) {
