@@ -810,23 +810,30 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNum = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION :VERIFY THE CORRECT IPV6 ADDRESS FOR CONNECTED CLIENT");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : EXECUTE COMMAND, WINDOWS : ipconfig |grep -A 10 'Wireless LAN adapter Wi-Fi' |grep -i 'IPv6 Address' or LINUX : ifconfig | grep 'inet6 ' ON THE CONNECTED CLIENT");
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : IT SHOULD RETURN THE CORRECT IPV4 ADDRESS");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "UNABLE TO GET THE CORRECT IPV6 ADDRESS FROM CLIENT";
-			status = BroadBandConnectedClientUtils.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType,
-					deviceConnected, tapEnv);
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
 				LOGGER.info(
-						"STEP " + stepNumber + " : ACTUAL : SUCCESSFYLLY VERIFIED CORRECT IPV6 ADDRESS FROM CLIENT");
+						"STEP " + stepNumber + ": DESCRIPTION :VERIFY THE CORRECT IPV6 ADDRESS FOR CONNECTED CLIENT");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : EXECUTE COMMAND, WINDOWS : ipconfig |grep -A 10 'Wireless LAN adapter Wi-Fi' |grep -i 'IPv6 Address' or LINUX : ifconfig | grep 'inet6 ' ON THE CONNECTED CLIENT");
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : IT SHOULD RETURN THE CORRECT IPV4 ADDRESS");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "UNABLE TO GET THE CORRECT IPV6 ADDRESS FROM CLIENT";
+				status = BroadBandConnectedClientUtils
+						.verifyIpv6AddressForWiFiOrLanInterfaceConnectedWithRdkbDevice(osType, deviceConnected, tapEnv);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : SUCCESSFYLLY VERIFIED CORRECT IPV6 ADDRESS FROM CLIENT");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 			/**
 			 * STEP 4 : VERIFY THE INTERNET CONNECTIVITY IN THE CLIENT WITH GIVEN GHZ SSID
@@ -873,33 +880,40 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNum = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : VERIFY THE INTERNET CONNECTIVITY IN THE CLIENT CONNECTED USING IPV6");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : EXECUTE COMMAND, WINDOWS : curl -6 -v 'www.google.com' | grep '200 OK' OR ping -6 -n 5 google.com , LINUX : curl -6 -f --interface <interfaceName> www.google.com | grep '200 OK' OR ping -6 -n 5 google.com ON THE CONNECTED CLIENT");
-			LOGGER.info("STEP " + stepNumber
-					+ ": EXPECTED : THE INTERNET CONNECTIVITY MUST BE AVAILABLE INTERFACE USING IPV4 ");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "NOT ABLE TO ACCESS THE SITE 'www.google.com' FROM CONNECTED CLIENT WITH USING IPV6";
-			broadBandResultObject = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(
-					tapEnv, deviceConnected,
-					BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
-					BroadBandTestConstants.IP_VERSION6);
-			status = broadBandResultObject.isStatus();
-			errorMessage = broadBandResultObject.getErrorMessage();
-			if (!status) {
-				errorMessage = "PIGN OPERATION FAILED TO ACCESS THE SITE 'www.google.com' USING IPV6 ";
-				status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(deviceConnected, tapEnv,
-						BroadBandTestConstants.PING_TO_GOOGLE, BroadBandTestConstants.IP_VERSION6);
-			}
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + " : ACTUAL : CONNECTED CLIENT HAS INTERNET CONNECTIVITY USING IPV6");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : VERIFY THE INTERNET CONNECTIVITY IN THE CLIENT CONNECTED USING IPV6");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : EXECUTE COMMAND, WINDOWS : curl -6 -v 'www.google.com' | grep '200 OK' OR ping -6 -n 5 google.com , LINUX : curl -6 -f --interface <interfaceName> www.google.com | grep '200 OK' OR ping -6 -n 5 google.com ON THE CONNECTED CLIENT");
+				LOGGER.info("STEP " + stepNumber
+						+ ": EXPECTED : THE INTERNET CONNECTIVITY MUST BE AVAILABLE INTERFACE USING IPV4 ");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "NOT ABLE TO ACCESS THE SITE 'www.google.com' FROM CONNECTED CLIENT WITH USING IPV6";
+				broadBandResultObject = BroadBandConnectedClientUtils
+						.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, deviceConnected,
+								BroadBandTestConstants.URL_HTTPS + BroadBandTestConstants.STRING_GOOGLE_HOST_ADDRESS,
+								BroadBandTestConstants.IP_VERSION6);
+				status = broadBandResultObject.isStatus();
+				errorMessage = broadBandResultObject.getErrorMessage();
+				if (!status) {
+					errorMessage = "PIGN OPERATION FAILED TO ACCESS THE SITE 'www.google.com' USING IPV6 ";
+					status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(deviceConnected, tapEnv,
+							BroadBandTestConstants.PING_TO_GOOGLE, BroadBandTestConstants.IP_VERSION6);
+				}
+				if (status) {
+					LOGGER.info(
+							"STEP " + stepNumber + " : ACTUAL : CONNECTED CLIENT HAS INTERNET CONNECTIVITY USING IPV6");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 			/**
 			 * Step 6 : VERIFY LOGIN INTO THE LAN GUI ADIMN PAGE BY USING VALID USERID AND
@@ -1047,23 +1061,30 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNum = "S" + stepNumber;
 			status = false;
 			errorMessage = "Unable to navigate to Firewall IPv6 page from the 'Firewall' Menu";
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Launch the IPv6 FireWall page from partner page");
-			LOGGER.info("STEP " + stepNumber + " : ACTION : Navigate to IPv6 Firewall page by clicking on \"IPv6\"");
-			LOGGER.info("STEP " + stepNumber
-					+ " : EXPECTED : IPv6 Firewall page should be displayed having page title as \"Gateway > Firewall> IPv6\"");
-			LOGGER.info("**********************************************************************************");
-			status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
-					BroadBandWebGuiTestConstant.LINK_TEXT_IPV6, BroadBandTestConstants.FIREWALL_IPV6);
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : Launch the IPv6 FireWall page from partner page");
+				LOGGER.info(
+						"STEP " + stepNumber + " : ACTION : Navigate to IPv6 Firewall page by clicking on \"IPv6\"");
 				LOGGER.info("STEP " + stepNumber
-						+ " : ACTUAL : IPv6 Firewall page is displayed having page title as 'Gateway > Firewall> IPv6'");
+						+ " : EXPECTED : IPv6 Firewall page should be displayed having page title as \"Gateway > Firewall> IPv6\"");
+				LOGGER.info("**********************************************************************************");
+				status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
+						BroadBandWebGuiTestConstant.LINK_TEXT_IPV6, BroadBandTestConstants.FIREWALL_IPV6);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : IPv6 Firewall page is displayed having page title as 'Gateway > Firewall> IPv6'");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum,
+						status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
-					errorMessage, true);
 
 			/**
 			 * Step 11 : Verify the Default IPv6 firewall mode is set to Typical Security
@@ -1072,27 +1093,33 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNumber++;
 			stepNum = "S" + stepNumber;
 			status = false;
-			errorMessage = "Default firewall mode for IPv6 retrieved from Web GUI is not 'Typical Security (default)'";
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ " : DESCRIPTION : Verify the Default IPv6 firewall mode is set to Typical Security (default)");
-			LOGGER.info("STEP " + stepNumber
-					+ " : ACTION : Retrieve the firewall level selected in \"Gateway > Firewall> IPv6\" Page");
-			LOGGER.info(
-					"STEP " + stepNumber + " : EXPECTED : Default firewall mode should be Typical Security (default)");
-			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
-					BroadBandTestConstants.DEFAULT_IPV6_FIREWALL_SECURITY, BroadBandCommonPage
-							.getFirewallSecurityLevel(driver, device, BroadBandTestConstants.String_CONSTANT_IPV6));
-			if (status) {
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				errorMessage = "Default firewall mode for IPv6 retrieved from Web GUI is not 'Typical Security (default)'";
+				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP " + stepNumber
-						+ " : ACTUAL : Default firewall mode for IPv4 retrieved from Web GUI is 'Typical Security (default)'");
+						+ " : DESCRIPTION : Verify the Default IPv6 firewall mode is set to Typical Security (default)");
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTION : Retrieve the firewall level selected in \"Gateway > Firewall> IPv6\" Page");
+				LOGGER.info("STEP " + stepNumber
+						+ " : EXPECTED : Default firewall mode should be Typical Security (default)");
+				LOGGER.info("**********************************************************************************");
+				status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+						BroadBandTestConstants.DEFAULT_IPV6_FIREWALL_SECURITY, BroadBandCommonPage
+								.getFirewallSecurityLevel(driver, device, BroadBandTestConstants.String_CONSTANT_IPV6));
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : Default firewall mode for IPv4 retrieved from Web GUI is 'Typical Security (default)'");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum,
+						status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
-					errorMessage, false);
 
 			/**
 			 * Step 12 : Launch the Managed Devices under Parental Control page from partner
