@@ -3230,8 +3230,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, WebPaDataTypes.STRING.getValue(),
-					AutomaticsTapApi.getSTBPropsValue(AutomaticsPropertyUtility
-							.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE)),
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
 					AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 
 			// Error message
