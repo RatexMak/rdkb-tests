@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.codehaus.jettison.json.JSONObject;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -104,6 +105,18 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 				
 				wtBaseUrl = "https://automatics-apps.rdkcentral.com/WTService";
 				LOGGER.info("wtBaseUrl is - " + wtBaseUrl);
+				
+				//try
+				
+				String status1 = "{ \"status\": \"SUCCESS\"}";
+				LOGGER.info("status1 :  " + status1);
+				
+
+				JSONObject objectName = new JSONObject(status1);
+				String status2 = objectName.getString("status");
+				
+				
+				//////////////////////////////////
 				
 				//Trying to get Station details before creating a Station
 				stations = WtClientUtils.getAllStationsDetails(wtSimulatorBaseUrl, wtBaseUrl);
