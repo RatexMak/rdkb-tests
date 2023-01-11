@@ -200,12 +200,13 @@ public class BroadBandWtTestCase extends AutomaticsTestBase {
 
 		for (Station station : stations) {
 
-		    String deleteStatus = WtClientUtils.deleteStation(station.getId(), wtSimulatorBaseUrl, wtBaseUrl);
+		    String deleteStatus = WtClientUtils.deleteStation(station.getAlias(), wtSimulatorBaseUrl,
+			    wtBaseUrl);
 		    status = CommonMethods.isNotNull(deleteStatus);
 		    if (status) {
-			LOGGER.info("Successfully deleted Station with ID :" + station.getId());
+			LOGGER.info("Successfully deleted Station with ID :" + station.getAlias());
 		    } else {
-			LOGGER.error("Failed to delete Station with ID :" + station.getId());
+			LOGGER.error("Failed to delete Station with ID :" + station.getAlias());
 		    }
 		}
 
