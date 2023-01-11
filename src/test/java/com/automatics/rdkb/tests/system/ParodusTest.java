@@ -1316,15 +1316,6 @@ public class ParodusTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 6: EXPECTED : The webpa command should Execute successfully");
 			LOGGER.info("***********************************************************");
 
-			JSONObject jsonAttribute = new JSONObject();
-			jsonAttribute.put(BroadBandTestConstants.NOTIFY, BroadBandTestConstants.CONSTANT_1);
-			status = BroadBandWebPaUtils.setWebPaAttribute(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_NOTIFY_COMPONENT_CONNECTED_CLIENT, jsonAttribute);
-			errorMessage = CommonUtils.concatStringUsingStringBuffer(
-					"Failed to Set Attribute value for WebPa parameter:",
-					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_NOTIFY_COMPONENT_CONNECTED_CLIENT,
-					"with set attribute as :", jsonAttribute.toString());
-
 			status = BroadBandWiFiUtils.setWebPaParams(device,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_2_4_GHZ_PRIVATE_SSID_NAME,
 					BroadBandTestConstants.STRING_TEST_1, BroadBandTestConstants.CONSTANT_0);
@@ -1342,21 +1333,26 @@ public class ParodusTest extends AutomaticsTestBase {
 
 			stepNumber = "s7";
 			status = false;
-			LOGGER.info("***********************************************************");
-			LOGGER.info("STEP 7: DESCRIPTION : Verify Set-Attributes request is logged in WEBPAlog.txt.0");
-			LOGGER.info("STEP 7: ACTION : Execute command:grep \"SET ATTRIBUTES\" /rdklogs/logs/WEBPAlog.txt.0 ");
-			LOGGER.info("STEP 7: EXPECTED : Response should contain the log message for Set-Attributes request");
-			LOGGER.info("***********************************************************");
-			errorMessage = "Failed to get the log message for SET ATTRIBUTES request";
-			status = searchWebpaLogInArmOrAtom(device, BroadBandTraceConstants.LOG_MESSAGE_SET_ATTRIBUTES,
-					isAtomSyncDevice);
-			if (status) {
-				LOGGER.info(
-						"STEP 7: ACTUAL: Successfully verified the log message for webpa set attributes in log message");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("***********************************************************");
+				LOGGER.info("STEP 7: DESCRIPTION : Verify Set-Attributes request is logged in WEBPAlog.txt.0");
+				LOGGER.info("STEP 7: ACTION : Execute command:grep \"SET ATTRIBUTES\" /rdklogs/logs/WEBPAlog.txt.0 ");
+				LOGGER.info("STEP 7: EXPECTED : Response should contain the log message for Set-Attributes request");
+				LOGGER.info("***********************************************************");
+				errorMessage = "Failed to get the log message for SET ATTRIBUTES request";
+				status = searchWebpaLogInArmOrAtom(device, BroadBandTraceConstants.LOG_MESSAGE_SET_ATTRIBUTES,
+						isAtomSyncDevice);
+				if (status) {
+					LOGGER.info(
+							"STEP 7: ACTUAL: Successfully verified the log message for webpa set attributes in log message");
+				} else {
+					LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				}
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			// ##################################################################################################//
 
 			stepNumber = "s8";

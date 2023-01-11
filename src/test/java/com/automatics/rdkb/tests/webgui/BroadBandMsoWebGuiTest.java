@@ -3255,7 +3255,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("#######################################################################################");
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-					AutomaticsTapApi.getSTBPropsValue(BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
+					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
 					AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 			// Error message
 			errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
