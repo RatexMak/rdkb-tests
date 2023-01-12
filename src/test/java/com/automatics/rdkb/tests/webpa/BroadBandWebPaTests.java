@@ -6253,8 +6253,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 7: EXPECTED: Ping to the destination host should fail");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet is accessible even after adding the client to blocked list";
 			if (status) {
 				LOGGER.info(
@@ -6325,8 +6330,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 10: EXPECTED: Ping to the destination host should be successful");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet cannot accessible even after removing the client from blocked list";
 			if (status) {
 				LOGGER.info(
@@ -6436,8 +6446,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 14: EXPECTED: Ping to the destination host should fail");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet is accessible even after adding the client to blocked list";
 			if (status) {
 				LOGGER.info(
@@ -6481,8 +6496,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 16: EXPECTED: Ping to the destination host should be successful");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet cannot accessible even after removing the client from blocked list";
 			if (status) {
 				LOGGER.info(
