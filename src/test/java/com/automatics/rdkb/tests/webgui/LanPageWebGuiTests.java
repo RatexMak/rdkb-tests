@@ -3341,9 +3341,6 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("STEP 8: EXPECTED : Ping should not be successful");
 		LOGGER.info("**********************************************************************************");
 
-//		status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(connectedClient, tapEnv,
-//				defaultGatewayWan, BroadBandTestConstants.IP_VERSION4);
-
 		status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, defaultGatewayWan,
 				connectedClient);
 
@@ -3394,10 +3391,20 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("STEP 10: EXPECTED : Status should be verified successfully");
 		LOGGER.info("**********************************************************************************");
 		try {
-			String firewallHeader = webDriver
-					.findElement(By.xpath(BroadBandWebGuiElements.ELEMENT_XPATH_FIREWALL_STATUS_IN_HEADER)).getText();
-			status = CommonMethods.isNotNull(firewallHeader) && CommonUtils
-					.patternSearchFromTargetString(firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MINIMUM_TEXT);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				String firewallHeader = webDriver
+						.findElement(By.xpath(BroadBandWebGuiElements.ELEMENT_XPATH_FIREWALL_STATUS_IN_HEADER))
+						.getText();
+				status = CommonMethods.isNotNull(firewallHeader) && CommonUtils.patternSearchFromTargetString(
+						firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MINIMUM_TEXT);
+			} else {
+				String firewallHeader = webDriver
+						.findElement(By.xpath(BroadBandWebGuiElements.ELEMENT_XPATH_FIREWALL_STATUS_IN_HEADER_RPI))
+						.getText();
+				LOGGER.info("firewallHeader" + firewallHeader);
+				status = CommonMethods.isNotNull(firewallHeader) && CommonUtils.patternSearchFromTargetString(
+						firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MAXIMUM_TEXT);
+			}
 		} catch (Exception e) {
 			LOGGER.error("Exception caught while validating firewall status in UI " + e.getMessage());
 
@@ -3445,9 +3452,6 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 		LOGGER.info("STEP 12: ACTION : Execute command :ping <<IPAddress>>");
 		LOGGER.info("STEP 12: EXPECTED : Ping should be successful");
 		LOGGER.info("**********************************************************************************");
-
-//		status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4AndIpv6(connectedClient, tapEnv,
-//				defaultGatewayWan, BroadBandTestConstants.IP_VERSION4);
 
 		status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, defaultGatewayWan,
 				connectedClient);
