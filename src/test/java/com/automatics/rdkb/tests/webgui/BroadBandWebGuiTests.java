@@ -5220,11 +5220,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-//			status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
 			
-			status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
-			
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
@@ -5265,10 +5263,8 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should not be successful.");
 			LOGGER.info("**********************************************************************************");
-			//pingResult = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
-			
-			pingResult = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			status = !pingResult;
 			if (status) {
@@ -5310,10 +5306,8 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should not be successful.");
 			LOGGER.info("**********************************************************************************");
-			//pingResult = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
-			
-			pingResult = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			status = !pingResult;
 			if (status) {
@@ -5357,10 +5351,8 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should not be successful.");
 			LOGGER.info("**********************************************************************************");
-			//pingResult = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
-			
-			pingResult = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			status = !pingResult;
 			if (status) {
@@ -5402,10 +5394,8 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			//status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
-			
-			status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
@@ -5450,10 +5440,8 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			//status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
-			
-			status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
@@ -5530,10 +5518,8 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			//status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
-			
-			status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv, wanIpAddress,
-					connectedClientDevice);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv,
+					wanIpAddress,BroadBandTestConstants.STRING_VALUE_FIVE);
 			
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");

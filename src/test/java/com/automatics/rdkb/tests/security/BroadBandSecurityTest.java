@@ -5292,7 +5292,9 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 			 * Calling VerifyPresenceOfServerPemFile helper method to check the presence of
 			 * server.pem
 			 */
-			stepCounter = VerifyPresenceOfServerPemFile(device, testCaseId, stepCounter);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				stepCounter = VerifyPresenceOfServerPemFile(device, testCaseId, stepCounter);
+			}
 			/*
 			 * Launch Admin GUI
 			 */
