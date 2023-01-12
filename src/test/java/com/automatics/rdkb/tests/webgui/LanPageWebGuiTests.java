@@ -3403,7 +3403,7 @@ public class LanPageWebGuiTests extends AutomaticsTestBase {
 						.getText();
 				LOGGER.info("firewallHeader" + firewallHeader);
 				status = CommonMethods.isNotNull(firewallHeader) && CommonUtils.patternSearchFromTargetString(
-						firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MAXIMUM_TEXT);
+						firewallHeader, BroadBandWebGuiTestConstant.FIREWALL_MINIMUM_TEXT);
 			}
 		} catch (Exception e) {
 			LOGGER.error("Exception caught while validating firewall status in UI " + e.getMessage());
