@@ -53,143 +53,146 @@ import com.automatics.rdkb.webui.page.LanSideTroubleShootingPage;
 
 public class BroadBandSystemWifiTests extends AutomaticsTestBase {
 
-    /**
-     * Verify Xconf default value,Hardware make/model,Linux kernel upgrade version
-     * <ol>
-     * <li>Verify WEBPA command to get the XCONF client firmware download default value.</li>
-     * <li>Verify Hardware Make/Model of the device in Xconf logs</li>
-     * <li>Verify Linux Kernel Upgrade Version.</li>
-     * </ol>
-     * 
-     * @param device
-     *            {@link Dut}
-     * @author Joseph M
-     */
-    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
-    @TestDetails(testUID = "TC-RDKB-SYSTEM-5007",  testDecription = "Verify Xconf default value,Hardware make/model,Linux kernel upgrade version")
-    public void testToVerifyHardwareAndLinuxVersion(Dut device) {
-	// Variable Declaration begins
-	String testCaseId = "";
-	String stepNum = "";
-	String errorMessage = "";
-	boolean status = false;
-	String response = null;
-	testCaseId = "TC-RDKB-SYSTEM-507";
+	/**
+	 * Verify Xconf default value,Hardware make/model,Linux kernel upgrade version
+	 * <ol>
+	 * <li>Verify WEBPA command to get the XCONF client firmware download default
+	 * value.</li>
+	 * <li>Verify Hardware Make/Model of the device in Xconf logs</li>
+	 * <li>Verify Linux Kernel Upgrade Version.</li>
+	 * </ol>
+	 * 
+	 * @param device {@link Dut}
+	 * @author Joseph M
+	 */
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+	@TestDetails(testUID = "TC-RDKB-SYSTEM-5007", testDecription = "Verify Xconf default value,Hardware make/model,Linux kernel upgrade version")
+	public void testToVerifyHardwareAndLinuxVersion(Dut device) {
+		// Variable Declaration begins
+		String testCaseId = "";
+		String stepNum = "";
+		String errorMessage = "";
+		boolean status = false;
+		String response = null;
+		testCaseId = "TC-RDKB-SYSTEM-507";
 
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-5007");
-	LOGGER.info("TEST DESCRIPTION: Verify Xconf default value,Hardware make/model,Linux kernel upgrade version");
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-SYSTEM-5007");
+		LOGGER.info("TEST DESCRIPTION: Verify Xconf default value,Hardware make/model,Linux kernel upgrade version");
 
-	LOGGER.info("TEST STEPS : ");
-	LOGGER.info("1. Verify WEBPA command to get the XCONF client firmware download  default value.");
-	LOGGER.info("2. Verify Hardware  Make/Model of the device in xconf logs");
-	LOGGER.info("3. Verify Linux Kernel Upgrade Version.");
-	LOGGER.info("#######################################################################################");
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify WEBPA command to get the XCONF client firmware download  default value.");
+		LOGGER.info("2. Verify Hardware  Make/Model of the device in xconf logs");
+		LOGGER.info("3. Verify Linux Kernel Upgrade Version.");
+		LOGGER.info("#######################################################################################");
 
-	LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
-	LOGGER.info("PRE-CONDITION STEPS");
-	LOGGER.info("#######################################################################################");
-	LOGGER.info("PRE-CONDITION : DESCRIPTION : Reboot the device.");
-	LOGGER.info("PRE-CONDITION : ACTION :Reboot the device using command: /sbin/reboot.");
-	LOGGER.info("PRE-CONDITION : EXPECTED :  Device should be rebooted.");
-	LOGGER.info("#######################################################################################");
-	status = CommonUtils.rebootAndWaitForIpAcquisition(tapEnv, device);
-	errorMessage = "Unable to reboot the device.";
-	if (status) {
-	    LOGGER.info("PRE-CONDITION : ACTUAL : Pre condition executed successfully");
-	} else {
-	    LOGGER.error("PRE-CONDITION : ACTUAL : Pre condition failed");
-	    throw new TestException(BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION :FAILED : "
-		    + errorMessage);
-	}
-	LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
-	try {
-	    stepNum = "S1";
-	    errorMessage = "The XCONF client firmware download check default value is not as false.";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 1: DESCRIPTION : Verify WEBPA command to get the XCONF client firmware download  default value");
-	    LOGGER.info("STEP 1: ACTION : Execute the Below Command:curl -X GET -H 'Authorization: Bearer <SAT TOKEN>' -H 'content-type:application/json' -H 'X-Webpa-Atomic:true' -k -i https://<url:port>/api/v2/device/mac:<MAC Address>/config?names=Device.X_COMCAST-COM_Xcalibur.Client.xconfCheckNow");
-	    LOGGER.info("STEP 1: EXPECTED : The output value false confirms the XCONF client firmware download check default value");
-	    LOGGER.info("**********************************************************************************");
-	    String xconfDefaultValue = tapEnv.executeWebPaCommand(device,
-		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_TRIGGERING_XCONF_CDL);
-	    LOGGER.info("Xconf Default value  is = " + xconfDefaultValue);
-	    if (CommonMethods.isNotNull(xconfDefaultValue)
-		    && xconfDefaultValue.equalsIgnoreCase(BroadBandTestConstants.FALSE)) {
-		status = true;
-	    }
-	    if (status) {
-		LOGGER.info("STEP 1: ACTUAL : XCONF client firmware download check default value retrieved is false");
-	    } else {
-		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    stepNum = "S2";
-	    errorMessage = "Unable to get the Hardware  Make/Model of the device in logs.";
-	    status = false;
-	    boolean modelInXconfStatus = false;
-	    String command = null;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 2: DESCRIPTION : Verify Hardware  Make/Model of the device in xconf logs.");
-	    LOGGER.info("STEP 2: ACTION : Get the Hardware Make/Model by using below command 'grep -i \"XCONF SCRIPT : MODEL\" /rdklogs/logs/ArmConsolelog.txt.0' for atom devices and 'grep -i \"XCONF SCRIPT\" /rdklogs/logs/Consolelog.txt.0' for arm devices and 'grep -i \"XCONF SCRIPT\" /rdklogs/logs/xconf.txt.0' for other devices");
-	    LOGGER.info("STEP 2: EXPECTED : Hardware  Make/Model of the device should be displayed .");
-	    LOGGER.info("**********************************************************************************");
-	    long startTime = System.currentTimeMillis();
-	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
-		command = BroadBandCommandConstants.XCONF_CURRENT_MODEL_ARM_CONSOLE_LOGS;
-	    } 
-	else{
-		command = BroadBandCommandConstants.XCONF_CURRENT_MODEL;
-	    }
-	    do {
-		response = tapEnv.executeCommandUsingSsh(device, command);
-		if (CommonMethods.isNotNull(response)) {
-			modelInXconfStatus = CommonUtils.patternSearchFromTargetString(response, device.getModel());
-			LOGGER.info("Model Name in log status is" + modelInXconfStatus);
+		LOGGER.info("################### STARTING PRE-CONFIGURATIONS ###################");
+		LOGGER.info("PRE-CONDITION STEPS");
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("PRE-CONDITION : DESCRIPTION : Reboot the device.");
+		LOGGER.info("PRE-CONDITION : ACTION :Reboot the device using command: /sbin/reboot.");
+		LOGGER.info("PRE-CONDITION : EXPECTED :  Device should be rebooted.");
+		LOGGER.info("#######################################################################################");
+		status = CommonUtils.rebootAndWaitForIpAcquisition(tapEnv, device);
+		errorMessage = "Unable to reboot the device.";
+		if (status) {
+			LOGGER.info("PRE-CONDITION : ACTUAL : Pre condition executed successfully");
+		} else {
+			LOGGER.error("PRE-CONDITION : ACTUAL : Pre condition failed");
+			throw new TestException(
+					BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION :FAILED : " + errorMessage);
 		}
-		status = modelInXconfStatus;
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS
-		    && !status
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-	    if (status) {
-		LOGGER.info("STEP 2: ACTUAL : Able to get the Hardware version and Model of the device in xconf logs ");
-	    } else {
-		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
+		try {
+			stepNum = "S1";
+			errorMessage = "The XCONF client firmware download check default value is not as false.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 1: DESCRIPTION : Verify WEBPA command to get the XCONF client firmware download  default value");
+			LOGGER.info(
+					"STEP 1: ACTION : Execute the Below Command:curl -X GET -H 'Authorization: Bearer <SAT TOKEN>' -H 'content-type:application/json' -H 'X-Webpa-Atomic:true' -k -i https://<url:port>/api/v2/device/mac:<MAC Address>/config?names=Device.X_COMCAST-COM_Xcalibur.Client.xconfCheckNow");
+			LOGGER.info(
+					"STEP 1: EXPECTED : The output value false confirms the XCONF client firmware download check default value");
+			LOGGER.info("**********************************************************************************");
+			String xconfDefaultValue = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_FOR_TRIGGERING_XCONF_CDL);
+			LOGGER.info("Xconf Default value  is = " + xconfDefaultValue);
+			if (CommonMethods.isNotNull(xconfDefaultValue)
+					&& xconfDefaultValue.equalsIgnoreCase(BroadBandTestConstants.FALSE)) {
+				status = true;
+			}
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : XCONF client firmware download check default value retrieved is false");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
-	    stepNum = "S3";
-	    errorMessage = "Linux kernel version is not displayed in Arm Console";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 3: DESCRIPTION : Verify Linux Kernel Upgrade Version in ArmConsole");
-	    LOGGER.info("STEP 3: ACTION : Get the Linux Kernel Upgrade Version by using the command 'uname -r'");
-	    LOGGER.info("STEP 3: EXPECTED : Linux Kernel Version  (LTS version) should be displayed in ArmConsole");
-	    LOGGER.info("**********************************************************************************");
-	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_LINUX_VERSION);
-	    LOGGER.info("Response for linux kernel upgrade is" + response);
-	    status = CommonUtils.patternSearchFromTargetString(response.trim(),
-		    tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_LINUX_KERNEL_VERSION).trim());
-	    if (status) {
-		LOGGER.info("STEP 3: ACTUAL : Linux Kernel Version is verified successfully.");
-	    } else {
-		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-	} catch (Exception e) {
-	    errorMessage = errorMessage + e.getMessage();
-	    LOGGER.error(errorMessage);
-	    CommonUtils
-		    .updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage, true);
+			stepNum = "S2";
+			errorMessage = "Unable to get the Hardware  Make/Model of the device in logs.";
+			status = false;
+			boolean modelInXconfStatus = false;
+			String command = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : Verify Hardware  Make/Model of the device in xconf logs.");
+			LOGGER.info(
+					"STEP 2: ACTION : Get the Hardware Make/Model by using below command 'grep -i \"XCONF SCRIPT : MODEL\" /rdklogs/logs/ArmConsolelog.txt.0' for atom devices and 'grep -i \"XCONF SCRIPT\" /rdklogs/logs/Consolelog.txt.0' for arm devices and 'grep -i \"XCONF SCRIPT\" /rdklogs/logs/xconf.txt.0' for other devices");
+			LOGGER.info("STEP 2: EXPECTED : Hardware  Make/Model of the device should be displayed .");
+			LOGGER.info("**********************************************************************************");
+			long startTime = System.currentTimeMillis();
+			if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
+				command = BroadBandCommandConstants.XCONF_CURRENT_MODEL_ARM_CONSOLE_LOGS;
+			} else {
+				command = BroadBandCommandConstants.XCONF_CURRENT_MODEL;
+			}
+			do {
+				response = tapEnv.executeCommandUsingSsh(device, command);
+				if (CommonMethods.isNotNull(response)) {
+					modelInXconfStatus = CommonUtils.patternSearchFromTargetString(response, device.getModel());
+					LOGGER.info("Model Name in log status is" + modelInXconfStatus);
+				}
+				status = modelInXconfStatus;
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIFTEEN_MINUTES_IN_MILLIS
+					&& !status
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Able to get the Hardware version and Model of the device in xconf logs ");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+			stepNum = "S3";
+			errorMessage = "Linux kernel version is not displayed in Arm Console";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 3: DESCRIPTION : Verify Linux Kernel Upgrade Version in ArmConsole");
+			LOGGER.info("STEP 3: ACTION : Get the Linux Kernel Upgrade Version by using the command 'uname -r'");
+			LOGGER.info("STEP 3: EXPECTED : Linux Kernel Version  (LTS version) should be displayed in ArmConsole");
+			LOGGER.info("**********************************************************************************");
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_LINUX_VERSION);
+			LOGGER.info("Response for linux kernel upgrade is" + response);
+			status = CommonUtils.patternSearchFromTargetString(response.trim(),
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_LINUX_KERNEL_VERSION).trim());
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Linux Kernel Version is verified successfully.");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					true);
+		}
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-5007");
 	}
-	LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-5007");
-    }
-    
+
 	/**
 	 * <ol>
 	 * <li>STEP 1: Verify the version of ipset</li>
@@ -757,7 +760,7 @@ public class BroadBandSystemWifiTests extends AutomaticsTestBase {
 		}
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-SYSTEM-IPSET-1008");
 	}
-	
+
 	/**
 	 * Verify common DHCPv4 code functionality
 	 * <ol>
@@ -1251,491 +1254,491 @@ public class BroadBandSystemWifiTests extends AutomaticsTestBase {
 		LOGGER.info("ENDING TEST CASE: TC-RDKB-DHCP-SWITCH-1001");
 	}
 
-    /**
-     * Perform Factory reset from Admin GUI page and verify default values after factory reset
-     * 
-     * 
-     * STEP 1:Launch Admin GUI page and verify login status 
-	 * STEP 2: Launch the Connected Devices page from Admin page
-	 * STEP 3: Verify whether Prefer Private option is Checked(enabled) from Local GUI page 
-	 * STEP 4:Verify the PreferPrivate option is enabled via WebPA"); 
-	 * STEP 5: Navigate to TroubleShooting page and click on Restore Factory setting 
-	 * STEP 6: Perform factory reset from GUI 
-	 * STEP 7:Wait for Ten minutes and check whether the device is accessable 
-	 * STEP 8:Verify Last reboot reason using webpa command 
-	 * STEP 9:Verify Last reboot reason using BootTime.log/PARODUSlog.txt.0 file 
-	 * STEP 10: verify the default SSID Name for 2.4 GHz band using WebPA  
-	 * STEP 11:verify the default SSID Name for 5 GHz band using WebPA 
-	 * STEP 12: Re activate the device using WebPA  
-	 * STEP 13:verify Wifi network security mode for 2.4 GHz band 
-	 * STEP 14: verify Wifi network security encryption mode for 2.4 GHz band 
-	 * STEP 15: Verify Wifi network enabled status for 2.4 GHz Wifi band 
-	 * STEP 16: Verify status of auto channel selection in 2.4 GHz Wifi band 
-	 * STEP 17: Verify network channel bandwidth for 2.4 GHz Wifi band 
-	 * STEP 18: Verify Wifi Broadcast network Name enabled status for 2.4 GHz Wifi band 
-	 * STEP 19: Verify Guard interval for 2.4 GHz Wifi network 
-	 * STEP 20: Verify WiFi network active status for 2.4 GHz in Connection Status page 
-	 * STEP 21: Verify the WiFi supported protocols for 2.4Ghz band 
-	 * STEP 22: verify Wifi network security mode for 2.4 GHz band 
-	 * STEP 23: verify Wifi network security encryption mode for 2.4 GHz band 
-	 * STEP 24: Verify Wifi network enabled status for 2.4 GHz Wifi band 
-	 * STEP 25: Verify status of auto channel selection in 2.4 GHz Wifi band 
-	 * STEP 26: Verify network channel bandwidth for 2.4 GHz Wifi band 
-	 * STEP 27: Verify Wifi Broadcast network Name enabled status for 2.4 GHz Wifi band 
-	 * STEP 28: Verify Guard interval for 2.4 GHz Wifi network 
-	 * STEP 29: Verify WiFi network active status for 2.4 GHz is Connection Status page 
-	 * STEP 30: Verify the WiFi supported protocols for 2.4Ghz band 
-	 * STEP 31: Connect to the Connected client having 2.4GHZ wifi Capability. 
-	 * STEP 32: Launch Broad band WebUI login page and verify login status 
-	 * STEP 33: Launch the Connected Devices page from AdminUI page 
-	 * STEP 34: Verify whether Prefer Private option is Checked(enabled) from Local GUI page 
-	 * STEP 35: Verify the PreferPrivate option is enabled via WebPA
+	/**
+	 * Perform Factory reset from Admin GUI page and verify default values after
+	 * factory reset
+	 * 
+	 * 
+	 * STEP 1:Launch Admin GUI page and verify login status STEP 2: Launch the
+	 * Connected Devices page from Admin page STEP 3: Verify whether Prefer Private
+	 * option is Checked(enabled) from Local GUI page STEP 4:Verify the
+	 * PreferPrivate option is enabled via WebPA"); STEP 5: Navigate to
+	 * TroubleShooting page and click on Restore Factory setting STEP 6: Perform
+	 * factory reset from GUI STEP 7:Wait for Ten minutes and check whether the
+	 * device is accessable STEP 8:Verify Last reboot reason using webpa command
+	 * STEP 9:Verify Last reboot reason using BootTime.log/PARODUSlog.txt.0 file
+	 * STEP 10: verify the default SSID Name for 2.4 GHz band using WebPA STEP
+	 * 11:verify the default SSID Name for 5 GHz band using WebPA STEP 12: Re
+	 * activate the device using WebPA STEP 13:verify Wifi network security mode for
+	 * 2.4 GHz band STEP 14: verify Wifi network security encryption mode for 2.4
+	 * GHz band STEP 15: Verify Wifi network enabled status for 2.4 GHz Wifi band
+	 * STEP 16: Verify status of auto channel selection in 2.4 GHz Wifi band STEP
+	 * 17: Verify network channel bandwidth for 2.4 GHz Wifi band STEP 18: Verify
+	 * Wifi Broadcast network Name enabled status for 2.4 GHz Wifi band STEP 19:
+	 * Verify Guard interval for 2.4 GHz Wifi network STEP 20: Verify WiFi network
+	 * active status for 2.4 GHz in Connection Status page STEP 21: Verify the WiFi
+	 * supported protocols for 2.4Ghz band STEP 22: verify Wifi network security
+	 * mode for 2.4 GHz band STEP 23: verify Wifi network security encryption mode
+	 * for 2.4 GHz band STEP 24: Verify Wifi network enabled status for 2.4 GHz Wifi
+	 * band STEP 25: Verify status of auto channel selection in 2.4 GHz Wifi band
+	 * STEP 26: Verify network channel bandwidth for 2.4 GHz Wifi band STEP 27:
+	 * Verify Wifi Broadcast network Name enabled status for 2.4 GHz Wifi band STEP
+	 * 28: Verify Guard interval for 2.4 GHz Wifi network STEP 29: Verify WiFi
+	 * network active status for 2.4 GHz is Connection Status page STEP 30: Verify
+	 * the WiFi supported protocols for 2.4Ghz band STEP 31: Connect to the
+	 * Connected client having 2.4GHZ wifi Capability. STEP 32: Launch Broad band
+	 * WebUI login page and verify login status STEP 33: Launch the Connected
+	 * Devices page from AdminUI page STEP 34: Verify whether Prefer Private option
+	 * is Checked(enabled) from Local GUI page STEP 35: Verify the PreferPrivate
+	 * option is enabled via WebPA
 	 * 
 	 * @param device {@link DUT}
-     * 
-     * @author Gnanaprakasham.s
+	 * 
+	 * @author Gnanaprakasham.s
 	 * @refactor Athira
-     * 
-     */
+	 * 
+	 */
 
-    @Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
-    @TestDetails(testUID = "TC-RDKB-DEVICE-RESET-1005")
-    public void testToVerifyWiFiDefaultValuesAfterFactoryResetFromClientDevice(Dut device) {
+	@Test(alwaysRun = true, enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class)
+	@TestDetails(testUID = "TC-RDKB-DEVICE-RESET-1005")
+	public void testToVerifyWiFiDefaultValuesAfterFactoryResetFromClientDevice(Dut device) {
 
-	// Test case id
-	String testId = "TC-RDKB-DEVICE-RESET-105";
-	// Step Counter
-	int stepCounter = 1;
-	// Test step number
-	String testStepNumber = "s" + stepCounter;
-	// String to store the error message
-	String errorMessage = null;
-	// String to store the test case status
-	boolean status = false;
-	// is set to true for fiber model
-	boolean isFiberDevice = false;
-	// is set to true for specific model 
-	boolean isParticularDevice = false;
-	// String variable to store the Prefer Private Status.
-	String preferPrivateStatus = "";
-	WebDriver webDriver = LanSideBasePage.getDriver();
-	LanSidePageNavigation lanSidePageNavigation = new LanSidePageNavigation(webDriver);
-	try {
+		// Test case id
+		String testId = "TC-RDKB-DEVICE-RESET-105";
+		// Step Counter
+		int stepCounter = 1;
+		// Test step number
+		String testStepNumber = "s" + stepCounter;
+		// String to store the error message
+		String errorMessage = null;
+		// String to store the test case status
+		boolean status = false;
+		// is set to true for fiber model
+		boolean isFiberDevice = false;
+		// is set to true for specific model
+		boolean isParticularDevice = false;
+		// String variable to store the Prefer Private Status.
+		String preferPrivateStatus = "";
+		WebDriver webDriver = LanSideBasePage.getDriver();
+		LanSidePageNavigation lanSidePageNavigation = new LanSidePageNavigation(webDriver);
+		try {
 
-	    if (DeviceModeHandler.isFibreDevice(device)) {
-		isFiberDevice = true;
-	    } 	    
-	    isParticularDevice = BroadbandPropertyFileHandler.isParticularDevice(device);
+			if (DeviceModeHandler.isFibreDevice(device)) {
+				isFiberDevice = true;
+			}
+			isParticularDevice = BroadbandPropertyFileHandler.isParticularDevice(device);
 
-	    LOGGER.info(
-		    "***********************************************************************************************************");
-	    LOGGER.info(
-		    "PRE-CONDITION : AS A PRECONDITION GET CONNECTED CLIENT DEVICE AND CONNECT TO CORRESPONDING WIFI NETWORK ");
-	    LOGGER.info(
-		    "***********************************************************************************************************");
-	    errorMessage = "Failed to get an connected client with selenium node configured";
-	    Dut clientDut = null;
-	    try {
-		clientDut = BroadBandConnectedClientUtils
-			.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
-		if (clientDut == null) {
-		    throw new TestException(
-			    "Obtained null response for clinet device. Seems like there is no client device connected to running gateway device");
-		}
-	    } catch (Exception exception) {
-		throw new TestException(exception.getMessage());
-	    }
-
-	    /**
-	     * STEP 1 :Launch Admin GUI page and verify login status
-	     * 
-	     */
-	    LOGGER.info("******************************************************");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": DESCRIPTION :Launch admin gui login page and verify login status from the client device");
-	    LOGGER.info(
-		    "STEP " + testStepNumber + ": ACTION : Launch the below URL format in browser https://10.0.0.1");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED: Broad band Web UI should be lunched and login should be successful");
-	    LOGGER.info("******************************************************");
-	    status = false;
-	    errorMessage = "ADMIN Page login failed";
-	    status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, clientDut);
-	    webDriver = LanWebGuiLoginPage.getDriver();
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber + ": ACTUAL : Successfully Launched admin gui login page");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    /**
-	     * STEP 2 :Launch the Connected Devices page from Admin page
-	     * 
-	     */
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Connected Devices page is not  displayed having page title as \"Gateway > Connected Devices >Devices\"";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP " + testStepNumber + ": DESCRIPTION : Launch the Connected Devices page from Admin UI page");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Navigate to Connected Devices page by clicking on \"Connected Decvices\" Menu  and select the submenu \"Devices\" ");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Connected Devices page should get displayed having page title as \"Gateway > Connected Devices >Devices\"");
-	    LOGGER.info("**********************************************************************************");
-	    try {
-			status = lanSidePageNavigation.navigateToConnectedDevicesPage(device, tapEnv, webDriver);
-		    } catch (Exception exception) {
-			LOGGER.error("Exception occurred while navigating to connected devices page in LAN  GUI Page: "
-				+ exception.getMessage());
-		    }
-		    if (status) {
 			LOGGER.info(
-				"STEP  "+ testStepNumber +" : ACTUAL : Connected Devices Page is displayed having Page Title as Gateway > Connected Devices >Devices");
-		    } else {
-			LOGGER.error("STEP " + testStepNumber +" : ACTUAL : " + errorMessage);
-		    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-	    
-	    /**
-	     * STEP 3: Verify whether Prefer Private option is Checked(enabled) from Local GUI page
-	     * 
-	     */
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Prefer Private option is not Checked(Enabled) by default in Local GUI page.";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": DESCRIPTION : Verify whether Prefer Private option is Checked(enabled) from Local GUI page");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Verify the state of Prefer Private option from Local GUI page.");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Prefer Private option should be Checked(Enabled) by default in Local GUI page.");
-	    LOGGER.info("**********************************************************************************");
-	    try {
-		status = BroadBandWebUiUtils.isPreferredPrivateCheckBoxEnabled(webDriver,
-			BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
-	    } catch (Exception exception) {
-		LOGGER.error("Exception occurred while clicking private wifi" + exception.getMessage());
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber + ": ACTUAL : prefer private option is in enabled state");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-
-	    /**
-	     * STEP 4:Verify the PreferPrivate option is enabled via WebPAI
-	     * 
-	     */
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Unable to retrieve the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP " + testStepNumber + ": DESCRIPTION : Verify the PreferPrivate option is enabled via WebPA");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Execute the WEBPA Command To check the prefer private option is enabled.");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Prefer Private Option Should be Disabled and The WEBPA Command should return True.");
-	    LOGGER.info("**********************************************************************************");
-	    try {
-		preferPrivateStatus = tapEnv.executeWebPaCommand(device,
-			BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS);
-		LOGGER.info("Prefer Private status retrieved using WebPa = " + preferPrivateStatus);
-		status = CommonMethods.isNotNull(preferPrivateStatus)
-			&& preferPrivateStatus.equalsIgnoreCase(BroadBandTestConstants.TRUE);
-		errorMessage = errorMessage + ":Actual=" + preferPrivateStatus + " " + "Expected="
-			+ BroadBandTestConstants.TRUE;
-	    } catch (Exception exception) {
-		LOGGER.error("Exception occurred while clicking private wifi" + exception.getMessage());
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber
-			+ ": ACTUAL: Successfully retrieved  the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    /**
-	     * STEP 5: Navigate to TroubleShooting page and click on Restore Factory setting
-	     * 
-	     */
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    LOGGER.info("******************************************************");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": DESCRIPTION : Navigate to the Reset/Restore Gateway page and verify navigation status ");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION      : Click Troubleshooting link the Navigate to Reset/Resore Gateway Page");
-	    LOGGER.info("STEP " + testStepNumber + ": EXPECTED    : Reset/Restore Gateway page has launched");
-	    LOGGER.info("******************************************************");
-	    status = false;
-	    errorMessage = "Reset/Restore Gateway page has not launched";
-	    LanSideTroubleShootingPage troubleShootingPage = new LanSideTroubleShootingPage();
-	    LanSideResetRestoreGatewayPage resetRestoreGatewayPage = null;
-
-	    try {
-	    LOGGER.info("STEP 5 Reset/Restore Gateway about to start");
-		resetRestoreGatewayPage = troubleShootingPage.clickOnRestartRestoreGateway();
-		status = true;
-	    } catch (Exception e) {
-		errorMessage += "Exception occured in navigating to 'TroubleShootting -> Reset/Restore Gateway' option - "
-			+ e.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber
-			+ ": ACTUAL: Successfully Navigated to the Reset/Restore Gateway page");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-	    
-
-	    /**
-	     * STEP 6 :Perform factory reset from GUI
-	     * 
-	     */
-	   stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    LOGGER.info("******************************************************");
-	    LOGGER.info("STEP " + testStepNumber + ": DESCRIPTION : Perform RESTORE WIFI settings ");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION      : Click RESTORE WI-FI SETTINGS icon from Reset/Resore Gateway Page ");
-	    LOGGER.info("STEP " + testStepNumber + ": EXPECTED    : Device accessible after wifi restore");
-	    LOGGER.info("******************************************************");
-	    status = false;
-	    errorMessage = "Restore WIFI settings failed";
-	    try {
-		if (null != resetRestoreGatewayPage) {
-		    resetRestoreGatewayPage.restoreFactorySettings();
-		    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-		    if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.TEN_SECOND_IN_MILLIS, 5)) {
-			status = true;
-			LOGGER.info("Device is rebooted after factory reset from Admin GUI");
-		    } else {
-			errorMessage = "Device is not rebooting after 2 minutes for factory reset from Admin GUI";
-		    }
-		} else {
-		    errorMessage = "Instance of restore page obtained is Null!!!!";
-		}
-	    } catch (Exception exception) {
-		errorMessage += "Exception occured while performing WIFI restore - " + exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber + ": ACTUAL: Successfully Rebooted the device via Admin GUI");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    /**
-	     * STEP 7 :Wait for Ten minutes and check whether the device is accessible EXPECTED: Device should be up
-	     * after reboot and accessible
-	     * 
-	     */
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    LOGGER.info("****************************************************************");
-	    LOGGER.info("STEP " + testStepNumber + ":Wait for Ten minutes and check whether the device is accessible");
-	    LOGGER.info("EXPECTED: Device should be up after reboot and accessible");
-	    LOGGER.info("****************************************************************");
-
-	    status = false;
-	    errorMessage = "Box is not able to access even after 10 minutes of after factory reset ";
-	    LOGGER.info("Waiting for few minutes after reboot to access the device");
-	    status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
-	    if (status) {
-		LOGGER.info(
-			"STEP " + testStepNumber + ": ACTUAL: Box is able to access after 10 minutes of factory reset");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    //Step 8 to 28
-	    BroadBandFactoryResetTests.verifyDefaultValuesAfterFactoryReset(device, testId,
-		    BroadBandTestConstants.EIGHT_NUMBER, isFiberDevice, isParticularDevice);
-
-	    // Step29
-	    stepCounter = 29;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Failed to get an connected client with selenium node configured";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": DESCRIPTION : Connect to the Connected client having  2.4GHZ wifi Capability");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : connect to the client having wifi capablilty as 2.4 ghz/Dual band");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Device should be able to connect with the connected client having 2.4GHZ wifi Capability");
-	    LOGGER.info("**********************************************************************************");
-	    try {
-		clientDut = BroadBandConnectedClientUtils
-			.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
-		status = (null != clientDut);
-	    } catch (Exception exception) {
-		throw new TestException(exception.getMessage());
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber
-			+ ": ACTUAL : Device is connected with the connected client having 2.4Ghz Wifi Capability");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-	    LOGGER.info("**********************************************************************************");
-
-	    // 30
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Unable to Login to LanGUI page using Admin credential";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": DESCRIPTION : Launch Broad band WebUI login page and verify login status");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Launch the Admin UI page using LOGIN CREDENTIALS :  username: 'admin' Password: 'password'");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Admin GUI page should be launched and login should be successful");
-	    LOGGER.info("**********************************************************************************");
-	    status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, clientDut);
-	    webDriver = LanWebGuiLoginPage.getDriver();
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber
-			+ ": ACTUAL : Launch Broad band WebUI login page and login status is successful");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
-	    }
-
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    LOGGER.info("**********************************************************************************");
-
-	    // 31
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Connected Devices page is not displayed having page title as \"Gateway > Connected Devices >Devices\"";
-	    status = false;
-
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP " + testStepNumber + ": DESCRIPTION : Launch the Connected Devices page from Admin UI page");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Navigate to Connected Devices page by clicking on \"Connected Decvices\" Menu  and select the submenu \"Devices\" ");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Connected Devices page should get displayed having page title as \"Gateway > Connected Devices >Devices\"");
-	    LOGGER.info("**********************************************************************************");
-	    try {
-			status = lanSidePageNavigation.navigateToConnectedDevicesPage(device, tapEnv, webDriver);
-		    } catch (Exception exception) {
-			LOGGER.error("Exception occurred while navigating to connected devices page in LAN  GUI Page: "
-				+ exception.getMessage());
-		    }
-		    if (status) {
+					"***********************************************************************************************************");
 			LOGGER.info(
-				"STEP  "+ testStepNumber +" : ACTUAL : Connected Devices Page is displayed having Page Title as Gateway > Connected Devices >Devices");
-		    } else {
-			LOGGER.error("STEP " + testStepNumber +" : ACTUAL : " + errorMessage);
-		    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-	    LOGGER.info("**********************************************************************************");
+					"PRE-CONDITION : AS A PRECONDITION GET CONNECTED CLIENT DEVICE AND CONNECT TO CORRESPONDING WIFI NETWORK ");
+			LOGGER.info(
+					"***********************************************************************************************************");
+			errorMessage = "Failed to get an connected client with selenium node configured";
+			Dut clientDut = null;
+			try {
+				clientDut = BroadBandConnectedClientUtils
+						.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
+				if (clientDut == null) {
+					throw new TestException(
+							"Obtained null response for clinet device. Seems like there is no client device connected to running gateway device");
+				}
+			} catch (Exception exception) {
+				throw new TestException(exception.getMessage());
+			}
 
-	    // 32
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Prefer Private option is not  Checked(Enabled) by default in Local GUI page.";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": DESCRIPTION : Verify whether Prefer Private option is Checked(enabled) from Local GUI page");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Verify the state of Prefer Private option from Local GUI page.");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Prefer Private option should be Checked(Enabled) by default in Local GUI page.");
-	    LOGGER.info("**********************************************************************************");
-	    try {
-	    webDriver = LanSideBasePage.getDriver();
-		status = BroadBandWebUiUtils.isPreferredPrivateCheckBoxEnabled(webDriver,
-			BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
-	    } catch (Exception exception) {
-		LOGGER.error("Exception occurred while clicking private wifi" + exception.getMessage());
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber + ": ACTUAL : prefer private option is in enabled state");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-	    LOGGER.info("**********************************************************************************");
+			/**
+			 * STEP 1 :Launch Admin GUI page and verify login status
+			 * 
+			 */
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": DESCRIPTION :Launch admin gui login page and verify login status from the client device");
+			LOGGER.info(
+					"STEP " + testStepNumber + ": ACTION : Launch the below URL format in browser https://10.0.0.1");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED: Broad band Web UI should be lunched and login should be successful");
+			LOGGER.info("******************************************************");
+			status = false;
+			errorMessage = "ADMIN Page login failed";
+			status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, clientDut);
+			webDriver = LanWebGuiLoginPage.getDriver();
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber + ": ACTUAL : Successfully Launched admin gui login page");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
-	    // 33
-	    stepCounter++;
-	    testStepNumber = "s" + stepCounter;
-	    errorMessage = "Unable to retrieve the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.";
-	    status = false;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info(
-		    "STEP " + testStepNumber + ": DESCRIPTION : Verify the PreferPrivate option is enabled via WebPA");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": ACTION : Execute the WEBPA Command To check the prefer private option is enabled");
-	    LOGGER.info("STEP " + testStepNumber
-		    + ": EXPECTED : Prefer Private Option Should be Disabled and The WEBPA Command should return True.");
-	    LOGGER.info("**********************************************************************************");
-	    preferPrivateStatus = tapEnv.executeWebPaCommand(device,
-		    BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS);
-	    LOGGER.info("Prefer Private status retrieved using WebPa = " + preferPrivateStatus);
-	    status = CommonMethods.isNotNull(preferPrivateStatus)
-		    && preferPrivateStatus.equalsIgnoreCase(BroadBandTestConstants.TRUE);
-	    errorMessage = errorMessage + ":Actual=" + preferPrivateStatus + " " + "Expected="
-		    + BroadBandTestConstants.TRUE;
-	    if (status) {
-		LOGGER.info("STEP " + testStepNumber
-			+ ": ACTUAL: Successfully retrieved  the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.");
-	    } else {
-		LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
-	    }
+			/**
+			 * STEP 2 :Launch the Connected Devices page from Admin page
+			 * 
+			 */
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Connected Devices page is not  displayed having page title as \"Gateway > Connected Devices >Devices\"";
+			status = false;
 
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-	    LOGGER.info("**********************************************************************************");
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + testStepNumber + ": DESCRIPTION : Launch the Connected Devices page from Admin UI page");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Navigate to Connected Devices page by clicking on \"Connected Decvices\" Menu  and select the submenu \"Devices\" ");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Connected Devices page should get displayed having page title as \"Gateway > Connected Devices >Devices\"");
+			LOGGER.info("**********************************************************************************");
+			try {
+				status = lanSidePageNavigation.navigateToConnectedDevicesPage(device, tapEnv, webDriver);
+			} catch (Exception exception) {
+				LOGGER.error("Exception occurred while navigating to connected devices page in LAN  GUI Page: "
+						+ exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP  " + testStepNumber
+						+ " : ACTUAL : Connected Devices Page is displayed having Page Title as Gateway > Connected Devices >Devices");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
-	} catch (Exception e) {
-	    LOGGER.error("Exception caught during script execution -" + e.getMessage());
-	    errorMessage = e.getMessage();
+			/**
+			 * STEP 3: Verify whether Prefer Private option is Checked(enabled) from Local
+			 * GUI page
+			 * 
+			 */
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Prefer Private option is not Checked(Enabled) by default in Local GUI page.";
+			status = false;
 
-	} finally {
-	    LOGGER.info("****************************************************************");
-	    LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Reactivate the router device after factory reset");
-	    LOGGER.info("POST-CONDITION 1 : EXPECTED : The device should be Reactivated successfully");
-	    LOGGER.info("****************************************************************");
-	    errorMessage = "Failed to reactivate device after factory reset";
-	    status = false;
-	    try {
-		BroadBandWiFiUtils.reactivateDeviceUsingWebpaOrSnmp(tapEnv, device);
-		status = true;
-	    } catch (TestException exp) {
-		errorMessage = exp.getMessage();
-	    }
-	    LOGGER.info(
-		    "POST-CONDITION 1 - ACTUAL: " + (status ? "The device Reactivated successfully." : errorMessage));
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": DESCRIPTION : Verify whether Prefer Private option is Checked(enabled) from Local GUI page");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Verify the state of Prefer Private option from Local GUI page.");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Prefer Private option should be Checked(Enabled) by default in Local GUI page.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				status = BroadBandWebUiUtils.isPreferredPrivateCheckBoxEnabled(webDriver,
+						BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+			} catch (Exception exception) {
+				LOGGER.error("Exception occurred while clicking private wifi" + exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber + ": ACTUAL : prefer private option is in enabled state");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * STEP 4:Verify the PreferPrivate option is enabled via WebPAI
+			 * 
+			 */
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Unable to retrieve the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + testStepNumber + ": DESCRIPTION : Verify the PreferPrivate option is enabled via WebPA");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Execute the WEBPA Command To check the prefer private option is enabled.");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Prefer Private Option Should be Disabled and The WEBPA Command should return True.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				preferPrivateStatus = tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS);
+				LOGGER.info("Prefer Private status retrieved using WebPa = " + preferPrivateStatus);
+				status = CommonMethods.isNotNull(preferPrivateStatus)
+						&& preferPrivateStatus.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+				errorMessage = errorMessage + ":Actual=" + preferPrivateStatus + " " + "Expected="
+						+ BroadBandTestConstants.TRUE;
+			} catch (Exception exception) {
+				LOGGER.error("Exception occurred while clicking private wifi" + exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber
+						+ ": ACTUAL: Successfully retrieved  the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 5: Navigate to TroubleShooting page and click on Restore Factory setting
+			 * 
+			 */
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": DESCRIPTION : Navigate to the Reset/Restore Gateway page and verify navigation status ");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION      : Click Troubleshooting link the Navigate to Reset/Resore Gateway Page");
+			LOGGER.info("STEP " + testStepNumber + ": EXPECTED    : Reset/Restore Gateway page has launched");
+			LOGGER.info("******************************************************");
+			status = false;
+			errorMessage = "Reset/Restore Gateway page has not launched";
+			LanSideTroubleShootingPage troubleShootingPage = new LanSideTroubleShootingPage();
+			LanSideResetRestoreGatewayPage resetRestoreGatewayPage = null;
+
+			try {
+				LOGGER.info("STEP 5 Reset/Restore Gateway about to start");
+				resetRestoreGatewayPage = troubleShootingPage.clickOnRestartRestoreGateway();
+				status = true;
+			} catch (Exception e) {
+				errorMessage += "Exception occured in navigating to 'TroubleShootting -> Reset/Restore Gateway' option - "
+						+ e.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber
+						+ ": ACTUAL: Successfully Navigated to the Reset/Restore Gateway page");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			/**
+			 * STEP 6 :Perform factory reset from GUI
+			 * 
+			 */
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			LOGGER.info("******************************************************");
+			LOGGER.info("STEP " + testStepNumber + ": DESCRIPTION : Perform RESTORE WIFI settings ");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION      : Click RESTORE WI-FI SETTINGS icon from Reset/Resore Gateway Page ");
+			LOGGER.info("STEP " + testStepNumber + ": EXPECTED    : Device accessible after wifi restore");
+			LOGGER.info("******************************************************");
+			status = false;
+			errorMessage = "Restore WIFI settings failed";
+			try {
+				if (null != resetRestoreGatewayPage) {
+					resetRestoreGatewayPage.restoreFactorySettings();
+					tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+					if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.TEN_SECOND_IN_MILLIS, 5)) {
+						status = true;
+						LOGGER.info("Device is rebooted after factory reset from Admin GUI");
+					} else {
+						errorMessage = "Device is not rebooting after 2 minutes for factory reset from Admin GUI";
+					}
+				} else {
+					errorMessage = "Instance of restore page obtained is Null!!!!";
+				}
+			} catch (Exception exception) {
+				errorMessage += "Exception occured while performing WIFI restore - " + exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber + ": ACTUAL: Successfully Rebooted the device via Admin GUI");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			/**
+			 * STEP 7 :Wait for Ten minutes and check whether the device is accessible
+			 * EXPECTED: Device should be up after reboot and accessible
+			 * 
+			 */
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			LOGGER.info("****************************************************************");
+			LOGGER.info("STEP " + testStepNumber + ":Wait for Ten minutes and check whether the device is accessible");
+			LOGGER.info("EXPECTED: Device should be up after reboot and accessible");
+			LOGGER.info("****************************************************************");
+
+			status = false;
+			errorMessage = "Box is not able to access even after 10 minutes of after factory reset ";
+			LOGGER.info("Waiting for few minutes after reboot to access the device");
+			status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+			if (status) {
+				LOGGER.info(
+						"STEP " + testStepNumber + ": ACTUAL: Box is able to access after 10 minutes of factory reset");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				// Step 8 to 28
+				BroadBandFactoryResetTests.verifyDefaultValuesAfterFactoryReset(device, testId,
+						BroadBandTestConstants.EIGHT_NUMBER, isFiberDevice, isParticularDevice);
+			}
+
+			// Step29
+			stepCounter = 29;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Failed to get an connected client with selenium node configured";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": DESCRIPTION : Connect to the Connected client having  2.4GHZ wifi Capability");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : connect to the client having wifi capablilty as 2.4 ghz/Dual band");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Device should be able to connect with the connected client having 2.4GHZ wifi Capability");
+			LOGGER.info("**********************************************************************************");
+			try {
+				clientDut = BroadBandConnectedClientUtils
+						.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
+				status = (null != clientDut);
+			} catch (Exception exception) {
+				throw new TestException(exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber
+						+ ": ACTUAL : Device is connected with the connected client having 2.4Ghz Wifi Capability");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			LOGGER.info("**********************************************************************************");
+
+			// 30
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Unable to Login to LanGUI page using Admin credential";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": DESCRIPTION : Launch Broad band WebUI login page and verify login status");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Launch the Admin UI page using LOGIN CREDENTIALS :  username: 'admin' Password: 'password'");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Admin GUI page should be launched and login should be successful");
+			LOGGER.info("**********************************************************************************");
+			status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, clientDut);
+			webDriver = LanWebGuiLoginPage.getDriver();
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber
+						+ ": ACTUAL : Launch Broad band WebUI login page and login status is successful");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			LOGGER.info("**********************************************************************************");
+
+			// 31
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Connected Devices page is not displayed having page title as \"Gateway > Connected Devices >Devices\"";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + testStepNumber + ": DESCRIPTION : Launch the Connected Devices page from Admin UI page");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Navigate to Connected Devices page by clicking on \"Connected Decvices\" Menu  and select the submenu \"Devices\" ");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Connected Devices page should get displayed having page title as \"Gateway > Connected Devices >Devices\"");
+			LOGGER.info("**********************************************************************************");
+			try {
+				status = lanSidePageNavigation.navigateToConnectedDevicesPage(device, tapEnv, webDriver);
+			} catch (Exception exception) {
+				LOGGER.error("Exception occurred while navigating to connected devices page in LAN  GUI Page: "
+						+ exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP  " + testStepNumber
+						+ " : ACTUAL : Connected Devices Page is displayed having Page Title as Gateway > Connected Devices >Devices");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			LOGGER.info("**********************************************************************************");
+
+			// 32
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Prefer Private option is not  Checked(Enabled) by default in Local GUI page.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": DESCRIPTION : Verify whether Prefer Private option is Checked(enabled) from Local GUI page");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Verify the state of Prefer Private option from Local GUI page.");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Prefer Private option should be Checked(Enabled) by default in Local GUI page.");
+			LOGGER.info("**********************************************************************************");
+			try {
+				webDriver = LanSideBasePage.getDriver();
+				status = BroadBandWebUiUtils.isPreferredPrivateCheckBoxEnabled(webDriver,
+						BroadBandTestConstants.BOOLEAN_VALUE_TRUE);
+			} catch (Exception exception) {
+				LOGGER.error("Exception occurred while clicking private wifi" + exception.getMessage());
+			}
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber + ": ACTUAL : prefer private option is in enabled state");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL : " + errorMessage);
+			}
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			LOGGER.info("**********************************************************************************");
+
+			// 33
+			stepCounter++;
+			testStepNumber = "s" + stepCounter;
+			errorMessage = "Unable to retrieve the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP " + testStepNumber + ": DESCRIPTION : Verify the PreferPrivate option is enabled via WebPA");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": ACTION : Execute the WEBPA Command To check the prefer private option is enabled");
+			LOGGER.info("STEP " + testStepNumber
+					+ ": EXPECTED : Prefer Private Option Should be Disabled and The WEBPA Command should return True.");
+			LOGGER.info("**********************************************************************************");
+			preferPrivateStatus = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_PREFER_PRIVATE_FEATURE_STATUS);
+			LOGGER.info("Prefer Private status retrieved using WebPa = " + preferPrivateStatus);
+			status = CommonMethods.isNotNull(preferPrivateStatus)
+					&& preferPrivateStatus.equalsIgnoreCase(BroadBandTestConstants.TRUE);
+			errorMessage = errorMessage + ":Actual=" + preferPrivateStatus + " " + "Expected="
+					+ BroadBandTestConstants.TRUE;
+			if (status) {
+				LOGGER.info("STEP " + testStepNumber
+						+ ": ACTUAL: Successfully retrieved  the status of Prefer Private 'Device.WiFi.X_RDKCENTRAL-COM_PreferPrivate' using WebPA command.");
+			} else {
+				LOGGER.error("STEP " + testStepNumber + ": ACTUAL: " + errorMessage);
+			}
+
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			LOGGER.info("**********************************************************************************");
+
+		} catch (Exception e) {
+			LOGGER.error("Exception caught during script execution -" + e.getMessage());
+			errorMessage = e.getMessage();
+
+		} finally {
+			LOGGER.info("****************************************************************");
+			LOGGER.info("POST-CONDITION 1 : DESCRIPTION : Reactivate the router device after factory reset");
+			LOGGER.info("POST-CONDITION 1 : EXPECTED : The device should be Reactivated successfully");
+			LOGGER.info("****************************************************************");
+			errorMessage = "Failed to reactivate device after factory reset";
+			status = false;
+			try {
+				BroadBandWiFiUtils.reactivateDeviceUsingWebpaOrSnmp(tapEnv, device);
+				status = true;
+			} catch (TestException exp) {
+				errorMessage = exp.getMessage();
+			}
+			LOGGER.info(
+					"POST-CONDITION 1 - ACTUAL: " + (status ? "The device Reactivated successfully." : errorMessage));
+		}
 	}
-    }
 }
