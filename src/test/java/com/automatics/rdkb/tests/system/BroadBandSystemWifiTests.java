@@ -32,6 +32,7 @@ import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
+import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
@@ -1321,6 +1322,7 @@ public class BroadBandSystemWifiTests extends AutomaticsTestBase {
 		String preferPrivateStatus = "";
 		WebDriver webDriver = LanSideBasePage.getDriver();
 		LanSidePageNavigation lanSidePageNavigation = new LanSidePageNavigation(webDriver);
+		String isCaptivePortal = null;
 		try {
 
 			if (DeviceModeHandler.isFibreDevice(device)) {
@@ -1576,7 +1578,19 @@ public class BroadBandSystemWifiTests extends AutomaticsTestBase {
 				BroadBandFactoryResetTests.verifyDefaultValuesAfterFactoryReset(device, testId,
 						BroadBandTestConstants.EIGHT_NUMBER, isFiberDevice, isParticularDevice);
 			} else {
-				LOGGER.info("Not Applicable for RPi device Setup : skipping test steps 8-28...");
+				isCaptivePortal = tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_CAPTIVE_PORTAL_ENABLE);
+
+				if (CommonMethods.isNotNull(isCaptivePortal)
+						&& BroadBandTestConstants.FALSE.equalsIgnoreCase(isCaptivePortal)) {
+					LOGGER.info("Verified Captive portal enable status is FALSE");
+				} else {
+
+					BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_CAPTIVE_PORTAL_ENABLE,
+							WebPaDataTypes.BOOLEAN.getValue(), BroadBandTestConstants.FALSE);
+				}
+				LOGGER.info("Not Applicable for RPi device Setup .Skipping test steps 8-28");
 			}
 
 			// Step29
