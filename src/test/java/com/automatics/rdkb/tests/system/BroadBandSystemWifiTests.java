@@ -1575,6 +1575,8 @@ public class BroadBandSystemWifiTests extends AutomaticsTestBase {
 				// Step 8 to 28
 				BroadBandFactoryResetTests.verifyDefaultValuesAfterFactoryReset(device, testId,
 						BroadBandTestConstants.EIGHT_NUMBER, isFiberDevice, isParticularDevice);
+			} else {
+				LOGGER.info("Not Applicable for RPi device Setup : skipping test steps 8-28...");
 			}
 
 			// Step29
