@@ -3983,7 +3983,7 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > AT A GLANCE PAGE");
 		LOGGER.info("**********************************************************************************");
 		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > AT A GLANCE PAGE";
-		driver = LanWebGuiLoginPage.getDriver();
+		
 		BroadBandAtGlancePage homepage = new BroadBandAtGlancePage(driver);
 		status = homepage.verifyAtGlancePageLaunchedStatus();
 		if (status) {

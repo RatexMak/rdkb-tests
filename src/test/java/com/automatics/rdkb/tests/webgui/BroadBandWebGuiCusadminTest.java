@@ -20,6 +20,7 @@ package com.automatics.rdkb.tests.webgui;
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
+import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
@@ -41,6 +42,7 @@ import com.automatics.rdkb.webui.constants.BroadBandWebGuiTestConstant;
 import com.automatics.rdkb.webui.page.LanWebGuiLoginPage;
 import com.automatics.rdkb.webui.utils.BroadBandWebUiUtils;
 import com.automatics.tap.AutomaticsTapApi;
+import com.automatics.utils.AutomaticsUtils;
 import com.automatics.utils.CommonMethods;
 
 /**
@@ -334,6 +336,7 @@ public class BroadBandWebGuiCusadminTest extends BroadBandWifiBaseTest {
 					tapEnv, device, BroadBandTestConstants.STRING_FOR_FACTORY_RESET_OF_THE_DEVICE);
 			if (isDeviceReactivationRequire) {
 				status = BroadBandCommonUtils.verifyFactoryResetReasonFromBootTimeLog(device, tapEnv);
+				AutomaticsUtils.sleep(AutomaticsConstants.FIVE_MINUTES);
 				LOGGER.info("BEGIN BROAD BAND DEVICE REACTIVATION.");
 				BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
 			}
