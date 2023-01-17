@@ -4171,8 +4171,11 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 						BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
 			}
 		} else {
-			status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
-					BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
+			if (BroadBandCommonPage.navigateToFirewall(driver, device)) {
+				errorMessage = "Unable to navigate to Firewall IPv4 page from the 'Firewall' Menu";
+				status = LanWebGuiLoginPage.isFireWallPageLaunchedForPartners(device, tapEnv,
+						BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
+			}
 		}
 		if (status) {
 			LOGGER.info("STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > FIREWALL > IPV4 PAGE");
