@@ -334,6 +334,8 @@ public class BroadBandWebGuiCusadminTest extends BroadBandWifiBaseTest {
 					tapEnv, device, BroadBandTestConstants.STRING_FOR_FACTORY_RESET_OF_THE_DEVICE);
 			if (isDeviceReactivationRequire) {
 				status = BroadBandCommonUtils.verifyFactoryResetReasonFromBootTimeLog(device, tapEnv);
+				LOGGER.info("BEGIN BROAD BAND DEVICE REACTIVATION.");
+				BroadBandWiFiUtils.reactivateDeviceUsingWebPa(tapEnv, device);
 			}
 			if (status) {
 				LOGGER.info("STEP 11: ACTUAL : Factory Resetting device was successful and device came up.");
