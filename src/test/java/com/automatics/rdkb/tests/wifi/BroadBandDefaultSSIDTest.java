@@ -1591,10 +1591,10 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			// Test to verify connection status
-//			status = false;
-//			BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device, tapEnv,
-//					connectedClient2Ghz, testCaseId, BroadBandTestConstants.INTEGER_VALUE_11,
-//					BroadBandTestConstants.BAND_2_4GHZ);
+			status = false;
+			BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device, tapEnv,
+					connectedClient2Ghz, testCaseId, BroadBandTestConstants.INTEGER_VALUE_11,
+					BroadBandTestConstants.BAND_2_4GHZ);
 			LOGGER.info("**********************************************************************************");
 
 			stepNum = "S13";
@@ -1621,7 +1621,7 @@ public class BroadBandDefaultSSIDTest extends AutomaticsTestBase {
 			// Test to verify connection status
 			status = false;
 			BroadBandConnectedClientUtils.verifyIpstatusAndConnectivityInConnectedClient(device, tapEnv,
-					connectedClient5Ghz, testCaseId, BroadBandTestConstants.CONSTANT_16,
+					connectedClient5Ghz, testCaseId, BroadBandTestConstants.CONSTANT_14,
 					BroadBandTestConstants.BAND_5GHZ);
 		} catch (Exception e) {
 			errorMessage = errorMessage + e.getMessage();
