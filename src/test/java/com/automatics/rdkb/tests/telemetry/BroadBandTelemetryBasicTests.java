@@ -1655,154 +1655,163 @@ public class BroadBandTelemetryBasicTests extends AutomaticsTestBase {
 			stepNum = "s6";
 			errorMessage = "Unable to verify CPU fragmentation details log message in CPUInfo.txt.0 file";
 			status = false;
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info("STEP 6: DESCRIPTION : Verify CPU fragmentation details log message in CPUInfo.txt.0 file");
-			LOGGER.info("STEP 6: ACTION : Execute command:cat /rdklogs/logs/CPUInfo.txt.0");
-			LOGGER.info("STEP 6: EXPECTED : Response should contain the log message" + "Sample output:"
-					+ "2019-04-24 [07:32:18] PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-Normal,..."
-					+ "2019-04-24 [07:32:18] PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA,..."
-					+ "2019-04-24 [07:32:18] PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-Normal,...");
-			LOGGER.info("***************************************************************************************");
-			try {
-				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_TRIGGER_LOG_BUDDYINFO);
-				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_TRIGGER_LOG_MEM_CPU_INFO);
-				response = tapEnv.executeCommandUsingSsh(device,
-						BroadBandCommandConstants.CMD_TO_GET_PROCESS_MEM_LOG_COUNT);
-				if (CommonMethods.isNotNull(response)
-						&& (!CommonMethods.patternMatcher(response, BroadBandTestConstants.STRING_VALUE_12))) {
-					tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_SET_PROCESS_MEM_LOG_COUNT);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("***************************************************************************************");
+				LOGGER.info("STEP 6: DESCRIPTION : Verify CPU fragmentation details log message in CPUInfo.txt.0 file");
+				LOGGER.info("STEP 6: ACTION : Execute command:cat /rdklogs/logs/CPUInfo.txt.0");
+				LOGGER.info("STEP 6: EXPECTED : Response should contain the log message" + "Sample output:"
+						+ "2019-04-24 [07:32:18] PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-Normal,..."
+						+ "2019-04-24 [07:32:18] PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA,..."
+						+ "2019-04-24 [07:32:18] PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-Normal,...");
+				LOGGER.info("***************************************************************************************");
+				try {
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_TRIGGER_LOG_BUDDYINFO);
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_TRIGGER_LOG_MEM_CPU_INFO);
 					response = tapEnv.executeCommandUsingSsh(device,
 							BroadBandCommandConstants.CMD_TO_GET_PROCESS_MEM_LOG_COUNT);
 					if (CommonMethods.isNotNull(response)
-							&& CommonMethods.patternMatcher(response, BroadBandTestConstants.STRING_VALUE_12)) {
-						tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
-						response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_CPU_INFO);
-					} else {
-						errorMessage = "Unable to set process_memory_log_count to 12 ";
+							&& (!CommonMethods.patternMatcher(response, BroadBandTestConstants.STRING_VALUE_12))) {
+						tapEnv.executeCommandUsingSsh(device,
+								BroadBandCommandConstants.CMD_TO_SET_PROCESS_MEM_LOG_COUNT);
+						response = tapEnv.executeCommandUsingSsh(device,
+								BroadBandCommandConstants.CMD_TO_GET_PROCESS_MEM_LOG_COUNT);
+						if (CommonMethods.isNotNull(response)
+								&& CommonMethods.patternMatcher(response, BroadBandTestConstants.STRING_VALUE_12)) {
+							tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+							response = tapEnv.executeCommandUsingSsh(device,
+									BroadBandCommandConstants.CMD_TO_GET_CPU_INFO);
+						} else {
+							errorMessage = "Unable to set process_memory_log_count to 12 ";
+						}
 					}
+				} catch (Exception e) {
+					errorMessage = errorMessage + e.getMessage();
+					LOGGER.error("Exception occured during execution" + errorMessage);
 				}
-			} catch (Exception e) {
-				errorMessage = errorMessage + e.getMessage();
-				LOGGER.error("Exception occured during execution" + errorMessage);
-			}
-			if (CommonMethods.isNotNull(response)) {
-				arrPrimaryZones = CommonMethods.patternFinderToReturnAllMatchedString(response,
-						BroadBandTestConstants.PATTERN_TO_FETCH_HOST_ZONES_CPU_MEMFRAG);
-				arrPrimaryValues = CommonMethods.patternFinderToReturnAllMatchedString(response,
-						BroadBandTestConstants.PATTERN_TO_FETCH_HOST_VALUES_CPU_MEMFRAG);
-				if ((arrPrimaryZones == null || arrPrimaryZones.isEmpty()) && arrPrimaryValues == null
-						|| (arrPrimaryValues.isEmpty())) {
-
-					LOGGER.info("HOST memory does not have any zones and values");
-				} else {
-					LOGGER.info("These are the zones present in CPUInfo.txt.0 for HOST : " + arrPrimaryZones);
-					LOGGER.info("These are the Values present in CPUInfo.txt.0 for HOST : " + arrPrimaryValues);
-					status = true;
-				}
-			} else {
-				LOGGER.info("CPUInfo.txt.0 doesnot have log for HOST memory");
-			}
-			if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
-				status = false;
 				if (CommonMethods.isNotNull(response)) {
-					arrSecondaryZones = CommonMethods.patternFinderToReturnAllMatchedString(response,
-							BroadBandTestConstants.PATTERN_TO_FETCH_PEER_ZONES_CPU_MEMFRAG);
-					arrSecondaryValues = CommonMethods.patternFinderToReturnAllMatchedString(response,
-							BroadBandTestConstants.PATTERN_TO_FETCH_PEER_VALUES_CPU_MEMFRAG);
-					if ((arrSecondaryZones == null || arrSecondaryZones.isEmpty()) && arrSecondaryValues == null
-							|| (arrSecondaryValues.isEmpty())) {
-						LOGGER.info("PEER memory does not have any zones and values");
-					} else {
-						LOGGER.info("These are the zones present in CPUInfo.txt.0 for PEER : " + arrSecondaryZones);
+					arrPrimaryZones = CommonMethods.patternFinderToReturnAllMatchedString(response,
+							BroadBandTestConstants.PATTERN_TO_FETCH_HOST_ZONES_CPU_MEMFRAG);
+					arrPrimaryValues = CommonMethods.patternFinderToReturnAllMatchedString(response,
+							BroadBandTestConstants.PATTERN_TO_FETCH_HOST_VALUES_CPU_MEMFRAG);
+					if ((arrPrimaryZones == null || arrPrimaryZones.isEmpty()) && arrPrimaryValues == null
+							|| (arrPrimaryValues.isEmpty())) {
 
-						LOGGER.info("These are the Values present in CPUInfo.txt.0 for PEER : " + arrSecondaryValues);
+						LOGGER.info("HOST memory does not have any zones and values");
+					} else {
+						LOGGER.info("These are the zones present in CPUInfo.txt.0 for HOST : " + arrPrimaryZones);
+						LOGGER.info("These are the Values present in CPUInfo.txt.0 for HOST : " + arrPrimaryValues);
 						status = true;
 					}
 				} else {
-					LOGGER.info("CPUInfo.txt.0 doesnot have log for PEER memory");
+					LOGGER.info("CPUInfo.txt.0 doesnot have log for HOST memory");
 				}
-			} else {
-				LOGGER.info("It is only applicable for Atom based devices");
-			}
-			if (status) {
-				LOGGER.info("STEP 6: ACTUAL : Verified CPU fragmentation log message in CPUInfo.txt.0 file");
-			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+				if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
+					status = false;
+					if (CommonMethods.isNotNull(response)) {
+						arrSecondaryZones = CommonMethods.patternFinderToReturnAllMatchedString(response,
+								BroadBandTestConstants.PATTERN_TO_FETCH_PEER_ZONES_CPU_MEMFRAG);
+						arrSecondaryValues = CommonMethods.patternFinderToReturnAllMatchedString(response,
+								BroadBandTestConstants.PATTERN_TO_FETCH_PEER_VALUES_CPU_MEMFRAG);
+						if ((arrSecondaryZones == null || arrSecondaryZones.isEmpty()) && arrSecondaryValues == null
+								|| (arrSecondaryValues.isEmpty())) {
+							LOGGER.info("PEER memory does not have any zones and values");
+						} else {
+							LOGGER.info("These are the zones present in CPUInfo.txt.0 for PEER : " + arrSecondaryZones);
 
-			/**
-			 * Step 7 : Verify Log message format in CPUInfo.txt.0 file
-			 */
-			stepNum = "s7";
-			errorMessage = "Unable verify Log message format in CPUInfo.txt.0 file";
-			status = false;
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info("STEP 7: DESCRIPTION : Verify Log message format in CPUInfo.txt.0 file");
-			LOGGER.info("STEP 7: ACTION : Execute command:cat /rdklogs/logs/CPUInfo.txt.0");
-			LOGGER.info("STEP 7: EXPECTED : Log message format should be Timestamp:CPU Mem Frag:zone:value");
-			LOGGER.info("***************************************************************************************");
-			if (CommonMethods.isNotNull(response)) {
-				status = CommonMethods.patternMatcher(response,
-						BroadBandTestConstants.PATTERN_TO_CHECK_CPU_FRAGMENTATION_FORMAT);
-			}
-			if (status) {
-				LOGGER.info("STEP 7: ACTUAL : Log messages are present in correct format in CPUInfo.txt.0 file");
-			} else {
-				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+							LOGGER.info(
+									"These are the Values present in CPUInfo.txt.0 for PEER : " + arrSecondaryValues);
+							status = true;
+						}
+					} else {
+						LOGGER.info("CPUInfo.txt.0 doesnot have log for PEER memory");
+					}
+				} else {
+					LOGGER.info("It is only applicable for Atom based devices");
+				}
+				if (status) {
+					LOGGER.info("STEP 6: ACTUAL : Verified CPU fragmentation log message in CPUInfo.txt.0 file");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
-			/**
-			 * Step8 : Get CPU fragmentation details from /proc/buddyinfo
-			 */
-			stepNum = "s8";
-			errorMessage = "Unable to fetch details from buddyinfo";
-			status = false;
-			LOGGER.info("***************************************************************************************");
-			LOGGER.info("STEP 8: DESCRIPTION : Get CPU fragmentation details from /proc/buddyinfo");
-			LOGGER.info("STEP 8: ACTION : Execute command:cat /proc/buddyinfo");
-			LOGGER.info("STEP 8: EXPECTED : Response should contain the CPU fragmentation details" + "Sample output:"
-					+ "~ # cat /proc/buddyinfo"
-					+ "Node 0, zone   Normal      9     24     86     36      6      3      2      2      2      3     13");
-			LOGGER.info("***************************************************************************************");
-			response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_BUDDYINFO);
-			if (CommonMethods.isNotNull(response)) {
-				arrBuddyInfo = CommonMethods.patternFinderToReturnAllMatchedString(response,
-						BroadBandTestConstants.PATTERN_TO_FETCH_BUDDYINFO);
-				LOGGER.info("These are the logs present in buddyinfo: " + arrBuddyInfo);
-				status = BroadBandCommonUtils.convertListOfStringsToLowerCase(arrBuddyInfo)
-						.equals(BroadBandCommonUtils.convertListOfStringsToLowerCase(arrPrimaryZones));
-				LOGGER.info("CPUInfo.txt.0 and buddyinfo having same zones for host");
-
-			} else {
-				LOGGER.info("CPU fragmentation details is not present for host memory in buddyinfo");
-			}
-			if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
+				/**
+				 * Step 7 : Verify Log message format in CPUInfo.txt.0 file
+				 */
+				stepNum = "s7";
+				errorMessage = "Unable verify Log message format in CPUInfo.txt.0 file";
 				status = false;
-				response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_BUDDYINFO);
+				LOGGER.info("***************************************************************************************");
+				LOGGER.info("STEP 7: DESCRIPTION : Verify Log message format in CPUInfo.txt.0 file");
+				LOGGER.info("STEP 7: ACTION : Execute command:cat /rdklogs/logs/CPUInfo.txt.0");
+				LOGGER.info("STEP 7: EXPECTED : Log message format should be Timestamp:CPU Mem Frag:zone:value");
+				LOGGER.info("***************************************************************************************");
 				if (CommonMethods.isNotNull(response)) {
-					arrBuddyInfoAtomDevice = CommonMethods.patternFinderToReturnAllMatchedString(response,
+					status = CommonMethods.patternMatcher(response,
+							BroadBandTestConstants.PATTERN_TO_CHECK_CPU_FRAGMENTATION_FORMAT);
+				}
+				if (status) {
+					LOGGER.info("STEP 7: ACTUAL : Log messages are present in correct format in CPUInfo.txt.0 file");
+				} else {
+					LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+				/**
+				 * Step8 : Get CPU fragmentation details from /proc/buddyinfo
+				 */
+				stepNum = "s8";
+				errorMessage = "Unable to fetch details from buddyinfo";
+				status = false;
+				LOGGER.info("***************************************************************************************");
+				LOGGER.info("STEP 8: DESCRIPTION : Get CPU fragmentation details from /proc/buddyinfo");
+				LOGGER.info("STEP 8: ACTION : Execute command:cat /proc/buddyinfo");
+				LOGGER.info("STEP 8: EXPECTED : Response should contain the CPU fragmentation details"
+						+ "Sample output:" + "~ # cat /proc/buddyinfo"
+						+ "Node 0, zone   Normal      9     24     86     36      6      3      2      2      2      3     13");
+				LOGGER.info("***************************************************************************************");
+				response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_BUDDYINFO);
+				if (CommonMethods.isNotNull(response)) {
+					arrBuddyInfo = CommonMethods.patternFinderToReturnAllMatchedString(response,
 							BroadBandTestConstants.PATTERN_TO_FETCH_BUDDYINFO);
-					LOGGER.info("These are the logs present in buddyinfo: " + arrBuddyInfoAtomDevice);
-					status = (arrBuddyInfoAtomDevice.equals(arrSecondaryZones));
-					LOGGER.info("CPUInfo.txt.0 and buddyinfo having same zones for peer");
+					LOGGER.info("These are the logs present in buddyinfo: " + arrBuddyInfo);
+					status = BroadBandCommonUtils.convertListOfStringsToLowerCase(arrBuddyInfo)
+							.equals(BroadBandCommonUtils.convertListOfStringsToLowerCase(arrPrimaryZones));
+					LOGGER.info("CPUInfo.txt.0 and buddyinfo having same zones for host");
 
 				} else {
-					LOGGER.info("CPU fragmentation details is not present for peer memory in buddyinfo");
+					LOGGER.info("CPU fragmentation details is not present for host memory in buddyinfo");
 				}
+				if (CommonMethods.isAtomSyncAvailable(device, tapEnv) && status) {
+					status = false;
+					response = tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_BUDDYINFO);
+					if (CommonMethods.isNotNull(response)) {
+						arrBuddyInfoAtomDevice = CommonMethods.patternFinderToReturnAllMatchedString(response,
+								BroadBandTestConstants.PATTERN_TO_FETCH_BUDDYINFO);
+						LOGGER.info("These are the logs present in buddyinfo: " + arrBuddyInfoAtomDevice);
+						status = (arrBuddyInfoAtomDevice.equals(arrSecondaryZones));
+						LOGGER.info("CPUInfo.txt.0 and buddyinfo having same zones for peer");
+
+					} else {
+						LOGGER.info("CPU fragmentation details is not present for peer memory in buddyinfo");
+					}
+				} else {
+					LOGGER.info("It is only applicable for Atom based devices");
+				}
+				if (status) {
+					LOGGER.info("STEP 8: ACTUAL : CPU Fragmentation details are present in /proc/buddyinfo");
+				} else {
+					LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("***************************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.info("It is only applicable for Atom based devices");
+				LOGGER.info("teststeps not applicable for RPi device");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			if (status) {
-				LOGGER.info("STEP 8: ACTUAL : CPU Fragmentation details are present in /proc/buddyinfo");
-			} else {
-				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("***************************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 			/**
 			 * Step 9 : Verify default primary and Secondary CPU fragmentation zone values
