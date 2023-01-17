@@ -3983,7 +3983,7 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > AT A GLANCE PAGE");
 		LOGGER.info("**********************************************************************************");
 		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > AT A GLANCE PAGE";
-		
+
 		BroadBandAtGlancePage homepage = new BroadBandAtGlancePage(driver);
 		status = homepage.verifyAtGlancePageLaunchedStatus();
 		if (status) {
@@ -4113,31 +4113,37 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 		stepNum = "S" + stepNumber;
 		status = false;
 		errorMessage = null;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNumber
-				+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > CONNECTION > MOCA PAGE AND VERIFY NAVIGATION STATUS");
-		LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON GATEWAY > CONNECTION > MOCA");
-		LOGGER.info("STEP " + stepNumber
-				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > CONNECTION > MOCA PAGE");
-		LOGGER.info("**********************************************************************************");
-		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > CONNECTION > MOCA PAGE";
-		if (!isBusinessClassDevice) {
-			status = lanSidePageNavigation.navigateToMoCAPage(device, tapEnv, driver);
-			if (status) {
-				LOGGER.info("STEP " + stepNumber
-						+ " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > CONNECTION > MOCA PAGE");
-			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
-			}
+		if (!DeviceModeHandler.isRPIDevice(device)) {
 			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
-					errorMessage, false);
-		} else {
 			LOGGER.info("STEP " + stepNumber
-					+ " : ACTUAL : PAGE NAVIGATION GATEWAY > CONNECTION > MOCA IS NOT APPLICABLE FOR COMMERCIAL DEVICES");
+					+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > CONNECTION > MOCA PAGE AND VERIFY NAVIGATION STATUS");
+			LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON GATEWAY > CONNECTION > MOCA");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > CONNECTION > MOCA PAGE");
 			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-					BroadBandTestConstants.NA_MSG_FOR_COMMERCIAL_DEVICES, false);
+			errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > CONNECTION > MOCA PAGE";
+			if (!isBusinessClassDevice) {
+				status = lanSidePageNavigation.navigateToMoCAPage(device, tapEnv, driver);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > CONNECTION > MOCA PAGE");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum,
+						status, errorMessage, false);
+			} else {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PAGE NAVIGATION GATEWAY > CONNECTION > MOCA IS NOT APPLICABLE FOR COMMERCIAL DEVICES");
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						BroadBandTestConstants.NA_MSG_FOR_COMMERCIAL_DEVICES, false);
+			}
+		} else {
+			LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+					false);
 		}
 
 		/**
@@ -4156,9 +4162,15 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > FIREWALL > IPV4 PAGE");
 		LOGGER.info("**********************************************************************************");
 		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > FIREWALL > IPV4 PAGE";
-		boolean result = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_FIREWALL,
-				BroadbandPropertyFileHandler.getPageTitleForMoCA());
-		if (result) {
+
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			boolean result = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_FIREWALL,
+					BroadbandPropertyFileHandler.getPageTitleForMoCA());
+			if (result) {
+				status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
+						BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
+			}
+		} else {
 			status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
 					BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
 		}
@@ -4179,24 +4191,31 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 		stepNum = "S" + stepNumber;
 		status = false;
 		errorMessage = null;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNumber
-				+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > FIREWALL > IPV6 PAGE AND VERIFY NAVIGATION STATUS");
-		LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON GATEWAY > FIREWALL > IPV6");
-		LOGGER.info("STEP " + stepNumber
-				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > FIREWALL > IPV6 PAGE");
-		LOGGER.info("**********************************************************************************");
-		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > FIREWALL > IPV6 PAGE";
-		status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
-				BroadBandWebGuiTestConstant.LINK_TEXT_IPV6, BroadBandTestConstants.FIREWALL_IPV6);
-		if (status) {
-			LOGGER.info("STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > FIREWALL > IPV6 PAGE");
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > FIREWALL > IPV6 PAGE AND VERIFY NAVIGATION STATUS");
+			LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON GATEWAY > FIREWALL > IPV6");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > FIREWALL > IPV6 PAGE");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > FIREWALL > IPV6 PAGE";
+			status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
+					BroadBandWebGuiTestConstant.LINK_TEXT_IPV6, BroadBandTestConstants.FIREWALL_IPV6);
+			if (status) {
+				LOGGER.info(
+						"STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > FIREWALL > IPV6 PAGE");
+			} else {
+				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
+					errorMessage, false);
 		} else {
-			LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+					false);
 		}
-		LOGGER.info("**********************************************************************************");
-		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
-				errorMessage, false);
 
 		/**
 		 * Step 10 : NAVIGATE TO THE GATEWAY > SOFTWARE PAGE AND VERIFY NAVIGATION
@@ -4667,31 +4686,38 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 		stepNum = "S" + stepNumber;
 		status = false;
 		errorMessage = null;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNumber
-				+ " : DESCRIPTION : NAVIGATE TO THE TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE AND VERIFY NAVIGATION STATUS");
-		LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON TROUBLESHOOTING > MOCA DIAGNOSTICS");
-		LOGGER.info("STEP " + stepNumber
-				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE");
-		LOGGER.info("**********************************************************************************");
-		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE";
-		if (!isBusinessClassDevice) {
-			status = lanSidePageNavigation.navigateToTroubleShootingMoCADiagnosticsPage(device, tapEnv, driver);
-			if (status) {
-				LOGGER.info("STEP " + stepNumber
-						+ " : ACTUAL : NAVIGATION SUCCESSFUL FOR TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE");
-			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
-			}
+
+		if (!DeviceModeHandler.isRPIDevice(device)) {
 			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
-					errorMessage, false);
-		} else {
 			LOGGER.info("STEP " + stepNumber
-					+ " : ACTUAL : PAGE NAVIGATION TROUBLESHOOTING > MOCA DIAGNOSTICS IS NOT APPLICABLE FOR COMMERCIAL DEVICES");
+					+ " : DESCRIPTION : NAVIGATE TO THE TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE AND VERIFY NAVIGATION STATUS");
+			LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON TROUBLESHOOTING > MOCA DIAGNOSTICS");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE");
 			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-					BroadBandTestConstants.NA_MSG_FOR_COMMERCIAL_DEVICES, false);
+			errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE";
+			if (!isBusinessClassDevice) {
+				status = lanSidePageNavigation.navigateToTroubleShootingMoCADiagnosticsPage(device, tapEnv, driver);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ " : ACTUAL : NAVIGATION SUCCESSFUL FOR TROUBLESHOOTING > MOCA DIAGNOSTICS PAGE");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum,
+						status, errorMessage, false);
+			} else {
+				LOGGER.info("STEP " + stepNumber
+						+ " : ACTUAL : PAGE NAVIGATION TROUBLESHOOTING > MOCA DIAGNOSTICS IS NOT APPLICABLE FOR COMMERCIAL DEVICES");
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						BroadBandTestConstants.NA_MSG_FOR_COMMERCIAL_DEVICES, false);
+			}
+		} else {
+			LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+					false);
 		}
 
 		/**
