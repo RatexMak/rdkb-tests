@@ -4140,11 +4140,7 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.NA_MSG_FOR_COMMERCIAL_DEVICES, false);
 			}
-		} else {
-			LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
-			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage,
-					false);
-		}
+
 
 		/**
 		 * Step 8 : NAVIGATE TO THE GATEWAY > FIREWALL > IPV4 PAGE AND VERIFY NAVIGATION
@@ -4163,20 +4159,13 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 		LOGGER.info("**********************************************************************************");
 		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > FIREWALL > IPV4 PAGE";
 
-		if (!DeviceModeHandler.isRPIDevice(device)) {
-			boolean result = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_FIREWALL,
-					BroadbandPropertyFileHandler.getPageTitleForMoCA());
-			if (result) {
-				status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
-						BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
-			}
-		} else {
-			if (BroadBandCommonPage.navigateToFirewall(driver, device)) {
-				errorMessage = "Unable to navigate to Firewall IPv4 page from the 'Firewall' Menu";
-				status = LanWebGuiLoginPage.isFireWallPageLaunchedForPartners(device, tapEnv,
-						BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
-			}
+		boolean result = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_FIREWALL,
+				BroadbandPropertyFileHandler.getPageTitleForMoCA());
+		if (result) {
+			status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
+					BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
 		}
+
 		if (status) {
 			LOGGER.info("STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > FIREWALL > IPV4 PAGE");
 		} else {
@@ -4185,6 +4174,12 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 		LOGGER.info("**********************************************************************************");
 		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
 				errorMessage, false);
+		} else {
+			LOGGER.info("Not Applicable for RPi device Setup : skipping teststep 7-8...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+					false);
+		}
+		
 		//
 		/**
 		 * Step 9 : NAVIGATE TO THE GATEWAY > FIREWALL > IPV6 PAGE AND VERIFY NAVIGATION
