@@ -520,6 +520,7 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s22";
 			status = false;
+			BroadBandResultObject bandResultObject = null;
 			LOGGER.info("#####################################################################################");
 			LOGGER.info(
 					"STEP 22: DESCRIPTION :VERIFY NO INTERNET CONNECTIVITY OF WIFI CONNECTED CLIENT 1 USING IPV4 WITH CURL REQUEST ");
@@ -527,9 +528,14 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 					"STEP 22: ACTION : EXECUTE curl --connect-timeout 20 --head -4 google.com SHOULD NOT BE SUCCESSFUL");
 			LOGGER.info("STEP 22: EXPECTED: CONNECTIVITY CHECK IS FAILURE");
 			LOGGER.info("#####################################################################################");
-			BroadBandResultObject bandResultObject = BroadBandConnectedClientUtils
-					.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv, wifiClientDevice,
-							BroadBandTestConstants.URL_GOOGLE, BroadBandTestConstants.IP_VERSION4);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				bandResultObject = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(
+						tapEnv, wifiClientDevice, BroadBandTestConstants.URL_GOOGLE,
+						BroadBandTestConstants.IP_VERSION4);
+			} else {
+				bandResultObject = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						wifiClientDevice, BroadBandTestConstants.URL_GOOGLE);
+			}
 			status = !bandResultObject.isStatus();
 			errorMessage = bandResultObject.getErrorMessage();
 			if (status) {
@@ -662,9 +668,14 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 			LOGGER.info("#####################################################################################");
 			testStepNumber = "s27";
 			status = false;
-			bandResultObject = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(
-					tapEnv, wifi5GhzClientDevice, BroadBandTestConstants.URL_GOOGLE,
-					BroadBandTestConstants.IP_VERSION4);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				bandResultObject = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(
+						tapEnv, wifi5GhzClientDevice, BroadBandTestConstants.URL_GOOGLE,
+						BroadBandTestConstants.IP_VERSION4);
+			} else {
+				bandResultObject = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						wifi5GhzClientDevice, BroadBandTestConstants.URL_GOOGLE);
+			}
 			status = !bandResultObject.isStatus();
 			errorMessage = bandResultObject.getErrorMessage();
 			if (status) {
