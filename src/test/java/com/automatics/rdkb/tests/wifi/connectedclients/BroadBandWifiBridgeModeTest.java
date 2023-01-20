@@ -359,7 +359,7 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.error("RPi setup dependency : skipping teststeps...");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 
 			/**
@@ -923,7 +923,7 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 			} else {
 				LOGGER.error("RPi setup dependency : skipping teststeps...");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, true);
+						errorMessage, false);
 			}
 
 		} catch (Exception exception) {
