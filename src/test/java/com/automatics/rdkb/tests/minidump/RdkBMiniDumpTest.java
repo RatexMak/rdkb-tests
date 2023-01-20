@@ -833,10 +833,19 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 					status = resultObject.isStatus();
 					errorMessage = resultObject.getErrorMessage();
 				} else {
-					LOGGER.info("Create the /nvram/automation/core_log.txt in Arm Console");
-					settopCrashUtils.perfomPreConditionForCrashVerification(tapEnv, device);
-					status = CommonUtils.isFileExists(device, tapEnv,
-							BroadBandCommandConstants.CORE_LOG_FILE_TEMP_PATH);
+					if (!DeviceModeHandler.isRPIDevice(device)) {
+						LOGGER.info("Create the /nvram/automation/core_log.txt in Arm Console");
+						settopCrashUtils.perfomPreConditionForCrashVerification(tapEnv, device);
+						status = CommonUtils.isFileExists(device, tapEnv,
+								BroadBandCommandConstants.CORE_LOG_FILE_TEMP_PATH);
+					} else {
+						LOGGER.info("removing previously generated dump files");
+						String result = tapEnv.executeCommandUsingSsh(device,
+								BroadBandTestConstants.CMD_REMOVE_FORCEFULLY
+										+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS + "/"
+										+ BroadBandTestConstants.ASTERISK);
+						status = CommonMethods.isNull(result);
+					}
 				}
 			} catch (TestException testException) {
 				errorMessage = testException.getMessage();
@@ -857,6 +866,7 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 			 */
 			status = false;
 			errorMessage = null;
+			if(BroadbandPropertyFileHandler.isServerConfiguredToUploadCrashDetails()) {
 			LOGGER.info("#######################################################################################");
 			LOGGER.info(
 					"PRE-CONDITION 3 : DESCRIPTION : Verify the Amazon s3 signing URL in respective property file in /etc/device.properties");
@@ -885,6 +895,7 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 				LOGGER.error("PRE-CONDITION 3 : ACTUAL : " + errorMessage);
 				throw new TestException(
 						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 3 : FAILED : " + errorMessage);
+			}
 			}
 
 			/**
@@ -987,9 +998,11 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 					// retrieve crash file name
 					crashFileName = crashDetails.get(SettopCrashUtils.PROPERTY_KEY_CRASH_FILE_NAME);
 					// verify whether given crash file is valid or not
+					LOGGER.info("crashfilename :"+crashFileName);
 					crashFileStatus = CommonMethods.isNotNull(crashFileName);
 
 					startTime = System.currentTimeMillis();
+					if(!DeviceModeHandler.isRPIDevice(device)) {
 					do {
 						lastRebootReson = tapEnv.executeWebPaCommand(device,
 								BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_LAST_REBOOT_REASON);
@@ -1001,6 +1014,7 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 					} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
 							&& !webpaLastRebootStatus && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
 									BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+					}
 
 				} catch (TestException testException) {
 					errorMessage = testException.getMessage();
@@ -1564,8 +1578,8 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		status = BroadBandWiFiUtils.checkAndSetPublicWifi(device, tapEnv);
 
 		if (status) {
-			LOGGER.info("PRE-CONDITION " + preConStepNumber
-					+ " : ACTUAL : Successfully enabled Public WiFi in the device");
+			LOGGER.info(
+					"PRE-CONDITION " + preConStepNumber + " : ACTUAL : Successfully enabled Public WiFi in the device");
 
 		} else {
 			LOGGER.error("PRE-CONDITION " + preConStepNumber + " : ACTUAL : " + errorMessage);

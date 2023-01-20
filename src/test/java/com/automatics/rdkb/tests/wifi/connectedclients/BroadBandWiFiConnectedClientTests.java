@@ -8653,70 +8653,83 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
 		errorMessage = "Logs are not in expected format";
 		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNum
-				+ " : DESCRIPTION : Verify the log print for bytes of AP RX for  client device connected with " + radio
-				+ " wifi band");
-		LOGGER.info("STEP " + stepNum
-				+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RX_<AccessPoint No>:\"");
-		LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:" + " # RX of " + radio
-				+ "" + "      WIFI_RX_<AccessPoint No>:<VALUE IN MB>");
-		LOGGER.info("**********************************************************************************");
-		if (accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
-				|| accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
-			status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
-					BroadBandTraceConstants.LOG_MESSAGE_WIFI_RX, BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
-
-			if (status) {
-				LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RX value for " + radio
-						+ "client device is printed as expected");
-			} else {
-				LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
-			}
+		if (!DeviceModeHandler.isRPIDevice(device)) {
 			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			LOGGER.info("STEP " + stepNum
+					+ " : DESCRIPTION : Verify the log print for bytes of AP RX for  client device connected with "
+					+ radio + " wifi band");
+			LOGGER.info("STEP " + stepNum
+					+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RX_<AccessPoint No>:\"");
+			LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:" + " # RX of " + radio
+					+ "" + "      WIFI_RX_<AccessPoint No>:<VALUE IN MB>");
+			LOGGER.info("**********************************************************************************");
+			if (accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
+					|| accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
+				status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
+						BroadBandTraceConstants.LOG_MESSAGE_WIFI_RX,
+						BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
+
+				if (status) {
+					LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RX value for " + radio
+							+ "client device is printed as expected");
+				} else {
+					LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			} else {
+				errorMessage = "STEP " + stepNum
+						+ ": ACTUAL : VERIFYING TELEMETRY MARKERS WIFI_RX  NOT APPLICABLE FOR  PUBLIC WIFI ";
+				LOGGER.info(errorMessage);
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+
+			}
 		} else {
-			errorMessage = "STEP " + stepNum
-					+ ": ACTUAL : VERIFYING TELEMETRY MARKERS WIFI_RX  NOT APPLICABLE FOR  PUBLIC WIFI ";
-			LOGGER.info(errorMessage);
+			LOGGER.info("VERIFYING TELEMETRY MARKERS WIFI_RX  NOT APPLICABLE FOR RPi DEVICE");
 			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 					errorMessage, false);
-
 		}
 
 		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
 		errorMessage = "Logs are not in expected format";
 		status = false;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNum
-				+ " : DESCRIPTION : Verify the log print for RX DELTA of current and previous value for  client device connected with "
-				+ radio + " wifi band");
-		LOGGER.info("STEP " + stepNum
-				+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RXDELTA_<AccessPoint No>\"");
-		LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:"
-				+ "     # RX DELTA of current and previous value " + radio + ""
-				+ "      WIFI_RXDELTA_<AccessPoint No>:<VALUE IN MB>");
-		LOGGER.info("**********************************************************************************");
-		if (accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
-				|| accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
-			status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
-					BroadBandTraceConstants.LOG_MESSAGE_WIFI_RXDELTA,
-					BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
-			if (status) {
-				LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RXDELTA value for " + radio
-						+ "client device is printed as expected");
-			} else {
-				LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
-			}
+		if (!DeviceModeHandler.isRPIDevice(device)) {
 			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			LOGGER.info("STEP " + stepNum
+					+ " : DESCRIPTION : Verify the log print for RX DELTA of current and previous value for  client device connected with "
+					+ radio + " wifi band");
+			LOGGER.info("STEP " + stepNum
+					+ " : ACTION : execute command cat wifihealth.txt | grep -i \"WIFI_RXDELTA_<AccessPoint No>\"");
+			LOGGER.info("STEP " + stepNum + " : EXPECTED : Log should be printed in below format:"
+					+ "     # RX DELTA of current and previous value " + radio + ""
+					+ "      WIFI_RXDELTA_<AccessPoint No>:<VALUE IN MB>");
+			LOGGER.info("**********************************************************************************");
+			if (accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_ONE)
+					|| accessPointNumber.equalsIgnoreCase(BroadBandTestConstants.STRING_VALUE_TWO)) {
+				status = BroadBandWiFiUtils.verifyTelemetryMarkers(device, accessPointNumber,
+						BroadBandTraceConstants.LOG_MESSAGE_WIFI_RXDELTA,
+						BroadBandTestConstants.PATTERN_FOR_TELEMETRY_MARKER);
+				if (status) {
+					LOGGER.info("STEP " + stepNum + " : ACTUAL : WIFI_RXDELTA value for " + radio
+							+ "client device is printed as expected");
+				} else {
+					LOGGER.error("STEP " + stepNum + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			} else {
+				errorMessage = "STEP " + stepNum
+						+ ": ACTUAL : VERIFYING TELEMETRY MARKERS WIFI_RXDELTA NOT APPLICABLE FOR PUBLIC WIFI ";
+				LOGGER.info(errorMessage);
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+
+			}
 		} else {
-			errorMessage = "STEP " + stepNum
-					+ ": ACTUAL : VERIFYING TELEMETRY MARKERS WIFI_RXDELTA NOT APPLICABLE FOR PUBLIC WIFI ";
-			LOGGER.info(errorMessage);
+			LOGGER.info("VERIFYING TELEMETRY MARKERS WIFI_RXDELTA  NOT APPLICABLE FOR RPi DEVICE");
 			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 					errorMessage, false);
-
 		}
 
 		stepNum = BroadBandCommonUtils.stepAdder(stepNum);
