@@ -536,8 +536,13 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 				bandResultObject = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
 						wifiClientDevice, BroadBandTestConstants.URL_GOOGLE);
 			}
-			status = !bandResultObject.isStatus();
-			errorMessage = bandResultObject.getErrorMessage();
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !bandResultObject.isStatus();
+				errorMessage = bandResultObject.getErrorMessage();
+			} else {
+				status = bandResultObject.isStatus();
+				errorMessage = bandResultObject.getErrorMessage();
+			}
 			if (status) {
 				LOGGER.info(
 						"STEP 22: ACTUAL:Validation Success Internet Connectivity unsuccessful using ipv4 with Curl request ");
@@ -676,8 +681,13 @@ public class BroadBandWifiBridgeModeTest extends AutomaticsTestBase {
 				bandResultObject = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
 						wifi5GhzClientDevice, BroadBandTestConstants.URL_GOOGLE);
 			}
-			status = !bandResultObject.isStatus();
-			errorMessage = bandResultObject.getErrorMessage();
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !bandResultObject.isStatus();
+				errorMessage = bandResultObject.getErrorMessage();
+			} else {
+				status = bandResultObject.isStatus();
+				errorMessage = bandResultObject.getErrorMessage();
+			}
 			if (status) {
 				LOGGER.info("STEP 27: ACTUAL: Validation success NO Internet connectivity using ipv4 interface");
 			} else {
