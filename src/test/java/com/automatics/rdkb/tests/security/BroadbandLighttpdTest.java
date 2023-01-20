@@ -916,7 +916,14 @@ public class BroadbandLighttpdTest extends AutomaticsTestBase {
 			status = false;
 
 			errorMessage = "System command response is not same as the webpa params response for ping data block size";
-			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_PING_DATA_BLOCK_SIZE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_PING_DATA_BLOCK_SIZE);
+			} else {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandTestConstants.CMD_GET_PING_DATA_BLOCK_SIZE.replace("/opt/secure/data/syscfg.db",
+								AutomaticsTapApi
+										.getSTBPropsValue(BroadBandTestConstants.PROP_KEY_LOG_FILE_SECURE_SYSCFG)));
+			}
 			response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_GET_PING_DATA_BLOCK_SIZE);
 
 			if (CommonMethods.isNotNull(response)) {
