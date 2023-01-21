@@ -2570,10 +2570,13 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = false;
 			errorMessage = "Unable to retrieve the connected client having 2.4GHZ wifi Capability";
 			List<Dut> lockedDevices = ((Device) device).getConnectedDeviceList();
-			connectedDeviceActivated = BroadBandConnectedClientUtils.getConnectedClientBasedOnTypeAndBand(device,
-					tapEnv, lockedDevices, BroadBandTestConstants.WIFI, BroadBandTestConstants.BAND_2_4GHZ);
+			connectedDeviceActivated = BroadBandConnectedClientUtils
+					.get2GhzWiFiCapableClientDeviceAndConnectToAssociated2GhzSsid(device, tapEnv);
+//			connectedDeviceActivated = BroadBandConnectedClientUtils.getConnectedClientBasedOnTypeAndBand(device,
+//					tapEnv, lockedDevices, BroadBandTestConstants.WIFI, BroadBandTestConstants.BAND_2_4GHZ);
 			LOGGER.info("STEP S1  : connectedDeviceActivated" + connectedDeviceActivated);
 			if (connectedDeviceActivated != null) {
+
 				errorMessage = "Unable to retreive the MAC address of the 2.4GHZ wifi Capable client";
 				macAddressRetrievedFromClient = BroadBandWiFiUtils
 						.retrieveMacAddressOfWifiConnectedClient(connectedDeviceActivated, device);
@@ -2973,8 +2976,10 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			status = false;
 			errorMessage = "Unable to retrieve the connected client having 5GHZ wifi Capability";
 			List<Dut> lockedDevices = ((Device) device).getConnectedDeviceList();
-			connectedDeviceActivated = BroadBandConnectedClientUtils.getConnectedClientBasedOnTypeAndBand(device,
-					tapEnv, lockedDevices, BroadBandTestConstants.WIFI, BroadBandTestConstants.BAND_5GHZ);
+			connectedDeviceActivated = BroadBandConnectedClientUtils
+					.get5GhzWiFiCapableClientDeviceAndConnectToAssociated5GhzSsid(device, tapEnv);
+//			connectedDeviceActivated = BroadBandConnectedClientUtils.getConnectedClientBasedOnTypeAndBand(device,
+//					tapEnv, lockedDevices, BroadBandTestConstants.WIFI, BroadBandTestConstants.BAND_5GHZ);
 			if (connectedDeviceActivated != null) {
 				errorMessage = "Unable to retreive the MAC address of the 5GHZ wifi Capable client";
 				macAddressRetrievedFromClient = BroadBandWiFiUtils

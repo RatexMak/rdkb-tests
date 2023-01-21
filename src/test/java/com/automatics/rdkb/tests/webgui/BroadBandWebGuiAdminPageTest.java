@@ -1509,58 +1509,66 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNumber++;
 			step = "S" + stepNumber;
 			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info(
-					"STEP :  " + stepNumber + " : DESCRIPTION : Obtain a ethernet client assosiated with the device");
-			LOGGER.info("STEP :  " + stepNumber + " : ACTION : Connect a ethernet client assosiated with the device");
-			LOGGER.info("STEP :  " + stepNumber + " : EXPECTED: The connection must be successful");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "Failed to obtain a ethernet client assosiated with the device";
-			try {
-				deviceConnectedWithEthernet = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
-			} catch (TestException exception) {
-				errorMessage = exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			status = (deviceConnectedWithEthernet != null);
-			if (status) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP :  " + stepNumber
-						+ " : ACTUAL: Successfully connected a ethernet client assosiated with the device ");
+						+ " : DESCRIPTION : Obtain a ethernet client assosiated with the device");
+				LOGGER.info(
+						"STEP :  " + stepNumber + " : ACTION : Connect a ethernet client assosiated with the device");
+				LOGGER.info("STEP :  " + stepNumber + " : EXPECTED: The connection must be successful");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "Failed to obtain a ethernet client assosiated with the device";
+				try {
+					deviceConnectedWithEthernet = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv,
+							device);
+				} catch (TestException exception) {
+					errorMessage = exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				status = (deviceConnectedWithEthernet != null);
+				if (status) {
+					LOGGER.info("STEP :  " + stepNumber
+							+ " : ACTUAL: Successfully connected a ethernet client assosiated with the device ");
+				} else {
+					LOGGER.error("STEP :  " + stepNumber + " : ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+
+				/**
+				 * SETP 22-25 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED
+				 * WITH ETHERNET AND INTERNET CONNECTIVITY USING IPV4 AND IPV6 INTERFACE.
+				 */
+				stepNumber++;
+				BroadBandWiFiUtils.verifyIpv4AndIpV6ConnectionInterface(device, testCaseId, deviceConnectedWithEthernet,
+						stepNumber);
+
+				/**
+				 * SETP 26 : VALIDATE ADMIN GUI LOGIN WITH WRONG PASSWORD.
+				 */
+				stepNumber = 26;
+				isAdminPageLaunched = executeTestStepToVerifyNegativeScenario(device, tapEnv, testCaseId, stepNumber,
+						deviceConnectedWithEthernet, BroadBandTestConstants.PASSWORD_MISMATCH, false);
+
+				/**
+				 * SETP 27 : VALIDATE ADMIN GUI LOGIN WITH NO PASSWORD.
+				 */
+				stepNumber++;
+				executeTestStepToVerifyNegativeScenario(device, tapEnv, testCaseId, stepNumber,
+						deviceConnectedWithEthernet, BroadBandTestConstants.EMPTY_STRING, isAdminPageLaunched);
+
+				/**
+				 * STEP 28 : VERIFY LOGIN INTO THE LAN GUI ADIMN PAGE BY USING USERID AND
+				 * PASSWORD
+				 */
+				stepNumber++;
+				isLoggedIn = LanSidePageNavigation.executeTestStepToLoginLanAdminWebGui(device, tapEnv,
+						deviceConnectedWithEthernet, testCaseId, stepNumber);
 			} else {
-				LOGGER.error("STEP :  " + stepNumber + " : ACTUAL: " + errorMessage);
+				LOGGER.info("RPi ethernet client setup dependency : skipping teststeps...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
-
-			/**
-			 * SETP 22-25 : VERIFY THE CORRECT IPV4 AND IPV6 ADDRESS FOR CLIENT CONNECTED
-			 * WITH ETHERNET AND INTERNET CONNECTIVITY USING IPV4 AND IPV6 INTERFACE.
-			 */
-			stepNumber++;
-			BroadBandWiFiUtils.verifyIpv4AndIpV6ConnectionInterface(device, testCaseId, deviceConnectedWithEthernet,
-					stepNumber);
-
-			/**
-			 * SETP 26 : VALIDATE ADMIN GUI LOGIN WITH WRONG PASSWORD.
-			 */
-			stepNumber = 26;
-			isAdminPageLaunched = executeTestStepToVerifyNegativeScenario(device, tapEnv, testCaseId, stepNumber,
-					deviceConnectedWithEthernet, BroadBandTestConstants.PASSWORD_MISMATCH, false);
-
-			/**
-			 * SETP 27 : VALIDATE ADMIN GUI LOGIN WITH NO PASSWORD.
-			 */
-			stepNumber++;
-			executeTestStepToVerifyNegativeScenario(device, tapEnv, testCaseId, stepNumber, deviceConnectedWithEthernet,
-					BroadBandTestConstants.EMPTY_STRING, isAdminPageLaunched);
-
-			/**
-			 * STEP 28 : VERIFY LOGIN INTO THE LAN GUI ADIMN PAGE BY USING USERID AND
-			 * PASSWORD
-			 */
-			stepNumber++;
-			isLoggedIn = LanSidePageNavigation.executeTestStepToLoginLanAdminWebGui(device, tapEnv,
-					deviceConnectedWithEthernet, testCaseId, stepNumber);
 		} catch (Exception exception) {
 			errorMessage = exception.getMessage();
 			LOGGER.error("EXCEPTION OCCURRED WHILE VALIDATING ADMIN GUI LOGIN NEGATIVE SCENARIO : " + errorMessage);
@@ -4141,45 +4149,45 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 						BroadBandTestConstants.NA_MSG_FOR_COMMERCIAL_DEVICES, false);
 			}
 
+			/**
+			 * Step 8 : NAVIGATE TO THE GATEWAY > FIREWALL > IPV4 PAGE AND VERIFY NAVIGATION
+			 * STATUS
+			 */
+			stepNumber++;
+			stepNum = "S" + stepNumber;
+			status = false;
+			errorMessage = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > FIREWALL > IPV4 PAGE AND VERIFY NAVIGATION STATUS");
+			LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON GATEWAY > FIREWALL > IPV4");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > FIREWALL > IPV4 PAGE");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > FIREWALL > IPV4 PAGE";
 
-		/**
-		 * Step 8 : NAVIGATE TO THE GATEWAY > FIREWALL > IPV4 PAGE AND VERIFY NAVIGATION
-		 * STATUS
-		 */
-		stepNumber++;
-		stepNum = "S" + stepNumber;
-		status = false;
-		errorMessage = null;
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNumber
-				+ " : DESCRIPTION : NAVIGATE TO THE GATEWAY > FIREWALL > IPV4 PAGE AND VERIFY NAVIGATION STATUS");
-		LOGGER.info("STEP " + stepNumber + " : ACTION : CLICK ON GATEWAY > FIREWALL > IPV4");
-		LOGGER.info("STEP " + stepNumber
-				+ " : EXPECTED : NAVIGATION SHOULD BE SUCCESSFUL AND IT SHOULD DISPLAY THE GATEWAY > FIREWALL > IPV4 PAGE");
-		LOGGER.info("**********************************************************************************");
-		errorMessage = "UNABLE TO VERIFY NAVIGATION STATUS ON GATEWAY > FIREWALL > IPV4 PAGE";
+			boolean result = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_FIREWALL,
+					BroadbandPropertyFileHandler.getPageTitleForMoCA());
+			if (result) {
+				status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
+						BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
+			}
 
-		boolean result = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_FIREWALL,
-				BroadbandPropertyFileHandler.getPageTitleForMoCA());
-		if (result) {
-			status = LanSideBasePage.isFireWallPageLaunchedForPartners(device, tapEnv,
-					BroadBandWebGuiTestConstant.LINK_TEXT_IPV4, BroadBandTestConstants.FIREWALL_IPV4);
-		}
-
-		if (status) {
-			LOGGER.info("STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > FIREWALL > IPV4 PAGE");
-		} else {
-			LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
-				errorMessage, false);
+			if (status) {
+				LOGGER.info(
+						"STEP " + stepNumber + " : ACTUAL : NAVIGATION SUCCESSFUL FOR GATEWAY > FIREWALL > IPV4 PAGE");
+			} else {
+				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(driver, tapEnv, device, testCaseId, stepNum, status,
+					errorMessage, false);
 		} else {
 			LOGGER.info("Not Applicable for RPi device Setup : skipping teststep 7-8...");
 			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage,
 					false);
 		}
-		
+
 		//
 		/**
 		 * Step 9 : NAVIGATE TO THE GATEWAY > FIREWALL > IPV6 PAGE AND VERIFY NAVIGATION
