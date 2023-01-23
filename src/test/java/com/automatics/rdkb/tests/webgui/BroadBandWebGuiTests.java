@@ -5702,13 +5702,17 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 
 			wifiClient = BroadBandConnectedClientUtils
 					.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
-			if (wifiClient != null) {
-				macAddress = ((Device) wifiClient).getConnectedDeviceInfo().getWifiMacAddress();
-				if (CommonMethods.isNotNull(macAddress)) {
-					hostName = BroadBandCommonUtils.getConnectedClientDetailsUsingWebpa(device, tapEnv, macAddress,
-							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_HOST_HOSTNAME);
-					status = CommonMethods.isNotNull(hostName);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				if (wifiClient != null) {
+					macAddress = ((Device) wifiClient).getConnectedDeviceInfo().getWifiMacAddress();
+					if (CommonMethods.isNotNull(macAddress)) {
+						hostName = BroadBandCommonUtils.getConnectedClientDetailsUsingWebpa(device, tapEnv, macAddress,
+								BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_HOST_HOSTNAME);
+						status = CommonMethods.isNotNull(hostName);
+					}
 				}
+			} else {
+				status = wifiClient != null;
 			}
 
 			if (status) {
