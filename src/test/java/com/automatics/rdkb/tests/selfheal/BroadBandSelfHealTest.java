@@ -1327,7 +1327,10 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			} else {
 				try {
 					status = BroadBandCommonUtils.validateSelfHealParameterValues(selfHealConfiguration,
-							BroadBandTestConstants.STRING_RESOURCE_USAGE_FOR_SELF_HEAL, RESOURCE_USAGE_COMPUTE_WINDOW);
+							BroadBandTestConstants.STRING_RESOURCE_USAGE_FOR_SELF_HEAL,
+							DeviceModeHandler.isRPIDevice(device)
+									? BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty()
+									: RESOURCE_USAGE_COMPUTE_WINDOW);
 				} catch (Exception exception) {
 					errorMessage = exception.getMessage();
 					LOGGER.error(errorMessage);

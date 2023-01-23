@@ -40,6 +40,7 @@ import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandRfcFeatureControlUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.cdl.BroadBandCodeDownloadUtils;
 import com.automatics.rdkb.utils.cdl.FirmwareDownloadUtils;
 import com.automatics.rdkb.utils.telemetry.BroadBandTelemetry2Utils;
@@ -519,8 +520,12 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 					+ "should be there in telemetry 2 logs");
 			LOGGER.info("**********************************************************************************");
 			try {
-				tapEnv.executeCommandUsingSsh(device,
-						BroadBandCommandConstants.TAIL_LOG_TO_BACKUP_FILE.replaceAll(
+				tapEnv.executeCommandUsingSsh(device, DeviceModeHandler.isRPIDevice(device)
+						? BroadBandCommandConstants.TAIL_LOG_TO_BACKUP_FILE_RPI.replaceAll(
+								BroadBandTestConstants.STRING_REPLACE,
+								BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0.replace(
+										BroadBandCommandConstants.DIRECTORY_LOGS, BroadBandTestConstants.EMPTY_STRING))
+						: BroadBandCommandConstants.TAIL_LOG_TO_BACKUP_FILE.replaceAll(
 								BroadBandTestConstants.STRING_REPLACE,
 								BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0.replace(
 										BroadBandCommandConstants.DIRECTORY_LOGS,
