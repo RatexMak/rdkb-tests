@@ -747,6 +747,8 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 		String pattern = null;
 		// Temp file created flag
 		boolean isTempCoreLogFileCreated = false;
+
+		boolean processKillandVerify = false;
 		// Start Time
 		long startTime = 0;
 		// String to store minidump which uploaded to crash portal
@@ -851,7 +853,9 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 				errorMessage = testException.getMessage();
 			}
 			if (status) {
-				isTempCoreLogFileCreated = status;
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					isTempCoreLogFileCreated = status;
+				}
 				LOGGER.info(
 						"PRE-CONDITION 2 : ACTUAL : Successfully removed pre-generated crash files and created /nvram/automation/core_log.txt file contents");
 			} else {
@@ -866,36 +870,36 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 			 */
 			status = false;
 			errorMessage = null;
-			if(BroadbandPropertyFileHandler.isServerConfiguredToUploadCrashDetails()) {
-			LOGGER.info("#######################################################################################");
-			LOGGER.info(
-					"PRE-CONDITION 3 : DESCRIPTION : Verify the Amazon s3 signing URL in respective property file in /etc/device.properties");
-			LOGGER.info(
-					"PRE-CONDITION 3 : ACTION : Execute Command : grep -i \"S3_AMAZON_SIGNING_URL\" /etc/device.properties");
-			LOGGER.info("PRE-CONDITION 3 : EXPTECTED : Should return the proper amazon s3 singing URL");
-			LOGGER.info("#######################################################################################");
-			errorMessage = "Unable to verify the amazon s3 singing URL";
-			String searchText = BroadBandTestConstants.PROP_KEY_AMAZON_URL;
-			try {
-				command = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.GREP_COMMAND,
-						BroadBandTestConstants.TEXT_DOUBLE_QUOTE, searchText, BroadBandTestConstants.TEXT_DOUBLE_QUOTE,
-						BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
-						BroadBandCommandConstants.FILE_DEVICE_PROPERTIES);
-				response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
-						command);
-				status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response.trim(),
-						AutomaticsPropertyUtility.getProperty(BroadBandTestConstants.PROP_KEY_S3_AMAZON_URL));
-			} catch (Exception exception) {
-				status = false;
-				errorMessage = exception.getMessage();
-			}
-			if (status) {
-				LOGGER.info("PRE-CONDITION 3 : ACTUAL : Successfully verified the amazon s3 singing URL");
-			} else {
-				LOGGER.error("PRE-CONDITION 3 : ACTUAL : " + errorMessage);
-				throw new TestException(
-						BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 3 : FAILED : " + errorMessage);
-			}
+			if (BroadbandPropertyFileHandler.isServerConfiguredToUploadCrashDetails()) {
+				LOGGER.info("#######################################################################################");
+				LOGGER.info(
+						"PRE-CONDITION 3 : DESCRIPTION : Verify the Amazon s3 signing URL in respective property file in /etc/device.properties");
+				LOGGER.info(
+						"PRE-CONDITION 3 : ACTION : Execute Command : grep -i \"S3_AMAZON_SIGNING_URL\" /etc/device.properties");
+				LOGGER.info("PRE-CONDITION 3 : EXPTECTED : Should return the proper amazon s3 singing URL");
+				LOGGER.info("#######################################################################################");
+				errorMessage = "Unable to verify the amazon s3 singing URL";
+				String searchText = BroadBandTestConstants.PROP_KEY_AMAZON_URL;
+				try {
+					command = BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.GREP_COMMAND,
+							BroadBandTestConstants.TEXT_DOUBLE_QUOTE, searchText,
+							BroadBandTestConstants.TEXT_DOUBLE_QUOTE, BroadBandTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandCommandConstants.FILE_DEVICE_PROPERTIES);
+					response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
+							command);
+					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response.trim(),
+							AutomaticsPropertyUtility.getProperty(BroadBandTestConstants.PROP_KEY_S3_AMAZON_URL));
+				} catch (Exception exception) {
+					status = false;
+					errorMessage = exception.getMessage();
+				}
+				if (status) {
+					LOGGER.info("PRE-CONDITION 3 : ACTUAL : Successfully verified the amazon s3 singing URL");
+				} else {
+					LOGGER.error("PRE-CONDITION 3 : ACTUAL : " + errorMessage);
+					throw new TestException(
+							BroadBandTestConstants.PRE_CONDITION_ERROR + "PRE-CONDITION 3 : FAILED : " + errorMessage);
+				}
 			}
 
 			/**
@@ -991,29 +995,39 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 						crashDetails = settopCrashUtils.restartProcessInAtomConsole(device, tapEnv, stbProcess2,
 								crashType);
 					} else {
-						crashDetails = settopCrashUtils.restartProcessInArmConsole(device, tapEnv, stbProcess2,
-								crashType);
+						if (!DeviceModeHandler.isRPIDevice(device)) {
+							crashDetails = settopCrashUtils.restartProcessInArmConsole(device, tapEnv, stbProcess2,
+									crashType);
+						} else {
+
+							LOGGER.info("Device level Validation only required for RPi currently :");
+							processKillandVerify = BroadBandCommonUtils.killProcessAndVerifyForCrashGeneration(device,
+									tapEnv, stbProcess2.getProcessName());
+							if (processKillandVerify) {
+								LOGGER.info("process killed successfully ");
+							}
+						}
 					}
 
 					// retrieve crash file name
 					crashFileName = crashDetails.get(SettopCrashUtils.PROPERTY_KEY_CRASH_FILE_NAME);
 					// verify whether given crash file is valid or not
-					LOGGER.info("crashfilename :"+crashFileName);
+					LOGGER.info("crashfilename :" + crashFileName);
 					crashFileStatus = CommonMethods.isNotNull(crashFileName);
 
 					startTime = System.currentTimeMillis();
-					if(!DeviceModeHandler.isRPIDevice(device)) {
-					do {
-						lastRebootReson = tapEnv.executeWebPaCommand(device,
-								BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_LAST_REBOOT_REASON);
-						LOGGER.info("VERFIYING LAST REBOOT RESASON AFTER CR_CRASH RETRIEVED FROM WEBPA GET IS : "
-								+ lastRebootReson);
-						webpaLastRebootStatus = CommonMethods.isNotNull(lastRebootReson) && CommonMethods
-								.patternMatcher(lastRebootReson, BroadBandTestConstants.STRING_CR_CRASH);
+					if (!DeviceModeHandler.isRPIDevice(device)) {
+						do {
+							lastRebootReson = tapEnv.executeWebPaCommand(device,
+									BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_LAST_REBOOT_REASON);
+							LOGGER.info("VERFIYING LAST REBOOT RESASON AFTER CR_CRASH RETRIEVED FROM WEBPA GET IS : "
+									+ lastRebootReson);
+							webpaLastRebootStatus = CommonMethods.isNotNull(lastRebootReson) && CommonMethods
+									.patternMatcher(lastRebootReson, BroadBandTestConstants.STRING_CR_CRASH);
 
-					} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
-							&& !webpaLastRebootStatus && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
-									BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+						} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
+								&& !webpaLastRebootStatus && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+										BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 					}
 
 				} catch (TestException testException) {
@@ -1030,15 +1044,33 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 						crashDetails = settopCrashUtils.restartProcessInAtomConsole(device, tapEnv, stbProcess2,
 								crashType);
 					} else {
-						crashDetails = settopCrashUtils.restartProcessInArmConsole(device, tapEnv, stbProcess2,
-								crashType);
+						if (!DeviceModeHandler.isRPIDevice(device)) {
+							crashDetails = settopCrashUtils.restartProcessInArmConsole(device, tapEnv, stbProcess2,
+									crashType);
+						} else {
+
+							LOGGER.info("Device level Validation only required for RPi currently :");
+							processKillandVerify = BroadBandCommonUtils.killProcessAndVerifyForCrashGeneration(device,
+									tapEnv, stbProcess2.getProcessName());
+							if (processKillandVerify) {
+								LOGGER.info("process killed successfully ");
+							}
+						}
 					}
 					// retrieve crash file name
-					crashFileName = crashDetails.get(SettopCrashUtils.PROPERTY_KEY_CRASH_FILE_NAME);
-					LOGGER.info("CRASHFILENAME :" + crashFileName);
-					// verify whether given crash file is valid or not
-					status = CommonMethods.isNotNull(crashFileName);
-					errorMessage = "Unable to retrieve crash file from crash logs";
+					if (!DeviceModeHandler.isRPIDevice(device)) {
+						crashFileName = crashDetails.get(SettopCrashUtils.PROPERTY_KEY_CRASH_FILE_NAME);
+						LOGGER.info("CRASHFILENAME :" + crashFileName);
+						// verify whether given crash file is valid or not
+						status = CommonMethods.isNotNull(crashFileName);
+						errorMessage = "Unable to retrieve crash file from crash logs";
+					} else {
+						LOGGER.info("is process killed : " + processKillandVerify);
+						if (processKillandVerify) {
+							status = true;
+							errorMessage = "Unable to kill the process ";
+						}
+					}
 				} catch (TestException testException) {
 					errorMessage = testException.getMessage();
 				}
@@ -1053,11 +1085,13 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 
 				} else {
-					response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-							BroadBandTestConstants.STRING_FOR_CRASH_PORTAL_FILE_NAME_SEARCH,
-							BroadBandCommandConstants.CORE_LOG_FILE_TEMP_PATH,
-							BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
-							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+					if (!DeviceModeHandler.isRPIDevice(device)) {
+						response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+								BroadBandTestConstants.STRING_FOR_CRASH_PORTAL_FILE_NAME_SEARCH,
+								BroadBandCommandConstants.CORE_LOG_FILE_TEMP_PATH,
+								BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+					}
 				}
 				if (CommonMethods.isNotNull(response)) {
 					logFileUploadedToCrashPortal = BroadBandCommonUtils.patternFinderMatchPositionBased(response,
@@ -1072,8 +1106,12 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 				}
 			}
 			if (status) {
-				LOGGER.info("STEP 1 : ACTUAL : Successfully retrieved the crash file name as: '" + crashFileName
-						+ "' and renamed to: " + logFileUploadedToCrashPortal);
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					LOGGER.info("STEP 1 : ACTUAL : Successfully retrieved the crash file name as: '" + crashFileName
+							+ "' and renamed to: " + logFileUploadedToCrashPortal);
+				} else {
+					LOGGER.info("STEP 1 : ACTUAL : Successfully verified if the process is killed in RPi");
+				}
 			} else {
 				LOGGER.error("STEP 1 : ACTUAL : " + errorMessage);
 			}
@@ -1099,66 +1137,82 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 				// retrieve mac address
 				mac = getSettopMacAddressForCrashDetailsValidation(device, tapEnv, executeInAtomConsole);
 				// retrieve device type
-				deviceType = settopCrashUtils.getDeviceTypeForCrashDetailsVerfication(device, tapEnv);
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					deviceType = settopCrashUtils.getDeviceTypeForCrashDetailsVerfication(device, tapEnv);
+				}
 				// retrieve device model
 				deviceModel = device.getModel();
 
 				LOGGER.info("Obtained device model name : " + deviceModel);
 				// retrieve build id
-				buildId = crashDetails.get(SettopCrashUtils.PROPERTY_KEY_BUILD_ID);
-				if (CommonMethods.isNotNull(buildId) && CommonMethods.isNotNull(mac)
-						&& CommonMethods.isNotNull(deviceType) && CommonMethods.isNotNull(deviceModel)) {
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					buildId = crashDetails.get(SettopCrashUtils.PROPERTY_KEY_BUILD_ID);
+					if (CommonMethods.isNotNull(buildId) && CommonMethods.isNotNull(mac)
+							&& CommonMethods.isNotNull(deviceType) && CommonMethods.isNotNull(deviceModel)) {
 
-					if (DeviceModeHandler.isFibreDevice(device)) {
-						LOGGER.info("Obtained device model name for fiber device : " + deviceModel);
-						pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
-								+ "_mod[P]*" + deviceModel + "_.*" + ".dmp.tgz";
-					}
-
-					else if (BroadbandPropertyFileHandler.isDeviceCheckForGBPAD(device)) {
-						deviceModel = deviceModel.substring(0, deviceModel.length() - 1);
-						LOGGER.info("Obtained device model name for device : " + deviceModel);
-						pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
-								+ "_mod" + deviceModel + ".*_.*" + ".dmp.tgz";
-					}
-
-					else if (BroadbandPropertyFileHandler.isDeviceCheckForGBPAD1(device)) {
-
-						if (BroadbandPropertyFileHandler.isDeviceCheckForGBPAD2(device)) {
-							deviceModel = deviceModel + "B";
-							LOGGER.info("Obtained device model name for business class device : " + deviceModel);
-						} else {
-							LOGGER.info("Obtained device model name for device : " + deviceModel);
+						if (DeviceModeHandler.isFibreDevice(device)) {
+							LOGGER.info("Obtained device model name for fiber device : " + deviceModel);
+							pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
+									+ "_mod[P]*" + deviceModel + "_.*" + ".dmp.tgz";
 						}
 
-						pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
-								+ "_mod" + deviceModel + ".*_.*" + ".dmp.tgz";
+						else if (BroadbandPropertyFileHandler.isDeviceCheckForGBPAD(device)) {
+							deviceModel = deviceModel.substring(0, deviceModel.length() - 1);
+							LOGGER.info("Obtained device model name for device : " + deviceModel);
+							pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
+									+ "_mod" + deviceModel + ".*_.*" + ".dmp.tgz";
+						}
 
-					} else if (DeviceModeHandler.isDSLDevice(device)) {
+						else if (BroadbandPropertyFileHandler.isDeviceCheckForGBPAD1(device)) {
 
-						pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
-								+ "_mod" + deviceModel + ".*_.*" + ".dmp.tgz";
+							if (BroadbandPropertyFileHandler.isDeviceCheckForGBPAD2(device)) {
+								deviceModel = deviceModel + "B";
+								LOGGER.info("Obtained device model name for business class device : " + deviceModel);
+							} else {
+								LOGGER.info("Obtained device model name for device : " + deviceModel);
+							}
 
+							pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
+									+ "_mod" + deviceModel + ".*_.*" + ".dmp.tgz";
+
+						} else if (DeviceModeHandler.isDSLDevice(device)) {
+
+							pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
+									+ "_mod" + deviceModel + ".*_.*" + ".dmp.tgz";
+
+						} else {
+							pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
+									+ "_mod" + deviceModel + "_.*" + ".dmp.tgz";
+						}
+						status = CommonMethods.patternMatcher(crashFileName, pattern)
+								&& CommonMethods.patternMatcher(logFileUploadedToCrashPortal, pattern);
+						;
+						errorMessage = "The naming format of the crash file is not in expected format. ie, format="
+								+ pattern + " and filename = " + crashFileName;
 					} else {
-						pattern = buildId + "_mac" + mac + "_dat\\d+-\\d+-\\d+-\\d+-\\d+-\\d+" + "_" + deviceType
-								+ "_mod" + deviceModel + "_.*" + ".dmp.tgz";
+						errorMessage = "not able to retrieve all the parameters for the crash file format validation. ie, buildId="
+								+ buildId + ", mac=" + mac + ", deviceType=" + deviceType + ", deviceModel="
+								+ deviceModel;
 					}
-					status = CommonMethods.patternMatcher(crashFileName, pattern)
-							&& CommonMethods.patternMatcher(logFileUploadedToCrashPortal, pattern);
-					;
-					errorMessage = "The naming format of the crash file is not in expected format. ie, format="
-							+ pattern + " and filename = " + crashFileName;
 				} else {
-					errorMessage = "not able to retrieve all the parameters for the crash file format validation. ie, buildId="
-							+ buildId + ", mac=" + mac + ", deviceType=" + deviceType + ", deviceModel=" + deviceModel;
+					pattern = "(.*.dmp)";
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+					LOGGER.info("response from minidumps folder :" + response);
+					status = CommonMethods.patternMatcher(response, pattern);
 				}
 			} catch (TestException testException) {
 				errorMessage = errorMessage + testException.getMessage();
 			}
 			if (status) {
-				LOGGER.info(
-						"STEP 2 : ACTUAL : Successfully verified the naming converntion for " + crashType.getCrashType()
-								+ " dump file created by " + stbProcess.getProcessName() + " process");
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					LOGGER.info("STEP 2 : ACTUAL : Successfully verified the naming converntion for "
+							+ crashType.getCrashType() + " dump file created by " + stbProcess.getProcessName()
+							+ " process");
+				} else {
+					LOGGER.info("STEP 2 : ACTUAL : Successfully verified minidumps file created by "
+							+ stbProcess.getProcessName() + " process. Dumpfile : " + response);
+				}
 			} else {
 				LOGGER.error("STEP 2 : ACTUAL : " + errorMessage);
 			}
