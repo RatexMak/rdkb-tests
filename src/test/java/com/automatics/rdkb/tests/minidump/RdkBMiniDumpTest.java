@@ -41,6 +41,7 @@ import com.automatics.providers.crashanalysis.CrashType;
 import com.automatics.providers.crashanalysis.SettopCrashUtils;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
+import com.automatics.rdkb.bluetooth.BroadbandBluetoothTest;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -846,7 +847,18 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 								BroadBandTestConstants.CMD_REMOVE_FORCEFULLY
 										+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS + "/"
 										+ BroadBandTestConstants.ASTERISK);
-						status = CommonMethods.isNull(result);
+						result = tapEnv.executeCommandUsingSsh(device,
+								BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.SINGLE_SPACE_CHARACTER
+										+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+						if (!result.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+							if (CommonMethods.isNull(result)) {
+								status = true;
+							}
+						} else {
+							tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_MKDIR
+									+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+							status = true;
+						}
 					}
 				}
 			} catch (TestException testException) {
