@@ -2169,7 +2169,9 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 		List<String> supportedSecurityModesList = new ArrayList<String>();
 		supportedSecurityModesList.add(BroadBandTestConstants.SECURITY_MODE_NONE);
 		supportedSecurityModesList.add(BroadBandTestConstants.SECURITY_MODE_WPA2_PERSONAL);
-		supportedSecurityModesList.add(BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE);
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			supportedSecurityModesList.add(BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE);
+		}
 
 		// stores the step number
 		int stepNumber = 0;

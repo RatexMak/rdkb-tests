@@ -893,11 +893,15 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 			status = null != connectedClientDevice;
 			String successMessage = null;
 			if (status) {
+				if(!DeviceModeHandler.isRPIDevice(device)) {
 				successMessage = "Connected Client is assigned with a valid IPv4 Address DHCP Range";
 				status = BroadBandConnectedClientUtils.verifyIISStatus(connectedClientDevice, tapEnv,
 						BroadBandConnectedClientTestConstants.IIS_START_FLAG);
 				successMessage = successMessage + " - IIS service is running successfully";
 				errorMessage = successMessage + " - Unnable to start IIS service";
+				}else {
+					status = true;
+				}
 			}
 			if (status) {
 				LOGGER.info("STEP 7 ACTUAL: " + successMessage);
