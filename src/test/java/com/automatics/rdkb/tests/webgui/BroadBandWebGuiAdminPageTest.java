@@ -5208,7 +5208,7 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNumber++;
 			stepNum = "S" + stepNumber;
 			status = false;
-			errorMessage = null;
+			errorMessage = "Port forwarding mode is not in disabled state";
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : VERIFY PORT FORWARDING IS IN DISABLED STATE.");
 			LOGGER.info("STEP " + stepNumber + " : ACTION : CHECK THE PORT FORWARDING BUTTON IS DISABLED.");
@@ -5288,24 +5288,31 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNumber++;
 			stepNum = "S" + stepNumber;
 			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP :  " + stepNumber
-					+ " : DESCRIPTION : VERIFY WEBPA COMMAND TO GET THE WANIPV6 OF THE CLIENT IS SUCCESSFUL.");
-			LOGGER.info("STEP :  " + stepNumber + " : ACTION :  Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6");
-			LOGGER.info("STEP :  " + stepNumber
-					+ " : EXPECTED: WEBPA GET SHOULD BE SUCCESSFUL AND WANIPV6 SHOULD BE RETRIEVED SUCCESFULLY.");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "UNABLE TO GET THE WAN IPV6 USING THE WEBPA PARAMETER.";
-			String wanIpv6Address = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
-			LOGGER.info("Wan Ipv6 Address = " + wanIpv6Address);
-			status = CommonMethods.isNotNull(wanIpv6Address);
-			if (status) {
-				LOGGER.info("STEP :  " + stepNumber + " : ACTUAL : WANIPV6 ADDRESS IS RETRIEVED SUCCESSFULLY");
+			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP :  " + stepNumber
+						+ " : DESCRIPTION : VERIFY WEBPA COMMAND TO GET THE WANIPV6 OF THE CLIENT IS SUCCESSFUL.");
+				LOGGER.info("STEP :  " + stepNumber + " : ACTION :  Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6");
+				LOGGER.info("STEP :  " + stepNumber
+						+ " : EXPECTED: WEBPA GET SHOULD BE SUCCESSFUL AND WANIPV6 SHOULD BE RETRIEVED SUCCESFULLY.");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = "UNABLE TO GET THE WAN IPV6 USING THE WEBPA PARAMETER.";
+				String wanIpv6Address = tapEnv.executeWebPaCommand(device,
+						BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+				LOGGER.info("Wan Ipv6 Address = " + wanIpv6Address);
+				status = CommonMethods.isNotNull(wanIpv6Address);
+				if (status) {
+					LOGGER.info("STEP :  " + stepNumber + " : ACTUAL : WANIPV6 ADDRESS IS RETRIEVED SUCCESSFULLY");
+				} else {
+					LOGGER.error("STEP :  " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP :  " + stepNumber + " : ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not available/disabled : Skipping Step...");
+				tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			/**
 			 * Step 12 : VERIFY DISCONNECTING THE WIFI CLIENT IN THE SETUP TO THE 2.4/5 GHZ
