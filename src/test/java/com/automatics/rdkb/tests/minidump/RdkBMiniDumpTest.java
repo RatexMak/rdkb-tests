@@ -1342,6 +1342,12 @@ public class RdkBMiniDumpTest extends BroadBandMiniDumpBaseTest {
 					response = tapEnv.executeCommandUsingSsh(device,
 							BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
 					LOGGER.info("response from minidumps folder :" + response);
+					if (CommonMethods.isNull(response)) {
+						BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+						response = tapEnv.executeCommandUsingSsh(device,
+								BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+						LOGGER.info("response from minidumps folder :" + response);
+					}
 					status = CommonMethods.patternMatcher(response, pattern);
 				}
 			} catch (TestException testException) {

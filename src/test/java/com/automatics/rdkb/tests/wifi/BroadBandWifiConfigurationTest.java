@@ -981,7 +981,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
 						WebPaDataTypes.STRING.getValue(), defaultOperatingStandard.getOperatingmode());
 			} else {
-				defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_G_N;
+				defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_AC;
 				errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + defaultOperatingStandard.getOperatingmode();
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
@@ -1010,7 +1010,9 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			errorMessage = "UNABLE TO CHANGE THE CHANNEL VALUE AS 161 FOR 5 GHZ";
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_CHANNEL_IN_5GHZ,
-					WebPaDataTypes.INTEGER.getValue(), BroadBandTestConstants.CHANNEL_NO_161);
+					WebPaDataTypes.INTEGER.getValue(),
+					DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_140
+							: BroadBandTestConstants.CHANNEL_NO_161);
 			if (status) {
 				LOGGER.info(
 						"STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE CHANNEL VALUE AS 161 FOR 5 GHZ.");
@@ -1470,7 +1472,9 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 				errorMessage = "UNABLE TO CHANGE THE CHANNEL VALUE AS 161 FOR 5 GHZ";
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_CHANNEL_IN_5GHZ,
-						WebPaDataTypes.INTEGER.getValue(), BroadBandTestConstants.CHANNEL_NO_161);
+						WebPaDataTypes.INTEGER.getValue(),
+						DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_140
+								: BroadBandTestConstants.CHANNEL_NO_161);
 			} else {
 				LOGGER.info("#######################################################################################");
 				LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : SET AND VERIFY THE CHANNEL VALUE TO 36 FOR 5 GHZ");
@@ -5311,7 +5315,9 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 		webPaParameters.add(Channel2ghz);
 		WebPaParameter Channel5ghz = BroadBandWebPaUtils.generateWebpaParameterWithValueAndType(
 				BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_CHANNEL_IN_5GHZ,
-				String.valueOf(BroadBandTestConstants.CHANNEL_NO_161), WebPaDataTypes.INTEGER.getValue());
+				String.valueOf(DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_140
+						: BroadBandTestConstants.CHANNEL_NO_161),
+				WebPaDataTypes.INTEGER.getValue());
 		webPaParameters.add(Channel5ghz);
 		status = BroadBandWebPaUtils.setVerifyMultipleWebPAInPolledDuration(device, tapEnv, webPaParameters,
 				BroadBandTestConstants.THREE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
@@ -5342,6 +5348,23 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 		String stepNum = "S" + stepNumber;
 		boolean status = false;
 		String errorMessage = null;
+		if (wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_2_4GHZ)) {
+			if (DeviceModeHandler.isRPIDevice(device)
+					&& wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_B)) {
+				LOGGER.info("Current RPI setup only supports g,n as 2.4GHz operating standands");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			} else {
+				if (DeviceModeHandler.isRPIDevice(device) && (wifiOperatingStandard
+						.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_A)
+						|| wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_N))) {
+					LOGGER.info("Current RPI setup only supports ac as 5GHz operating standands");
+					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+				}
+			}
+
+		}
 		String operStdWepParam = wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_2_4GHZ)
 				? BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD
 				: BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD;
