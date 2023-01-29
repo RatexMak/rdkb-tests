@@ -1421,8 +1421,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		LOGGER.info("#######################################################################################");
 		// Error message
 		String errorMessage = "Failed to Tigger Factory Reset/Device didn't come up after Factory Reset.";
-		status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
-				BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
+		status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 		if (status) {
 			LOGGER.info("STEP :  " + stepNumber + " ACTUAL : Device came up after Factory reset successfully.");
 		} else {
