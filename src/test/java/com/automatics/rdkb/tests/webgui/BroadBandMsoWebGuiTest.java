@@ -2543,11 +2543,11 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 	 * </p>
 	 * <ol>
 	 * <li>STEP 1: Disable 2.4GHz radio using WebPA command.</li>
-	 * <li>STEP 2: Verify enabling private SSID of 2.4 Ghz using
-	 * SMNP, TR069 and WEBPA.</li>
+	 * <li>STEP 2: Verify enabling private SSID of 2.4 Ghz using SMNP, TR069 and
+	 * WEBPA.</li>
 	 * <li>STEP 3: Disable 5GHz radio using WebPA command.</li>
-	 * <li>STEP 4: Verify enabling private SSID of 5 Ghz using SMNP,
-	 * TR069 and WEBPA.</li>
+	 * <li>STEP 4: Verify enabling private SSID of 5 Ghz using SMNP, TR069 and
+	 * WEBPA.</li>
 	 * <li>STEP 5: Reboot the device.</li>
 	 * <li>STEP 6: Verify 2.4 Ghz Radio value.</li>
 	 * <li>STEP 7: Verify 5 Ghz Radio value.</li>
@@ -2600,12 +2600,11 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("STEP 1 : ACTUAL: " + (status ? "Successfully disabled 2.4 Ghz wifi radio" : errorMessage));
 
 			/**
-			 * Step 2 :Verify enabling private SSID of 2.4 Ghz using from SMNP,
-			 * TR069 and WEBPA.
+			 * Step 2 :Verify enabling private SSID of 2.4 Ghz using from SMNP, TR069 and
+			 * WEBPA.
 			 */
 			LOGGER.info("**********************************************");
-			LOGGER.info(
-					"STEP 2: DESCRIPTION : Verify enabling private SSID of 2.4 Ghz using SMNP, TR069 and WEBPA. ");
+			LOGGER.info("STEP 2: DESCRIPTION : Verify enabling private SSID of 2.4 Ghz using SMNP, TR069 and WEBPA. ");
 			LOGGER.info("STEP 2:  ACTION : Execute below steps to verify \n");
 			LOGGER.info("STEP 2: EXPECTED : Private SSID of 2.4 Ghz shouldn't be allowed to enable .. ");
 			LOGGER.info("**********************************************");
@@ -2652,12 +2651,10 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
-			 * Step 4 :Verify enabling private SSID of 5 Ghz using SMNP,
-			 * TR069 and WEBPA.
+			 * Step 4 :Verify enabling private SSID of 5 Ghz using SMNP, TR069 and WEBPA.
 			 */
 			LOGGER.info("**********************************************");
-			LOGGER.info(
-					"STEP 4: DESCRIPTION : Verify enabling private SSID of 5Ghz using SMNP, TR069 and WEBPA. ");
+			LOGGER.info("STEP 4: DESCRIPTION : Verify enabling private SSID of 5Ghz using SMNP, TR069 and WEBPA. ");
 			LOGGER.info("STEP 4:  ACTION : Execute below steps to verify \n");
 			LOGGER.info("STEP 4: EXPECTED : Private SSID of 5 Ghz shouldn't be allowed to enable. ");
 			LOGGER.info("**********************************************");
@@ -2871,8 +2868,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 
 		executionStatus.setErrorMessage(errorMessage.toString());
 
-		LOGGER.info("Status of enabling Private SSID through SNMP/TR-069/WEBPA is failed-"
-				+ executionStatus.isStatus());
+		LOGGER.info(
+				"Status of enabling Private SSID through SNMP/TR-069/WEBPA is failed-" + executionStatus.isStatus());
 		LOGGER.debug("ENDING METHOD: verifyEnablingPrivateSsid");
 		return executionStatus;
 	}
@@ -3230,7 +3227,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, WebPaDataTypes.STRING.getValue(),
-					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
+					AutomaticsTapApi
+							.getSTBPropsValue(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
 					AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 
 			// Error message
@@ -3254,7 +3252,8 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("#######################################################################################");
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-					AutomaticsTapApi.getSTBPropsValue(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
+					AutomaticsTapApi
+							.getSTBPropsValue(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE),
 					AutomaticsConstants.THREE_MINUTES, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 			// Error message
 			errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
@@ -5280,8 +5279,11 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			status = (CommonMethods.isNotNull(response) && isSystemdPlatforms
 					? CommonUtils.patternSearchFromTargetString(response,
 							BroadBandTestConstants.TEXT_RESTARTING_CCSPXDNSSSP)
-					: CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.TEXT_RESETTING_CCSPXDNSSSP));
+					: DeviceModeHandler.isRPIDevice(device)
+							? CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.PROCESS_CRASH_RPI)
+							: CommonUtils.patternSearchFromTargetString(response,
+									BroadBandTestConstants.TEXT_RESETTING_CCSPXDNSSSP));
 			if (status) {
 				LOGGER.info("STEP " + stepNumber
 						+ " : ACTUAL : EXPECTED LOG for starting the 'CcspXdnsSsp' process IS PRESENT IN the logs.");
