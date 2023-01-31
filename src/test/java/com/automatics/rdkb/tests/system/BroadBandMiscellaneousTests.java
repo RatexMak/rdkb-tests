@@ -1621,6 +1621,26 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase {
 				status = BroadBandWebPaUtils.setAndVerifyParameterValuesUsingWebPaorDmcli(device, tapEnv,
 						BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, WebPaDataTypes.INTEGER.getValue(),
 						BroadBandTestConstants.STRING_VALUE_FOUR);
+
+				if (status && DeviceModeHandler.isRPIDevice(device)) {
+					LOGGER.info("removing previously generated dump files");
+					String result = tapEnv.executeCommandUsingSsh(device,
+							BroadBandTestConstants.CMD_REMOVE_FORCEFULLY
+									+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS + "/"
+									+ BroadBandTestConstants.ASTERISK);
+					result = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.SINGLE_SPACE_CHARACTER
+									+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+					if (!result.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+						if (CommonMethods.isNull(result)) {
+							status = true;
+						}
+					} else {
+						tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_MKDIR
+								+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+						status = true;
+					}
+				}
 			}
 			if (status) {
 				LOGGER.info("PRE-CONDITION 2: ACTUAL : SelfHeal trigger interval is set to 4 minutes");
@@ -1757,6 +1777,13 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase {
 				response = tapEnv.executeCommandUsingSsh(device,
 						BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(BroadBandTestConstants.STRING_REPLACE,
 								BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+				if (CommonMethods.isNull(response)) {
+					BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(
+									BroadBandTestConstants.STRING_REPLACE,
+									BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+				}
 				status = CommonMethods.isNotNull(response) && CommonUtils
 						.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_NON_ROOT);
 				if (CommonMethods.isNull(telemetryNonRootLog)) {
@@ -1927,7 +1954,25 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase {
 					"STEP 11: ACTION : Execute:1.get telemtery2_0 process using pidof telemtery2_02.kill -1 <telemtery2_0>");
 			LOGGER.info("STEP 11: EXPECTED : telemtery2_0 process should be killed");
 			LOGGER.info("**********************************************************************************");
-			CommonUtils.clearLogFile(tapEnv, device, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				CommonUtils.clearLogFile(tapEnv, device, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB);
+			} else {
+				LOGGER.info("removing previously generated dump files");
+				String result = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_REMOVE_FORCEFULLY
+						+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS + "/" + BroadBandTestConstants.ASTERISK);
+				result = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.SINGLE_SPACE_CHARACTER
+								+ BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+				if (!result.contains(BroadBandTestConstants.NO_SUCH_FILE_OR_DIRECTORY)) {
+					if (CommonMethods.isNull(result)) {
+						status = true;
+					}
+				} else {
+					tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommandConstants.CMD_MKDIR + BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+					status = true;
+				}
+			}
 			status = BroadBandCommonUtils.killAndCheckProcess(device, tapEnv,
 					BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0);
 
@@ -1951,9 +1996,25 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 12: EXPECTED : Response should have 200 success message ");
 			LOGGER.info("**********************************************************************************");
 
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTraceConstants.LOG_MESSAGE_RESPONSE_200, BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB,
-					BroadBandTestConstants.TEN_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_RESPONSE_200,
+						BroadBandTestConstants.LOG_FILE_FOR_CRASHES_RDKB, BroadBandTestConstants.TEN_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			} else {
+				String pattern = "(.*.dmp)";
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+				LOGGER.info("response from minidumps folder :" + response);
+				if (CommonMethods.isNull(response)) {
+					BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommandConstants.CMD_LS + BroadBandTestConstants.STRING_PARTITION_MINIDUMPS);
+					LOGGER.info("response from minidumps folder :" + response);
+				}
+				status = CommonMethods.patternMatcher(response, pattern);
+				tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+			}
 
 			if (status) {
 				LOGGER.info("STEP 12: ACTUAL : Verified minidump is created for killed telemetry2_0 process");

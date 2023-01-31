@@ -633,14 +633,25 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 			LOGGER.info("Verifying re-try logs");
 			startTime = System.currentTimeMillis();
 			do {
-				response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_TELEMETRY_VER_TWO_LOGS);
-				status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-						BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG);
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandTestConstants.CMD_GET_TELEMETRY_VER_TWO_LOGS);
+					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
+							BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG);
+				} else {
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandTestConstants.CMD_GET_TELEMETRY_VER_TWO_LOGS);
+					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
+							BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG_RPI);
+				}
 				if (!status) {
 					response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_CAT
 							+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + telemetryLogs);
-					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-							BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG);
+					status = CommonMethods.isNotNull(response) && DeviceModeHandler.isRPIDevice(device)
+							? CommonMethods.patternMatcher(response,
+									BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG_RPI)
+							: CommonMethods.patternMatcher(response,
+									BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG);
 				}
 			} while (!status && (System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
 					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
@@ -692,79 +703,89 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 		String response = null;
 		Boolean status = false;
 		SimpleDateFormat format = new SimpleDateFormat(BroadBandTestConstants.TIME_FORMAT);
+
 		String errorMessage = "Expected re-try time stamp is not 180secs";
-		LOGGER.info("**********************************************************************************");
-		LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Verify re-try is happening in 180Seconds");
-		LOGGER.info("STEP " + stepNumber
-				+ " :ACTION : Execute grep -i 'Waiting for 180 sec before trying fetchRemoteConfiguration, No.of tries : 2' /rdklogs/logs/telemetry2_0.txt.0  ");
-		LOGGER.info("STEP " + stepNumber
-				+ " : EXPECTED : In the response should contain time stamp within 180s of difference between re-try");
-		LOGGER.info("**********************************************************************************");
-		try {
-			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG_2,
-					BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-
-			if (CommonMethods.isNull(response)) {
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber + " :DESCRIPTION : Verify re-try is happening in 180Seconds");
+			LOGGER.info("STEP " + stepNumber
+					+ " :ACTION : Execute grep -i 'Waiting for 180 sec before trying fetchRemoteConfiguration, No.of tries : 2' /rdklogs/logs/telemetry2_0.txt.0  ");
+			LOGGER.info("STEP " + stepNumber
+					+ " : EXPECTED : In the response should contain time stamp within 180s of difference between re-try");
+			LOGGER.info("**********************************************************************************");
+			try {
 				response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-						BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG_2, telemetryLogs,
-						BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+						BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG_2,
+						BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 
-			}
-			LOGGER.info("Server 1 st hit Response " + response);
-			if (CommonMethods.isNotNull(response)) {
-				// get the time stamp from the response output
-				response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_TIME_FORMAT);
+				if (CommonMethods.isNull(response)) {
+					response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+							BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG_2, telemetryLogs,
+							BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+				}
+				LOGGER.info("Server 1 st hit Response " + response);
 				if (CommonMethods.isNotNull(response)) {
-					// convert the time stamp to formated output
-					try {
-						firstserverhitTime = format.parse(response);
-					} catch (Exception e) {
-						LOGGER.error("Exception Occured validating 1st server hit time " + e.getMessage());
+					// get the time stamp from the response output
+					response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_TIME_FORMAT);
+					if (CommonMethods.isNotNull(response)) {
+						// convert the time stamp to formated output
+						try {
+							firstserverhitTime = format.parse(response);
+						} catch (Exception e) {
+							LOGGER.error("Exception Occured validating 1st server hit time " + e.getMessage());
+						}
 					}
 				}
-			}
-			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG,
-					BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			if (CommonMethods.isNull(response)) {
 				response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-						BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG, telemetryLogs,
-						BroadBandTestConstants.TWO_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			}
-			LOGGER.info("Server 2nd hit response " + response);
-			if (CommonMethods.isNotNull(response)) {
-				// get the time stamp from the response output
-				response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_TIME_FORMAT);
+						BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG,
+						BroadBandTestConstants.FILE_PATH_TELEMETRY_2_0, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				if (CommonMethods.isNull(response)) {
+					response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+							BroadBandTestConstants.LOGS_INDICATE_XCONF_RE_TRY_MSG, telemetryLogs,
+							BroadBandTestConstants.TWO_MINUTE_IN_MILLIS,
+							BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+				}
+				LOGGER.info("Server 2nd hit response " + response);
 				if (CommonMethods.isNotNull(response)) {
-					// convert the time stamp to formated output
-					try {
-						secondserverhitTime = format.parse(response);
-					} catch (Exception e) {
-						LOGGER.error("Exception Occured validating 2nd server hit time" + e.getMessage());
+					// get the time stamp from the response output
+					response = CommonMethods.patternFinder(response, BroadBandTestConstants.PATTERN_TIME_FORMAT);
+					if (CommonMethods.isNotNull(response)) {
+						// convert the time stamp to formated output
+						try {
+							secondserverhitTime = format.parse(response);
+						} catch (Exception e) {
+							LOGGER.error("Exception Occured validating 2nd server hit time" + e.getMessage());
+						}
 					}
 				}
+				// calculate the difference in time
+				if (firstserverhitTime != null && secondserverhitTime != null) {
+					timeDifference = secondserverhitTime.getTime() - firstserverhitTime.getTime();
+				}
+				// status true if time is >= 180000 miliseconds
+				status = (timeDifference >= 180000);
+				LOGGER.info("Time difference for fallback from primary server to secondary server :  " + timeDifference
+						+ "and is :" + status);
+			} catch (Exception e) {
+				LOGGER.error("Exception Occured validating fallback time stamp" + e.getMessage());
 			}
-			// calculate the difference in time
-			if (firstserverhitTime != null && secondserverhitTime != null) {
-				timeDifference = secondserverhitTime.getTime() - firstserverhitTime.getTime();
+			if (status) {
+				LOGGER.info(
+						"STEP :" + stepNumber + " ACTUAL : Successfully verified that the fallback happens within 5s");
+			} else {
+				LOGGER.error("STEP :" + stepNumber + " ACTUAL : " + errorMessage);
 			}
-			// status true if time is >= 180000 miliseconds
-			status = (timeDifference >= 180000);
-			LOGGER.info("Time difference for fallback from primary server to secondary server :  " + timeDifference
-					+ "and is :" + status);
-		} catch (Exception e) {
-			LOGGER.error("Exception Occured validating fallback time stamp" + e.getMessage());
-		}
-		if (status) {
-			LOGGER.info("STEP :" + stepNumber + " ACTUAL : Successfully verified that the fallback happens within 5s");
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 		} else {
-			LOGGER.error("STEP :" + stepNumber + " ACTUAL : " + errorMessage);
+			LOGGER.info("This step in not applicable for RPi : skipping step...");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
 		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 	}
 
