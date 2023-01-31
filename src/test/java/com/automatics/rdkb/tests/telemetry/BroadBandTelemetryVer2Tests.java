@@ -591,15 +591,28 @@ public class BroadBandTelemetryVer2Tests extends AutomaticsTestBase {
 					&& CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv)) {
 				startTime = System.currentTimeMillis();
 				do {
-					response = tapEnv.executeCommandUsingSsh(device,
-							BroadBandTestConstants.CMD_GET_TELEMETRY_VER_TWO_LOGS);
-					status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-							".*" + BroadBandTestConstants.LOGS_INDICATE_XCONF_GET_INVALID + ".*");
-					if (!status) {
-						response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_CAT
-								+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + telemetryLogs);
+					if (!DeviceModeHandler.isRPIDevice(device)) {
+						response = tapEnv.executeCommandUsingSsh(device,
+								BroadBandTestConstants.CMD_GET_TELEMETRY_VER_TWO_LOGS);
 						status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
 								".*" + BroadBandTestConstants.LOGS_INDICATE_XCONF_GET_INVALID + ".*");
+						if (!status) {
+							response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_CAT
+									+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + telemetryLogs);
+							status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
+									".*" + BroadBandTestConstants.LOGS_INDICATE_XCONF_GET_INVALID + ".*");
+						}
+					} else {
+						response = tapEnv.executeCommandUsingSsh(device,
+								BroadBandTestConstants.CMD_GET_TELEMETRY_VER_TWO_LOGS);
+						status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
+								".*" + BroadBandTestConstants.LOGS_INDICATE_XCONF_GET_INVALID_RPI + ".*");
+						if (!status) {
+							response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_CAT
+									+ BroadBandTestConstants.SINGLE_SPACE_CHARACTER + telemetryLogs);
+							status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
+									".*" + BroadBandTestConstants.LOGS_INDICATE_XCONF_GET_INVALID_RPI + ".*");
+						}
 					}
 
 				} while (!status
