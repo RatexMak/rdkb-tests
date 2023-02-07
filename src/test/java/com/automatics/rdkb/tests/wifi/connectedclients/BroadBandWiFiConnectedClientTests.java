@@ -3807,17 +3807,11 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase {
 			LOGGER.info("#####################################################################################");
 			testStepNumber = "s5";
 			status = false;
-			if (DeviceModeHandler.isRPIDevice(device)) {
-				errorMessage = "MAC Filter mode is not configured as Allow-ALL";
-				response = tapEnv.executeWebPaCommand(device,
-						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_MAC_FILTER_MODE);
-				status = response.equalsIgnoreCase(BroadBandTestConstants.MAC_FILTER_ALLOW_ALL);
-			} else {
-				errorMessage = "MAC Filter mode is not configured as Allow";
-				response = tapEnv.executeWebPaCommand(device,
-						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_MAC_FILTER_MODE);
-				status = response.equalsIgnoreCase(BroadBandTestConstants.MAC_FILTER_ALLOW);
-			}
+			errorMessage = "MAC Filter mode is not configured as Allow";
+			response = tapEnv.executeWebPaCommand(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_MAC_FILTER_MODE);
+			status = response.equalsIgnoreCase(BroadBandTestConstants.MAC_FILTER_ALLOW);
+
 			LOGGER.info(
 					"S5 ACTUAL : " + (status ? "MAC Filter mode for the device is configured as Allow" : errorMessage));
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
