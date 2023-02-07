@@ -189,19 +189,25 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 3: EXPECTED : Webpa set operation should be failed");
 			LOGGER.info("**********************************************************************************");
 
-			status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_AGGRESSIVE_SELFHEAL_INTERVAL, BroadBandTestConstants.CONSTANT_2,
-					BroadBandTestConstants.STRING_CONSTANT_15, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_AGGRESSIVE_SELFHEAL_INTERVAL,
+						BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_CONSTANT_15,
+						BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
 
-			if (status) {
-				LOGGER.info(
-						"STEP 3: ACTUAL : Successfully verified Aggressive selfheal interval is not able to set as 15 min using webpa when base selfheal interval is 15 min");
+				if (status) {
+					LOGGER.info(
+							"STEP 3: ACTUAL : Successfully verified Aggressive selfheal interval is not able to set as 15 min using webpa when base selfheal interval is 15 min");
+				} else {
+					LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+				LOGGER.info("Step not applicable for RPi : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			// ##############################################################################################//
 
 			stepNum = "s4";
@@ -238,19 +244,25 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 5: EXPECTED : Webpa set operation should be failed");
 			LOGGER.info("**********************************************************************************");
 
-			status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
-					BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, BroadBandTestConstants.CONSTANT_2,
-					BroadBandTestConstants.STRING_5, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, BroadBandTestConstants.CONSTANT_2,
+						BroadBandTestConstants.STRING_5, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
 
-			if (status) {
-				LOGGER.info(
-						"STEP 5: ACTUAL : Successfully verified base selfheal interval is not able to set below the aggressive selfheal interval");
+				if (status) {
+					LOGGER.info(
+							"STEP 5: ACTUAL : Successfully verified base selfheal interval is not able to set below the aggressive selfheal interval");
+				} else {
+					LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+				LOGGER.info("Step not applicable for RPi : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			// ##############################################################################################//
 
 			stepNum = "s6";
@@ -263,18 +275,24 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 6: EXPECTED : Webpa set operation should be failed");
 			LOGGER.info("**********************************************************************************");
 
-			status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
-					BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, BroadBandTestConstants.CONSTANT_2,
-					BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
-			if (status) {
-				LOGGER.info(
-						"STEP 6: ACTUAL : Successfully verified base selfheal interval value below Aggressive selfheal interval");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW, BroadBandTestConstants.CONSTANT_2,
+						BroadBandTestConstants.STRING_CONSTANT_1, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+				if (status) {
+					LOGGER.info(
+							"STEP 6: ACTUAL : Successfully verified base selfheal interval value below Aggressive selfheal interval");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				LOGGER.info("Step not applicable for RPi : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			// ##############################################################################################//
 
 			stepNum = "s7";
@@ -383,19 +401,25 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 					"STEP 11: EXPECTED : Webpa set operation should be failed because base selfheal interval is configured as 5");
 			LOGGER.info("**********************************************************************************");
 
-			status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
-					BroadBandWebPaConstants.WEBPA_PARAM_AGGRESSIVE_SELFHEAL_INTERVAL, BroadBandTestConstants.CONSTANT_2,
-					BroadBandTestConstants.STRING_5, BroadBandTestConstants.ONE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
+						BroadBandWebPaConstants.WEBPA_PARAM_AGGRESSIVE_SELFHEAL_INTERVAL,
+						BroadBandTestConstants.CONSTANT_2, BroadBandTestConstants.STRING_5,
+						BroadBandTestConstants.ONE_MINUTE_IN_MILLIS, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS);
 
-			if (status) {
-				LOGGER.info(
-						"STEP 11: ACTUAL : Successfully verified aggressive selfheal interval is not able to set the value as 5 min when base interval is set to 5 min");
+				if (status) {
+					LOGGER.info(
+							"STEP 11: ACTUAL : Successfully verified aggressive selfheal interval is not able to set the value as 5 min when base interval is set to 5 min");
+				} else {
+					LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+				LOGGER.info("Step not applicable for RPi : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 			// ##############################################################################################//
 
 			stepNum = "s12";
@@ -722,7 +746,8 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 
 			try {
 				status = BroadBandCommonUtils.validateSelfHealParameterValues(selfHealConfiguration,
-						BroadBandTestConstants.STRING_RESOURCE_USAGE_FOR_SELF_HEAL, BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
+						BroadBandTestConstants.STRING_RESOURCE_USAGE_FOR_SELF_HEAL,
+						BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 			} catch (Exception exception) {
 				errorMessage = exception.getMessage();
 				LOGGER.error(errorMessage);
@@ -1046,8 +1071,7 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 					"************************************************************************************************");
 			LOGGER.info(
 					"STEP 12:DESCRIPTION: Verify updated maxSubsytemResetCount using WebPA param \"Device.SelfHeal.X_RDKCENTRAL-COM_MaxResetCount\"");
-			LOGGER.info(
-					"STEP 12:ACTION: Execute command to update maxSubsytemResetCount then verify response");
+			LOGGER.info("STEP 12:ACTION: Execute command to update maxSubsytemResetCount then verify response");
 			LOGGER.info(
 					"STEP 12:EXPECTED: maxSubsytemResetCount configurations must be retrieved successfully and should be same as step 10");
 			LOGGER.info(
@@ -3264,28 +3288,28 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			testStepNumber = "s6";
 			status = false;
 			if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 6: DESCRIPTION : Check if 'erouter0' IP is released ");
-			LOGGER.info("STEP 6: ACTION : Execute command ifconfig | grep -i erouer0 and verify ip address");
-			LOGGER.info("STEP 6: EXPECTED : Erouter module is reset and hence IP must be released as expected ");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = " Erouter IP is not release after erouter reset initiated by  webpa param \"Device.X_CISCO_COM_DeviceControl.RebootDevice \" ";
-			response = BroadBandCommonUtils.getErouteripv6Address(device, tapEnv);
-			status = CommonMethods.isNotNull(response);
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP 6: DESCRIPTION : Check if 'erouter0' IP is released ");
+				LOGGER.info("STEP 6: ACTION : Execute command ifconfig | grep -i erouer0 and verify ip address");
+				LOGGER.info("STEP 6: EXPECTED : Erouter module is reset and hence IP must be released as expected ");
+				LOGGER.info("**********************************************************************************");
+				errorMessage = " Erouter IP is not release after erouter reset initiated by  webpa param \"Device.X_CISCO_COM_DeviceControl.RebootDevice \" ";
+				response = BroadBandCommonUtils.getErouteripv6Address(device, tapEnv);
+				status = CommonMethods.isNotNull(response);
 
-			if (status) {
-				LOGGER.info("STEP 6: ACTUAL : Erouter module is reset and hence IP released as expected");
-			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+				if (status) {
+					LOGGER.info("STEP 6: ACTUAL : Erouter module is reset and hence IP released as expected");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
 				LOGGER.info("IPv6 is not available/disabled : Skipping Step 6 ...");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
 						errorMessage, false);
 			}
-			
+
 		} catch (Exception exception) {
 			errorMessage = "Exception occurred during execution : " + exception.getMessage();
 			LOGGER.error(errorMessage);
@@ -3306,7 +3330,8 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 //					BroadBandTestConstants.STRING_VALUE_FIFTEEN);
 			response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
 					BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
-					BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty(), BroadBandTestConstants.STRING_VALUE_ZERO);
+					BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty(),
+					BroadBandTestConstants.STRING_VALUE_ZERO);
 		}
 
 	}
@@ -3748,7 +3773,10 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 //				response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithDefaultIndexOnRdkDevices(device, tapEnv,
 //						BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
 //						RESOURCE_USAGE_COMPUTE_WINDOW);
-				response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv, BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER, BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty(), BroadBandTestConstants.STRING_VALUE_ZERO);
+				response = BroadBandSnmpUtils.retrieveSnmpSetOutputWithGivenIndexOnRdkDevices(device, tapEnv,
+						BroadBandSnmpMib.ECM_SELFHEAL_RESOURCE_USAGE_COMPUTER_WINDOW.getOid(), SnmpDataType.INTEGER,
+						BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty(),
+						BroadBandTestConstants.STRING_VALUE_ZERO);
 				status = CommonMethods.isNotNull(response);
 			}
 			if (status) {
@@ -4580,7 +4608,8 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 			LOGGER.info("******************************************************************************");
 			LOGGER.info("STEP 4: DESCRIPTION: Update wifiClient mac address using webpa");
 			LOGGER.info(
-					"STEP 4: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress data type: 0 value: "+tapEnv.getStbMacIdForIpDeviceWithoutColon(device));
+					"STEP 4: ACTION: Execute webpa set command: parameter: Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress data type: 0 value: "
+							+ tapEnv.getStbMacIdForIpDeviceWithoutColon(device));
 			LOGGER.info("STEP 4: EXPECTED: Webpa set operation should be success");
 			LOGGER.info("******************************************************************************");
 			errorMessage = "Failed to update the webpa parameter Device.WiFi.X_RDKCENTRAL-COM_Report.WifiClient.MacAddress";
