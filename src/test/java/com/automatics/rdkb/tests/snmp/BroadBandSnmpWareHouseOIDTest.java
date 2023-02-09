@@ -303,13 +303,16 @@ public class BroadBandSnmpWareHouseOIDTest extends AutomaticsTestBase {
 							if (CommonMethods.patternMatcher(warehouseSnmp.getInfo(),
 									BroadBandTestConstants.WAREHOUSE_WIFI_5GHZ_CHANNEL)
 									|| (CommonMethods.patternMatcher(warehouseSnmp.getInfo(),
-											BroadBandTestConstants.WAREHOUSE_WIFI_2GHZ_CHANNEL))) {
+											BroadBandTestConstants.WAREHOUSE_WIFI_2GHZ_CHANNEL))
+									|| (CommonMethods.patternMatcher(warehouseSnmp.getInfo(), "wireless password"))
+									|| (CommonMethods.patternMatcher(warehouseSnmp.getInfo(),
+											"wireless password 5g"))) {
 								if (CommonMethods.isNotNull(snmpOutput)
 										&& !snmpOutput.contains(BroadBandSnmpConstants.SNMP_ERROR_RESPONSE_NO_OBJECT)
 										&& !snmpOutput.contains(BroadBandSnmpConstants.SNMP_ERROR_RESPONSE_NO_OID)
 										&& !CommonMethods.patternMatcher(snmpOutput.toLowerCase(),
 												BroadBandTestConstants.STRING_TIMEOUT)) {
-									performApplysettings(device, tapEnv);
+									BroadBandCommonUtils.PerformApplySettingsForBothRadios(device, tapEnv);
 									BroadBandCommonUtils.hasWaitForDuration(tapEnv,
 											BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
 								}
