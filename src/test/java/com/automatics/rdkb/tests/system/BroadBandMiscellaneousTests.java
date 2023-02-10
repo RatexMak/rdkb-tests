@@ -2040,6 +2040,13 @@ public class BroadBandMiscellaneousTests extends AutomaticsTestBase {
 				response = tapEnv.executeCommandUsingSsh(device,
 						BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(BroadBandTestConstants.STRING_REPLACE,
 								BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+				if (CommonMethods.isNull(response)) {
+					BroadBandCommonUtils.rebootAndWaitForStbAccessible(device, tapEnv);
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandCommandConstants.CMD_GET_PROCESS_DETAILS.replace(
+									BroadBandTestConstants.STRING_REPLACE,
+									BroadBandTestConstants.PROCESS_NAME_TELEMETRY_2_0));
+				}
 				status = CommonMethods.isNotNull(response) && CommonUtils
 						.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.STRING_ROOT);
 			} while (!status
