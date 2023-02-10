@@ -5208,19 +5208,33 @@ public class BroadBandWebGuiAdminPageTest extends BroadBandWifiBaseTest {
 			stepNumber++;
 			stepNum = "S" + stepNumber;
 			status = false;
-			errorMessage = "Port forwarding mode is not in disabled state";
 			LOGGER.info("**********************************************************************************");
 			LOGGER.info("STEP " + stepNumber + " : DESCRIPTION : VERIFY PORT FORWARDING IS IN DISABLED STATE.");
 			LOGGER.info("STEP " + stepNumber + " : ACTION : CHECK THE PORT FORWARDING BUTTON IS DISABLED.");
 			LOGGER.info("STEP " + stepNumber + " : EXPECTED : PORT FORWARDING SHOULD BE IN  DISABLED STATE.");
 			LOGGER.info("**********************************************************************************");
-			status = !BroadBandCommonPage.getPortForwardingModeEnabledStatus(lanDriver, device);
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + " : ACTUAL : Port forwarding mode is in disabled state");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				errorMessage = "Port forwarding mode is not in disabled state";
+
+				status = !BroadBandCommonPage.getPortForwardingModeEnabledStatus(lanDriver, device);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : Port forwarding mode is in disabled state");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
 			} else {
-				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				errorMessage = "Port forwarding mode is not in enabled state";
+
+				LOGGER.info("Verify Port forwarding is in Enabled state in Rpi devices");
+				status = BroadBandCommonPage.getPortForwardingModeEnabledStatus(lanDriver, device);
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + " : ACTUAL : Port forwarding mode is in enabled state");
+				} else {
+					LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
 			}
-			LOGGER.info("**********************************************************************************");
 			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(lanDriver, tapEnv, device, testCaseId, stepNum,
 					status, errorMessage, false);
 
