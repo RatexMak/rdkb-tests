@@ -948,7 +948,7 @@ public class BroadBandSecurityTest extends BroadBandWebUiBaseTest {
 				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, true);
 			} else {
 				errorMessage = "Test step is not applicable for devices model " + device.getModel();
-				LOGGER.error("STEP 2 : ACTUAL : " + errorMessage);
+				LOGGER.info("STEP 2 : ACTUAL : " + errorMessage);
 				LOGGER.info("**********************************************************************************");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
 						errorMessage, false);

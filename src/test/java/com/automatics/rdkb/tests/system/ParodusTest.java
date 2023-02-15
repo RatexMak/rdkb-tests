@@ -3266,18 +3266,24 @@ public class ParodusTest extends AutomaticsTestBase {
 					"STEP 3: ACTION: Execute command: grep -i \"Received temporary redirection response message\" /rdklogs/logs/PARODUSlog.txt.*");
 			LOGGER.info("STEP 3: EXPECTED: Response should contain the log message in PARODUS log file");
 			LOGGER.info("******************************************************************************");
-			errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer("Failed to get log message ",
-					BroadBandTraceConstants.LOG_MESSAGE_RECEIVED_TEMP_REDIRECT, " from parodus log file");
-			status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTraceConstants.LOG_MESSAGE_RECEIVED_TEMP_REDIRECT,
-					BroadBandCommandConstants.LOG_FILE_PARODUS, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-			if (status) {
-				LOGGER.info("STEP 3: ACTUAL: Successfully verified log message in parodus log file");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer("Failed to get log message ",
+						BroadBandTraceConstants.LOG_MESSAGE_RECEIVED_TEMP_REDIRECT, " from parodus log file");
+				status = CommonMethods.isNotNull(BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_RECEIVED_TEMP_REDIRECT,
+						BroadBandCommandConstants.LOG_FILE_PARODUS, BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS,
+						BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+				if (status) {
+					LOGGER.info("STEP 3: ACTUAL: Successfully verified log message in parodus log file");
+				} else {
+					LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+				}
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 3: ACTUAL: " + errorMessage);
+				LOGGER.info("Temporary redirection Not Applicable for RPi device ");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			// ##################################################################################################//
 
 			stepNumber = "s4";
@@ -3308,32 +3314,38 @@ public class ParodusTest extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP 5: EXPECTED: Response should contain the log message in Armconsole log file. And get the timestamp value");
 			LOGGER.info("******************************************************************************");
-			errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer("Failed to get log message ",
-					BroadBandTraceConstants.LOG_MESSAGE_START_PARODUS, " from parodus log file");
-			String consoleLog = CommonMethods.isAtomSyncAvailable(device, tapEnv)
-					? BroadBandCommandConstants.FILE_ARMCONSOLELOG
-					: BroadBandCommandConstants.FILE_CONSOLELOG;
-			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandTraceConstants.LOG_MESSAGE_START_PARODUS, consoleLog,
-					BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			if (CommonMethods.isNotNull(response)) {
-				// get the time stamp from response output
-				response = CommonMethods.patternFinder(response,
-						BroadBandTestConstants.PATTERN_TIME_FORMAT_IN_LOG_FILE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				errorMessage = BroadBandCommonUtils.concatStringUsingStringBuffer("Failed to get log message ",
+						BroadBandTraceConstants.LOG_MESSAGE_START_PARODUS, " from parodus log file");
+				String consoleLog = CommonMethods.isAtomSyncAvailable(device, tapEnv)
+						? BroadBandCommandConstants.FILE_ARMCONSOLELOG
+						: BroadBandCommandConstants.FILE_CONSOLELOG;
+				response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+						BroadBandTraceConstants.LOG_MESSAGE_START_PARODUS, consoleLog,
+						BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 				if (CommonMethods.isNotNull(response)) {
-					// convert the time stamp to formatted output
-					dateTimeConsole = format.parse(response);
-					status = true;
+					// get the time stamp from response output
+					response = CommonMethods.patternFinder(response,
+							BroadBandTestConstants.PATTERN_TIME_FORMAT_IN_LOG_FILE);
+					if (CommonMethods.isNotNull(response)) {
+						// convert the time stamp to formatted output
+						dateTimeConsole = format.parse(response);
+						status = true;
+					}
 				}
-			}
-			if (status) {
-				LOGGER.info(
-						"STEP 5: ACTUAL: Successfully verified log message in PARODUS log file and time stamp from the response is: "
-								+ dateTimeConsole);
+				if (status) {
+					LOGGER.info(
+							"STEP 5: ACTUAL: Successfully verified log message in PARODUS log file and time stamp from the response is: "
+									+ dateTimeConsole);
+				} else {
+					LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+				}
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 5: ACTUAL: " + errorMessage);
+				LOGGER.info("startParodus.sh not applicable for RPi");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
 			// ##################################################################################################//
 
 			stepNumber = "s6";
@@ -3354,6 +3366,7 @@ public class ParodusTest extends AutomaticsTestBase {
 				LOGGER.error("STEP 6: ACTUAL: " + errorMessage);
 			}
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNumber, status, errorMessage, false);
+
 			// ##################################################################################################//
 
 			stepNumber = "s7";
