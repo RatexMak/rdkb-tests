@@ -11471,7 +11471,10 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			String response = tapEnv.executeCommandUsingSsh(device,
-					BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS);
+					DeviceModeHandler.isRPIDevice(device)
+							? BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS.replace("/opt/secure/data/",
+									BroadBandTestConstants.NVRAM_PATH)
+							: BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS);
 			status = CommonUtils.patternSearchFromTargetString(response,
 					BroadBandTestConstants.STRING_SYNDICATION_FLOW_CONTROL
 							.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.FALSE));
@@ -11548,7 +11551,10 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			response = tapEnv.executeCommandUsingSsh(device,
-					BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_DSCP_VALUES);
+					DeviceModeHandler.isRPIDevice(device)
+							? BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_DSCP_VALUES
+									.replace("/opt/secure/data/", BroadBandTestConstants.NVRAM_PATH)
+							: BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_DSCP_VALUES);
 			if (CommonMethods.isNotNull(response)) {
 				status = CommonUtils.patternSearchFromTargetString(response,
 						BroadBandTestConstants.DSCP_INITIAL_FORWARDED_MARK.replace(
@@ -11597,7 +11603,10 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 
 			response = tapEnv.executeCommandUsingSsh(device,
-					BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS);
+					DeviceModeHandler.isRPIDevice(device)
+							? BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS.replace("/opt/secure/data/",
+									BroadBandTestConstants.NVRAM_PATH)
+							: BroadBandCommandConstants.CMD_SYSCFG_SYNDICATE_FLOW_STATUS);
 			status = CommonUtils.patternSearchFromTargetString(response,
 					BroadBandTestConstants.STRING_SYNDICATION_FLOW_CONTROL
 							.replace(BroadBandTestConstants.STRING_REPLACE, BroadBandTestConstants.TRUE));
