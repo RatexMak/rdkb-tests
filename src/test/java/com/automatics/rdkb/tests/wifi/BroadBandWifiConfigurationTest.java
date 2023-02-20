@@ -7918,7 +7918,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 			status = false;
 			errorMessage = null;
-			if (DeviceModeHandler.isRPIDevice(device)) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				LOGGER.info("#####################################################################################");
 				LOGGER.info("STEP " + stepNumber
 						+ ": DESCRIPTION : VERIFY INTERNET ACCESS BY USING WWW.FACEBOOK.COM WITH 5 GHZ SSID");
