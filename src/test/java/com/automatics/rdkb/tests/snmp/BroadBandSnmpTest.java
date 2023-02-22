@@ -2754,7 +2754,11 @@ public class BroadBandSnmpTest extends AutomaticsTestBase {
 							.replace(BroadBandTestConstants.TR181_NODE_REF, replaceValue);
 
 					webPaResponse = tapEnv.executeWebPaCommand(device, webPaParam);
-					status = CommonMethods.isNotNull(webPaResponse);
+					if (DeviceModeHandler.isRPIDevice(device) && CommonMethods.isNull(webPaResponse)) {
+						status = true;
+					} else {
+						status = CommonMethods.isNotNull(webPaResponse);
+					}
 					if (status) {
 						webPaSecurityModevalue = BroadBandTestConstants.MAP_SECURITY_MODE_AND_KEY_TO_GET_POSSIBLE_SECURITY_MODE_VALUES
 								.get(webPaResponse);

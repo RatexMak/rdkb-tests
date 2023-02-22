@@ -421,11 +421,11 @@ public class NTPServerTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 1: Verify the device is able to retrieve the NTP parameters from Xconf RFC");
 			LOGGER.info("EXPECTED: Should contain log strings that retrieve NTP enabled param in dcmrfc.log");
 			errorMessage = "Errors in validating dcmrfc logs ";
-			if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device))
-				status = BroadBandRfcFeatureControlUtils.verifyNTPEnableOrDisableInDCMRfcLog(tapEnv, device, true,
-						deviceDateTime);
-			else
-				status = false;
+//			if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device))
+			status = BroadBandRfcFeatureControlUtils.verifyNTPEnableOrDisableInDCMRfcLog(tapEnv, device, true,
+					deviceDateTime);
+//			else
+//				status = false;
 			LOGGER.info("STEP " + testStepNumber
 					+ " - ACTUAL: NTP feature returned in dcmrfc.script log with enabled as value :" + status);
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
@@ -449,8 +449,7 @@ public class NTPServerTest extends AutomaticsTestBase {
 
 		finally {
 			try {
-				NTPServerUtils.enableOrDisableNTPFeatureByRFC(tapEnv, device, false);
-				if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device)) {
+				if (NTPServerUtils.enableOrDisableNTPFeatureByRFC(tapEnv, device, false)) {
 					BroadBandRfcFeatureControlUtils.removeNvramOverrideForRfc(device, tapEnv);
 				}
 			} catch (JSONException e) {
@@ -512,11 +511,11 @@ public class NTPServerTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 1: Verify the device is able to retrieve the NTP parameters from Xconf RFC");
 			LOGGER.info("EXPECTED: Should contain log strings that retrieve NTP disabled param in dcmrfc.log");
 			errorMessage = "Errors in validating dcmrfc logs ";
-			if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device))
-				status = BroadBandRfcFeatureControlUtils.verifyNTPEnableOrDisableInDCMRfcLog(tapEnv, device, false,
-						deviceDateTime);
-			else
-				status = false;
+//			if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device))
+			status = BroadBandRfcFeatureControlUtils.verifyNTPEnableOrDisableInDCMRfcLog(tapEnv, device, false,
+					deviceDateTime);
+//			else
+//				status = false;
 			LOGGER.info("STEP " + testStepNumber
 					+ " - ACTUAL: NTP feature returned in dcmrfc.script log with disable as value :" + status);
 			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
@@ -540,8 +539,7 @@ public class NTPServerTest extends AutomaticsTestBase {
 
 		finally {
 			try {
-				NTPServerUtils.enableOrDisableNTPFeatureByRFC(tapEnv, device, false);
-				if (CommonMethods.waitForEstbIpAcquisition(tapEnv, device)) {
+				if (NTPServerUtils.enableOrDisableNTPFeatureByRFC(tapEnv, device, false)) {
 					BroadBandRfcFeatureControlUtils.removeNvramOverrideForRfc(device, tapEnv);
 				}
 			} catch (JSONException e) {

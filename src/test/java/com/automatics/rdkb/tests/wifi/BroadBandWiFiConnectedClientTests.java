@@ -18,6 +18,8 @@
 
 package com.automatics.rdkb.tests.wifi;
 
+import java.util.Arrays;
+
 import org.testng.annotations.Test;
 
 import com.automatics.annotations.TestDetails;
@@ -136,29 +138,31 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase{
 		    "STEP 1: EXPECTED :Operating mode should be 802.11a/n for atom console devices, n for DSL devices and for rest of the devices expected if 802.11a/n/ac ");
 	    LOGGER.info("**********************************************************************************");
 	    if (CommonMethods.isAtomSyncAvailable(device, tapEnv)) {
-		defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N;
-	    } else if (BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)) {
-		defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N_AC_AX;
-	    } else {
-		defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
-	    }
-	    errorMessage = "Received Operating standard is Not as Expected "
-		    + defaultOperatingStandard.getOperatingmode();
-	    try {
-		status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
-			defaultOperatingStandard.getOperatingmode());
-	    } catch (TestException exception) {
-		errorMessage = errorMessage + exception.getMessage();
-		LOGGER.info(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP 1: ACTUAL :The operating mode for 5GHz network in RDKB device is as expected ");
-	    } else {
-		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
+			defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N;
+		} else if (BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)) {
+			defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N_AC_AX;
+		} else if (DeviceModeHandler.isRPIDevice(device)) {
+			defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_AC;
+		}else {
+			defaultOperatingStandard = WifiOperatingStandard.OPERATING_STANDARD_A_N_AC;
+		}
+		errorMessage = "Received Operating standard is Not as Expected "
+				+ defaultOperatingStandard.getOperatingmode();
+		try {
+			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD,
+					defaultOperatingStandard.getOperatingmode());
+		} catch (TestException exception) {
+			errorMessage = errorMessage + exception.getMessage();
+			LOGGER.info(errorMessage);
+		}
+		if (status) {
+			LOGGER.info("STEP 1: ACTUAL :The operating mode for 5GHz network in RDKB device is as expected ");
+		} else {
+			LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, true);
 
 	    /**
 	     * Step2 : Check 5 GHz client is connected and IPV4 address obtained
@@ -210,24 +214,26 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase{
 	    LOGGER.info("STEP 3: ACTION : Execute command to verify  default operating mode from 5 Ghz");
 	    LOGGER.info("STEP 3: EXPECTED :Operating mode should be 802.11a or 802.11n or 802.11ac");
 	    LOGGER.info("**********************************************************************************");
-
-	    step = "s3";
-	    status = false;
-	    errorMessage = "The default value for operating mode in 2.4GHz network for client device is NOT either 802.11a 802.11n or 802.11ac'";
-	    try {
-		status = BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(connectedClientDevice,
-			tapEnv, defaultOperatingStandard.getClientOperatingMode());
-	    } catch (TestException exception) {
-		errorMessage = exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP 3: ACTUAL :The operating mode for 5GHz network in client device is a/n/ac ");
-	    } else {
-		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+		step = "s3";
+		status = false;
+		errorMessage = "The default value for operating mode in 2.4GHz network for client device is NOT either 802.11a 802.11n or 802.11ac'";
+		try {
+			status = BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(connectedClientDevice,
+					tapEnv,
+					DeviceModeHandler.isRPIDevice(device) ? Arrays.asList(
+							BroadbandPropertyFileHandler.get5GhzClientOperatingModeFromProperties().split(";"))
+							: defaultOperatingStandard.getClientOperatingMode());
+		} catch (TestException exception) {
+			errorMessage = exception.getMessage();
+			LOGGER.error(errorMessage);
+		}
+		if (status) {
+			LOGGER.info("STEP 3: ACTUAL :The operating mode for 5GHz network in client device is a/n/ac ");
+		} else {
+			LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+		}
+		LOGGER.info("**********************************************************************************");
+		tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
 	    /**
 	     * Step4 : Change the mode of operation in 5GHz client to 802.11 ac; Change the mode of operation in 5GHz
@@ -334,40 +340,44 @@ public class BroadBandWiFiConnectedClientTests extends AutomaticsTestBase{
 		status = false;
 
 		if (CommonMethods.isAtomSyncAvailable(device, tapEnv) || (DeviceModeHandler.isDSLDevice(device))) {
-		    LOGGER.info("**********************************************************************************");
-		    tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
-			    errorMessage, false);
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
 		} else {
-		    try {
+			try {
 
-			errorMessage = BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)
-				? "The operating mode for 5GHz network is not changed from a/n/ac/ax to a/n/ac mode in client device."
-				: "The operating mode for 5GHz network is not changed from \'a/n/ac\' to \'ac\' mode in client device.";
-			status = BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)
-				? BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
-					connectedClientDevice, tapEnv,
-					WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getClientOperatingMode())
-				: BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
-					connectedClientDevice, tapEnv,
-					WifiOperatingStandard.OPERATING_STANDARD_AC.getClientOperatingMode());
-			successMessage = BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)
-				? "Changed the operating mode for 5GHz network from a/n/ac/ax to a/n/ac "
-					+ "using WebPA - Device.WiFi.Radio.10100.OperatingStandards."
-				: "Changed the operating mode for 5GHz network from a/n/ac to ac "
-					+ "using WebPA - Device.WiFi.Radio.10100.OperatingStandards.";
-		    } catch (TestException exception) {
-			errorMessage = exception.getMessage();
-			LOGGER.error(errorMessage);
-		    }
-		    if (status) {
-			LOGGER.info("STEP 6: ACTUAL :" + successMessage);
-		    } else {
-			LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-		    }
-		    LOGGER.info("**********************************************************************************");
+				errorMessage = BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)
+						? "The operating mode for 5GHz network is not changed from a/n/ac/ax to a/n/ac mode in client device."
+						: "The operating mode for 5GHz network is not changed from \'a/n/ac\' to \'ac\' mode in client device.";
+				status = BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)
+						? BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
+								connectedClientDevice, tapEnv,
+								WifiOperatingStandard.OPERATING_STANDARD_A_N_AC.getClientOperatingMode())
+						: BroadBandConnectedClientUtils.verifyOperatingStandardInConnectedClient(
+								connectedClientDevice, tapEnv,
+								DeviceModeHandler.isRPIDevice(device)
+										? Arrays.asList(BroadbandPropertyFileHandler
+												.get5GhzClientOperatingModeFromProperties().split(";"))
+										: WifiOperatingStandard.OPERATING_STANDARD_AC.getClientOperatingMode());
+				successMessage = BroadbandPropertyFileHandler.getStatusForDeviceCheck(device)
+						? "Changed the operating mode for 5GHz network from a/n/ac/ax to a/n/ac "
+								+ "using WebPA - Device.WiFi.Radio.10100.OperatingStandards."
+						: "Changed the operating mode for 5GHz network from a/n/ac to ac "
+								+ "using WebPA - Device.WiFi.Radio.10100.OperatingStandards.";
+			} catch (TestException exception) {
+				errorMessage = exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP 6: ACTUAL :" + successMessage);
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
 
-		    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 		}
+		
 		/**
 		 * Step7 : Change the mode of operation in 5GHz client to 802.11 n; For devices change mode from a/n/ac
 		 * to a/n/ac/ax

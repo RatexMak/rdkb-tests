@@ -37,6 +37,7 @@ import com.automatics.constants.AutomaticsConstants;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
 import com.automatics.enums.ExecutionStatus;
+import com.automatics.enums.WebPaDataType;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
@@ -1343,6 +1344,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    testStepNumber = "S" + stepNumber;
 	    executionStatus = false;
 	    errorMessage = null;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info(
 		    "STEP " + stepNumber + ": DESCRIPTION : Verify response by querying IPv6 enabled external server");
@@ -1381,6 +1383,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, testStepNumber, executionStatus, errorMessage, false);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 5 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 	} catch (Exception e) {
 	    errorMessage = e.getMessage();
 	    LOGGER.error(errorMessage);
@@ -2683,7 +2690,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW);
 	    LOGGER.info("UsageComputeWindow retrieved using WebPa = " + response);
 	    status = CommonMethods.isNotNull(response)
-		    && response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW);
+			    && response.equalsIgnoreCase(BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 	    errorMessage = "Unable to verify the UsageComputeWindow  using WebPA command on TR181 parameter 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow'  -Expected value:"
 		    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:" + response;
 
@@ -2777,15 +2784,15 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		response = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.USAGE_COMPUTE_WINDOW);
 		LOGGER.info("UsageComputeWindow retrieved using WebPa = " + response);
 		status = CommonMethods.isNotNull(response)
-			&& response.equalsIgnoreCase(BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW);
+			&& response.equalsIgnoreCase(BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty());
 	    } while (!status && (System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
 		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 	    errorMessage = "Unable to verify the UsageComputeWindow  using WebPA command on TR181 parameter 'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow'  -Expected value:"
-		    + BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:" + response;
+		    + BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:" + response;
 	    if (status) {
 		LOGGER.info(
 			"STEP 5: ACTUAL : Successfully verified the default UsageComputeWindow  'Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_UsageComputeWindow' using WebPA command.-Expected value:"
-				+ BroadBandTestConstants.CONSTANT_RESOURCE_USAGE_COMPUTE_WINDOW + "|Actual Value:"
+				+ BroadbandPropertyFileHandler.getResourceUsageComputeWindowFromProperty() + "|Actual Value:"
 				+ response);
 	    } else {
 		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
@@ -3630,6 +3637,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    errorMessage = "Failed to verify the ping 8.8.8.8 response in ARM/ATOM console";
 	    response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
 		    BroadBandCommandConstants.CMD_PING_8_8_8_8);
+	    tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 	    status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
 		    BroadBandConnectedClientTestConstants.PATTERN_MATCHER_PING_RESPONSE_LINUX);
 	    if (status) {
@@ -3712,36 +3720,46 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    /**
 	     * STEP 4 : Verify dev interface scope link in ip route response at ARM/ATOM console
 	     */
-	    stepNumber++;
-	    step = "S" + stepNumber;
-	    status = false;
-	    errorMessage = null;
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP " + stepNumber
-		    + ": DESCRIPTION : Verify dev interface scope link in ip route response at ARM/ATOM console");
-	    LOGGER.info("STEP " + stepNumber + ": ACTION : Execute command ip route ");
-	    LOGGER.info("STEP " + stepNumber
-		    + ": EXPECTED : Must return dev interface scope link in ip route response at ARM/ATOM console");
-	    LOGGER.info("**********************************************************************************");
-	    errorMessage = "Failed to Verify dev interface scope link in ip route response at ARM/ATOM console";
-	    response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
-		    BroadBandCommandConstants.CMD_SBIN_IP_ROUTE);
-	    status = CommonMethods.isNotNull(response)
-		    && CommonMethods.patternMatcher(response, BroadBandTestConstants.PATTERN_DEV_SCOPE_LINK);
-	    if (!status) {
-		response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
-			BroadBandCommandConstants.CMD_IP_ROUTE);
-		status = CommonMethods.isNotNull(response)
-			&& CommonMethods.patternMatcher(response, BroadBandTestConstants.PATTERN_DEV_SCOPE_LINK);
-	    }
-	    if (status) {
-		LOGGER.info("STEP " + stepNumber
-			+ ": ACTUAL : Successfully verified dev interface scope link in ip route response at ARM/ATOM console");
-	    } else {
-		LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+	    /**
+		 * STEP 4 : Verify dev interface scope link in ip route response at ARM/ATOM
+		 * console
+		 */
+		stepNumber++;
+		step = "S" + stepNumber;
+		status = false;
+		errorMessage = null;
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP " + stepNumber
+					+ ": DESCRIPTION : Verify dev interface scope link in ip route response at ARM/ATOM console");
+			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute command ip route ");
+			LOGGER.info("STEP " + stepNumber
+					+ ": EXPECTED : Must return dev interface scope link in ip route response at ARM/ATOM console");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Failed to Verify dev interface scope link in ip route response at ARM/ATOM console";
+			response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
+					BroadBandCommandConstants.CMD_SBIN_IP_ROUTE);
+			status = CommonMethods.isNotNull(response)
+					&& CommonMethods.patternMatcher(response, BroadBandTestConstants.PATTERN_DEV_SCOPE_LINK);
+			if (!status) {
+				response = BroadBandCommonUtils.executeCommandInAtomConsoleIfAtomIsPresentElseInArm(device, tapEnv,
+						BroadBandCommandConstants.CMD_IP_ROUTE);
+				status = CommonMethods.isNotNull(response)
+						&& CommonMethods.patternMatcher(response, BroadBandTestConstants.PATTERN_DEV_SCOPE_LINK);
+			}
+			if (status) {
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTUAL : Successfully verified dev interface scope link in ip route response at ARM/ATOM console");
+			} else {
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
+		} else {
+			LOGGER.info("this step is not applicable for RPi : skipping teststep ...");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 	} catch (Exception e) {
 	    errorMessage = errorMessage + e.getMessage();
 	    LOGGER.error(errorMessage);
@@ -4286,19 +4304,27 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 1: EXPECTED : command execution must be successful ");
 	    LOGGER.info("**********************************************************************************");
 	    errorMessage = "Failed to execute \"yes > /dev/null &\" command to make ";
-	    if (DeviceModeHandler.isFibreDevice(device)) {
-		for (int iteration = BroadBandTestConstants.CONSTANT_0; iteration <= BroadBandTestConstants.CONSTANT_9; iteration++) {
-		    response = tapEnv.executeCommandUsingSsh(device,
-			    BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT);
-		    status = CommonMethods.isNotNull(response);
+		if (DeviceModeHandler.isFibreDevice(device)) {
+			for (int iteration = BroadBandTestConstants.CONSTANT_0; iteration <= BroadBandTestConstants.CONSTANT_9; iteration++) {
+				response = tapEnv.executeCommandUsingSsh(device,
+						BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT);
+				status = CommonMethods.isNotNull(response);
+			}
+		} else {
+			for (int iteration = BroadBandTestConstants.CONSTANT_0; iteration <= BroadBandTestConstants.CONSTANT_9; iteration++) {
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					response = tapEnv.executeCommandUsingSsh(device,
+							BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT);
+					status = CommonMethods.isNull(response);
+				} else {
+					response = tapEnv.executeCommandUsingSsh(device,
+							"su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+									+ BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT
+									+ BroadBandTestConstants.DOUBLE_QUOTE);
+					status = CommonMethods.isNull(response);
+				}
+			}
 		}
-	    } else {
-		for (int iteration = BroadBandTestConstants.CONSTANT_0; iteration <= BroadBandTestConstants.CONSTANT_9; iteration++) {
-		    response = tapEnv.executeCommandUsingSsh(device,
-			    BroadBandTestConstants.COMMAND_TO_MAKE_CPU_USAGE_HUNDRED_PERCENT);
-		    status = CommonMethods.isNull(response);
-		}
-	    }
 	    if (status) {
 		LOGGER.info("STEP 1: ACTUAL : Making CPU usage as 100% is successful");
 	    } else {
@@ -4397,11 +4423,18 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    errorMessage = "Failed to verify log format in SelfHeal.txt.0";
-	    response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
-		    BroadBandTraceConstants.LOG_MESSAGE_100_CPU_LOAD_FROM_SELFHEAL,
-		    BroadBandCommandConstants.LOG_FILE_SELFHEAL);
-	    status = CommonMethods.patternMatcher(response,
-		    BroadBandTestConstants.PATTERN_TO_VALIDATE_MSG_FROMAT_FROM_SELFHEAL);
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					BroadBandTraceConstants.LOG_MESSAGE_100_CPU_LOAD_FROM_SELFHEAL,
+					BroadBandCommandConstants.LOG_FILE_SELFHEAL);
+			status = CommonMethods.patternMatcher(response,
+					BroadBandTestConstants.PATTERN_TO_VALIDATE_MSG_FROMAT_FROM_SELFHEAL);
+		} else {
+			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device,
+					BroadBandTraceConstants.LOG_MESSAGE_100_CPU_LOAD_FROM_SELFHEAL_RPI,
+					BroadBandCommandConstants.LOG_FILE_SELFHEAL);
+			status = CommonMethods.isNotNull(response);
+		}
 
 	    if (status) {
 		LOGGER.info("STEP 5: ACTUAL : Successfully Verified log format logged in SelfHeal.txt.0");
@@ -5790,6 +5823,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 		    "STEP 6: ACTION : Check console logs for logging on ZRAM enable using \"cat /rdklogs/logs/zram.log | grep zram\" command");
 	    LOGGER.info("STEP 6: EXPECTED : ZRAM enable should be logged under cat /rdklogs/logs/zram.log");
 	    LOGGER.info("**********************************************************************************");
+	    if(DeviceModeHandler.isRPIDevice(device)) {
 	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 		    ? tapEnv.executeCommandOnAtom(device,
 			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
@@ -5805,6 +5839,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }else {
+	    	LOGGER.info("/rdklogs/logs/zram.log not applicable for RPi : Skipping TestStep...");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+	    }
+	    
 
 	    stepNum = "s7";
 	    errorMessage = "Unable to check ZRAM partition in the device";
@@ -5814,6 +5853,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 7: ACTION : Check for the ZRAM partitions in the device using \"cat /proc/swaps\"");
 	    LOGGER.info("STEP 7: EXPECTED : ZRAM partitions should be present in the device");
 	    LOGGER.info("**********************************************************************************");
+	    if(DeviceModeHandler.isRPIDevice(device)) {
 	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 		    ? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION)
 		    : tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION);
@@ -5834,6 +5874,10 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }else {
+	    	LOGGER.info("ZRAM partitions not applicable for RPi : Skipping TestStep...");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+	    }
 
 	    stepNum = "S8";
 	    errorMessage = "Unable to post the RFC payload data to Proxy Xconf DCM Server";
@@ -5879,6 +5923,11 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.RFC_RESTART_SERVICE);
 	    status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(response,
 		    BroadBandTestConstants.RFC_RESTART_SUCCEEDED);
+	    if (!status) {
+			status = BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, WebPaDataType.UNSIGNED_INT.getValue(),
+					BroadBandTestConstants.STRING_VALUE_ONE);
+		}
 	    if (status) {
 		LOGGER.info("STEP 9: ACTUAL : RFC service restart has been successfully trigerred");
 	    } else {
@@ -5959,6 +6008,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 13: ACTION : Check console logs for logging on ZRAM enable");
 	    LOGGER.info("STEP 13: EXPECTED : ZRAM disable should be logged under cat /rdklogs/logs/zram.log");
 	    LOGGER.info("**********************************************************************************");
+	    if(DeviceModeHandler.isRPIDevice(device)) {
 	    response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 		    ? tapEnv.executeCommandOnAtom(device,
 			    BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
@@ -5974,6 +6024,10 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+	    }else {
+	    	LOGGER.info("ZRAM /rdklogs/logs/zram.log not applicable for RPi : Skipping TestStep...");
+		    tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, errorMessage, false);
+	    }
 
 	} catch (Exception e) {
 	    errorMessage = errorMessage + e.getMessage();

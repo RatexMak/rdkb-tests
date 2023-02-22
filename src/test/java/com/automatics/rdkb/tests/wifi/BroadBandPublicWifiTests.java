@@ -584,19 +584,22 @@ public class BroadBandPublicWifiTests extends BroadBandWebUiBaseTest {
 		    device, tapEnv, preConStepNumber, BroadBandTestConstants.CONSTANT_1);
 	    ssidVisibleDevice2Ghz = ssidVisibleDevices.get(BroadBandTestConstants.CONSTANT_0);
 
-	    /**
-	     * PRE-CONDITION 2 : SET AND VERIFY THE public WIFI STATUS IS ENABLED
-	     */
-	    preConStepNumber++;
-	    BroadBandPreConditionUtils.executePreConditionToEnableThePublicWifiOnGatewayDevice(device, tapEnv,
-		    preConStepNumber);
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			/**
+			 * PRE-CONDITION 2 : SET AND VERIFY THE public WIFI STATUS IS ENABLED
+			 */
+			preConStepNumber++;
+			BroadBandPreConditionUtils.executePreConditionToEnableThePublicWifiOnGatewayDevice(device, tapEnv,
+					preConStepNumber);
 
-	    /**
-	     * PRE-CONDITION 3 : VERIFY THE public WIFI 2.4 AND 5 GHZ SSID'S ARE BROADCASTING IN CONNECTED CLIENT 1
-	     */
-	    preConStepNumber++;
-	    BroadBandPreConditionUtils.executePreConditionToVerifyPublicWifiBroadcastingStatus(device, tapEnv,
-		    ssidVisibleDevice2Ghz, preConStepNumber);
+			/**
+			 * PRE-CONDITION 3 : VERIFY THE public WIFI 2.4 AND 5 GHZ SSID'S ARE
+			 * BROADCASTING IN CONNECTED CLIENT 1
+			 */
+			preConStepNumber++;
+			BroadBandPreConditionUtils.executePreConditionToVerifyPublicWifiBroadcastingStatus(device, tapEnv,
+					ssidVisibleDevice2Ghz, preConStepNumber);
+		}
 	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
 
 	    /**
@@ -813,19 +816,22 @@ public class BroadBandPublicWifiTests extends BroadBandWebUiBaseTest {
 	    ssidVisibleDevices = BroadBandPreConditionUtils.executePreConditionToGetBothPrivateWiFiSsidsVisibleDevices(
 		    device, tapEnv, preConStepNumber, BroadBandTestConstants.CONSTANT_1);
 	    ssidVisibleDevice5Ghz = ssidVisibleDevices.get(BroadBandTestConstants.CONSTANT_0);
-	    /**
-	     * PRE-CONDITION 2 : SET AND VERIFY THE public WIFI STATUS IS ENABLED
-	     */
-	    preConStepNumber++;
-	    BroadBandPreConditionUtils.executePreConditionToEnableThePublicWifiOnGatewayDevice(device, tapEnv,
-		    preConStepNumber);
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			/**
+			 * PRE-CONDITION 2 : SET AND VERIFY THE public WIFI STATUS IS ENABLED
+			 */
+			preConStepNumber++;
+			BroadBandPreConditionUtils.executePreConditionToEnableThePublicWifiOnGatewayDevice(device, tapEnv,
+					preConStepNumber);
 
-	    /**
-	     * PRE-CONDITION 3 : VERIFY THE public WIFI 2.4 AND 5 GHZ SSID'S ARE BROADCASTING IN CONNECTED CLIENT 1
-	     */
-	    preConStepNumber++;
-	    BroadBandPreConditionUtils.executePreConditionToVerifyPublicWifiBroadcastingStatus(device, tapEnv,
-		    ssidVisibleDevice5Ghz, preConStepNumber);
+			/**
+			 * PRE-CONDITION 3 : VERIFY THE public WIFI 2.4 AND 5 GHZ SSID'S ARE
+			 * BROADCASTING IN CONNECTED CLIENT 1
+			 */
+			preConStepNumber++;
+			BroadBandPreConditionUtils.executePreConditionToVerifyPublicWifiBroadcastingStatus(device, tapEnv,
+					ssidVisibleDevice5Ghz, preConStepNumber);
+		}
 	    LOGGER.info("################### COMPLETED PRE-CONFIGURATIONS ###################");
 
 	    /**

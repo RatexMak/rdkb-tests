@@ -23,9 +23,11 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 
@@ -90,13 +92,19 @@ public class BroadBandSecurityLibraryTest extends AutomaticsTestBase {
 	     * STEP 3: Verify the nfs library is not available on the device.
 	     */
 	    step = "s3";
-	    result = false;
-	    LOGGER.info("STEP 3: VERIFY NFS LIBRARY IS NOT AVAILABLE.");
-	    LOGGER.info("STEP 3: - EXPECTED - NFS LIBRARY MUST NOT BE AVAILABLE.");
-	    result = !BroadBandCommonUtils.isFilePresentOnDevice(tapEnv, device, BroadBandTestConstants.LIB_NFS);
-	    errorMessage = "NFS LIBRARY IS PRESENT ON THE DEVICE.";
-	    LOGGER.info("STEP 3: - ACTUAL: " + (result ? "NFS LIBRARY IS NOT PRESENT." : errorMessage));
-	    tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+		result = false;
+		LOGGER.info("STEP 3: VERIFY NFS LIBRARY IS NOT AVAILABLE.");
+		LOGGER.info("STEP 3: - EXPECTED - NFS LIBRARY MUST NOT BE AVAILABLE.");
+		if (!DeviceModeHandler.isRPIDevice(device)) {
+			result = !BroadBandCommonUtils.isFilePresentOnDevice(tapEnv, device, BroadBandTestConstants.LIB_NFS);
+			errorMessage = "NFS LIBRARY IS PRESENT ON THE DEVICE.";
+			LOGGER.info("STEP 3: - ACTUAL: " + (result ? "NFS LIBRARY IS NOT PRESENT." : errorMessage));
+			tapEnv.updateExecutionStatus(device, testCaseId, step, result, errorMessage, false);
+		} else {
+			LOGGER.info("NFS is available in RPi : skipping teststep ...");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 	} catch (Exception exception) {
 	    errorMessage = exception.getMessage();
 	    LOGGER.error("EXCEPTION OCCURRED WHILE VALIDATING THE SECURITY - REMOVAL OF TELNET, RLOGIN, NFS LIBRARIES: "

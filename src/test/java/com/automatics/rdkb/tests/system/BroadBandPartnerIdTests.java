@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandTraceConstants;
@@ -326,40 +327,48 @@ public class BroadBandPartnerIdTests extends AutomaticsTestBase {
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, result, message, false);
 
 	    /**
-	     * S2) Verify PartnerID using TR-69 parameter
-	     */
-	    stepNum = "s2";
-	    String tr69PartnerId = null;
-	    LOGGER.info(
-		    "**************************************************************************************************");
-	    LOGGER.info("STEP 2: DESCRIPTION : VERIFY PARTNERID USING TR-069 PARAMETER.");
-	    LOGGER.info("STEP 2: ACTION : EXECUTE TR-069 COMMAND TO VERIFY PARTNERID");
-	    LOGGER.info("STEP 2: EXPECTED : TR-069 RESPONSE MUST RETURN THE PARTNER ID.");
-	    LOGGER.info(
-		    "**************************************************************************************************");
-	    result = false;
-	    message = "Unable to verify the Syndicate Partner ID with TR-69 Request.";
-	    tr69PartnerId = tapEnv.executeTr69CommandWithTimeOut(device,
-		    BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID,
-		    BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
-	    LOGGER.info("PARTNER ID FROM TR-069:" + tr69PartnerId);
-	    result = CommonMethods.isNotNull(tr69PartnerId) && (tr69PartnerId.equalsIgnoreCase(defaultPartner)
-		    || (!partnersList.isEmpty() && partnersList.contains(tr69PartnerId)));
-	    LOGGER.info(
-		    "**************************************************************************************************");
+		 * S2) Verify PartnerID using TR-69 parameter
+		 */
+		stepNum = "s2";
+		String tr69PartnerId = null;
+		if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+			LOGGER.info("TR-69 is enabled...");
+			LOGGER.info(
+					"**************************************************************************************************");
+			LOGGER.info("STEP 2: DESCRIPTION : VERIFY PARTNERID USING TR-069 PARAMETER.");
+			LOGGER.info("STEP 2: ACTION : EXECUTE TR-069 COMMAND TO VERIFY PARTNERID");
+			LOGGER.info("STEP 2: EXPECTED : TR-069 RESPONSE MUST RETURN THE PARTNER ID.");
+			LOGGER.info(
+					"**************************************************************************************************");
+			result = false;
+			message = "Unable to verify the Syndicate Partner ID with TR-69 Request.";
+			tr69PartnerId = tapEnv.executeTr69CommandWithTimeOut(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_FOR_SYNDICATION_PARTNER_ID,
+					BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+			LOGGER.info("PARTNER ID FROM TR-069:" + tr69PartnerId);
+			result = CommonMethods.isNotNull(tr69PartnerId) && (tr69PartnerId.equalsIgnoreCase(defaultPartner)
+					|| (!partnersList.isEmpty() && partnersList.contains(tr69PartnerId)));
+			LOGGER.info(
+					"**************************************************************************************************");
 
-	    if (result) {
-		LOGGER.info("STEP 2: ACTUAL: PARTNER ID VERIFIED SUCCESSFULLY USING TR-069.");
-	    } else {
-		LOGGER.info("STEP 2: ACTUAL: " + message);
-	    }
-	    LOGGER.info(
-		    "**************************************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, result, message, false);
+			if (result) {
+				LOGGER.info("STEP 2: ACTUAL: PARTNER ID VERIFIED SUCCESSFULLY USING TR-069.");
+			} else {
+				LOGGER.info("STEP 2: ACTUAL: " + message);
+			}
+			LOGGER.info(
+					"**************************************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, result, message, false);
+		} else {
+			message = "TR-69 is disabled so skipping teststep ...";
+			LOGGER.error(message);
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE, message,
+					false);
+		}
 	} catch (Exception exception) {
-	    message = exception.getMessage();
-	    LOGGER.error("EXCEPTION OCCURRED WHILE VALIDATING PARTNER ID USING WEBPA AND TR-069: " + message);
-	    CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, result, message, true);
+		message = exception.getMessage();
+		LOGGER.error("EXCEPTION OCCURRED WHILE VALIDATING PARTNER ID USING WEBPA AND TR-069: " + message);
+		CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, result, message, true);
 	}
 	LOGGER.info("ENDING TEST CASE : TC-RDKB-SYND-PTNRID-5002");
     }

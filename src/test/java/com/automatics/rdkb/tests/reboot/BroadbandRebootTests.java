@@ -2012,6 +2012,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    stepNum = "S3";
 	    errorMessage = "Interface brlan0 is not assigned with valid DHCPv6 address.";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 3: DESCRIPTION : Verify whether brlan0 is assigned properly with valid DHCPv6 address.");
 	    LOGGER.info(
@@ -2026,6 +2027,12 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 3 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+		
 
 	    stepNum = "S4";
 	    errorMessage = "Unable to bring brlan0 interface status to down.";
@@ -2051,17 +2058,30 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 		tapEnv.executeCommandUsingSsh(device,
 			BroadBandTestConstants.COMMAND_TO_GET_SELF_HEAL_AGGRESSIVE_LOGS_FOR_PROCESS_CRASH);
 	    }
-	    /** Executing command to bring interface brlan0 to down */
-	    response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_BRLAN0_DOWN);
-	    tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-	    if (CommonMethods.isNull(response)) {
-		LOGGER.info("Command to bring interface brlan0 down executed successfully.");
-		interfaceBrlan0Status = BootTimeUtils.verifyInterfaceBrlan0UpStatus(device, tapEnv);
-		status = CommonMethods.isNotNull(interfaceBrlan0Status) && interfaceBrlan0Status
-			.equalsIgnoreCase(BroadBandConnectedClientTestConstants.RADIO_STATUS_DOWN);
-	    } else {
-		LOGGER.error("Command to bring interface brlan0 down executed successfully.");
-	    }
+		/** Executing command to bring interface brlan0 to down */
+		response = tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_BRLAN0_DOWN);
+		tapEnv.waitTill(BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
+
+		if (DeviceModeHandler.isRPIDevice(device)) {
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_BRLAN_DOWN_LOGS);
+			status = CommonMethods.isNotNull(response)
+					&& response.contains(BroadBandTestConstants.STRING_BRLAN_DOWN_SELF_HEAL_LOG);
+		}
+
+		else {
+			if (CommonMethods.isNull(response)) {
+				LOGGER.info("Command to bring interface brlan0 down executed successfully.");
+				interfaceBrlan0Status = BootTimeUtils.verifyInterfaceBrlan0UpStatus(device, tapEnv);
+				status = CommonMethods.isNotNull(interfaceBrlan0Status) && interfaceBrlan0Status
+						.equalsIgnoreCase(BroadBandConnectedClientTestConstants.RADIO_STATUS_DOWN);
+			}
+			
+		    else {
+				LOGGER.error("Command to bring interface brlan0 down not executed successfully.");
+			    }
+			
+		}
+
 	    if (status) {
 		LOGGER.info("STEP 4: ACTUAL : Interface brlan0 is brought to down status.");
 	    } else {
@@ -2109,13 +2129,22 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    LOGGER.info(
 		    "STEP 6: EXPECTED : Required log mentioned above should be present in /rdklogs/logs/SelfHealAggressive.txt.0 log file.");
 	    LOGGER.info("**********************************************************************************");
-	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.COMMAND_TO_GET_PROCESS_CRASH_LOGS);
-	    status = CommonMethods.isNotNull(response)
-		    && (CommonMethods.patternMatcher(response, BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_01)
-			    || CommonMethods.patternMatcher(response,
-				    BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_02)
-			    || CommonMethods.patternMatcher(response,
-				    BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_03));
+		if (DeviceModeHandler.isRPIDevice(device)) {
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.CMD_GET_BRLAN_DOWN_LOGS);
+			status = CommonMethods.isNotNull(response)
+					&& response.contains(BroadBandTestConstants.STRING_BRLAN_DOWN_SELF_HEAL_LOG);
+		}
+
+		else {
+			response = tapEnv.executeCommandUsingSsh(device,
+					BroadBandTestConstants.COMMAND_TO_GET_PROCESS_CRASH_LOGS);
+			status = CommonMethods.isNotNull(response) && (CommonMethods.patternMatcher(response,
+					BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_01)
+					|| CommonMethods.patternMatcher(response,
+							BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_02)
+					|| CommonMethods.patternMatcher(response,
+							BroadBandTestConstants.INTERFACE_BRLAN_0_SELFHEAL_LOG_03));
+		}
 	    if (status) {
 		LOGGER.info(
 			"STEP 6: ACTUAL : Required log verified succesfully in /rdklogs/logs/SelfHealAggressive.txt.0 log file.");
@@ -2147,6 +2176,7 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    stepNum = "S8";
 	    errorMessage = "Interface brlan0 is not assigned with valid DHCPv6 address.";
 	    status = false;
+		if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
 	    LOGGER.info("**********************************************************************************");
 	    LOGGER.info("STEP 8: DESCRIPTION : Verify whether brlan0 is assigned properly with valid DHCPv6 address.");
 	    LOGGER.info(
@@ -2162,6 +2192,11 @@ public class BroadbandRebootTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("**********************************************************************************");
 	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		} else {
+			LOGGER.info("IPv6 is not available/disabled : Skipping Step 8 ...");
+			tapEnv.updateExecutionForAllStatus(device, testId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
 
 	} catch (Exception exception) {
 	    LOGGER.error("Exception occured.");

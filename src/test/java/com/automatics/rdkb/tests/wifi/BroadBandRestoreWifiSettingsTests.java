@@ -31,6 +31,7 @@ import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
+import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants.RdkBWifiParameters;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants.WIFI_RESTORE_METHOD;
 import com.automatics.rdkb.constants.RDKBTestConstants;
@@ -587,8 +588,14 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	LOGGER.info("**********************************************************************************");
 	if (!(DeviceModeHandler.isDSLDevice(device))) {
 	    try {
-		status = BroadBandCommonUtils.verifyRdkbWifiParameters(wifiParameterMap,
-			RdkBWifiParameters.AUTOCHANNEL_ENABLE_STATUS_5GHZ);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = BroadBandCommonUtils.verifyRdkbWifiParameters(wifiParameterMap,
+						RdkBWifiParameters.AUTOCHANNEL_ENABLE_STATUS_5GHZ);
+			} else {
+				status = wifiParameterMap
+						.get(BroadBandWebPaConstants.WEBPA_PARAM_FOR_WIFI_AUTOCHANNELENABLE_STATUS_5GHZ)
+						.equalsIgnoreCase("false");
+			}
 	    } catch (Exception e) {
 		status = false;
 		errorMessage = e.getMessage();
@@ -885,8 +892,8 @@ public class BroadBandRestoreWifiSettingsTests extends AutomaticsTestBase {
 	    }
 	    LOGGER.info("################### ENDING PRE-CONFIGURATIONS ###################");
 
-	    LOGGER.info("Waiting for 2 minutes for changes to get reflected");
-	    tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+		LOGGER.info("Waiting for 2 minutes for changes to get reflected");
+		tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
 
 	    testStepNumber = "s1";
 	    status = false;

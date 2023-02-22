@@ -1809,5 +1809,4 @@ public class BroadBandDeviceFingerPrintTest extends AutomaticsTestBase {
 	}
 	LOGGER.info("ENDING TEST CASE:TC-RDKB-OVS-1002");
    }
-
 }

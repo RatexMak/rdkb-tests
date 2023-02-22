@@ -415,14 +415,17 @@ public class BroadBandNetCatTest extends AutomaticsTestBase {
 			? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCBadHostIp())
 			: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCBadHostIp());
 		status = CommonMethods.isNotNull(response)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_LAN_IP)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_IP_1)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_IP_2)
-			&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
-				BroadBandTestConstants.NC_CONNECTION_ERROR_IP_3);
+				&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+						BroadBandTestConstants.NC_CONNECTION_ERROR_LAN_IP)
+				&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+						BroadBandTestConstants.NC_ERROR_BAD_HOST
+								+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange1())
+				&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+						BroadBandTestConstants.NC_ERROR_BAD_HOST
+								+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange2())
+				&& CommonUtils.isGivenStringAvailableInCommandOutput(response,
+						BroadBandTestConstants.NC_ERROR_BAD_HOST
+								+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange3());
 		if (status) {
 		    LOGGER.info("STEP 4: ACTUAL : All the commands throws error \"Bad Host\"");
 		} else {
@@ -443,8 +446,9 @@ public class BroadBandNetCatTest extends AutomaticsTestBase {
 		response = isAtomDevice
 			? tapEnv.executeCommandOnAtom(device, BroadbandPropertyFileHandler.getNCOutsideHostIp())
 			: tapEnv.executeCommandInSettopBox(device, BroadbandPropertyFileHandler.getNCOutsideHostIp());
-		status = CommonMethods.isNotNull(response) && CommonUtils.isGivenStringAvailableInCommandOutput(
-			response, BroadBandTestConstants.NC_CONNECTION_ERROR_IP_4);
+		status = CommonMethods.isNotNull(response) && CommonUtils
+				.isGivenStringAvailableInCommandOutput(response, BroadBandTestConstants.NC_ERROR_BAD_HOST
+						+ BroadbandPropertyFileHandler.getNCPrivateIPOutsideRange4());
 		if (status) {
 		    LOGGER.info("STEP 5: ACTUAL : The command throws error \"Bad Host\" <IP OUTSIDE DEVICE>");
 		} else {

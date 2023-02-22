@@ -34,6 +34,7 @@ import com.automatics.rdkb.constants.BroadBandTraceConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
@@ -287,33 +288,41 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 				stepNumber++;
 				testStepNumber = "S" + stepNumber;
 				status = false;
-				
-				LOGGER.info("************************************************************************************");
-				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Ping connection to the gateway IPv6 Address from WAN is successful before blocking ICMP IPv6 Traffic");
-				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 -W 5 <WAN IPv6> ");
-				LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Ping request to the gateway from WAN should be successful");
-				LOGGER.info("************************************************************************************");
+				String wanIpv6 = null;
+				if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+					LOGGER.info("************************************************************************************");
+					LOGGER.info("STEP " + stepNumber
+							+ ": DESCRIPTION : Verify the Ping connection to the gateway IPv6 Address from WAN is successful before blocking ICMP IPv6 Traffic");
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 -W 5 <WAN IPv6> ");
+					LOGGER.info("STEP " + stepNumber
+							+ ": EXPECTED : Ping request to the gateway from WAN should be successful");
+					LOGGER.info("************************************************************************************");
 
-				String wanIpv6 = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
+					wanIpv6 = tapEnv.executeWebPaCommand(device, BroadBandWebPaConstants.WEBPA_PARAM_WAN_IPV6);
 
-				LOGGER.info("Wan Ipv6 Address is = " + wanIpv6);
+					LOGGER.info("Wan Ipv6 Address is = " + wanIpv6);
 
-
-				LOGGER.info("WAN IPv6 ADDRESS OF THE DEVICE: " + wanIpv6);
-				errorMessage = "Unable to retrieve WAN IPv6 Address of the gateway. ACTUAL RESPONSE: " + wanIpv6;
-				if (CommonMethods.isNotNull(wanIpv6) && CommonMethods.isIpv6Address(wanIpv6)) {
-					result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv6);
-					status = result.isStatus();
-					errorMessage = result.getErrorMessage();
-				}
-				if (status) {
-					LOGGER.info(testStepNumber
-							+ " ACTUAL: Ping request to the gateway IPv6 Address from WAN is successful");
+					LOGGER.info("WAN IPv6 ADDRESS OF THE DEVICE: " + wanIpv6);
+					errorMessage = "Unable to retrieve WAN IPv6 Address of the gateway. ACTUAL RESPONSE: " + wanIpv6;
+					if (CommonMethods.isNotNull(wanIpv6) && CommonMethods.isIpv6Address(wanIpv6)) {
+						result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv6);
+						status = result.isStatus();
+						errorMessage = result.getErrorMessage();
+					}
+					if (status) {
+						LOGGER.info(testStepNumber
+								+ " ACTUAL: Ping request to the gateway IPv6 Address from WAN is successful");
+					} else {
+						LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+					}
+					LOGGER.info("************************************************************************************");
+					tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 				} else {
-					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+					LOGGER.info("IPv6 is disabled/not available : skipping teststep ...");
+					tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
 				}
-				LOGGER.info("************************************************************************************");
-				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 				/**
 				 * Step 7: Verify the Custom Secuirty is configured to 'Block ICMP' for IPv6
@@ -350,26 +359,35 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 				stepNumber++;
 				testStepNumber = "S" + stepNumber;
 				status = false;
-				LOGGER.info("************************************************************************************");
-				LOGGER.info("STEP "+ stepNumber + ": DESCRIPTION : Verify the Ping connection to the gateway IPv6 Address from WAN should fail when ICMP requests are blocked under Firewall settings");
-				LOGGER.info("STEP "+ stepNumber + ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 -W 5 <WAN IPv6> ");
-				LOGGER.info("STEP "+ stepNumber + ": EXPECTED : Ping request to the gateway IPv6 Address from WAN should fail");
-				LOGGER.info("************************************************************************************");
+				if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+					LOGGER.info("************************************************************************************");
+					LOGGER.info("STEP " + stepNumber
+							+ ": DESCRIPTION : Verify the Ping connection to the gateway IPv6 Address from WAN should fail when ICMP requests are blocked under Firewall settings");
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTION : Execute the command from WAN(Jump Server): ping -c 4 -W 5 <WAN IPv6> ");
+					LOGGER.info("STEP " + stepNumber
+							+ ": EXPECTED : Ping request to the gateway IPv6 Address from WAN should fail");
+					LOGGER.info("************************************************************************************");
 
-				result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv6);
-				errorMessage = result.isStatus()
-						? "Ping to gateway IPv6 Address from WAN is successful even after blocking ICMP Traffic"
-						: result.getErrorMessage();
-				status = !result.isStatus()
-						&& CommonUtils.patternSearchFromTargetString(errorMessage, "Ping from WAN got failed");
-				if (status) {
-					LOGGER.info(testStepNumber
-							+ " ACTUAL: Ping to the gateway IPv6 Address from WAN failed as expected after blocking ICMP Traffic");
+					result = BroadBandCommonUtils.verifyPingConnectionFromJumpServer(device, tapEnv, wanIpv6);
+					errorMessage = result.isStatus()
+							? "Ping to gateway IPv6 Address from WAN is successful even after blocking ICMP Traffic"
+							: result.getErrorMessage();
+					status = !result.isStatus()
+							&& CommonUtils.patternSearchFromTargetString(errorMessage, "Ping from WAN got failed");
+					if (status) {
+						LOGGER.info(testStepNumber
+								+ " ACTUAL: Ping to the gateway IPv6 Address from WAN failed as expected after blocking ICMP Traffic");
+					} else {
+						LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+					}
+					LOGGER.info("************************************************************************************");
+					tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 				} else {
-					LOGGER.error(testStepNumber + " ACTUAL: " + errorMessage);
+					LOGGER.info("IPv6 is disabled/not available : skipping teststep ...");
+					tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
 				}
-				LOGGER.info("************************************************************************************");
-				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
 
 				while (stepNumber <= 8) {

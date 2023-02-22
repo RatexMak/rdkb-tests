@@ -223,8 +223,8 @@ public class BroadBandWebPAInterfaceTest extends AutomaticsTestBase {
 	    // -i <iptable 4090 interface> |grep -i INPUT |grep -i ACCEPT
 	    LOGGER.info("Command for validation - " + sbCommand.toString());
 	    String response = tapEnv.executeCommandUsingSsh(device, sbCommand.toString());
-	    status = CommonMethods.isNotNull(response)
-		    && CommonMethods.patternMatcher(response, BroadBandTestConstants.PATTER_MATCHER_IPTABLE_INPUT_RULE);
+		status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response, "(INPUT.*)(.*"
+				+ BroadbandPropertyFileHandler.get4090InterfaceToValidateInIptables() + ".*)(.*ACCEPT)");
 	    errorMessage = "iptable INPUT rule for "
 		    + BroadbandPropertyFileHandler.get4090InterfaceToValidateInIptables()
 		    + " interface is not in Accept state. ";
@@ -264,8 +264,8 @@ public class BroadBandWebPAInterfaceTest extends AutomaticsTestBase {
 	    // -S|grep -i <iptable 4090 interface> |grep -i FORWARD |grep -i ACCEPT
 	    LOGGER.info("Command for validation - " + sbCommand.toString());
 	    response = tapEnv.executeCommandUsingSsh(device, sbCommand.toString());
-	    status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response,
-		    BroadBandTestConstants.PATTERN_MATCHER_IPTABLE_FORWARD_RULE);
+		status = CommonMethods.isNotNull(response) && CommonMethods.patternMatcher(response, "(FORWARD.*)(.*"
+				+ BroadbandPropertyFileHandler.get4090InterfaceToValidateInIptables() + ".*)(.*ACCEPT)");
 	    errorMessage = "iptable FORWARD rule for "
 		    + BroadbandPropertyFileHandler.get4090InterfaceToValidateInIptables()
 		    + " interface is not in Accept state.";

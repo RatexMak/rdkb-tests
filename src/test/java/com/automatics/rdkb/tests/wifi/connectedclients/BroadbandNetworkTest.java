@@ -28,6 +28,7 @@ import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Device;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.exceptions.TestException;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.BroadBandTestGroup;
@@ -39,6 +40,7 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.tap.AutomaticsTapApi;
@@ -258,19 +260,24 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber
 					+ ": EXPECTED : The retrived Primary DNS server IPv4, IPv6 address should not be null/empty.");
 			LOGGER.info("**********************************************************************************");
-			webpaResponseMap = new HashMap<String, String>();
-			webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device,
-					BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS);
-			status = (!webpaResponseMap.isEmpty() && (null != webpaResponseMap)
-					&& BroadBandWebPaUtils.getAndVerifyMapValueIsNotNullOrEmpty(webpaResponseMap));
-			if (status) {
-				LOGGER.info("STEP " + stepNumber
-						+ ": ACTUAL : DNS primary, secondary IPv4 ,IPv6 address are retrieved using webpa and verified successfully.");
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+			 webpaResponseMap = new HashMap<String, String>();
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device,
+							BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS);
+				} else {
+					webpaResponseMap = tapEnv.executeMultipleWebPaGetCommands(device,
+							BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_DNS_RPI);
+				}
+				status = (!webpaResponseMap.isEmpty() && (null != webpaResponseMap)
+						&& BroadBandWebPaUtils.getAndVerifyMapValueIsNotNullOrEmpty(webpaResponseMap));
+				if (status) {
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTUAL : DNS primary, secondary IPv4 ,IPv6 address are retrieved using webpa and verified successfully.");
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
 
 			// Step 2 : Retrieves and validates DNS server ip Wi-Fi Connected client and
 			// cross validate with webpa respose
@@ -304,38 +311,50 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 
 			// Step 4
 			stepNumber++;
-			stepNum = "S" + stepNumber;
-			errorMessage = "Failed to get Local IPv4 Address to the client within the acceptable time of 5 minutes";
-			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : Verify the IPv4 Address is retrieved  from the client connected with Ethernet within the acceptable time 5min");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Get the device IPv4 address using below commandLinux : ifconfig eth0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv4 Address\"");
-			LOGGER.info("STEP " + stepNumber
-					+ ": EXPECTED : Local IPv4 Address assigned to the client should be retrieved successfully within the acceptable time 5min");
-			LOGGER.info("**********************************************************************************");
-			do {
-				broadBandResultObject = BroadBandConnectedClientUtils
-						.verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv, deviceConnectedWithEthernet);
-				timeTaken = System.currentTimeMillis() - startTime;
-				LOGGER.info(
-						"TIME TAKEN IN MILLI SECONDS FOR CLIENT TO OBTAIN IPV4 AFTER GATEWAY REBOOT IS: " + timeTaken);
-				timeTaken = (timeTaken / BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-				status = (broadBandResultObject.isStatus() && (timeTaken <= BroadBandTestConstants.CONSTANT_5));
-				errorMessage = broadBandResultObject.getErrorMessage();
-			} while (!status && (System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
-					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TEN_SECOND_IN_MILLIS));
-			if (status) {
-				LOGGER.info("TIME TAKEN IN MINUTES FOR CLIENT TO OBTAIN IPV4 AFTER GATEWAY REBOOT IS: " + timeTaken);
+		    stepNum = "S" + stepNumber;
+		    errorMessage = "Failed to get Local IPv4 Address to the client within the acceptable time of 5 minutes";
+		    status = false;
+		    if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP " + stepNumber
-						+ ": ACTUAL : Connected Client Has Got IPV4 Within 5 Minutes After Successful Device Reboot.");
-			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
-			}
+						+ ": DESCRIPTION : Verify the IPv4 Address is retrieved  from the client connected with Ethernet within the acceptable time 5min");
+				LOGGER.info("STEP " + stepNumber
+						+ ": ACTION : Get the device IPv4 address using below commandLinux : ifconfig eth0 |grep -i \"inet addr:\"Windows: ipconfig |grep -A 10 \"Ethernet LAN adapter Wi-Fi\" |grep -i \"IPv4 Address\"");
+				LOGGER.info("STEP " + stepNumber
+						+ ": EXPECTED : Local IPv4 Address assigned to the client should be retrieved successfully within the acceptable time 5min");
+				LOGGER.info("**********************************************************************************");
+				do {
+					broadBandResultObject = BroadBandConnectedClientUtils
+							.verifyConnectedClientIpv4AddressInDhcpAfterRenew(device, tapEnv,
+									deviceConnectedWithEthernet);
+					timeTaken = System.currentTimeMillis() - startTime;
+					LOGGER.info("TIME TAKEN IN MILLI SECONDS FOR CLIENT TO OBTAIN IPV4 AFTER GATEWAY REBOOT IS: "
+							+ timeTaken);
+					timeTaken = (timeTaken / BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+					status = (broadBandResultObject.isStatus() && (timeTaken <= BroadBandTestConstants.CONSTANT_5));
+					errorMessage = broadBandResultObject.getErrorMessage();
+				} while (!status
+						&& (System.currentTimeMillis() - startTime) < BroadBandTestConstants.FIVE_MINUTE_IN_MILLIS
+						&& BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+								BroadBandTestConstants.TEN_SECOND_IN_MILLIS));
+				if (status) {
+					LOGGER.info(
+							"TIME TAKEN IN MINUTES FOR CLIENT TO OBTAIN IPV4 AFTER GATEWAY REBOOT IS: " + timeTaken);
+					LOGGER.info("STEP " + stepNumber
+							+ ": ACTUAL : Connected Client Has Got IPV4 Within 5 Minutes After Successful Device Reboot.");
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
 
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+			} else {
+				LOGGER.info("skipping teststep due to device setup dependency ...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
+		    LOGGER.info("**********************************************************************************");
+		    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 			// Step 5
 			stepNumber++;
@@ -453,24 +472,38 @@ public class BroadbandNetworkTest extends AutomaticsTestBase {
 	    LOGGER.info("STEP " + stepNumber
 		    + ": EXPECTED : Retriving ,verifying primary and secondary DNS server IPV4, IPv6 address  assigned to the connected client should be successful and same as webpa value obtained in step 1.");
 	    LOGGER.info("**********************************************************************************");
-	    command = ((Device) connectedClient).getOsType()
-		    .equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_WINDOWS)
-			    ? BroadBandConnectedClientTestConstants.WINDOWS_COMMAND_TO_GET_IP_ADDRESS
-			    : BroadBandConnectedClientTestConstants.CMD_LINUX_TO_RETRIEVE_DNS_SERVER_IPS;
-	    LOGGER.info("command to execute on step " + stepNumber + " is " + command);
-	    response = tapEnv.executeCommandOnOneIPClients(connectedClient, command);
-	    LOGGER.info("response on step " + stepNumber + " is " + response);
-	    if (CommonMethods.isNotNull(response)) {
-		for (String key : BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS) {
-			LOGGER.info("Key on step " + stepNumber + " is " + key);
-			LOGGER.info("webpaResponseMap.get(key) on step " + stepNumber + " is " + webpaResponseMap.get(key));
-		    status = CommonUtils.patternSearchFromTargetString(response, webpaResponseMap.get(key));
-		    LOGGER.info("status on step " + stepNumber + " is " + status);
-		    if (!status) {
-			break;
-		    }
+		command = ((Device) connectedClient).getOsType()
+				.equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_WINDOWS)
+						? BroadBandConnectedClientTestConstants.WINDOWS_COMMAND_TO_GET_IP_ADDRESS
+						: BroadBandConnectedClientTestConstants.CMD_LINUX_TO_RETRIEVE_DNS_SERVER_IPS;
+		LOGGER.info("command to execute on step " + stepNumber + " is " + command);
+		response = tapEnv.executeCommandOnOneIPClients(connectedClient, command);
+		LOGGER.info("response on step " + stepNumber + " is " + response);
+		if (CommonMethods.isNotNull(response)) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				for (String key : BroadBandWebPaConstants.WEBPA_PARAMETER_ARRAY_TO_GET_DNS_IP_ADDRESS) {
+					LOGGER.info("Key on step " + stepNumber + " is " + key);
+					LOGGER.info(
+							"webpaResponseMap.get(key) on step " + stepNumber + " is " + webpaResponseMap.get(key));
+					status = CommonUtils.patternSearchFromTargetString(response, webpaResponseMap.get(key));
+					LOGGER.info("status on step " + stepNumber + " is " + status);
+					if (!status) {
+						break;
+					}
+				}
+			} else {
+				for (String key : BroadBandWebPaConstants.WEBPA_PARAM_PRIMARY_DNS_RPI) {
+					LOGGER.info("Key on step " + stepNumber + " is " + key);
+					LOGGER.info(
+							"webpaResponseMap.get(key) on step " + stepNumber + " is " + webpaResponseMap.get(key));
+					status = CommonUtils.patternSearchFromTargetString(response, webpaResponseMap.get(key));
+					LOGGER.info("status on step " + stepNumber + " is " + status);
+					if (!status) {
+						break;
+					}
+				}
+			}
 		}
-	    }
 	    if (status) {
 		LOGGER.info("STEP " + stepNumber
 			+ ": ACTUAL : DNS primary, secondary IPv4 ,IPv6 address are retrieved from connected client and verified successfully with the WEBPA value obtained in Step 1");

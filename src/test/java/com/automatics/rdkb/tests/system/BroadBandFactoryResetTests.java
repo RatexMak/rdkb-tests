@@ -1597,10 +1597,11 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			// TR-181 to configure "MemoryLimit" for Rabid is not applicable for Business
 			// class devices
-			if (DeviceModeHandler.isDSLDevice(device) || DeviceModeHandler.isBusinessClassDevice(device)) {
-				LOGGER.info("This Step is not applicable for DSL and Business class devices");
+			if (DeviceModeHandler.isDSLDevice(device) || DeviceModeHandler.isBusinessClassDevice(device)
+					|| DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("This Step is not applicable for DSL, Business class devices and RPi devices");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
-						"Step is not applicable for DSL and Business class devices", false);
+						"Step is not applicable for DSL, Business class devices and RPi devices", false);
 			} else {
 				factoryResetSettings = RabidMemoryLimit.values();
 				errorMessage = BroadBandFactoryResetUtils.updateSettingsOnDevice(device, factoryResetSettings,
@@ -1998,10 +1999,11 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 
 			// TR-181 to configure "MemoryLimit" for Rabid is not applicable for Business
 			// class devices
-			if (DeviceModeHandler.isDSLDevice(device) || DeviceModeHandler.isBusinessClassDevice(device)) {
-				LOGGER.info("This Step is not applicable for DSL and Business class devices");
+			if (DeviceModeHandler.isDSLDevice(device) || DeviceModeHandler.isBusinessClassDevice(device)
+					|| DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("This Step is not applicable for DSL, Business class devices and RPi devices");
 				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNumber, ExecutionStatus.NOT_APPLICABLE,
-						"Step is not applicable for DSL and Business class devices", false);
+						"Step is not applicable for DSL, Business class devices and RPi devices", false);
 			} else {
 				factoryResetSettings = RabidMemoryLimit.values();
 				errorMessage = validateSettingsOnDevice(device, factoryResetSettings, defaultValues, skipList);
@@ -2275,14 +2277,23 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 		/**
 		 * Pre-Condition : Getting Rabid Framework memory limit
 		 */
-		preConditionNumber++;
-		LOGGER.info("#######################################################################################");
-		LOGGER.info("PRE-CONDITION " + preConditionNumber
-				+ " : DESCRIPTION : Verify getting default value for rabid framework memory limit.");
-		LOGGER.info("PRE-CONDITION " + preConditionNumber
-				+ " : ACTION :Execute WebPA Get command for following param: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RabidFramework.MemoryLimit");
-		LOGGER.info("PRE-CONDITION " + preConditionNumber
-				+ " : EXPECTED : Rabid framework memory limit should be 20MB by default.");
+		Boolean isRabidFrameworkDevice = null;
+		isRabidFrameworkDevice = !DeviceModeHandler.isRPIDevice(device);
+
+		if (isRabidFrameworkDevice) {
+			preConditionNumber++;
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("PRE-CONDITION " + preConditionNumber
+					+ " : DESCRIPTION : Verify getting default value for rabid framework memory limit.");
+			LOGGER.info("PRE-CONDITION " + preConditionNumber
+					+ " : ACTION :Execute WebPA Get command for following param: Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RabidFramework.MemoryLimit");
+			LOGGER.info("PRE-CONDITION " + preConditionNumber
+					+ " : EXPECTED : Rabid framework memory limit should be 20MB by default.");
+			LOGGER.info("#######################################################################################");
+// Default value is false 
+			factoryResetSettings = RabidMemoryLimit.values();
+			BroadBandFactoryResetUtils.addDefaultValueInMap(device, tapEnv, defaultValues, factoryResetSettings);
+		}
 		LOGGER.info("#######################################################################################");
 // Default value is false 
 		factoryResetSettings = RabidMemoryLimit.values();
@@ -2403,7 +2414,7 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 									BroadBandSnmpConstants.SNMP_ERROR_RESPONSE_NO_OID)
 							&& !CommonMethods.patternMatcher(response,
 									BroadBandSnmpConstants.SNMP_ERROR_NON_WRITABLE)) {
-						if (response.equals(defaultValue)) {
+						if (response.equalsIgnoreCase(defaultValue)) {
 							message.append(
 									"SUCCESS : Current value and Default value after factory reset for the parameter "
 											+ factoryResetSetting + " is same."
@@ -2967,8 +2978,7 @@ public class BroadBandFactoryResetTests extends AutomaticsTestBase {
 			errorMessage = e.getMessage();
 		}
 		if (status) {
-			LOGGER.info("STEP " + stepNumber
-					+ " ACTUAL : supported  protocols for 2.4Ghz band is 'g,n' or 'g,n,ax'");
+			LOGGER.info("STEP " + stepNumber + " ACTUAL : supported  protocols for 2.4Ghz band is 'g,n' or 'g,n,ax'");
 		} else {
 			LOGGER.error("STEP " + stepNumber + "ACTUAL: " + errorMessage);
 		}

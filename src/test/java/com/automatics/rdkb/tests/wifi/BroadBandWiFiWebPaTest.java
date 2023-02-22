@@ -38,7 +38,9 @@ import com.automatics.rdkb.constants.BroadBandPropertyKeyConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
@@ -586,6 +588,9 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 
 		if (CommonMethods.isNotNull(ssidObtainedFromDevice)) {
 		    status = ssidObtainedFromDevice.contains(ssidNameFromWebPa);
+		    if(!status) {
+		    	status = ssidObtainedFromDevice.equalsIgnoreCase(ssidNameFromWebPa);
+		    }
 		    errorMessage = "2.4GHz Private SSID name using device command doesn't matches with name retrieved from WebPA command. ACTUAL : SSID name from device command = "
 			    + ssidObtainedFromDevice
 			    + " , SSID name 'Device.WiFi.SSID.10001.SSID' using WebPA command = " + ssidNameFromWebPa;
@@ -1276,30 +1281,38 @@ public class BroadBandWiFiWebPaTest extends AutomaticsTestBase {
 	String errorMessage = null;
 	// stores the test status
 	boolean status = false;
+	String interfaceName = null;
 	try {
-	    /**
-	     * STEP 1:Disable the SSID of 5Ghz Private Interface and verify the same from device side
-	     */
-	    testStepNumber = "s1";
-	    status = false;
-	    LOGGER.info("#####################################################################################");
-	    LOGGER.info("STEP 1:Disable the SSID of 5Ghz Private  Interface and verify the same from device side");
-	    LOGGER.info(
-		    "EXPECTED: should be able to set the parameter with Value false and the same should be relected in the device");
-	    LOGGER.info("#####################################################################################");
-	    String interfaceName = BroadBandWebPaUtils.getWiFiInterface(device, tapEnv,
-		    BroadBandTestConstants.BAND_5GHZ, BroadBandTestConstants.PRIVATE_WIFI_TYPE,
-		    BroadBandTestConstants.BSSID_PARAM);
-	    errorMessage = "Seems like Device command or Wi-Fi Interface used for retrieving 5GHz private bSSID name is empty or null";
-	    if (CommonMethods.isNotNull(interfaceName)) {
-		status = BroadBandWebPaUtils.disableSsidAndVerifyFromDevice(device, tapEnv, interfaceName,
-			BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
-		errorMessage = "Unable to set the parameter Device.WiFi.SSID.10101.Enable with value false";
-	    }
-	    LOGGER.info("S1 ACTUAL : "
-		    + (status ? "Device.WiFi.SSID.10101.Enable is set to false and the same is verified in the device"
-			    : errorMessage));
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+		/**
+		 * STEP 1:Disable the SSID of 5Ghz Private Interface and verify the same from
+		 * device side
+		 */
+		testStepNumber = "s1";
+		status = false;
+		LOGGER.info("#####################################################################################");
+		LOGGER.info("STEP 1:Disable the SSID of 5Ghz Private  Interface and verify the same from device side");
+		LOGGER.info(
+				"EXPECTED: should be able to set the parameter with Value false and the same should be relected in the device");
+		LOGGER.info("#####################################################################################");
+		if (DeviceModeHandler.isRPIDevice(device)) {
+
+			interfaceName = BroadBandCommonUtils.concatStringUsingStringBuffer("ifconfig",
+					BroadBandTestConstants.SYMBOL_PIPE, BroadBandTestConstants.GREP_COMMAND,
+					BroadbandPropertyFileHandler.get5ghzInterfaceName());
+		} else {
+			interfaceName = BroadBandWebPaUtils.getWiFiInterface(device, tapEnv, BroadBandTestConstants.BAND_5GHZ,
+					BroadBandTestConstants.PRIVATE_WIFI_TYPE, BroadBandTestConstants.BSSID_PARAM);
+		}
+		errorMessage = "Seems like Device command or Wi-Fi Interface used for retrieving 5GHz private bSSID name is empty or null";
+		if (CommonMethods.isNotNull(interfaceName)) {
+			status = BroadBandWebPaUtils.disableSsidAndVerifyFromDevice(device, tapEnv, interfaceName,
+					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_5_GHZ_PRIVATE_SSID_ENABLED_STATUS);
+			errorMessage = "Unable to set the parameter Device.WiFi.SSID.10101.Enable with value false";
+		}
+		LOGGER.info("S1 ACTUAL : "
+				+ (status ? "Device.WiFi.SSID.10101.Enable is set to false and the same is verified in the device"
+						: errorMessage));
+		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 	    /**
 	     * STEP 2:Enable the SSID of 5Ghz Private Interface and verify the same from device side

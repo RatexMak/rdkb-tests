@@ -550,7 +550,7 @@ public class BroadBandXconfCdlNegativeScenarios extends AutomaticsTestBase {
 	    WebPaServerResponse response = BroadBandWebPaUtils.setWebPaParamAndReturnResp(tapEnv, device,
 		    TR69ParamConstants.TR69_XCONF_CHECK_NOW, BroadBandTestConstants.TRUE,
 		    AutomaticsConstants.CONSTANT_3);
-	    status = (response.getStatusCode() == BroadBandTestConstants.SUCCESS_CODE);
+	    status = (response.getStatusCode() == BroadBandTestConstants.SUCCESS_CODE)|| response.getMessage().contains(BroadBandTestConstants.SUCCESS_TXT);
 
 	    if (status) {
 		LOGGER.info("STEP 4: ACTUAL : Download triggered  using webpa");

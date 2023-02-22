@@ -41,6 +41,7 @@ import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
 import com.automatics.rdkb.utils.ConnectedNattedClientsUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandWiFiPacketCaptureUtils;
@@ -233,6 +234,7 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 	    testStepNumber = "S" + stepNumber;
 	    status = false;
 	    String ssid = null;
+	    String response = null;
 	    LOGGER.info("#######################################################################################");
 	    LOGGER.info("STEP " + stepNumber
 		    + " : DESCRIPTION : VERIFY THE WI-FI CONNECTED CLIENT IS IN DISCONNECTED STATE.");
@@ -242,10 +244,22 @@ public class BroadBandWifiChannelConfigTest  extends AutomaticsTestBase {
 		    "STEP " + stepNumber + ": EXPECTED : THE WI-FI CONNECTED CLIENT SHOULD BE IN DISCONNECTED STATE");
 	    LOGGER.info("#######################################################################################");
 	    try {
-		errorMessage = "The Wifi connected client is still connected to the 2.4GHz SSID";
-		ssid = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
-			WiFiFrequencyBand.WIFI_BAND_2_GHZ);
-		status = ConnectedNattedClientsUtils.verifyConnectToSSID(wifiClientDevice, tapEnv, ssid, false);
+			errorMessage = "The Wifi connected client is still connected to the 5GHz SSID";
+			ssid = BroadBandConnectedClientUtils.getSsidNameFromGatewayUsingWebPaOrDmcli(device, tapEnv,
+					WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				response = tapEnv.executeCommandOnOneIPClients(wifiClientDevice,
+						BroadBandCommandConstants.CMD_WINDOWS_SHOW_INTERFACES);
+				if (response.contains(ssid)) {
+					status = !response.contains(BroadBandTestConstants.STRING_CONSTANT_CONNECTED);
+				} else {
+					status = true;
+				}
+			} else {
+				status = ConnectedNattedClientsUtils.verifyConnectToSSID(wifiClientDevice, tapEnv, ssid, false);
+			}
+			
 	    } catch (TestException exp) {
 		errorMessage = exp.getMessage();
 		LOGGER.error(errorMessage);

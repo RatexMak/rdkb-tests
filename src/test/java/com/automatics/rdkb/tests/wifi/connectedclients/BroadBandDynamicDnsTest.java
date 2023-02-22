@@ -29,6 +29,7 @@ import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.BroadBandPostConditionUtils;
 import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
 import com.automatics.utils.AutomaticsPropertyUtility;
@@ -241,10 +242,16 @@ public class BroadBandDynamicDnsTest extends AutomaticsTestBase {
 	LOGGER.info("STEP " + stepNumber + ": EXPECTED : MUST RETURN THE RESPONSE AS 'I AM NOT AN OPENDNS RESOLVER'");
 	LOGGER.info("#######################################################################################");
 	errorMessage = "FAILED TO VERIFY NSLOOKUP";
+	if(!DeviceModeHandler.isRPIDevice(device)) {
 	status = BroadBandCommonUtils.executeAndVerifyNsLookUpCommandInConnectedClient(deviceConnected, tapEnv,
 		AutomaticsPropertyUtility
 			.getProperty(BroadBandPropertyKeyConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE),
 		BroadBandTestConstants.NS_LOOKUP_GLOBAL_DNS_RESPONSE);
+	}else {
+		status = BroadBandCommonUtils.executeAndVerifyNsLookUpCommandInConnectedClient(deviceConnected, tapEnv,
+				BroadBandTestConstants.EMPTY_STRING,
+				BroadBandTestConstants.NS_LOOKUP_GLOBAL_DNS_RESPONSE);
+	}
 	if (status) {
 	    LOGGER.info("STEP " + stepNumber + ": ACTUAL : OBTAINED EXPECTED RESULT SUCCESSFULLY.EXPECTED RESULT : "
 		    + BroadBandTestConstants.NS_LOOKUP_GLOBAL_DNS_RESPONSE);

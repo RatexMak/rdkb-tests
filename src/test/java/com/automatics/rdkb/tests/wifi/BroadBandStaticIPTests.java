@@ -30,6 +30,7 @@ import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.constants.RDKBTestConstants;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
@@ -197,8 +198,8 @@ public class BroadBandStaticIPTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 3: ACTION : Paste the script which is the minimum settings to get statics working.");
 	    LOGGER.info("STEP 3: EXPECTED : the script should be copied successfully.");
 	    LOGGER.info("**********************************************************************************");
-	    if (CommonUtils.downloadFileUsingAutoVault(device, tapEnv,
-		    BroadBandTestConstants.DEFAULT_LOCATION_TO_COPY_FILE, BroadBandTestConstants.VAR_PATH)) {
+		if (CommonUtils.downloadFileUsingAutoVault(device, tapEnv,
+				BroadbandPropertyFileHandler.getCliConfigFileLocation(), BroadBandTestConstants.VAR_PATH)) {
 		status = CommonMethods.isFileExists(device, tapEnv,
 			BroadBandTestConstants.VAR_PATH.concat(BroadBandTestConstants.SCRIPT_CLICONFIG));
 	    }
@@ -444,9 +445,10 @@ public class BroadBandStaticIPTests extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    String command = ((Device) connectedDevice).getOsType()
-		    .equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
-			    ? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS
-			    : BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
+			    .equalsIgnoreCase(BroadBandConnectedClientTestConstants.OS_LINUX)
+				    ? BroadBandConnectedClientTestConstants.COMMAND_CURL_LINUX_IPV4_ADDRESS.replace("<INTERFACE>",
+							BroadbandPropertyFileHandler.getLinuxClientWifiInterface())
+				    : BroadBandConnectedClientTestConstants.COMMAND_CURL_WINDOWS_IPV4_ADDRESS;
 	    response = tapEnv.executeCommandOnOneIPClients(connectedDevice, command);
 	    status = (CommonMethods.isNotNull(response)
 		    && response.contains(BroadBandConnectedClientTestConstants.RESPONSE_STATUS_OK));

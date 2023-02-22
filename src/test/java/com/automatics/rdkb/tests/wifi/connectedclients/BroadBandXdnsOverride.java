@@ -246,6 +246,9 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			testStep = "s4";
 			openDnsIP = DeviceModeHandler.isDSLDevice(device) ? BroadBandTestConstants.STRING_OPEN_DNS_IP_DSL
 					: BroadBandTestConstants.STRING_OPEN_DNS_IP_75_76;
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				openDnsIP = "";
+			}
 			LOGGER.info("##########################################################################");
 			LOGGER.info("STEP 4 : DESCRIPTION :EXECUTE nslookup amazon.com " + openDnsIP
 					+ " WIFI CONNECTED CLIENT AND VERIFY OUTPUT");
@@ -1418,8 +1421,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 		LOGGER.info("#######################################################################################");
 		// Error message
 		String errorMessage = "Failed to Tigger Factory Reset/Device didn't come up after Factory Reset.";
-		status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
-				BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
+		status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 		if (status) {
 			LOGGER.info("STEP :  " + stepNumber + " ACTUAL : Device came up after Factory reset successfully.");
 		} else {
@@ -3196,8 +3198,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_DNS_PRIMARY_IP_TCPDUMP);
+			status = CommonUtils.searchLogFiles(tapEnv, device, BroadbandPropertyFileHandler.getDNSPrimaryIpTcpDump());
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3319,7 +3320,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
 			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_DNS_SECONDARY_IP_TCPDUMP);
+					BroadbandPropertyFileHandler.getDNSSecondaryIpTcpDump());
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3525,8 +3526,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandCommandConstants.CMD_TO_KILL_ANY_PROCESS + BroadBandTestConstants.TCPDUMP);
 			tapEnv.executeCommandUsingSsh(device, tcpDumpReadAndWrite);
 			tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			status = CommonUtils.searchLogFiles(tapEnv, device,
-					BroadBandCommandConstants.CMD_TO_GET_INVALID_DNS_PRIMARY_IP_TCPDUMP);
+			status = CommonUtils.searchLogFiles(tapEnv, device, BroadbandPropertyFileHandler.getDNSPrimaryIpTcpDump());
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_DUMMY_FILE);
 			tapEnv.executeCommandInSettopBox(device, BroadBandCommandConstants.CMD_REMOVE_CAPTURE_FILE);
 
@@ -3936,19 +3936,21 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			errorMessage = "Failed to set security edge configurations";
 			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV4, BroadBandTestConstants.CONSTANT_0,
-					BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)) {
+					BroadbandPropertyFileHandler.getDNSValidIpv4Value())) {
 				errorMessage = "Failed to set value of Primary IPv6 Dns parameter";
 				if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 						BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6,
-						BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)) {
+						BroadBandTestConstants.CONSTANT_0, BroadbandPropertyFileHandler.getDNSValidIpv6Value())) {
 					errorMessage = "Failed to set value of secondary IPv4 Dns parameter";
 					if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 							BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
-							BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS)) {
+							BroadBandTestConstants.CONSTANT_0,
+							BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value())) {
 						errorMessage = "Failed to set value of secondary IPv6 Dns parameter";
 						if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 								BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV6,
-								BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS)) {
+								BroadBandTestConstants.CONSTANT_0,
+								BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value())) {
 							errorMessage = "Failed to set value of device tag for XDNS";
 							status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 									BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_XDNS_DEVICE_TAG,
@@ -3981,14 +3983,15 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandTestConstants.CAT_COMMAND, BroadBandTestConstants.RESOLVE_DOT_CONF_FILE));
 			if (CommonMethods.isNotNull(response)) {
 				errorMessage = "Primary IPv4 XDNS value not updated in resolv.conf file";
-				if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)) {
+				if (CommonMethods.patternMatcher(response, BroadbandPropertyFileHandler.getDNSValidIpv4Value())) {
 					errorMessage = "Primary IPv6 XDNS value not updated in resolv.conf file";
-					if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)) {
+					if (CommonMethods.patternMatcher(response, BroadbandPropertyFileHandler.getDNSValidIpv6Value())) {
 						errorMessage = "Secondary IPv4 XDNS value not updated in resolv.conf file";
-						if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS)) {
+						if (CommonMethods.patternMatcher(response,
+								BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value())) {
 							errorMessage = "Secondary IPv6 XDNS value not updated in resolv.conf file";
 							if (CommonMethods.patternMatcher(response,
-									BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS)) {
+									BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value())) {
 								errorMessage = "Security Edge tag value not updated in resolv.conf file";
 								status = CommonMethods.patternMatcher(response,
 										BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE);
@@ -4065,14 +4068,15 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
 					BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			status = CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)
+			status = CommonUtils.patternSearchFromTargetString(response,
+					BroadbandPropertyFileHandler.getDNSValidIpv4Value())
 					|| CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS);
+							BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value());
 			if (!status) {
 				status = CommonUtils.patternSearchFromTargetString(response,
-						BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)
+						BroadbandPropertyFileHandler.getDNSValidIpv6Value())
 						|| CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS);
+								BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value());
 			}
 			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_EMPTY_PACKET_AKAMAI);
 			if (status) {
@@ -4114,14 +4118,15 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
 					BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			status = CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)
+			status = CommonUtils.patternSearchFromTargetString(response,
+					BroadbandPropertyFileHandler.getDNSValidIpv4Value())
 					|| CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS);
+							BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value());
 			if (!status) {
 				status = CommonUtils.patternSearchFromTargetString(response,
-						BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)
+						BroadbandPropertyFileHandler.getDNSValidIpv6Value())
 						|| CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS);
+								BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value());
 			}
 			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_EMPTY_PACKET_AKAMAI);
 			if (status) {
@@ -4168,7 +4173,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 								BroadBandWebPaConstants.WEBPA_PARAM_XDNS_IPV6_MAPPING_TABLE
 										.replace(BroadBandTestConstants.TR181_NODE_REF, xdnsTableCount),
 								BroadBandTestConstants.CONSTANT_0,
-								BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE)) {
+								BroadbandPropertyFileHandler.getGlobalDNSIpv6Value())) {
 							status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 									BroadBandWebPaConstants.WEBPA_PARAM_XDNS_CLIENT_TAG_NAME_MAPPING_TABLE
 											.replace(BroadBandTestConstants.TR181_NODE_REF, xdnsTableCount),
@@ -4178,7 +4183,6 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					}
 				}
 			}
-
 			if (status) {
 				LOGGER.info("STEP 8: ACTUAL : Successfully set security edge exclusion parameters");
 				tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
@@ -4202,14 +4206,15 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandTestConstants.CAT_COMMAND, BroadBandTestConstants.RESOLVE_DOT_CONF_FILE));
 			if (CommonMethods.isNotNull(response)) {
 				errorMessage = "Primary IPv4 XDNS value not updated in resolv.conf file";
-				if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)) {
+				if (CommonMethods.patternMatcher(response, BroadbandPropertyFileHandler.getDNSValidIpv4Value())) {
 					errorMessage = "Primary IPv6 XDNS value not updated in resolv.conf file";
-					if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)) {
+					if (CommonMethods.patternMatcher(response, BroadbandPropertyFileHandler.getDNSValidIpv6Value())) {
 						errorMessage = "Secondary IPv4 XDNS value not updated in resolv.conf file";
-						if (CommonMethods.patternMatcher(response, BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS)) {
+						if (CommonMethods.patternMatcher(response,
+								BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value())) {
 							errorMessage = "Secondary IPv6 XDNS value not updated in resolv.conf file";
 							if (CommonMethods.patternMatcher(response,
-									BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS)) {
+									BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value())) {
 								errorMessage = "Security Edge exclusion tag value not updated in resolv.conf file";
 								if (CommonMethods.patternMatcher(response,
 										BroadBandTestConstants.STRING_XDNS_SECURITY_EDGE_EXCLUSION)) {
@@ -4270,14 +4275,15 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			response = BroadBandCommonUtils.searchLogFiles(tapEnv, device, BroadBandTestConstants.STRING_XDNS_BROWSE,
 					BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
-			status = CommonUtils.patternSearchFromTargetString(response, BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS)
+			status = CommonUtils.patternSearchFromTargetString(response,
+					BroadbandPropertyFileHandler.getDNSValidIpv4Value())
 					|| CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS);
+							BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value());
 			if (!status) {
 				status = CommonUtils.patternSearchFromTargetString(response,
-						BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS)
+						BroadbandPropertyFileHandler.getDNSValidIpv6Value())
 						|| CommonUtils.patternSearchFromTargetString(response,
-								BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS);
+								BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value());
 			}
 			tapEnv.executeCommandUsingSsh(device, "echo > /tmp/akamai.pcap");
 			if (status) {
@@ -4285,7 +4291,6 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 			} else {
 				LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
 			}
-
 			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
 			LOGGER.info("**********************************************************************************");
@@ -4324,13 +4329,14 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandCommandConstants.PATH_AKAMAI_CAPTURE, BroadBandTestConstants.THREE_MINUTE_IN_MILLIS,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 			status = (!CommonUtils.patternSearchFromTargetString(response,
-					BroadBandTestConstants.VALUE_PRIMARY_IPV4_XDNS))
+					BroadbandPropertyFileHandler.getDNSValidIpv4Value()))
 					&& (!CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.VALUE_SECONDARY_IPV4_XDNS))
+							BroadbandPropertyFileHandler.getDNSValidSecondaryIpv4Value()))
 					&& (!CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.VALUE_PRIMARY_IPV6_XDNS))
+							BroadbandPropertyFileHandler.getDNSValidIpv6Value()))
 					&& (!CommonUtils.patternSearchFromTargetString(response,
-							BroadBandTestConstants.VALUE_SECONDARY_IPV6_XDNS));
+							BroadbandPropertyFileHandler.getDNSValidSecondaryIpv6Value()));
+
 
 			if (status) {
 				LOGGER.info("STEP 13: ACTUAL : Successfully disabled XDNS feature");
@@ -4379,7 +4385,7 @@ public class BroadBandXdnsOverride extends AutomaticsTestBase {
 					BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV4_VALUE);
 			BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, BroadBandTestConstants.CONSTANT_0,
-					BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE);
+					BroadbandPropertyFileHandler.getGlobalDNSIpv6Value());
 			DmcliUtils.setWebPaParameterValueUsingDmcliCommand(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_SECONDARY_XDNS_IPV4,
 					BroadBandTestConstants.CONSTANT_0, BroadBandTestConstants.STRING_OPEN_DNS_IP_75_76);

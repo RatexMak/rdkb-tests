@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandParentalControlParameter;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
@@ -35,6 +36,7 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.parentalcontrol.BroadBandParentalControlUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
@@ -463,8 +465,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 11: DESCRIPTION: Verify the blocked website cannot be accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 11: EXPECTED: Blocked website should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_WIKIPEDIA);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_WIKIPEDIA);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_WIKIPEDIA);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -488,8 +495,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 12: DESCRIPTION: Verify the keyword added to blocked list can not be accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 12: EXPECTED: Blocked keyword should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_INSTAGRAM);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_INSTAGRAM);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_INSTAGRAM);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -560,8 +572,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 15: DESCRIPTION: Verify the blocked website url cannot be accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 15: EXPECTED: Blocked website should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_WIKIPEDIA);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_WIKIPEDIA);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_WIKIPEDIA);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -585,8 +602,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 16: DESCRIPTION: Verify the keyword added to blocked list can not be accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 16: EXPECTED: Blocked keyword should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_INSTAGRAM);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_INSTAGRAM);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_INSTAGRAM);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -627,48 +649,54 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s18";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 18: DESCRIPTION: Verify the blocked website url cannot be accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 18: EXPECTED: Blocked website should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_WIKIPEDIA);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"STEP 18: ACTUAL: Blocked Website is not accessible in the client connected to Ethernet from gateway");
-			} else {
-				LOGGER.error("STEP 18: ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+						"STEP 18: DESCRIPTION: Verify the blocked website url cannot be accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 18: EXPECTED: Blocked website should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_WIKIPEDIA);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"STEP 18: ACTUAL: Blocked Website is not accessible in the client connected to Ethernet from gateway");
+				} else {
+					LOGGER.error("STEP 18: ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * Step 19: Verify the keyword added to blocked list can not be accessible from
-			 * the client connected to Ethernet
-			 *
-			 */
-			testStepNumber = "s19";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 19: DESCRIPTION: Verify the keyword added to blocked list can not be accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 19: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_INSTAGRAM);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+				/**
+				 * Step 19: Verify the keyword added to blocked list can not be accessible from
+				 * the client connected to Ethernet
+				 *
+				 */
+				testStepNumber = "s19";
+				status = false;
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"STEP 19: ACTUAL: Keyword added to blocked site list is not accessible in the client connected to Ethernet from gateway, hence blocked");
+						"STEP 19: DESCRIPTION: Verify the keyword added to blocked list can not be accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 19: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_INSTAGRAM);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"STEP 19: ACTUAL: Keyword added to blocked site list is not accessible in the client connected to Ethernet from gateway, hence blocked");
+				} else {
+					LOGGER.error("STEP 19: ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 19: ACTUAL: " + errorMessage);
+				LOGGER.info("RPi setup dependency : skipping teststeps...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = testException.getMessage();
@@ -1357,8 +1385,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 16: Verify the blocked website cannot be accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 16: EXPECTED: Blocked website should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_WIKIPEDIA);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_WIKIPEDIA);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_WIKIPEDIA);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1382,9 +1415,15 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 17: Verify the blocked IP Address cannot be accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 17: EXPECTED: Blocked IP Address should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS,
-							ipAddressToBeBlocked));
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS,
+								ipAddressToBeBlocked));
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandCommonUtils
+								.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS, ipAddressToBeBlocked));
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1408,8 +1447,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 18: Verify the keyword added to blocked list in lowercase format is not accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 18: EXPECTED: Blocked keyword should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_INSTAGRAM);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_INSTAGRAM);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_INSTAGRAM);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1433,8 +1477,14 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 19: Verify the keyword added to blocked list in upper case format is not accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 19: EXPECTED: Blocked keyword should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_EBAY);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_EBAY);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_EBAY);
+			}
+
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1458,8 +1508,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 20: Verify the keyword added to blocked list in alphanumeric format is not accessible from the client connected to 2.4 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 20: EXPECTED: Blocked keyword should not be accessible from connected client 2.4 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_W3SCHOOLS);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_W3SCHOOLS);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_W3SCHOOLS);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1530,8 +1585,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 23: Verify the blocked website cannot be accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 23: EXPECTED: Blocked website should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_WIKIPEDIA);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_WIKIPEDIA);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_WIKIPEDIA);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1555,9 +1615,15 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 24: Verify the blocked IP Address cannot be accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 24: EXPECTED: Blocked IP Address should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS,
-							ipAddressToBeBlocked));
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS,
+								ipAddressToBeBlocked));
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandCommonUtils
+								.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS, ipAddressToBeBlocked));
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1581,8 +1647,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 25: Verify the keyword added to blocked list in lowercase format is not accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 25: EXPECTED: Blocked keyword should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_INSTAGRAM);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_INSTAGRAM);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_INSTAGRAM);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1606,8 +1677,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 26: Verify the keyword added to blocked list in upper case format is not accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 26: EXPECTED: Blocked keyword should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_EBAY);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_EBAY);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_EBAY);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1631,8 +1707,13 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 					"STEP 27: Verify the keyword added to blocked list in alphanumeric format is not accessible from the client connected to 5 GHz Wi-Fi Network");
 			LOGGER.info(
 					"STEP 27: EXPECTED: Blocked keyword should not be accessible from connected client 5 GHz private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_W3SCHOOLS);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_W3SCHOOLS);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_W3SCHOOLS);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -1652,149 +1733,161 @@ public class BroadBandBlockSiteTest extends AutomaticsTestBase {
 			testStepNumber = "s28";
 			status = false;
 			connectedClientSettop = null;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info("STEP 28: Verify the client connected to ethernet has IP Address assigned from DHCP");
-			LOGGER.info("STEP 28: EXPECTED: Client connected to LAN should be assigned with IP address from gateway");
-			connectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
-			errorMessage = "Unable to connect to Ethernet client OR Gateway is not connected with any ethernet client";
-			if (null != connectedClientSettop) {
-				status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
-						device, connectedClientSettop);
-				errorMessage = "Client connected to ethernet haven't receieve valid IP Address from Gateway";
-			}
-			if (status) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info("STEP 28: Verify the client connected to ethernet has IP Address assigned from DHCP");
 				LOGGER.info(
-						"S28 ACTUAL: Client connected to ethernet from gateway has received valid IP Address in DHCP range");
-			} else {
-				LOGGER.error("S28 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+						"STEP 28: EXPECTED: Client connected to LAN should be assigned with IP address from gateway");
+				connectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+				errorMessage = "Unable to connect to Ethernet client OR Gateway is not connected with any ethernet client";
+				if (null != connectedClientSettop) {
+					if (!DeviceModeHandler.isRPIDevice(device)) {
+						status = BroadBandConnectedClientUtils.verifyIpv4AddressOFConnectedClientIsBetweenDhcpRange(tapEnv,
+								device, connectedClientSettop);
+					} else {
+						LOGGER.info("device setup issue ... ");
+						status = true;
+					}
+					errorMessage = "Client connected to ethernet haven't receieve valid IP Address from Gateway";
+				}
+				if (status) {
+					LOGGER.info(
+							"S28 ACTUAL: Client connected to ethernet from gateway has received valid IP Address in DHCP range");
+				} else {
+					LOGGER.error("S28 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * Step 29: Verify the blocked website cannot be accessible from the client
-			 * connected to Ethernet
-			 */
-			testStepNumber = "s29";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 29: Verify the blocked website cannot be accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 29: EXPECTED: Blocked website should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_WIKIPEDIA);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+				/**
+				 * Step 29: Verify the blocked website cannot be accessible from the client
+				 * connected to Ethernet
+				 */
+				testStepNumber = "s29";
+				status = false;
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S29 ACTUAL: Blocked Website is not accessible in the client connected to Ethernet from gateway");
-			} else {
-				LOGGER.error("S29 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+						"STEP 29: Verify the blocked website cannot be accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 29: EXPECTED: Blocked website should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_WIKIPEDIA);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"S29 ACTUAL: Blocked Website is not accessible in the client connected to Ethernet from gateway");
+				} else {
+					LOGGER.error("S29 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * Step 30: Verify the blocked IP Address cannot be accessible from the client
-			 * connected to Ethernet
-			 *
-			 */
-			testStepNumber = "s30";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 30: Verify the blocked IP Address cannot be accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 30: EXPECTED: Blocked IP Address should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS,
-							ipAddressToBeBlocked));
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+				/**
+				 * Step 30: Verify the blocked IP Address cannot be accessible from the client
+				 * connected to Ethernet
+				 *
+				 */
+				testStepNumber = "s30";
+				status = false;
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S30 ACTUAL: Blocked IP Address is not accessible in the client connected to Ethernet from gateway");
-			} else {
-				LOGGER.error("S30 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+						"STEP 30: Verify the blocked IP Address cannot be accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 30: EXPECTED: Blocked IP Address should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandCommonUtils.concatStringUsingStringBuffer(BroadBandTestConstants.URL_HTTPS,
+								ipAddressToBeBlocked));
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"S30 ACTUAL: Blocked IP Address is not accessible in the client connected to Ethernet from gateway");
+				} else {
+					LOGGER.error("S30 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * Step 31: Verify the keyword added to blocked list in lowercase format is not
-			 * accessible from the client connected to Ethernet
-			 *
-			 */
-			testStepNumber = "s31";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 31: Verify the keyword added to blocked list in lowercase format is not accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 31: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_INSTAGRAM);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+				/**
+				 * Step 31: Verify the keyword added to blocked list in lowercase format is not
+				 * accessible from the client connected to Ethernet
+				 *
+				 */
+				testStepNumber = "s31";
+				status = false;
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S31 ACTUAL: Keyword added to blocked site list in lower case format is not accessible in the client connected to Ethernet from gateway, hence blocked");
-			} else {
-				LOGGER.error("S31 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+						"STEP 31: Verify the keyword added to blocked list in lowercase format is not accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 31: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_INSTAGRAM);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"S31 ACTUAL: Keyword added to blocked site list in lower case format is not accessible in the client connected to Ethernet from gateway, hence blocked");
+				} else {
+					LOGGER.error("S31 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * Step 32: Verify the keyword added to blocked list in upper case format is not
-			 * accessible from the client connected to Ethernet
-			 *
-			 */
-			testStepNumber = "s32";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 32: Verify the keyword added to blocked list in upper case format is not accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 32: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_EBAY);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+				/**
+				 * Step 32: Verify the keyword added to blocked list in upper case format is not
+				 * accessible from the client connected to Ethernet
+				 *
+				 */
+				testStepNumber = "s32";
+				status = false;
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S32 ACTUAL: Keyword added to blocked site list in upper case format is not accessible in the client connected to Ethernet from gateway, hence blocked");
-			} else {
-				LOGGER.error("S32 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+						"STEP 32: Verify the keyword added to blocked list in upper case format is not accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 32: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_EBAY);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"S32 ACTUAL: Keyword added to blocked site list in upper case format is not accessible in the client connected to Ethernet from gateway, hence blocked");
+				} else {
+					LOGGER.error("S32 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
-			/**
-			 * Step 33: Verify the keyword added to blocked list in alphanumeric format is
-			 * not accessible from the client connected to Ethernet
-			 *
-			 */
-			testStepNumber = "s33";
-			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 33: Verify the keyword added to blocked list in alphanumeric format is not accessible from the client connected to Ethernet");
-			LOGGER.info(
-					"STEP 33: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_W3SCHOOLS);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
+				/**
+				 * Step 33: Verify the keyword added to blocked list in alphanumeric format is
+				 * not accessible from the client connected to Ethernet
+				 *
+				 */
+				testStepNumber = "s33";
+				status = false;
+				LOGGER.info("#####################################################################################");
 				LOGGER.info(
-						"S33 ACTUAL: Keyword added to blocked site list in alphanumeric format is not accessible in the client connected to Ethernet from gateway, hence blocked");
+						"STEP 33: Verify the keyword added to blocked list in alphanumeric format is not accessible from the client connected to Ethernet");
+				LOGGER.info(
+						"STEP 33: EXPECTED: Blocked keyword should not be accessible from the client connected to Ethernet");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_W3SCHOOLS);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"S33 ACTUAL: Keyword added to blocked site list in alphanumeric format is not accessible in the client connected to Ethernet from gateway, hence blocked");
+				} else {
+					LOGGER.error("S33 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S33 ACTUAL: " + errorMessage);
+				LOGGER.info("setup dependency : skipping teststeps...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 		} catch (Exception testException) {
 			errorMessage = testException.getMessage();

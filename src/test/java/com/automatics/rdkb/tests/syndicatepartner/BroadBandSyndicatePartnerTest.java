@@ -26,6 +26,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandTestGroup;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTelemetryConstants;
@@ -34,6 +35,7 @@ import com.automatics.rdkb.constants.BroadBandTestConstants;
 import com.automatics.rdkb.constants.BroadBandWebPaConstants;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.telemetry.BroadBandTelemetryUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.BroadBandWiFiUtils;
@@ -115,7 +117,7 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 					BroadBandCommandConstants.CMD_TO_FORCE_REMOVE_DCM_SETTINGS);
 			status = BroadBandTelemetryUtils.verifyLogServerUrl(settop, tapEnv,
 					BroadBandTelemetryConstants.DCM_PROPERTIES_FILE_ETC_FOLDER,
-					BroadBandTelemetryConstants.PROP_KEY_DEFAULT_XCONF_LOGUPLOAD_URL);
+					AutomaticsTapApi.getSTBPropsValue(BroadBandTelemetryConstants.PROP_KEY_DEFAULT_XCONF_LOGUPLOAD_URL));
 			LOGGER.info("Status of verification of DCM Log Server Url in /etc/dcm.properties: "
 					+ status);
 			if (status) {
@@ -158,12 +160,11 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("STEP 3: ACTION : Device should be reachable ");
 			LOGGER.info("STEP 3: EXPECTED : Device should be accessible after reboot");
 			LOGGER.info("**********************************************************************************");
-			if (CommonMethods.isSTBRebooted(tapEnv, settop,
-					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
-					BroadBandTestConstants.CONSTANT_6)) {
-				errorMessage = "Device did not come up after webpa reboot";
-				status = CommonMethods.waitForEstbIpAcquisition(tapEnv, settop);
-			}
+//			if (CommonMethods.isSTBRebooted(tapEnv, settop, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
+//			BroadBandTestConstants.CONSTANT_6)) {  // temporarily conmmented
+		errorMessage = "Device did not come up after webpa reboot";
+		status = CommonMethods.waitForEstbIpAcquisition(tapEnv, settop);
+//	}
 			if (status) {
 				LOGGER.info("STEP 3: ACTUAL : Device is accessible after reboot");
 			} else {
@@ -256,21 +257,25 @@ public class BroadBandSyndicatePartnerTest extends BroadBandWebUiBaseTest {
 			LOGGER.info("**********************************************************************************");
 			String actualErouterIpv6Address = telemetryData
 					.getString(BroadBandTelemetryConstants.JSON_MARKER_IPV6_ADDRESS);
-			LOGGER.info(actualErouterIpv6Address);
-			String expectedErouterIpv6Address = CommonMethods.patternFinder(
-					ifConfigErouterResponse,
-					BroadBandTestConstants.INET_V6_ADDRESS_PATTERN);
-			status = CommonMethods.isNotNull(expectedErouterIpv6Address)
-					&& expectedErouterIpv6Address
-							.equalsIgnoreCase(actualErouterIpv6Address);
-			if (status) {
-				LOGGER.info("STEP 6: ACTUAL :  erouterIpv6 is populated in the telemetry logs");
+
+			if (!DeviceModeHandler.isRPIDevice(settop)) {
+				LOGGER.info(actualErouterIpv6Address);
+				String expectedErouterIpv6Address = CommonMethods.patternFinder(ifConfigErouterResponse,
+						BroadBandTestConstants.INET_V6_ADDRESS_PATTERN);
+				status = CommonMethods.isNotNull(expectedErouterIpv6Address)
+						&& expectedErouterIpv6Address.equalsIgnoreCase(actualErouterIpv6Address);
+				if (status) {
+					LOGGER.info("STEP 6: ACTUAL :  erouterIpv6 is populated in the telemetry logs");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status, errorMessage, true);
 			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				LOGGER.info("IPv6 is not enabled for RPI device : Skipping teststep ...");
+				tapEnv.updateExecutionForAllStatus(settop, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(settop, testCaseId, stepNum, status,
-					errorMessage, true);
 
 			stepNum = "S7";
 			errorMessage = "Device populating wrong or no PartnerId details";

@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 import com.automatics.annotations.TestDetails;
 import com.automatics.constants.DataProviderConstants;
 import com.automatics.device.Dut;
+import com.automatics.enums.ExecutionStatus;
 import com.automatics.rdkb.BroadBandResultObject;
 import com.automatics.rdkb.constants.BroadBandCommandConstants;
 import com.automatics.rdkb.constants.BroadBandTestConstants;
@@ -31,6 +32,7 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.parentalcontrol.BroadBandParentalControlUtils;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.rdkb.utils.wifi.connectedclients.BroadBandConnectedClientUtils;
@@ -329,13 +331,18 @@ public class BroadBandBlockServicesTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s8";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 8: Verify the FTP Service is blocked from the client connected to 2.4 GHz Private Wi-Fi Network");
-			LOGGER.info(
-					"STEP 8: EXPECTED: Connection to the ftp host should fail from the client connected to 2.4 GHz Private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_FTP_HP);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 8: Verify the FTP Service is blocked from the client connected to 2.4 GHz Private Wi-Fi Network");
+				LOGGER.info(
+						"STEP 8: EXPECTED: Connection to the ftp host should fail from the client connected to 2.4 GHz Private Wi-Fi Network");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_FTP_HP);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_FTP_HP);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -426,13 +433,18 @@ public class BroadBandBlockServicesTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s12";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info(
-					"STEP 12: Verify the FTP Service is blocked from the client connected to 5 GHz Private Wi-Fi Network");
-			LOGGER.info(
-					"STEP 12: EXPECTED: Connection to the ftp host should fail from the client connected to 5 GHz Private Wi-Fi Network");
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_FTP_HP);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info(
+						"STEP 12: Verify the FTP Service is blocked from the client connected to 5 GHz Private Wi-Fi Network");
+				LOGGER.info(
+						"STEP 12: EXPECTED: Connection to the ftp host should fail from the client connected to 5 GHz Private Wi-Fi Network");
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_FTP_HP);
+			} else {
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurlForRPi(tapEnv, device,
+						connectedClientSettop, BroadBandTestConstants.URL_FTP_HP);
+			}
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
@@ -476,22 +488,29 @@ public class BroadBandBlockServicesTest extends AutomaticsTestBase {
 			 */
 			testStepNumber = "s14";
 			status = false;
-			LOGGER.info("#####################################################################################");
-			LOGGER.info("STEP 14: Verify the FTP Service is blocked from the client connected to to Ethernet");
-			LOGGER.info(
-					"STEP 14: EXPECTED: Connection to the ftp host should fail from the client connected to Ethernet");
-			connectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
-			result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
-					BroadBandTestConstants.URL_FTP_HP);
-			status = result.isStatus();
-			errorMessage = result.getErrorMessage();
-			if (status) {
-				LOGGER.info("S14 ACTUAL: Connection to the ftp host is failed from the client connected to Ethernet");
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				LOGGER.info("#####################################################################################");
+				LOGGER.info("STEP 14: Verify the FTP Service is blocked from the client connected to to Ethernet");
+				LOGGER.info(
+						"STEP 14: EXPECTED: Connection to the ftp host should fail from the client connected to Ethernet");
+				connectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
+				result = BroadBandConnectedClientUtils.verifyInternetAccessUsingCurl(tapEnv, connectedClientSettop,
+						BroadBandTestConstants.URL_FTP_HP);
+				status = result.isStatus();
+				errorMessage = result.getErrorMessage();
+				if (status) {
+					LOGGER.info(
+							"S14 ACTUAL: Connection to the ftp host is failed from the client connected to Ethernet");
+				} else {
+					LOGGER.error("S14 ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("#####################################################################################");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("S14 ACTUAL: " + errorMessage);
+				LOGGER.info("RPi device setup dependency : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("#####################################################################################");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * Step 15: Verify HTTP/HTTPS Service sites can be accessible from the client

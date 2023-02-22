@@ -1820,16 +1820,24 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 
 	    status = CommonMethods.patternMatcher(response, BroadBandTraceConstants.LOG_MESSAGE_PARAM_VALUE_SAME);
 
-	    if (status) {
-		LOGGER.info(
-			"STEP 11: ACTUAL : RFC parameter old and new values are same log message is present in output");
-	    } else {
-		LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
-	    }
+		if (!status) {
+			status = CommonMethods.patternMatcher(response,
+					BroadBandCommonUtils.concatStringUsingStringBuffer(
+							BroadBandTraceConstants.LOG_MESSAGE_OLD_PARAM_VALUE, BroadBandTestConstants.TRUE))
+					&& CommonMethods.patternMatcher(response, BroadBandCommonUtils.concatStringUsingStringBuffer(
+							BroadBandTraceConstants.LOG_MESSAGE_NEW_PARAM_VALUE, BroadBandTestConstants.TRUE));
+			}
 
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		if (status) {
+			LOGGER.info(
+					"STEP 11: ACTUAL : RFC parameter old and new values are same log message is present in output");
+		} else {
+			LOGGER.error("STEP 11: ACTUAL : " + errorMessage);
+		}
+		
+		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 
-	    LOGGER.info("**********************************************************************************");
+		LOGGER.info("**********************************************************************************");
 
 	    stepNum = "s12";
 	    errorMessage = "Value of parameter is not true after being processed by RFC";
@@ -2049,7 +2057,10 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 		tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 			errorMessage, false);
 	    } else {
-		status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+			status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
+			BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, BroadBandTestConstants.CONSTANT_2,
+					BroadBandTestConstants.STRING_VALUE_ONE);
 
 		if (status) {
 		    LOGGER.info("STEP 4: ACTUAL : Device is online after reboot");
@@ -2139,7 +2150,10 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 	    LOGGER.info("**********************************************************************************");
 
 	    status = CommonMethods.rebootAndWaitForIpAccusition(device, tapEnv);
-
+		BroadBandWebPaUtils.setParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+				BroadBandWebPaConstants.WEBPA_PARAM_RFC_CONTROL, BroadBandTestConstants.CONSTANT_2,
+				BroadBandTestConstants.STRING_VALUE_ONE);
+		
 	    if (status) {
 		LOGGER.info("STEP 7: ACTUAL : Device is online");
 	    } else {
@@ -2180,29 +2194,34 @@ public class BroadBandDCMTest extends AutomaticsTestBase {
 	    stepNum = "s9";
 	    errorMessage = "Failed to include new instance name in telemetry data to be uploaded to server.";
 	    status = false;
+	    if (!DeviceModeHandler.isRPIDevice(device)) {
 
-	    LOGGER.info("**********************************************************************************");
-	    LOGGER.info("STEP 9: DESCRIPTION : Verify the new feature instance name in telemetry data");
-	    LOGGER.info("STEP 9: ACTION : Execute:grep -I TMEndpoint2 /rdklogs/logs/dcmscript.log");
-	    LOGGER.info(
-		    "STEP 9: EXPECTED : The telemetry data should contain new instance name to be uploaded to server");
-	    LOGGER.info("**********************************************************************************");
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 9: DESCRIPTION : Verify the new feature instance name in telemetry data");
+			LOGGER.info("STEP 9: ACTION : Execute:grep -I TMEndpoint2 /rdklogs/logs/dcmscript.log");
+			LOGGER.info(
+					"STEP 9: EXPECTED : The telemetry data should contain new instance name to be uploaded to server");
+			LOGGER.info("**********************************************************************************");
 
-	    status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
-		    BroadBandTraceConstants.OVERRIDE_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
-		    BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT, BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS,
-		    BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+			status = CommonMethods.isNotNull(CommonUtils.searchLogFilesWithPollingInterval(tapEnv, device,
+					BroadBandTraceConstants.OVERRIDE_TELEMETRYENDPOINT_FEATURE_INSTANCE_NAME,
+					BroadBandCommandConstants.LOG_FILE_DCM_SCRIPT, BroadBandTestConstants.THIRTY_MINUTES_IN_MILLIS,
+					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
 
-	    if (status) {
-		LOGGER.info(
-			"STEP 9: ACTUAL : Successfully verified feature instance name in /rdklogs/logs/dcmscript.log");
-	    } else {
-		LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
-	    }
+			if (status) {
+				LOGGER.info(
+						"STEP 9: ACTUAL : Successfully verified feature instance name in /rdklogs/logs/dcmscript.log");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
 
-	    tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
-
-	    LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+		} else {
+			LOGGER.info("STEP 9: Not Applicable for RPi");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		}
+		LOGGER.info("**********************************************************************************");
 
 	} catch (Exception e) {
 	    errorMessage = errorMessage + e.getMessage();

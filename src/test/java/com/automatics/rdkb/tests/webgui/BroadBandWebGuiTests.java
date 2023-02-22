@@ -75,14 +75,13 @@ import com.automatics.rdkb.constants.RDKBTestConstants.WiFiFrequencyBand;
 
 public class BroadBandWebGuiTests extends AutomaticsTestBase {
 
-	/** String for step number */
-	public int stepNumber = 0;
-
 	boolean isBrowserOpen = false; // Boolean variable to check whether Browser is open.
 	protected WebDriver driver;
 	boolean isDhcpV4Configured = false; // Boolean variable to check whether DHCPV4 Configuration changes are done.
 	String errorMessage = null; // Variable to store error message.
 	String stepNum = "";
+	/** String for step number */
+	public int stepNumber = 0;
 
 	/**
 	 * Test To verify local UI no longer supports the ability to save/restore the
@@ -3711,267 +3710,6 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 	}
 
 	/**
-	 * Validate the error message when DHCP Starting and Ending address is invalid
-	 * <ol>
-	 * <li>Verify whether Private Wifi SSIDs\" are enabled using WebPA.</li>
-	 * <li>Connect the client to Private Wi-Fi Network and verify connection
-	 * status</li>
-	 * <li>Verify the client connected to Private Wi-Fi Network has got the IPv4
-	 * Address between DHCP Range</li>
-	 * <li>Verify the client connected to Private Wi-Fi Network has got the IPv6
-	 * Address</li>
-	 * <li>Verify the internet is accessible in the client connected to the Private
-	 * Wi-Fi Network</li>
-	 * <li>Verify the gateway admin page on Wi-Fi client is launched and logged in
-	 * successfully</li>
-	 * <li>Launch the \"Connection\" page from AdminUI page</li>
-	 * <li>Launch the \"Local IP Network\" page from \"Connection\" page</li>
-	 * <li>Validate the error message when DHCP Starting address is larger than
-	 * ending address</li>
-	 * <li>Validate the error message when DHCP Ending address is invalid</li>
-	 * </ol>
-	 * 
-	 * @refactor Athira
-	 */
-	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
-	@TestDetails(testUID = "TC-RDKB-DHCP-NEG-5001")
-	public void testToValidateLocalIpConfiguration(Dut device) {
-
-		// Variable Declaration begins
-		String testCaseId = "TC-RDKB-DHCP-NEG-501";
-		String stepNum = "S1";
-		String errorMessage = "";
-		boolean status = false;
-		LanSidePageNavigation lanSidePageNavigation = null;
-		// Variable Declaration Ends
-
-		LOGGER.info("#######################################################################################");
-		LOGGER.info("STARTING TEST CASE: TC-RDKB-DHCP-NEG-5001");
-		LOGGER.info("TEST DESCRIPTION: Validate the error message when DHCP Starting and Ending address is invalid");
-
-		LOGGER.info("TEST STEPS : ");
-		LOGGER.info("1. Verify whether Private Wifi SSIDs\" are enabled using WebPA.");
-		LOGGER.info("2. Connect the client to Private Wi-Fi Network and verify connection status ");
-		LOGGER.info(
-				"3. Verify the client connected to Private Wi-Fi Network has got the IPv4 Address between DHCP Range");
-		LOGGER.info("4. Verify the client connected to Private Wi-Fi Network has got the IPv6 Address");
-		LOGGER.info("5. Verify the internet is accessible in the client connected to the Private Wi-Fi Network");
-		LOGGER.info("6. Verify the gateway admin page on Wi-Fi  client is launched and logged in successfully");
-		LOGGER.info("7. Launch the \"Connection\" page from AdminUI page");
-		LOGGER.info("8. Launch the \"Local IP Network\" page from \"Connection\" page");
-		LOGGER.info("9. Validate the error message when DHCP Starting address is larger than ending address");
-		LOGGER.info("10. Validate the error message when DHCP Ending address is invalid");
-
-		LOGGER.info("#######################################################################################");
-
-		try {
-
-			stepNum = "s1";
-			errorMessage = "Enabling Private Wi-Fi SSIDs' via WebPA failed";
-			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 1: DESCRIPTION : Verify whether Private Wifi SSIDs\" are enabled using WebPA.");
-			LOGGER.info(
-					"STEP 1: ACTION : Execute the command:FOR 2.4 GHZ: curl -X PATCH <WEBPA URL>/api/v2/device/mac:<ECM MAC>/config -d \"{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10001.Enable\",\"value\":\"True\",\"dataType\":3}]}\"  FOR 5 GHZ: curl -X PATCH <WEBPA URL>/api/v2/device/mac:<ECM MAC>/config -d \"{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10101.Enable\",\"value\":\"True\",\"dataType\":3}]}\"      ");
-			LOGGER.info("STEP 1: EXPECTED : Both 2.4 GHz and 5 GHz radio should be enabled");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "Enabling 2.4 GHz private Wi-Fi radio via WebPA failed";
-			if (BroadBandConnectedClientUtils.enableOrDisableRadiosForGivenSsidUsingWebPaCommand(
-					WiFiFrequencyBand.WIFI_BAND_2_GHZ, tapEnv, device, true)) {
-				status = BroadBandConnectedClientUtils.enableOrDisableRadiosForGivenSsidUsingWebPaCommand(
-						WiFiFrequencyBand.WIFI_BAND_5_GHZ, tapEnv, device, true);
-				errorMessage = "Enabling 5 GHz private Wi-Fi radio via WebPA failed";
-			}
-			if (status) {
-				LOGGER.info("S1 ACTUAL: Both 2.4 GHz & 5 GHz Private Wi-Fi SSIDs' are enabled using WebPA");
-			} else {
-				LOGGER.error("S1 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-			stepNum = "s2";
-			status = false;
-			Dut wirelessConnectedClientSettop = null;
-			errorMessage = "Unable to connect to the private Wi-Fi Network Or WiFi capable devices are not available";
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info(
-					"STEP 2: DESCRIPTION : Connect the client to Private Wi-Fi Network and verify connection status ");
-			LOGGER.info(
-					"STEP 2: ACTION : Connect to the wifi using below commandsLinux :nmcli dev wifi connect <ssid> password <passwd>Windows : netsh wlan connect ssid=<ssid> name=<ssid name>");
-			LOGGER.info("STEP 2: EXPECTED : Device should be connected with the Private Wi-Fi Network");
-			LOGGER.info("**********************************************************************************");
-			try {
-				wirelessConnectedClientSettop = BroadBandConnectedClientUtils
-						.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
-			} catch (Exception e) {
-				errorMessage = e.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			status = null != wirelessConnectedClientSettop;
-			if (status) {
-				LOGGER.info("GOING TO WAIT FOR 2 MINUTES AFTER CONNECTING THE WIFI CLIENT.");
-				tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
-				LOGGER.info("S2 ACTUAL: Device has been connected with the Private Wi-Fi Network");
-			} else {
-				LOGGER.error("S2 ACTUAL: " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
-
-			// step-3 to step-5
-			BroadBandConnectedClientUtils.validateIpAddressesAndInternetConnectivityOfConnectedClient(device,
-					wirelessConnectedClientSettop, tapEnv, BroadBandTestConstants.CONSTANT_3, testCaseId);
-
-			stepNum = "s6";
-			status = false;
-			errorMessage = "Unable to login gateway admin page";
-			WebDriver webDriver = null;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info(
-					"STEP 6: DESCRIPTION : Verify the gateway admin page on Wi-Fi  client is launched and logged in successfully");
-			LOGGER.info("STEP 6: ACTION : Launch the URL in Wi-Fi client : http://10.0.0.1");
-			LOGGER.info(
-					"STEP 6: EXPECTED : Gateway admin page on Wi-Fi client should sucessfully get launched and logged in");
-			LOGGER.info("**********************************************************************************");
-			try {
-				status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, wirelessConnectedClientSettop);
-			} catch (Exception exception) {
-				LOGGER.error("Exception occurred during Gateway Admin Page login : " + exception.getMessage());
-			}
-			if (status) {
-				webDriver = LanSideBasePage.getDriver();
-				LOGGER.info(
-						"STEP 6: ACTUAL : Gateway admin page is accessible from the client connected using admin/****** credential for Residential or cusadmin/****** credential for Commercial devices");
-			} else {
-				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
-					status, errorMessage, true);
-
-			stepNum = "s7";
-			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 7: DESCRIPTION : Launch the 'Connection' page from AdminUI page");
-			LOGGER.info("STEP 7: ACTION : Navigate to  Connection page");
-			LOGGER.info(
-					"STEP 7: EXPECTED : Connection page should be successfully launched with page title as 'Gateway > At a Glance - <PARTNER>'");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "Unable to launch 'Connection' page from AdminUI page";
-
-			status = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_CONNECTION,
-					BroadbandPropertyFileHandler.getAtAGlancePageTitle());
-
-			if (status) {
-				LOGGER.info(
-						"STEP 7: ACTUAL : 'Connection' page is successfully launched with page title as 'Gateway > At a Glance'");
-			} else {
-				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
-					status, errorMessage, true);
-
-			stepNum = "s8";
-			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 8: DESCRIPTION : Launch the 'Local IP Network' page from 'Connection' page");
-			LOGGER.info("STEP 8: ACTION : Navigate to Gateway > Connection > Local IP Network");
-			LOGGER.info(
-					"STEP 8: EXPECTED : Local IP Network page should be successfully launched with page title as 'Gateway > Connection > Local IP Configuration - Public WiFi'");
-			LOGGER.info("**********************************************************************************");
-			errorMessage = "Unable to launch 'Local IP Network' page from 'Connection' page";
-			lanSidePageNavigation = new LanSidePageNavigation(webDriver);
-			status = lanSidePageNavigation.navigateToLocalIpConfigurationPage(device, tapEnv, webDriver);
-
-			if (status) {
-				LOGGER.info(
-						"STEP 8: ACTUAL : 'Local IP Network' page is successfully launched with page title as 'Gateway > Connection > Local IP Configuration'");
-			} else {
-				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
-					status, errorMessage, true);
-
-			stepNum = "s9";
-			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info(
-					"STEP 9: DESCRIPTION : Validate the error message when DHCP Starting address is larger than ending address");
-			LOGGER.info(
-					"STEP 9: ACTION : Enter the Starting address greater than ending address and click on 'Save Settings'");
-			LOGGER.info(
-					"STEP 9: EXPECTED : Error should be thrown as 'Beginning Address can't be larger than ending address'");
-			LOGGER.info("**********************************************************************************");
-			try {
-				LanSideBasePage.click(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_BEGINNING_ADDRESS));
-				LanSideBasePage.clear(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_BEGINNING_ADDRESS));
-				LanSideBasePage.sendKeys(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_BEGINNING_ADDRESS),
-						BroadBandTestConstants.STRING_10);
-				LanSideBasePage.click(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
-				LanSideBasePage.clear(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
-				LanSideBasePage.sendKeys(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS),
-						BroadBandTestConstants.STRING_5);
-				status = LanSideBasePage.verifyAndAcceptAlert(
-						BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_SAVE_BUTTON,
-						BroadBandTestConstants.POPUP_TTILE_ALERT,
-						BroadBandTestConstants.ERROR_MESSAGE_DHCP_INVALID_ADDRESS, tapEnv);
-			} catch (Exception e) {
-				LOGGER.error("Exception occurred while validating the error message : " + e.getMessage());
-			}
-			if (status) {
-				LOGGER.info(
-						"STEP 9: ACTUAL : Error message is thrown as 'Beginning Address can't be larger than ending address' when DHCP Starting address is larger than ending address");
-			} else {
-				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
-					status, errorMessage, true);
-
-			stepNum = "s10";
-			status = false;
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP 10: DESCRIPTION : Validate the error message when DHCP Ending address is invalid");
-			LOGGER.info("STEP 10: ACTION : Enter the ending address out of range and click on 'Save Settings'");
-			LOGGER.info(
-					"STEP 10: EXPECTED : Error should be thrown as 'Please enter a value less than or equal to 253'");
-			LOGGER.info("**********************************************************************************");
-			try {
-				LanSideBasePage.click(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
-				LanSideBasePage.clear(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
-				LanSideBasePage.sendKeys(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS),
-						BroadBandTestConstants.STRING_300);
-				LanSideBasePage.click(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DHCP_LEASE_TIME_AMOUNT));
-				status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
-						BroadBandTestConstants.ERROR_MESSAGE_DMZ_PAGE, LanSideBasePage.getText(
-								By.xpath(BroadBandWebGuiElements.XPATH_FOR_DHCP_ENDING_ADDRESS_ERROR_MESSAGE)));
-			} catch (Exception e) {
-				LOGGER.error("Exception occurred while validating the error message : " + e.getMessage());
-			}
-			if (status) {
-				LOGGER.info(
-						"STEP 10: ACTUAL : Error message is thrown as 'Please enter a value less than or equal to 253' when DHCP Ending address is invalid");
-			} else {
-				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
-			}
-			LOGGER.info("**********************************************************************************");
-			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
-					status, errorMessage, true);
-
-		} catch (Exception e) {
-			errorMessage = errorMessage + e.getMessage();
-			LOGGER.error(errorMessage);
-			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
-					false);
-		}
-
-		LOGGER.info("ENDING TEST CASE: TC-RDKB-DHCP-NEG-5001");
-	}
-
-	/**
 	 * Method to Set DHCPV4 Configuration to Random Values Via LanUI
 	 * 
 	 * @param device          {@link Dut}
@@ -4450,7 +4188,10 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("**********************************************************************************");
 			wiredConnectedClientSettop = BroadBandConnectedClientUtils.getEthernetConnectedClient(tapEnv, device);
 			status = null != wiredConnectedClientSettop;
-			isEthernetClientAvailable = status;
+			isEthernetClientAvailable = DeviceModeHandler.isRPIDevice(device) ? false : status;
+			if (status && !isEthernetClientAvailable) {
+				LOGGER.info("RPi ethernet client setup dependency present");
+			}
 			if (status) {
 				LOGGER.info("STEP 6: ACTUAL : #successMessage#");
 			} else {
@@ -4731,6 +4472,267 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 
 			LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
 		}
+	}
+
+	/**
+	 * Validate the error message when DHCP Starting and Ending address is invalid
+	 * <ol>
+	 * <li>Verify whether Private Wifi SSIDs\" are enabled using WebPA.</li>
+	 * <li>Connect the client to Private Wi-Fi Network and verify connection
+	 * status</li>
+	 * <li>Verify the client connected to Private Wi-Fi Network has got the IPv4
+	 * Address between DHCP Range</li>
+	 * <li>Verify the client connected to Private Wi-Fi Network has got the IPv6
+	 * Address</li>
+	 * <li>Verify the internet is accessible in the client connected to the Private
+	 * Wi-Fi Network</li>
+	 * <li>Verify the gateway admin page on Wi-Fi client is launched and logged in
+	 * successfully</li>
+	 * <li>Launch the \"Connection\" page from AdminUI page</li>
+	 * <li>Launch the \"Local IP Network\" page from \"Connection\" page</li>
+	 * <li>Validate the error message when DHCP Starting address is larger than
+	 * ending address</li>
+	 * <li>Validate the error message when DHCP Ending address is invalid</li>
+	 * </ol>
+	 * 
+	 * @refactor Athira
+	 */
+	@Test(enabled = true, dataProvider = DataProviderConstants.CONNECTED_CLIENTS_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, groups = TestGroup.SYSTEM)
+	@TestDetails(testUID = "TC-RDKB-DHCP-NEG-5001")
+	public void testToValidateLocalIpConfiguration(Dut device) {
+
+		// Variable Declaration begins
+		String testCaseId = "TC-RDKB-DHCP-NEG-501";
+		String stepNum = "S1";
+		String errorMessage = "";
+		boolean status = false;
+		LanSidePageNavigation lanSidePageNavigation = null;
+		// Variable Declaration Ends
+
+		LOGGER.info("#######################################################################################");
+		LOGGER.info("STARTING TEST CASE: TC-RDKB-DHCP-NEG-5001");
+		LOGGER.info("TEST DESCRIPTION: Validate the error message when DHCP Starting and Ending address is invalid");
+
+		LOGGER.info("TEST STEPS : ");
+		LOGGER.info("1. Verify whether Private Wifi SSIDs\" are enabled using WebPA.");
+		LOGGER.info("2. Connect the client to Private Wi-Fi Network and verify connection status ");
+		LOGGER.info(
+				"3. Verify the client connected to Private Wi-Fi Network has got the IPv4 Address between DHCP Range");
+		LOGGER.info("4. Verify the client connected to Private Wi-Fi Network has got the IPv6 Address");
+		LOGGER.info("5. Verify the internet is accessible in the client connected to the Private Wi-Fi Network");
+		LOGGER.info("6. Verify the gateway admin page on Wi-Fi  client is launched and logged in successfully");
+		LOGGER.info("7. Launch the \"Connection\" page from AdminUI page");
+		LOGGER.info("8. Launch the \"Local IP Network\" page from \"Connection\" page");
+		LOGGER.info("9. Validate the error message when DHCP Starting address is larger than ending address");
+		LOGGER.info("10. Validate the error message when DHCP Ending address is invalid");
+
+		LOGGER.info("#######################################################################################");
+
+		try {
+
+			stepNum = "s1";
+			errorMessage = "Enabling Private Wi-Fi SSIDs' via WebPA failed";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 1: DESCRIPTION : Verify whether Private Wifi SSIDs\" are enabled using WebPA.");
+			LOGGER.info(
+					"STEP 1: ACTION : Execute the command:FOR 2.4 GHZ: curl -X PATCH <WEBPA URL>/api/v2/device/mac:<ECM MAC>/config -d \"{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10001.Enable\",\"value\":\"True\",\"dataType\":3}]}\"  FOR 5 GHZ: curl -X PATCH <WEBPA URL>/api/v2/device/mac:<ECM MAC>/config -d \"{\"parameters\":[{\"name\":\"Device.WiFi.SSID.10101.Enable\",\"value\":\"True\",\"dataType\":3}]}\"      ");
+			LOGGER.info("STEP 1: EXPECTED : Both 2.4 GHz and 5 GHz radio should be enabled");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Enabling 2.4 GHz private Wi-Fi radio via WebPA failed";
+			if (BroadBandConnectedClientUtils.enableOrDisableRadiosForGivenSsidUsingWebPaCommand(
+					WiFiFrequencyBand.WIFI_BAND_2_GHZ, tapEnv, device, true)) {
+				status = BroadBandConnectedClientUtils.enableOrDisableRadiosForGivenSsidUsingWebPaCommand(
+						WiFiFrequencyBand.WIFI_BAND_5_GHZ, tapEnv, device, true);
+				errorMessage = "Enabling 5 GHz private Wi-Fi radio via WebPA failed";
+			}
+			if (status) {
+				LOGGER.info("S1 ACTUAL: Both 2.4 GHz & 5 GHz Private Wi-Fi SSIDs' are enabled using WebPA");
+			} else {
+				LOGGER.error("S1 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			stepNum = "s2";
+			status = false;
+			Dut wirelessConnectedClientSettop = null;
+			errorMessage = "Unable to connect to the private Wi-Fi Network Or WiFi capable devices are not available";
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRIPTION : Connect the client to Private Wi-Fi Network and verify connection status ");
+			LOGGER.info(
+					"STEP 2: ACTION : Connect to the wifi using below commandsLinux :nmcli dev wifi connect <ssid> password <passwd>Windows : netsh wlan connect ssid=<ssid> name=<ssid name>");
+			LOGGER.info("STEP 2: EXPECTED : Device should be connected with the Private Wi-Fi Network");
+			LOGGER.info("**********************************************************************************");
+			try {
+				wirelessConnectedClientSettop = BroadBandConnectedClientUtils
+						.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
+			} catch (Exception e) {
+				errorMessage = e.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			status = null != wirelessConnectedClientSettop;
+			if (status) {
+				LOGGER.info("GOING TO WAIT FOR 2 MINUTES AFTER CONNECTING THE WIFI CLIENT.");
+				tapEnv.waitTill(BroadBandTestConstants.TWO_MINUTE_IN_MILLIS);
+				LOGGER.info("S2 ACTUAL: Device has been connected with the Private Wi-Fi Network");
+			} else {
+				LOGGER.error("S2 ACTUAL: " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, true);
+
+			// step-3 to step-5
+			BroadBandConnectedClientUtils.validateIpAddressesAndInternetConnectivityOfConnectedClient(device,
+					wirelessConnectedClientSettop, tapEnv, BroadBandTestConstants.CONSTANT_3, testCaseId);
+
+			stepNum = "s6";
+			status = false;
+			errorMessage = "Unable to login gateway admin page";
+			WebDriver webDriver = null;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 6: DESCRIPTION : Verify the gateway admin page on Wi-Fi  client is launched and logged in successfully");
+			LOGGER.info("STEP 6: ACTION : Launch the URL in Wi-Fi client : http://10.0.0.1");
+			LOGGER.info(
+					"STEP 6: EXPECTED : Gateway admin page on Wi-Fi client should sucessfully get launched and logged in");
+			LOGGER.info("**********************************************************************************");
+			try {
+				status = LanWebGuiLoginPage.logintoLanPage(tapEnv, device, wirelessConnectedClientSettop);
+			} catch (Exception exception) {
+				LOGGER.error("Exception occurred during Gateway Admin Page login : " + exception.getMessage());
+			}
+			if (status) {
+				webDriver = LanSideBasePage.getDriver();
+				LOGGER.info(
+						"STEP 6: ACTUAL : Gateway admin page is accessible from the client connected using admin/****** credential for Residential or cusadmin/****** credential for Commercial devices");
+			} else {
+				LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "s7";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION : Launch the 'Connection' page from AdminUI page");
+			LOGGER.info("STEP 7: ACTION : Navigate to  Connection page");
+			LOGGER.info(
+					"STEP 7: EXPECTED : Connection page should be successfully launched with page title as 'Gateway > At a Glance - <PARTNER>'");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to launch 'Connection' page from AdminUI page";
+
+			status = LanSideBasePage.isPageLaunched(BroadBandWebGuiTestConstant.LINK_TEXT_CONNECTION,
+					BroadbandPropertyFileHandler.getAtAGlancePageTitle());
+
+			if (status) {
+				LOGGER.info(
+						"STEP 7: ACTUAL : 'Connection' page is successfully launched with page title as 'Gateway > At a Glance'");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "s8";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Launch the 'Local IP Network' page from 'Connection' page");
+			LOGGER.info("STEP 8: ACTION : Navigate to Gateway > Connection > Local IP Network");
+			LOGGER.info(
+					"STEP 8: EXPECTED : Local IP Network page should be successfully launched with page title as 'Gateway > Connection > Local IP Configuration - Public WiFi'");
+			LOGGER.info("**********************************************************************************");
+			errorMessage = "Unable to launch 'Local IP Network' page from 'Connection' page";
+			lanSidePageNavigation = new LanSidePageNavigation(webDriver);
+			status = lanSidePageNavigation.navigateToLocalIpConfigurationPage(device, tapEnv, webDriver);
+
+			if (status) {
+				LOGGER.info(
+						"STEP 8: ACTUAL : 'Local IP Network' page is successfully launched with page title as 'Gateway > Connection > Local IP Configuration'");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "s9";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info(
+					"STEP 9: DESCRIPTION : Validate the error message when DHCP Starting address is larger than ending address");
+			LOGGER.info(
+					"STEP 9: ACTION : Enter the Starting address greater than ending address and click on 'Save Settings'");
+			LOGGER.info(
+					"STEP 9: EXPECTED : Error should be thrown as 'Beginning Address can't be larger than ending address'");
+			LOGGER.info("**********************************************************************************");
+			try {
+				LanSideBasePage.click(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_BEGINNING_ADDRESS));
+				LanSideBasePage.clear(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_BEGINNING_ADDRESS));
+				LanSideBasePage.sendKeys(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_BEGINNING_ADDRESS),
+						BroadBandTestConstants.STRING_10);
+				LanSideBasePage.click(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
+				LanSideBasePage.clear(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
+				LanSideBasePage.sendKeys(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS),
+						BroadBandTestConstants.STRING_5);
+				status = LanSideBasePage.verifyAndAcceptAlert(
+						BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_SAVE_BUTTON,
+						BroadBandTestConstants.POPUP_TTILE_ALERT,
+						BroadBandTestConstants.ERROR_MESSAGE_DHCP_INVALID_ADDRESS, tapEnv);
+			} catch (Exception e) {
+				LOGGER.error("Exception occurred while validating the error message : " + e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 9: ACTUAL : Error message is thrown as 'Beginning Address can't be larger than ending address' when DHCP Starting address is larger than ending address");
+			} else {
+				LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+			stepNum = "s10";
+			status = false;
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION : Validate the error message when DHCP Ending address is invalid");
+			LOGGER.info("STEP 10: ACTION : Enter the ending address out of range and click on 'Save Settings'");
+			LOGGER.info(
+					"STEP 10: EXPECTED : Error should be thrown as 'Please enter a value less than or equal to 253'");
+			LOGGER.info("**********************************************************************************");
+			try {
+				LanSideBasePage.click(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
+				LanSideBasePage.clear(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS));
+				LanSideBasePage.sendKeys(By.xpath(BroadBandWebGuiTestConstant.XPATH_FOR_DHCP_IPV4_ENDING_ADDRESS),
+						BroadBandTestConstants.STRING_300);
+				LanSideBasePage.click(By.xpath(BroadBandWebGuiElements.XPATH_FOR_DHCP_LEASE_TIME_AMOUNT));
+				status = BroadBandCommonUtils.compareValues(BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+						BroadBandTestConstants.ERROR_MESSAGE_DMZ_PAGE, LanSideBasePage.getText(
+								By.xpath(BroadBandWebGuiElements.XPATH_FOR_DHCP_ENDING_ADDRESS_ERROR_MESSAGE)));
+			} catch (Exception e) {
+				LOGGER.error("Exception occurred while validating the error message : " + e.getMessage());
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 10: ACTUAL : Error message is thrown as 'Please enter a value less than or equal to 253' when DHCP Ending address is invalid");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			BroadBandWebUiUtils.updateExecutionStatusForWebGuiStep(webDriver, tapEnv, device, testCaseId, stepNum,
+					status, errorMessage, true);
+
+		} catch (Exception e) {
+			errorMessage = errorMessage + e.getMessage();
+			LOGGER.error(errorMessage);
+			CommonUtils.updateTestStatusDuringException(tapEnv, device, testCaseId, stepNum, status, errorMessage,
+					false);
+		}
+
+		LOGGER.info("ENDING TEST CASE: TC-RDKB-DHCP-NEG-5001");
 	}
 
 	/**
@@ -5274,7 +5276,10 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
 			} else {
@@ -5314,7 +5319,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should not be successful.");
 			LOGGER.info("**********************************************************************************");
-			pingResult = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			status = !pingResult;
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
@@ -5355,7 +5362,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should not be successful.");
 			LOGGER.info("**********************************************************************************");
-			pingResult = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			status = !pingResult;
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
@@ -5398,7 +5407,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should not be successful.");
 			LOGGER.info("**********************************************************************************");
-			pingResult = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			status = !pingResult;
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
@@ -5439,7 +5450,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
 			} else {
@@ -5483,7 +5496,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
 			} else {
@@ -5559,7 +5574,9 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute ping command ping <WAN IPv4>.");
 			LOGGER.info("STEP " + stepNumber + ": EXPECTED : Ping should be successful.");
 			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.pingTestFromJumpServer(device, tapEnv, wanIpAddress);
+			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedClientDevice, tapEnv, wanIpAddress,
+					BroadBandTestConstants.STRING_VALUE_FIVE);
+
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Verified ping request TO WAN IP suceessfully.");
 			} else {
@@ -5685,13 +5702,17 @@ public class BroadBandWebGuiTests extends AutomaticsTestBase {
 
 			wifiClient = BroadBandConnectedClientUtils
 					.get2GhzOr5GhzWiFiCapableClientDeviceAndConnectToCorrespondingSsid(device, tapEnv);
-			if (wifiClient != null) {
-				macAddress = ((Device) wifiClient).getConnectedDeviceInfo().getWifiMacAddress();
-				if (CommonMethods.isNotNull(macAddress)) {
-					hostName = BroadBandCommonUtils.getConnectedClientDetailsUsingWebpa(device, tapEnv, macAddress,
-							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_HOST_HOSTNAME);
-					status = CommonMethods.isNotNull(hostName);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				if (wifiClient != null) {
+					macAddress = ((Device) wifiClient).getConnectedDeviceInfo().getWifiMacAddress();
+					if (CommonMethods.isNotNull(macAddress)) {
+						hostName = BroadBandCommonUtils.getConnectedClientDetailsUsingWebpa(device, tapEnv, macAddress,
+								BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_HOST_HOSTNAME);
+						status = CommonMethods.isNotNull(hostName);
+					}
 				}
+			} else {
+				status = wifiClient != null;
 			}
 
 			if (status) {

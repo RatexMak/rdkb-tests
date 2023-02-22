@@ -39,6 +39,7 @@ import com.automatics.rdkb.utils.BroadBandPreConditionUtils;
 import com.automatics.rdkb.utils.BroadBandSystemUtils;
 import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.CommonUtils;
+import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.webpa.BroadBandWebPaUtils;
 import com.automatics.tap.AutomaticsTapApi;
 import com.automatics.test.AutomaticsTestBase;
@@ -143,10 +144,22 @@ public class BroadBandTelemetryPingTests extends AutomaticsTestBase {
 
 	    // Variable to hold the Device Model
 	    String deviceModelFromSettop = device.getModel();
-	    // Variable to hold the ecmMac
-	    String ecmMacFromBHC = ((Device) device).getEcmMac();
-	    // Variable to hold the DeviceId
-	    String deviceIdFromSettop = device.getSerialNumber();
+		// Variable to hold the ecmMac
+		String ecmMacFromBHC = ((Device) device).getEcmMac();
+
+		if (DeviceModeHandler.isRPIDevice(device)) {
+			ecmMacFromBHC = ((Device) device).getHostMacAddress();
+			LOGGER.info("mac address :" + ecmMacFromBHC);
+		}
+		// Variable to hold the DeviceId
+		String deviceIdFromSettop = device.getSerialNumber();
+		LOGGER.info("device ID : " + deviceIdFromSettop);
+
+		if (CommonMethods.isNull(deviceIdFromSettop)) {
+			deviceIdFromSettop = BroadBandWebPaUtils.getParameterValuesUsingWebPaOrDmcli(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAMETER_FOR_SERIAL_NUMBER);
+		}
+
 
 	    /**
 	     * VERIFY IF THE 'TELEMETRY2_0' PROCESS IS UP AFTER ENABLING TELEMETRY 2.0
@@ -347,8 +360,9 @@ public class BroadBandTelemetryPingTests extends AutomaticsTestBase {
 	    stepNumber = "s7";
 	    status = false;
 	    String deviceModel = null;
-	    errorMessage = "The DeviceModel obtained is-" + deviceModel + " expected model -" + deviceModelFromSettop;
-	    LOGGER.info("**********************************************************************************");
+		errorMessage = "The DeviceModel obtained is-" + deviceModel + " expected model -"
+				+ BroadbandPropertyFileHandler.getDeviceModelFromProperties(device);
+		LOGGER.info("**********************************************************************************");
 	    LOGGER.info(
 		    "STEP 7 : DESCRIPTION : Validate TR181 parameter Device.IP.Diagnostics.X_RDKCENTRAL-COM_PingTest.DeviceModel");
 	    LOGGER.info(
@@ -356,8 +370,9 @@ public class BroadBandTelemetryPingTests extends AutomaticsTestBase {
 	    LOGGER.info("STEP 7 : EXPECTED : The DeviceModel should be returned");
 	    LOGGER.info("**********************************************************************************");
 	    try {
-		status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-			BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_DEVICE_MODEL, deviceModelFromSettop);
+			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+					BroadBandWebPaConstants.WEBPA_PARAM_TO_GET_DEVICE_MODEL,
+					BroadbandPropertyFileHandler.getDeviceModelFromProperties(device));
 	    } catch (Exception e) {
 		errorMessage = e.getMessage();
 		LOGGER.error("Exception occurred while validating DeviceModel" + errorMessage);

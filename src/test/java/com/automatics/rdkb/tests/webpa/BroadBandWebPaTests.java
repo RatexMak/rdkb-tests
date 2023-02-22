@@ -660,7 +660,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			status = false;
 			status = BroadBandWebPaUtils.setVerifyWebPAInPolledDuration(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_TO_UPDATE_GLOBAL_XDNS_IPV6, WebPaDataTypes.STRING.getValue(),
-					BroadBandTestConstants.STRING_DEFAULT_GLOBAL_DNS_IPV6_VALUE, BroadBandTestConstants.THREE_MINUTES,
+					BroadbandPropertyFileHandler.getGlobalDNSIpv6Value(), BroadBandTestConstants.THREE_MINUTES,
 					BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS);
 			// Error message
 			errorMessage = "Failed to set Global DNS IPv6 value using webpa param 'Device.X_RDKCENTRAL-COM_XDNS.DefaultDeviceDnsIPv6'";
@@ -1009,7 +1009,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			errorMessage = "Unable to retrieve IPv4 address from nslookup response";
 			try {
 				response = tapEnv.executeCommandUsingSshConnection(
-						WhiteListServer.getInstance(tapEnv, BroadbandPropertyFileHandler.getReverseSshJumpServer()),
+						WhiteListServer.getInstance(tapEnv, "localhost"),
 						BroadBandCommonUtils.concatStringUsingStringBuffer(
 								BroadBandCommandConstants.CMD_NSLOOKUP_WITH_PATH_FOR_IPV4_ADDRESS,
 								BroadBandTestConstants.NSLOOKUP_FOR_FACEBOOK));
@@ -2253,12 +2253,18 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 2: EXPECTED : Rebooted device using WebPA successfully");
 			LOGGER.info("**********************************************************************************");
 
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device,
-					(CommonMethods.isAtomSyncAvailable(device, tapEnv)
-							? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
-							: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE + BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+			} else {
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device,
+						(CommonMethods.isAtomSyncAvailable(device, tapEnv)
+								? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
+								: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			}
 			status = BroadBandWiFiUtils.setWebPaParams(device,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_CONTROL_DEVICE_REBOOT, BroadBandTestConstants.DEVICE,
 					BroadBandTestConstants.CONSTANT_0);
@@ -2284,19 +2290,25 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 3: EXPECTED : Device rebooted successfully and verified 404 response during reboot");
 			LOGGER.info("**********************************************************************************");
 
-			if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS,
-					BroadBandTestConstants.CONSTANT_6)) {
-				errorMessage = "Failed to receive 404 response during reboot for webpa command";
-				webpaResponse = tapEnv.getTR69ParameterValuesUsingWebPA(device,
-						BroadBandWebPaConstants.TR69_PARAM_SERIAL_NUMBER);
-				if (null != webpaResponse) {
-					statusCode = webpaResponse.getStatusCode();
-					LOGGER.info("STATUS CODE: " + statusCode);
-					if (statusCode == HttpStatus.SC_NOT_FOUND) {
-						errorMessage = "Device did not come up after webpa reboot";
-						status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				if (CommonMethods.isSTBRebooted(tapEnv, device, BroadBandTestConstants.TEN_SECOND_IN_MILLIS,
+						BroadBandTestConstants.CONSTANT_6)) {
+					errorMessage = "Failed to receive 404 response during reboot for webpa command";
+					webpaResponse = tapEnv.getTR69ParameterValuesUsingWebPA(device,
+							BroadBandWebPaConstants.TR69_PARAM_SERIAL_NUMBER);
+					if (null != webpaResponse) {
+						statusCode = webpaResponse.getStatusCode();
+						LOGGER.info("STATUS CODE: " + statusCode);
+						LOGGER.info("STATUS MESSAGE: " + webpaResponse.getMessage());
+						if (statusCode == HttpStatus.SC_NOT_FOUND
+								|| webpaResponse.getMessage().contains(BroadBandTestConstants.STATUS_FAILED)) {
+							errorMessage = "Device did not come up after webpa reboot";
+							status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
+						}
 					}
 				}
+			} else {
+				status = CommonMethods.waitForEstbIpAcquisition(tapEnv, device);
 			}
 
 			if (status) {
@@ -2530,12 +2542,21 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 11: EXPECTED : Successfully simulated syseventd process crash");
 			LOGGER.info("**********************************************************************************");
 
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
-			tapEnv.executeCommandUsingSsh(device,
-					(CommonMethods.isAtomSyncAvailable(device, tapEnv)
-							? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
-							: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+				tapEnv.executeCommandUsingSsh(device, "su -c " + BroadBandTestConstants.DOUBLE_QUOTE
+						+ BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM + BroadBandTestConstants.DOUBLE_QUOTE);
+			} else {
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
+				tapEnv.executeCommandUsingSsh(device,
+						(CommonMethods.isAtomSyncAvailable(device, tapEnv)
+								? BroadBandCommandConstants.CMD_GET_ARMCONSOLELOGS_NVRAM
+								: BroadBandCommandConstants.CMD_GET_CONSOLELOGS_NVRAM));
+			}
 			status = CommonMethods.restartProcess(device, tapEnv, ProcessRestartOption.KILL_11,
 					BroadBandTestConstants.PROCESS_NAME_SYSEVENTD);
 
@@ -4060,8 +4081,9 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 5: ACTION : Factory reset the device and reactivate it.");
 			LOGGER.info("STEP 5: EXPECTED : Factory resetting the device should be successful.");
 			LOGGER.info("**********************************************************************************");
-			isFactoryReset = status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv,
-					device);
+//		    isFactoryReset = status = BroadBandCommonUtils.performFactoryResetAndWaitForWebPaProcessToUp(tapEnv,
+//		    device);
+			isFactoryReset = status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 			if (status) {
 				LOGGER.info("STEP 5: ACTUAL : Factory Resetting and Reactivating the device is succesful.");
 			} else {
@@ -4109,7 +4131,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_MAC_ADDRESS,
 					BroadBandWebPaConstants.WEBPA_PARAM_WIFICLIENT_SCHEMA };
 			String[] defaultvalues = new String[] { BroadBandTestConstants.FALSE, BroadBandTestConstants.STRING_ZERO,
-					BroadBandTestConstants.NULL_MAC_ADDRESS_WITHOUT_DELIMETER,
+					DeviceModeHandler.isRPIDevice(device) ? null
+							: BroadBandTestConstants.NULL_MAC_ADDRESS_WITHOUT_DELIMETER,
 					BroadBandTestConstants.WIFICLIENT_SCHEMA_TYPE };
 			status = BroadBandWebPaUtils.verifyWiFiClientDataModelDefaultValues(device, tapEnv, parameters,
 					defaultvalues);
@@ -4415,7 +4438,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				errorMessage = "Value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.ManageableNotification.Enable is not true by default";
 				status = response.equalsIgnoreCase(BroadBandTestConstants.TRUE);
 			}
-			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+			//tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM);
+			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PAMLOGS_NVRAM, BroadBandTestConstants.FIFTY_SECONDS_IN_MILLIS);
 			tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_GET_PARODUSLOGS_NVRAM);
 
 			if (status) {
@@ -6229,8 +6253,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 7: EXPECTED: Ping to the destination host should fail");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet is accessible even after adding the client to blocked list";
 			if (status) {
 				LOGGER.info(
@@ -6301,8 +6330,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 10: EXPECTED: Ping to the destination host should be successful");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet cannot accessible even after removing the client from blocked list";
 			if (status) {
 				LOGGER.info(
@@ -6412,8 +6446,13 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 14: EXPECTED: Ping to the destination host should fail");
 			LOGGER.info("################## Waiting for 90 seconds to reflect the changes ####################");
 			tapEnv.waitTill(BroadBandTestConstants.NINTY_SECOND_IN_MILLIS);
-			status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
-					BroadBandTestConstants.PING_TO_GOOGLE);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				status = !ConnectedNattedClientsUtils.verifyPingConnection(connectedDeviceActivated, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE);
+			} else {
+				status = !ConnectedNattedClientsUtils.verifyPingConnectionForIpv4(device, tapEnv,
+						BroadBandTestConstants.PING_TO_GOOGLE, connectedDeviceActivated);
+			}
 			errorMessage = "Internet is accessible even after adding the client to blocked list";
 			if (status) {
 				LOGGER.info(
@@ -8163,6 +8202,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			stepNumber++;
 			step = "S" + stepNumber;
 			status = false;
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 			if (!isBusinessDevice && !isDSL) {
 				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP " + stepNumber
@@ -8190,6 +8230,12 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.NA_MSG_FOR_RESIDENTIAL_CLASS_DEVICES, false);
 			}
+			} else {
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+						false);
+			}
+			
 			/**
 			 * Step 6 : Enable finger printing in device
 			 */
@@ -8681,6 +8727,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 
 			status = false;
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 			if (!isBusinessDevice && !isDSL) {
 				errorMessage = "Failed to verify MoCA logging telemetry is in disabled state after reset";
 				LOGGER.info("**********************************************************************************");
@@ -8701,6 +8748,24 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				}
 				LOGGER.info("**********************************************************************************");
 				tapEnv.updateExecutionStatus(device, testId, step, status, errorMessage, false);
+			} else {
+				while (stepNumber <= BroadBandTestConstants.CONSTANT_23) {
+					step = "s" + stepNumber;
+					errorMessage = "STEP " + stepNumber
+							+ "  Moca and wifi personizzation is not applicable for business class devices";
+					LOGGER.info("******************************************************************");
+					LOGGER.info("STEP " + stepNumber + ": ACTUAL :" + errorMessage);
+					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+					stepNumber++;
+
+				}
+			}
+		} else {
+			LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+			tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+					false);
+		}
 
 				/**
 				 * Step 23 : Verify wi-fi personalization status as true
@@ -8708,6 +8773,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				stepNumber++;
 				step = "S" + stepNumber;
 				status = false;
+				if (!isBusinessDevice && !isDSL) {
 				errorMessage = "Unable to verify wi-fi personalization status as true";
 				LOGGER.info("**********************************************************************************");
 				LOGGER.info("STEP " + stepNumber
@@ -8871,6 +8937,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				 * disabled after reset
 				 */
 				stepNumber++;
+				if (!DeviceModeHandler.isRPIDevice(device)) {
 				if (!isBusinessDevice) {
 					step = "S" + stepNumber;
 					status = false;
@@ -8902,6 +8969,12 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 							BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
 
 				}
+				} else {
+					LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+				}
+				
 				/**
 				 * Step 29 : Verify default CPU Memory fragmentation interval
 				 */
@@ -9294,6 +9367,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 			stepNumber++;
 			step = "S" + stepNumber;
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 			if (!isBusinessDevice && !isDSL) {
 				status = false;
 				LOGGER.info("**********************************************************************************");
@@ -9328,6 +9402,12 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
 			}
+			} else {
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE, errorMessage,
+						false);
+			}
+			
 			/**
 			 * Step 40 :Verification of Number of pings per server using the TR181
 			 * parameter-Device.SelfHeal.ConnectivityTest.X_RDKCENTRAL-COM_NumPingsPerServer
@@ -11065,6 +11145,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 
 			step = "S" + stepNumber;
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 			if (!isBusinessDevice && !isDSL) {
 				status = false;
 				errorMessage = "Unable to verify the MoCA status as enabled by default";
@@ -11091,6 +11172,11 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.NA_MSG_FOR_BUSINESS_CLASS_DEVICES, false);
 
+			}
+			} else {
+				LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
 
 			/**
@@ -11192,6 +11278,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			 */
 
 			step = "S" + stepNumber;
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 			if (!isBusinessDevice && !isDSL) {
 				status = false;
 				errorMessage = "Unable to verify the default value of Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.IPv6onMoCA.Enable as true ";
@@ -11222,7 +11309,12 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 				tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
 						BroadBandTestConstants.NA_MSG_FOR_RESIDENTIAL_CLASS_DEVICES, false);
 
-			}
+			}}
+			 else {
+					LOGGER.info("Not Applicable for RPi device Setup : skipping teststep...");
+					tapEnv.updateExecutionForAllStatus(device, testId, step, ExecutionStatus.NOT_APPLICABLE,
+							errorMessage, false);
+			 }
 
 			/**
 			 * STEP 97 : VERIFY DEFER FIRMWARE DOWNLOAD REBOOT DEFAULT VALUE
