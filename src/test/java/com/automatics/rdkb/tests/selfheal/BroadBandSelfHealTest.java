@@ -3279,7 +3279,7 @@ public class BroadBandSelfHealTest extends AutomaticsTestBase {
 				LOGGER.info("**********************************************************************************");
 				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+				LOGGER.info("STEP 5: ACTUAL : " + errorMessage);
 				LOGGER.info("**********************************************************************************");
 				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
 						errorMessage, false);
