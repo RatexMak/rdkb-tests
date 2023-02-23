@@ -6986,31 +6986,36 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 			status = false;
 			errorMessage = "The value of ParameterKey  is  not as expected.";
-
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify  the value of ParameterKey");
-			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa on "
-					+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : A non null value is expected");
-			LOGGER.info("**********************************************************************************");
-			try {
-				webPaResponse = tapEnv.executeWebPaCommand(device,
-						DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
-				status = CommonMethods.isNotNull(webPaResponse);
-				webpaResponseList.add(webPaResponse);
-			} catch (Exception e) {
-				errorMessage = errorMessage + e.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + ": ACTUAL : The expected value of "
-						+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString() + " is "
-						+ webPaResponse);
+			if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify  the value of ParameterKey");
+				LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa on "
+						+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : A non null value is expected");
+				LOGGER.info("**********************************************************************************");
+				try {
+					webPaResponse = tapEnv.executeWebPaCommand(device,
+							DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
+					status = CommonMethods.isNotNull(webPaResponse);
+					webpaResponseList.add(webPaResponse);
+				} catch (Exception e) {
+					errorMessage = errorMessage + e.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + ": ACTUAL : The expected value of "
+							+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString()
+							+ " is " + webPaResponse);
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				LOGGER.info("TR69 not implemented : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+						"TR69 related step", false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 
 			/**
 			 * Step 10 : Reboot the device and wait for ipacquisition
@@ -7056,8 +7061,7 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			LOGGER.info(
 					"STEP " + stepNumber + " EXPECTED : Factory reset should be successful and device should be Up ");
 			LOGGER.info("**********************************************************************************");
-			status = BroadBandCommonUtils.performFactoryResetWebPaByPassingTriggerTime(tapEnv, device,
-					BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS);
+			status = BroadBandCommonUtils.performFactoryResetWebPa(tapEnv, device);
 			if (status) {
 				isfactoryReset = status;
 				LOGGER.info("STEP " + stepNumber + " ACTUAL : successfully factory reset device and reactivated");
@@ -7428,34 +7432,39 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 			step = "S" + stepNumber;
 			status = false;
 			errorMessage = "The value of ParameterKey  is  not as expected.";
+			if (BroadbandPropertyFileHandler.isTr69Enabled()) {
+				LOGGER.info("**********************************************************************************");
+				LOGGER.info("STEP " + stepNumber
+						+ ": DESCRIPTION : Verify  the value of ParameterKey persist even after " + process);
+				LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa on "
+						+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
+				LOGGER.info("STEP " + stepNumber + ": EXPECTED : A non null value is expected");
+				LOGGER.info("**********************************************************************************");
+				try {
+					webPaResponse = tapEnv.executeWebPaCommand(device,
+							DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
+					status = CommonMethods.isNotNull(webPaResponse) && BroadBandCommonUtils.compareValues(
+							BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
+							String.valueOf(initialWebpaResponse.get(BroadBandTestConstants.CONSTANT_8)), webPaResponse);
+				} catch (Exception e) {
+					errorMessage = errorMessage + e.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP " + stepNumber + ": ACTUAL : The expected value of "
+							+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString()
+							+ " is " + webPaResponse);
+				} else {
+					LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				}
 
-			LOGGER.info("**********************************************************************************");
-			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : Verify  the value of ParameterKey persist even after "
-					+ process);
-			LOGGER.info("STEP " + stepNumber + ": ACTION : Execute webpa on "
-					+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
-			LOGGER.info("STEP " + stepNumber + ": EXPECTED : A non null value is expected");
-			LOGGER.info("**********************************************************************************");
-			try {
-				webPaResponse = tapEnv.executeWebPaCommand(device,
-						DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString());
-				status = CommonMethods.isNotNull(webPaResponse) && BroadBandCommonUtils.compareValues(
-						BroadBandTestConstants.CONSTANT_TXT_COMPARISON,
-						String.valueOf(initialWebpaResponse.get(BroadBandTestConstants.CONSTANT_8)), webPaResponse);
-			} catch (Exception e) {
-				errorMessage = errorMessage + e.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP " + stepNumber + ": ACTUAL : The expected value of "
-						+ DeviceManagementServerParams.DEVICE_MANAGEMENT_PARAMETER_KEY.getWebpa().toString() + " is "
-						+ webPaResponse);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage);
+				LOGGER.info("TR69 not implemented : skipping teststep...");
+				tapEnv.updateExecutionForAllStatus(device, testCaseId, step, ExecutionStatus.NOT_APPLICABLE,
+						"TR69 related step", false);
 			}
-
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testCaseId, step, status, errorMessage, false);
 		} catch (Exception e) {
 			errorMessage = errorMessage + e.getMessage();
 			LOGGER.error(errorMessage);
