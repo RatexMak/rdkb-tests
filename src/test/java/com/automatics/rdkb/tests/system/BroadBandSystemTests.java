@@ -5876,7 +5876,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 					"STEP 6: ACTION : Check console logs for logging on ZRAM enable using \"cat /rdklogs/logs/zram.log | grep zram\" command");
 			LOGGER.info("STEP 6: EXPECTED : ZRAM enable should be logged under cat /rdklogs/logs/zram.log");
 			LOGGER.info("**********************************************************************************");
-			if (DeviceModeHandler.isRPIDevice(device)) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 
 				response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 						? tapEnv.executeCommandOnAtom(device,
@@ -5907,7 +5907,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 7: ACTION : Check for the ZRAM partitions in the device using \"cat /proc/swaps\"");
 			LOGGER.info("STEP 7: EXPECTED : ZRAM partitions should be present in the device");
 			LOGGER.info("**********************************************************************************");
-			if (DeviceModeHandler.isRPIDevice(device)) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 						? tapEnv.executeCommandOnAtom(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION)
 						: tapEnv.executeCommandUsingSsh(device, BroadBandCommandConstants.CMD_TO_GET_ZRAM_PARTITION);
@@ -6064,7 +6064,7 @@ public class BroadBandSystemTests extends AutomaticsTestBase {
 			LOGGER.info("STEP 13: EXPECTED : ZRAM disable should be logged under cat /rdklogs/logs/zram.log");
 			LOGGER.info("**********************************************************************************");
 
-			if (DeviceModeHandler.isRPIDevice(device)) {
+			if (!DeviceModeHandler.isRPIDevice(device)) {
 				response = CommonMethods.isAtomSyncAvailable(device, tapEnv)
 						? tapEnv.executeCommandOnAtom(device,
 								BroadBandCommandConstants.CMD_TO_GREP_ENABLE_AND_DISABLE_ZRAM_LOG)
