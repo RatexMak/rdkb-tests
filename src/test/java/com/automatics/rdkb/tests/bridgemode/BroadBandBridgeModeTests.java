@@ -30,6 +30,7 @@ import com.automatics.rdkb.constants.RDKBTestConstants;
 import com.automatics.rdkb.constants.WebPaParamConstants.WebPaDataTypes;
 import com.automatics.rdkb.utils.BroadBandBridgeModeUtils;
 import com.automatics.rdkb.utils.BroadBandCommonUtils;
+import com.automatics.rdkb.utils.BroadbandPropertyFileHandler;
 import com.automatics.rdkb.utils.DeviceModeHandler;
 import com.automatics.rdkb.utils.moca.MocaUtils;
 import com.automatics.rdkb.utils.snmp.BroadBandSnmpMib;
@@ -634,453 +635,468 @@ public class BroadBandBridgeModeTests extends AutomaticsTestBase {
 			LOGGER.info("ENDING TEST CASE: " + testCaseId);
 		}
 	}
-	
-    /**
-     * Test script to validate basic WiFi parameters on router mode transition
-     * 
-     * <ol>
-     * <li>Verify dumping the Ipv4 and Ipv6 tables to local files.</li>
-     * <li>Verify getting erouter0 Ipv4 and Ipv6 addresses and save for future validation.</li>
-     * <li>Verify enabling Bridge mode using WebPa.</li>
-     * <li>Verify whether Bridge mode is enabled via SNMP.</li>
-     * <li>Verify erouter0 Ipv4 and Ipv6 addresses with step 2 results.</li>
-     * <li>Verify brlan0 configuration in Bridge mode.</li>
-     * <li>Verify disabling Bridge mode using WebPa.</li>
-     * <li>Verify whether Bridge mode is disabled via SNMP.</li>
-     * <li>Verify Ip tables after Bridge Mode to Router transition.</li>
-     * <li>Verify brlan0 configuration in Router mode.</li>
-     * <li>Verify setting device in LAN Mode as currently in Bridge Mode.</li>
-     * <li>Verify deleting all the created files in /tmp folder.</li>
-     * 
-     * @param device
-     * 
-     * @author Revanth K, Gnanaprakasham S
-     * @refactor Athira
-     */
 
-    @Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
-    @TestDetails(testUID = "TC-RDKB-BRIDGE-MODE-1003")
-    public void testToVerifyRoutingFunctionalitiesAcrossModeTranisitions(Dut device) {
+	/**
+	 * Test script to validate basic WiFi parameters on router mode transition
+	 * 
+	 * <ol>
+	 * <li>Verify dumping the Ipv4 and Ipv6 tables to local files.</li>
+	 * <li>Verify getting erouter0 Ipv4 and Ipv6 addresses and save for future
+	 * validation.</li>
+	 * <li>Verify enabling Bridge mode using WebPa.</li>
+	 * <li>Verify whether Bridge mode is enabled via SNMP.</li>
+	 * <li>Verify erouter0 Ipv4 and Ipv6 addresses with step 2 results.</li>
+	 * <li>Verify brlan0 configuration in Bridge mode.</li>
+	 * <li>Verify disabling Bridge mode using WebPa.</li>
+	 * <li>Verify whether Bridge mode is disabled via SNMP.</li>
+	 * <li>Verify Ip tables after Bridge Mode to Router transition.</li>
+	 * <li>Verify brlan0 configuration in Router mode.</li>
+	 * <li>Verify setting device in LAN Mode as currently in Bridge Mode.</li>
+	 * <li>Verify deleting all the created files in /tmp folder.</li>
+	 * 
+	 * @param device
+	 * 
+	 * @author Revanth K, Gnanaprakasham S
+	 * @refactor Athira
+	 */
 
-	// Variable declaration starts
-	boolean status = false;
-	String testId = "TC-RDKB-BRIDGE-MODE-003";
-	String testStepNumber = "s1";
-	String response = null;
-	String errorMessage = "Not able to dump Ipv4 table and Ipv6 table in local files.";
-	String erouter0Ipv6AddressInRouterMode = null;
-	String erouter0Ipv4AddressInRouterMode = null;
-	String erouter0Ipv4AddressInBridgeMode = null;
-	String erouter0Ipv6AddressInBridgeMode = null;
-	long startTime = 0L;
-	// Variable declaration ends
+	@Test(dataProvider = DataProviderConstants.PARALLEL_DATA_PROVIDER, dataProviderClass = AutomaticsTapApi.class, alwaysRun = true, enabled = true)
+	@TestDetails(testUID = "TC-RDKB-BRIDGE-MODE-1003")
+	public void testToVerifyRoutingFunctionalitiesAcrossModeTranisitions(Dut device) {
 
-	try {
+		// Variable declaration starts
+		boolean status = false;
+		String testId = "TC-RDKB-BRIDGE-MODE-003";
+		String testStepNumber = "s1";
+		String response = null;
+		String errorMessage = "Not able to dump Ipv4 table and Ipv6 table in local files.";
+		String erouter0Ipv6AddressInRouterMode = null;
+		String erouter0Ipv4AddressInRouterMode = null;
+		String erouter0Ipv4AddressInBridgeMode = null;
+		String erouter0Ipv6AddressInBridgeMode = null;
+		long startTime = 0L;
+		// Variable declaration ends
 
-	    LOGGER.info("#######################################################################################");
-	    LOGGER.info("STARTING TEST CASE: TC-RDKB-BRIDGE-MODE-1003");
-	    LOGGER.info("TEST DESCRIPTION: Test to verify routing functionalities on mode transitions.");
-	    LOGGER.info("TEST STEPS : ");
-	    LOGGER.info("1. Verify dumping the Ipv4 and Ipv6 tables to local files.");
-	    LOGGER.info("2. Verify getting erouter0 Ipv4 and Ipv6 addresses and save for future validation.");
-	    LOGGER.info("3. Verify enabling Bridge mode using WebPa.");
-	    LOGGER.info("4. Verify whether Bridge mode is enabled via SNMP.");
-	    LOGGER.info("5. Verify erouter0 Ipv4 and Ipv6 addresses with step 2 results.");
-	    LOGGER.info("6. Verify brlan0 configuration in Bridge mode.");
-	    LOGGER.info("7. Verify disabling Bridge mode using WebPa.");
-	    LOGGER.info("8. Verify whether Bridge mode is disabled via SNMP.");
-	    LOGGER.info("9. Verify Ip tables after Bridge Mode to Router transition.");
-	    LOGGER.info("10. Verify brlan0 configuration in Router mode.");
-	    LOGGER.info("POST CONDITION 1. Verify setting device in LAN Mode as currently in Bridge Mode.");
-	    LOGGER.info("POST CONDITION 2. Verify deleting all the created files in /tmp folder.");
-	    LOGGER.info("#######################################################################################");
-
-	    LOGGER.info("*******************************************************************************************");
-	    LOGGER.info("STEP 1:DESCRITPION: Verify dumping the Ipv4 and Ipv6 tables to local files.");
-	    LOGGER.info(
-		    "STEP 1: ACTION: SSH the device and Execute the following commands: 'iptables-save > /tmp/ipv4tableinitial' & 'ip6tables-save > /tmp/ipv6tableinitial'.");
-	    LOGGER.info(
-		    "STEP 1: EXPECTED: Results of the commands must be saved saved successfully without any issue.");
-	    LOGGER.info("*******************************************************************************************");
-	    try {
-		status = BroadBandCommonUtils.dumpIpTablesToGivenLocation(device, tapEnv,
-			BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV4_TABLE_RULES,
-			BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV6_TABLE_RULES);
-	    } catch (Exception exception) {
-		errorMessage = errorMessage
-			+ " Exception occurred while dumping the Ipv4 and Ipv6 tables to local files-> "
-			+ exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP 1: ACTUAL : Dumped initial Ipv4 and Ipv6 tables to local files successfully.");
-	    } else {
-		LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    testStepNumber = "s2";
-	    errorMessage = "Not able to get the erouter Ipv4 and Ipv6 address from device using '/sbin/ifconfig erouter0' command.";
-	    status = false;
-	    LOGGER.info("*******************************************************************************************");
-	    LOGGER.info(
-		    "STEP 2: DESCRITPION: Verify getting erouter0 Ipv4 and Ipv6 addresses and save for future validation.");
-	    LOGGER.info(
-		    "STEP 2: ACTION: SSH the device and Execute the following command: '/sbin/ifconfig erouter0\' and get Ipv4 & Ipv6 addresses.");
-	    LOGGER.info("STEP 2: EXPECTED: erouter0 Ipv4 and Ipv6 addresses must be saved successfully.");
-	    LOGGER.info("*******************************************************************************************");
-	    try {
-		erouter0Ipv4AddressInRouterMode = CommonMethods.getErouter0ipv4Address(device, tapEnv);
-		erouter0Ipv6AddressInRouterMode = CommonMethods.getErouter0ipv6Address(device, tapEnv);
-		LOGGER.info("erouter0 Ipv4 Address In Router Mode: " + erouter0Ipv4AddressInRouterMode);
-		LOGGER.info("erouter0 Ipv6 Address In Router Mode: " + erouter0Ipv6AddressInRouterMode);
-		status = CommonMethods.isNotNull(erouter0Ipv4AddressInRouterMode)
-			&& CommonMethods.isNotNull(erouter0Ipv6AddressInRouterMode);
-	    } catch (TestException exception) {
-		errorMessage = errorMessage + " Exception occurred while getting erouter Ipv64 and Ipv4 addresses-> "
-			+ exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP 2: ACTUAL : Successfully obtained erouter Ipv4 and Ipv6 addresses from the device.");
-	    } else {
-		LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-
-	    testStepNumber = "s3";
-	    status = false;
-	    errorMessage = "Not able to change the device Lan Mode to Bridge Mode.";
-	    LOGGER.info(
-		    "************************************************************************************************");
-	    LOGGER.info("STEP 3:DESCRITPION: Verify enabling Bridge mode using WebPa.");
-	    LOGGER.info(
-		    "STEP 3: ACTION: Execute the Webpa Set command for following param: Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode and set value as 'bridge-static'.");
-	    LOGGER.info("STEP 3: EXPECTED: Device must be set in Bridge Mode.");
-	    LOGGER.info(
-		    "************************************************************************************************");
-
-	    try {
-		status = BroadBandCommonUtils.setDeviceInBridgeStaticModeStatusUsingWebPaCommand(tapEnv, device);
-
-	    } catch (TestException exception) {
-		errorMessage = errorMessage + "Exception occurred while setting device Lan Mode to Bridge Mode => "
-			+ exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP 3: ACTUAL : Device Lan Mode is changed to Bridge Mode successfully.");
-	    } else {
-		LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    testStepNumber = "s4";
-	    status = false;
-	    errorMessage = "Bridge mode is not enabled even after 3 minutes of changing the device to bridge mode.";
-	    LOGGER.info(
-		    "************************************************************************************************");
-	    LOGGER.info("STEP 4: DESCRIPTION: Verify whether Bridge mode is enabled via SNMP.");
-	    LOGGER.info("STEP 4: ACTION: Execute SNMP Get command for OID: 1.3.6.1.4.1.17270.50.2.3.2.1.1.32");
-	    LOGGER.info("STEP 4: EXPECTED: SNMP output should be '1'.");
-	    LOGGER.info(
-		    "************************************************************************************************");
-	    startTime = System.currentTimeMillis();
-	    do {
 		try {
-		    status = BroadBandSnmpUtils.performSnmpWalkAndVerify(tapEnv, device,
-			    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(),
-			    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex(),
-			    BroadBandTestConstants.STRING_VALUE_ONE);
-		} catch (TestException exception) {
-		    errorMessage = errorMessage + exception.getMessage();
-		    LOGGER.error(errorMessage);
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS && !status
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
-	    if (status) {
-		LOGGER.info("STEP 4: ACTUAL : Device Lan Mode as Bridge Mode verified successfully via SNMP.");
-	    } else {
-		LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
 
-	    testStepNumber = "s5";
-	    status = false;
-	    errorMessage = "Cross verification of erouter0 Ipv4 and Ipv6 addresses with step 2 results failed.";
-	    LOGGER.info("*******************************************************************************************");
-	    LOGGER.info("STEP 5: DESCRIPTION: Verify erouter0 Ipv4 and Ipv6 addresses with step 2 results.");
-	    LOGGER.info(
-		    "STEP 5: ACTION: SSH the device and Execute the following command: '/sbin/ifconfig erouter0\' and get Ipv4 & Ipv6 addresses.");
-	    LOGGER.info(
-		    "STEP 5: EXPECTED: erouter0 Ipv4 and Ipv6 addresses must be same as they are obtained in step 2.");
-	    LOGGER.info("*******************************************************************************************");
-	    try {
-		erouter0Ipv4AddressInBridgeMode = CommonMethods.getErouter0ipv4Address(device, tapEnv);
-		LOGGER.info("erouter0 Ipv4 Address In Bridge Mode: " + erouter0Ipv4AddressInBridgeMode);
-		erouter0Ipv6AddressInBridgeMode = CommonMethods.getErouter0ipv6Address(device, tapEnv);
-		LOGGER.info("erouter0 Ipv6 Address In Bridge Mode: " + erouter0Ipv6AddressInBridgeMode);
-		status = CommonMethods.patternMatcher(erouter0Ipv4AddressInBridgeMode, erouter0Ipv4AddressInRouterMode)
-			&& CommonMethods.patternMatcher(erouter0Ipv6AddressInBridgeMode,
-				erouter0Ipv6AddressInRouterMode);
-	    } catch (Exception exception) {
-		errorMessage = errorMessage + "Exception occurred while verifying erouter0 Ipv4 and Ipv6 addresses  => "
-			+ exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info(
-			"STEP 5: ACTUAL : erouter0 Ipv4 and Ipv6 addresses are verified successfully in Bridge Mode.");
-	    } else {
-		LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STARTING TEST CASE: TC-RDKB-BRIDGE-MODE-1003");
+			LOGGER.info("TEST DESCRIPTION: Test to verify routing functionalities on mode transitions.");
+			LOGGER.info("TEST STEPS : ");
+			LOGGER.info("1. Verify dumping the Ipv4 and Ipv6 tables to local files.");
+			LOGGER.info("2. Verify getting erouter0 Ipv4 and Ipv6 addresses and save for future validation.");
+			LOGGER.info("3. Verify enabling Bridge mode using WebPa.");
+			LOGGER.info("4. Verify whether Bridge mode is enabled via SNMP.");
+			LOGGER.info("5. Verify erouter0 Ipv4 and Ipv6 addresses with step 2 results.");
+			LOGGER.info("6. Verify brlan0 configuration in Bridge mode.");
+			LOGGER.info("7. Verify disabling Bridge mode using WebPa.");
+			LOGGER.info("8. Verify whether Bridge mode is disabled via SNMP.");
+			LOGGER.info("9. Verify Ip tables after Bridge Mode to Router transition.");
+			LOGGER.info("10. Verify brlan0 configuration in Router mode.");
+			LOGGER.info("POST CONDITION 1. Verify setting device in LAN Mode as currently in Bridge Mode.");
+			LOGGER.info("POST CONDITION 2. Verify deleting all the created files in /tmp folder.");
+			LOGGER.info("#######################################################################################");
 
-	    testStepNumber = "s6";
-	    status = false;
-	    errorMessage = "brlan0 configuration has IPv4 and IPv6 address fields in Bridge Mode.";
-	    LOGGER.info("*******************************************************************************************");
-	    LOGGER.info("STEP 6: DESCRIPTION: Verify brlan0 configuration in Bridge mode.");
-	    LOGGER.info("STEP 6: ACTION: SSH the device and Execute the following command: 'ifconfig brlan0'.");
-	    LOGGER.info(
-		    "STEP 6: EXPECTED: There should not be any Ip addresses associated with brlan0 interface in bridge mode.");
-	    LOGGER.info("*******************************************************************************************");
-	    if (!DeviceModeHandler.isFibreDevice(device)) {
-		try {
-		    status = !BroadBandCommonUtils.validateBrlan0Configuration(device, tapEnv);
-		} catch (TestException exception) {
-		    errorMessage = errorMessage
-			    + "Exception occured while verifying IPv4 and IPv6 address in brlan0 configuration in Bridge Mode  => "
-			    + exception.getMessage();
-		    LOGGER.error(errorMessage);
-		}
-		if (status) {
-		    LOGGER.info(
-			    "STEP 6: ACTUAL : erouter0 Ipv4 and Ipv6 addresses in brlan0 configuration are verified successfully in Bridge Mode.");
-		} else {
-		    LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-	    } else {
-		errorMessage = "skippig brlan0 bridge mode validations as it is a Fibre device";
-		LOGGER.info("STEP 6: ACTUAL : " + errorMessage);
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-			errorMessage, false);
-	    }
-
-	    testStepNumber = "s7";
-	    status = false;
-	    boolean isSetToRouterMode = false;
-	    errorMessage = "Not able to change the device Lan Mode to Router Mode.";
-	    LOGGER.info(
-		    "************************************************************************************************");
-	    LOGGER.info("STEP 7: DESCRIPTION: Verify disabling Bridge mode using WebPa.");
-	    LOGGER.info(
-		    "STEP 7: ACTION: Execute the Webpa Set command for following param: Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode and set to value 'router'.");
-	    LOGGER.info("STEP 7: EXPECTED: Device must be set to Router Mode.");
-	    LOGGER.info(
-		    "************************************************************************************************");
-	    isSetToRouterMode = BroadBandWiFiUtils.setWebPaParams(device,
-		    BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS,
-		    BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER, WebPaDataTypes.STRING.getValue());
-	    if (isSetToRouterMode) {
-		startTime = System.currentTimeMillis();
-		do {
-		    try {
-			status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-				BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS,
-				BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER);
-		    } catch (TestException exception) {
-			errorMessage = errorMessage
-				+ "Exception occurred while setting device Lan Mode to Router Mode => "
-				+ exception.getMessage();
-			LOGGER.error(errorMessage);
-		    }
-		} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS
-			&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
-				BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
-	    }
-	    if (status) {
-		LOGGER.info("STEP 7: ACTUAL : Device Lan Mode is changed to Router Mode successfully.");
-	    } else {
-		LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    testStepNumber = "s8";
-	    status = false;
-	    errorMessage = "Bridge mode is not disabled even after 3 minutes of changing the device to bridge mode.";
-	    LOGGER.info(
-		    "************************************************************************************************");
-	    LOGGER.info("STEP 8: DESCRIPTION : Verify whether Bridge mode is disabled via SNMP.");
-	    LOGGER.info("STEP 8: ACTION : Execute SNMP Get command for OID: 1.3.6.1.4.1.17270.50.2.3.2.1.1.32");
-	    LOGGER.info("STEP 8: EXPECTED : SNMP output should be '2'.");
-	    LOGGER.info("********************************************************************************************");
-	    startTime = System.currentTimeMillis();
-	    do {
-		try {
-		    status = BroadBandSnmpUtils.performSnmpWalkAndVerify(tapEnv, device,
-			    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(),
-			    BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex(),
-			    BroadBandTestConstants.STRING_VALUE_TWO);
-		} catch (TestException exception) {
-		    errorMessage = errorMessage + exception.getMessage();
-		    LOGGER.error(errorMessage);
-		}
-	    } while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS && !status
-		    && BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
-	    if (status) {
-		LOGGER.info("STEP 8: ACTUAL : Device Lan Mode as Router Mode verified successfully via SNMP.");
-	    } else {
-		LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-
-	    testStepNumber = "s9";
-	    status = false;
-	    errorMessage = "Initial & Final Ip tables are not same after Bridge Mode to router transition.";
-	    LOGGER.info("*******************************************************************************************");
-	    LOGGER.info("STEP 9: DESCRIPTION: Verify Ip tables after Bridge Mode to Router transition.");
-	    LOGGER.info("STEP 9: ACTION: Get the current Ip table rules and compare them with the previous tables.");
-	    LOGGER.info("STEP 9: EXPECTED: Ip tables must be same as they are obtained in Step1.");
-	    LOGGER.info("*******************************************************************************************");
-	    startTime = System.currentTimeMillis();
-	    if (!DeviceModeHandler.isFibreDevice(device)) {
-		do {
-		    try {
-			status = BroadBandCommonUtils.getIptableRulesAndVerify(device, tapEnv,
-				BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV4_TABLE_RULES,
-				BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV6_TABLE_RULES);
-		    } catch (Exception exception) {
-			errorMessage = errorMessage
-				+ "Exception occurred while verifying Ip tables after Bridge Mode to router transition => "
-				+ exception.getMessage();
-			LOGGER.error(errorMessage);
-		    }
-		} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
-			&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
-				BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
-		if (status) {
-		    LOGGER.info(
-			    "STEP 9: ACTUAL : Initial & Final Ip tables are same after Bridge Mode to router transition.");
-		} else {
-		    LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
-		}
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
-	    } else {
-		errorMessage = "skippig brlan0 bridge mode validations as it is a Fibre device";
-		LOGGER.info("STEP 9: ACTUAL : " + errorMessage);
-		LOGGER.info("**********************************************************************************");
-		tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
-			errorMessage, false);
-	    }
-
-	    testStepNumber = "s10";
-	    status = false;
-	    errorMessage = "brlan0 configuration has not IPv4 and IPv6 address fields in Router Mode.";
-	    LOGGER.info("*******************************************************************************************");
-	    LOGGER.info("STEP 10: DESCRIPTION: Verify brlan0 configuration in Router mode.");
-	    LOGGER.info("STEP 10: ACTION: SSH the device and Execute the following command: 'ifconfig brlan0'.");
-	    LOGGER.info("STEP 10: EXPECTED: brlan0 interface must have valid Ip addresses.");
-	    LOGGER.info("*******************************************************************************************");
-	    response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.IFCONFIG_BRLAN);
-	    LOGGER.info("Obtained brlan0 configuration from ifconfig command : " + response);
-	    try {
-		status = BroadBandCommonUtils.validateBrlan0Configuration(device, tapEnv);
-	    } catch (TestException exception) {
-		errorMessage = errorMessage
-			+ "Exception occured while verifying IPv4 and IPv6 addresses in brlan0 configuration in Router Mode. => "
-			+ exception.getMessage();
-		LOGGER.error(errorMessage);
-	    }
-	    if (status) {
-		LOGGER.info("STEP 10: ACTUAL : brlan0 configuration has IPv4 and IPv6 address fields in Router Mode.");
-	    } else {
-		LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
-	    }
-	    LOGGER.info("**********************************************************************************");
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
-	} catch (Exception exception) {
-	    errorMessage = "Exception occurred during execution : " + exception.getMessage();
-	    LOGGER.error(errorMessage);
-	    tapEnv.updateExecutionStatus(device, testId, testStepNumber, false, errorMessage, true);
-	} finally {
-	    LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
-	    LOGGER.info("POST-CONDITION STEPS");
-	    if (BroadBandCommonUtils.verifyDeviceInBridgeStaticModeStatusUsingWebPaCommand(tapEnv, device)) {
-		status = false;
-		errorMessage = "Unable to set the device back in Router Mode.";
-		LOGGER.info("#######################################################################################");
-		LOGGER.info(
-			"POST-CONDITION 1: DESCRIPTION : Verify setting device in LAN Mode as currently in Bridge Mode.");
-		LOGGER.info(
-			"POST-CONDITION 1: ACTION : Execute the Webpa Set command for following param: Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode and set value as 'router'.");
-		LOGGER.info("POST-CONDITION 1: EXPECTED : Device must be set in Router Mode.");
-		LOGGER.info("#######################################################################################");
-		if (BroadBandCommonUtils.verifyDeviceInBridgeStaticModeStatusUsingWebPaCommand(tapEnv, device)) {
-		    status = false;
-		    errorMessage = "Unable to set the device back in Router Mode.";
-		    try {
-			status = BroadBandCommonUtils.setDeviceInRouterModeStatusUsingWebPaCommand(tapEnv, device);
-		    } catch (Exception exception) {
-			errorMessage = errorMessage + "Exception occured while setting device in LAN Mode => "
-				+ exception.getMessage();
-		    }
-		    if (status) {
-			LOGGER.info("POST-CONDITION 1: ACTUAL : Device is set in Router Mode successfully.");
-			LOGGER.info("Waiting For 3 minutes after Changing Device to Router Mode.");
-			tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTES);
-		    } else {
-			LOGGER.error("POST-CONDITION 1: ACTUAL : " + errorMessage);
-		    }
-		}
-		status = false;
-		errorMessage = "Unable to delete files created in /tmp folder.";
-		LOGGER.info("#######################################################################################");
-		LOGGER.info("POST-CONDITION 2: DESCRIPTION : Verify deleting all the created files in /tmp folder.");
-		LOGGER.info(
-			"POST-CONDITION 2: ACTION : SSH the device and Execute 'rm' command for all the created files in /tmp folder.");
-		LOGGER.info("POST-CONDITION 2: EXPECTED : All files created in /tmp folder must be deleted.");
-		LOGGER.info("#######################################################################################");
-		try {
-		    tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
-			    RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
-			    BroadBandTestConstants.FILE_NAME_TO_STORE_FINAL_IPV6_TABLE_RULES));
-		    tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
-			    RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
-			    BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV6_TABLE_RULES));
-		    tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
-			    RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
-			    BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV4_TABLE_RULES));
-		    tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
-			    RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
-			    BroadBandTestConstants.FILE_NAME_TO_STORE_FINAL_IPV4_TABLE_RULES));
-		    status = true;
-		    if (status) {
+			LOGGER.info("*******************************************************************************************");
+			LOGGER.info("STEP 1:DESCRITPION: Verify dumping the Ipv4 and Ipv6 tables to local files.");
 			LOGGER.info(
-				"POST-CONDITION 2: ACTUAL : All files created in /tmp folder deleted successfully.");
-		    } else {
-			LOGGER.error("POST-CONDITION 2: ACTUAL : " + errorMessage);
-		    }
+					"STEP 1: ACTION: SSH the device and Execute the following commands: 'iptables-save > /tmp/ipv4tableinitial' & 'ip6tables-save > /tmp/ipv6tableinitial'.");
+			LOGGER.info(
+					"STEP 1: EXPECTED: Results of the commands must be saved saved successfully without any issue.");
+			LOGGER.info("*******************************************************************************************");
+			try {
+				status = BroadBandCommonUtils.dumpIpTablesToGivenLocation(device, tapEnv,
+						BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV4_TABLE_RULES,
+						BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV6_TABLE_RULES);
+			} catch (Exception exception) {
+				errorMessage = errorMessage
+						+ " Exception occurred while dumping the Ipv4 and Ipv6 tables to local files-> "
+						+ exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP 1: ACTUAL : Dumped initial Ipv4 and Ipv6 tables to local files successfully.");
+			} else {
+				LOGGER.error("STEP 1: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			testStepNumber = "s2";
+			errorMessage = "Not able to get the erouter Ipv4 and Ipv6 address from device using '/sbin/ifconfig erouter0' command.";
+			status = false;
+			LOGGER.info("*******************************************************************************************");
+			LOGGER.info(
+					"STEP 2: DESCRITPION: Verify getting erouter0 Ipv4 and Ipv6 addresses and save for future validation.");
+			LOGGER.info(
+					"STEP 2: ACTION: SSH the device and Execute the following command: '/sbin/ifconfig erouter0\' and get Ipv4 & Ipv6 addresses.");
+			LOGGER.info("STEP 2: EXPECTED: erouter0 Ipv4 and Ipv6 addresses must be saved successfully.");
+			LOGGER.info("*******************************************************************************************");
+			try {
+				erouter0Ipv4AddressInRouterMode = CommonMethods.getErouter0ipv4Address(device, tapEnv);
+				if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+					erouter0Ipv6AddressInRouterMode = CommonMethods.getErouter0ipv6Address(device, tapEnv);
+				}
+				LOGGER.info("erouter0 Ipv4 Address In Router Mode: " + erouter0Ipv4AddressInRouterMode);
+				LOGGER.info("erouter0 Ipv6 Address In Router Mode: " + erouter0Ipv6AddressInRouterMode);
+				if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+					status = CommonMethods.isNotNull(erouter0Ipv4AddressInRouterMode)
+							&& CommonMethods.isNotNull(erouter0Ipv6AddressInRouterMode);
+				} else {
+					status = CommonMethods.isNotNull(erouter0Ipv4AddressInRouterMode);
+				}
+			} catch (TestException exception) {
+				errorMessage = errorMessage + " Exception occurred while getting erouter Ipv64 and Ipv4 addresses-> "
+						+ exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP 2: ACTUAL : Successfully obtained erouter Ipv4 and Ipv6 addresses from the device.");
+			} else {
+				LOGGER.error("STEP 2: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			testStepNumber = "s3";
+			status = false;
+			errorMessage = "Not able to change the device Lan Mode to Bridge Mode.";
+			LOGGER.info(
+					"************************************************************************************************");
+			LOGGER.info("STEP 3:DESCRITPION: Verify enabling Bridge mode using WebPa.");
+			LOGGER.info(
+					"STEP 3: ACTION: Execute the Webpa Set command for following param: Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode and set value as 'bridge-static'.");
+			LOGGER.info("STEP 3: EXPECTED: Device must be set in Bridge Mode.");
+			LOGGER.info(
+					"************************************************************************************************");
+
+			try {
+				status = BroadBandCommonUtils.setDeviceInBridgeStaticModeStatusUsingWebPaCommand(tapEnv, device);
+
+			} catch (TestException exception) {
+				errorMessage = errorMessage + "Exception occurred while setting device Lan Mode to Bridge Mode => "
+						+ exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP 3: ACTUAL : Device Lan Mode is changed to Bridge Mode successfully.");
+			} else {
+				LOGGER.error("STEP 3: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			testStepNumber = "s4";
+			status = false;
+			errorMessage = "Bridge mode is not enabled even after 3 minutes of changing the device to bridge mode.";
+			LOGGER.info(
+					"************************************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION: Verify whether Bridge mode is enabled via SNMP.");
+			LOGGER.info("STEP 4: ACTION: Execute SNMP Get command for OID: 1.3.6.1.4.1.17270.50.2.3.2.1.1.32");
+			LOGGER.info("STEP 4: EXPECTED: SNMP output should be '1'.");
+			LOGGER.info(
+					"************************************************************************************************");
+			startTime = System.currentTimeMillis();
+			do {
+				try {
+					status = BroadBandSnmpUtils.performSnmpWalkAndVerify(tapEnv, device,
+							BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(),
+							BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex(),
+							BroadBandTestConstants.STRING_VALUE_ONE);
+				} catch (TestException exception) {
+					errorMessage = errorMessage + exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.THREE_MINUTE_IN_MILLIS && !status
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+			if (status) {
+				LOGGER.info("STEP 4: ACTUAL : Device Lan Mode as Bridge Mode verified successfully via SNMP.");
+			} else {
+				LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			testStepNumber = "s5";
+			status = false;
+			errorMessage = "Cross verification of erouter0 Ipv4 and Ipv6 addresses with step 2 results failed.";
+			LOGGER.info("*******************************************************************************************");
+			LOGGER.info("STEP 5: DESCRIPTION: Verify erouter0 Ipv4 and Ipv6 addresses with step 2 results.");
+			LOGGER.info(
+					"STEP 5: ACTION: SSH the device and Execute the following command: '/sbin/ifconfig erouter0\' and get Ipv4 & Ipv6 addresses.");
+			LOGGER.info(
+					"STEP 5: EXPECTED: erouter0 Ipv4 and Ipv6 addresses must be same as they are obtained in step 2.");
+			LOGGER.info("*******************************************************************************************");
+			try {
+				erouter0Ipv4AddressInBridgeMode = CommonMethods.getErouter0ipv4Address(device, tapEnv);
+				LOGGER.info("erouter0 Ipv4 Address In Bridge Mode: " + erouter0Ipv4AddressInBridgeMode);
+				if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+					erouter0Ipv6AddressInBridgeMode = CommonMethods.getErouter0ipv6Address(device, tapEnv);
+				}
+				LOGGER.info("erouter0 Ipv6 Address In Bridge Mode: " + erouter0Ipv6AddressInBridgeMode);
+				if (BroadbandPropertyFileHandler.isIpv6Enabled()) {
+					status = CommonMethods.patternMatcher(erouter0Ipv4AddressInBridgeMode,
+							erouter0Ipv4AddressInRouterMode)
+							&& CommonMethods.patternMatcher(erouter0Ipv6AddressInBridgeMode,
+									erouter0Ipv6AddressInRouterMode);
+				} else {
+					status = CommonMethods.patternMatcher(erouter0Ipv4AddressInBridgeMode,
+							erouter0Ipv4AddressInRouterMode);
+				}
+			} catch (Exception exception) {
+				errorMessage = errorMessage + "Exception occurred while verifying erouter0 Ipv4 and Ipv6 addresses  => "
+						+ exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info(
+						"STEP 5: ACTUAL : erouter0 Ipv4 and Ipv6 addresses are verified successfully in Bridge Mode.");
+			} else {
+				LOGGER.error("STEP 5: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+
+			testStepNumber = "s6";
+			status = false;
+			errorMessage = "brlan0 configuration has IPv4 and IPv6 address fields in Bridge Mode.";
+			LOGGER.info("*******************************************************************************************");
+			LOGGER.info("STEP 6: DESCRIPTION: Verify brlan0 configuration in Bridge mode.");
+			LOGGER.info("STEP 6: ACTION: SSH the device and Execute the following command: 'ifconfig brlan0'.");
+			LOGGER.info(
+					"STEP 6: EXPECTED: There should not be any Ip addresses associated with brlan0 interface in bridge mode.");
+			LOGGER.info("*******************************************************************************************");
+			if (!DeviceModeHandler.isFibreDevice(device)) {
+				try {
+					status = !BroadBandCommonUtils.validateBrlan0Configuration(device, tapEnv);
+				} catch (TestException exception) {
+					errorMessage = errorMessage
+							+ "Exception occured while verifying IPv4 and IPv6 address in brlan0 configuration in Bridge Mode  => "
+							+ exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info(
+							"STEP 6: ACTUAL : erouter0 Ipv4 and Ipv6 addresses in brlan0 configuration are verified successfully in Bridge Mode.");
+				} else {
+					LOGGER.error("STEP 6: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
+			} else {
+				errorMessage = "skippig brlan0 bridge mode validations as it is a Fibre device";
+				LOGGER.info("STEP 6: ACTUAL : " + errorMessage);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
+
+			testStepNumber = "s7";
+			status = false;
+			boolean isSetToRouterMode = false;
+			errorMessage = "Not able to change the device Lan Mode to Router Mode.";
+			LOGGER.info(
+					"************************************************************************************************");
+			LOGGER.info("STEP 7: DESCRIPTION: Verify disabling Bridge mode using WebPa.");
+			LOGGER.info(
+					"STEP 7: ACTION: Execute the Webpa Set command for following param: Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode and set to value 'router'.");
+			LOGGER.info("STEP 7: EXPECTED: Device must be set to Router Mode.");
+			LOGGER.info(
+					"************************************************************************************************");
+			isSetToRouterMode = BroadBandWiFiUtils.setWebPaParams(device,
+					BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS,
+					BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER, WebPaDataTypes.STRING.getValue());
+			if (isSetToRouterMode) {
+				startTime = System.currentTimeMillis();
+				do {
+					try {
+						status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+								BroadBandWebPaConstants.WEBPA_PARAM_BRIDGE_MODE_STATUS,
+								BroadBandTestConstants.LAN_MANAGEMENT_MODE_ROUTER);
+					} catch (TestException exception) {
+						errorMessage = errorMessage
+								+ "Exception occurred while setting device Lan Mode to Router Mode => "
+								+ exception.getMessage();
+						LOGGER.error(errorMessage);
+					}
+				} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TWO_MINUTE_IN_MILLIS
+						&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+								BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+			}
+			if (status) {
+				LOGGER.info("STEP 7: ACTUAL : Device Lan Mode is changed to Router Mode successfully.");
+			} else {
+				LOGGER.error("STEP 7: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			testStepNumber = "s8";
+			status = false;
+			errorMessage = "Bridge mode is not disabled even after 3 minutes of changing the device to bridge mode.";
+			LOGGER.info(
+					"************************************************************************************************");
+			LOGGER.info("STEP 8: DESCRIPTION : Verify whether Bridge mode is disabled via SNMP.");
+			LOGGER.info("STEP 8: ACTION : Execute SNMP Get command for OID: 1.3.6.1.4.1.17270.50.2.3.2.1.1.32");
+			LOGGER.info("STEP 8: EXPECTED : SNMP output should be '2'.");
+			LOGGER.info("********************************************************************************************");
+			startTime = System.currentTimeMillis();
+			do {
+				try {
+					status = BroadBandSnmpUtils.performSnmpWalkAndVerify(tapEnv, device,
+							BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getOid(),
+							BroadBandSnmpMib.ENABLE_DISABLE_BRIDGE_MODE.getTableIndex(),
+							BroadBandTestConstants.STRING_VALUE_TWO);
+				} catch (TestException exception) {
+					errorMessage = errorMessage + exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+			} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.EIGHT_MINUTE_IN_MILLIS && !status
+					&& BroadBandCommonUtils.hasWaitForDuration(tapEnv, BroadBandTestConstants.TWENTY_SECOND_IN_MILLIS));
+			if (status) {
+				LOGGER.info("STEP 8: ACTUAL : Device Lan Mode as Router Mode verified successfully via SNMP.");
+			} else {
+				LOGGER.error("STEP 8: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+
+			testStepNumber = "s9";
+			status = false;
+			errorMessage = "Initial & Final Ip tables are not same after Bridge Mode to router transition.";
+			LOGGER.info("*******************************************************************************************");
+			LOGGER.info("STEP 9: DESCRIPTION: Verify Ip tables after Bridge Mode to Router transition.");
+			LOGGER.info("STEP 9: ACTION: Get the current Ip table rules and compare them with the previous tables.");
+			LOGGER.info("STEP 9: EXPECTED: Ip tables must be same as they are obtained in Step1.");
+			LOGGER.info("*******************************************************************************************");
+			startTime = System.currentTimeMillis();
+			if (!DeviceModeHandler.isFibreDevice(device)) {
+				do {
+					try {
+						status = BroadBandCommonUtils.getIptableRulesAndVerify(device, tapEnv,
+								BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV4_TABLE_RULES,
+								BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV6_TABLE_RULES);
+					} catch (Exception exception) {
+						errorMessage = errorMessage
+								+ "Exception occurred while verifying Ip tables after Bridge Mode to router transition => "
+								+ exception.getMessage();
+						LOGGER.error(errorMessage);
+					}
+				} while ((System.currentTimeMillis() - startTime) < BroadBandTestConstants.TEN_MINUTE_IN_MILLIS
+						&& !status && BroadBandCommonUtils.hasWaitForDuration(tapEnv,
+								BroadBandTestConstants.THIRTY_SECOND_IN_MILLIS));
+				if (status) {
+					LOGGER.info(
+							"STEP 9: ACTUAL : Initial & Final Ip tables are same after Bridge Mode to router transition.");
+				} else {
+					LOGGER.error("STEP 9: ACTUAL : " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, true);
+			} else {
+				errorMessage = "skippig brlan0 bridge mode validations as it is a Fibre device";
+				LOGGER.info("STEP 9: ACTUAL : " + errorMessage);
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
+			}
+
+			testStepNumber = "s10";
+			status = false;
+			errorMessage = "brlan0 configuration has not IPv4 and IPv6 address fields in Router Mode.";
+			LOGGER.info("*******************************************************************************************");
+			LOGGER.info("STEP 10: DESCRIPTION: Verify brlan0 configuration in Router mode.");
+			LOGGER.info("STEP 10: ACTION: SSH the device and Execute the following command: 'ifconfig brlan0'.");
+			LOGGER.info("STEP 10: EXPECTED: brlan0 interface must have valid Ip addresses.");
+			LOGGER.info("*******************************************************************************************");
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandTestConstants.IFCONFIG_BRLAN);
+			LOGGER.info("Obtained brlan0 configuration from ifconfig command : " + response);
+			try {
+				status = BroadBandCommonUtils.validateBrlan0Configuration(device, tapEnv);
+			} catch (TestException exception) {
+				errorMessage = errorMessage
+						+ "Exception occured while verifying IPv4 and IPv6 addresses in brlan0 configuration in Router Mode. => "
+						+ exception.getMessage();
+				LOGGER.error(errorMessage);
+			}
+			if (status) {
+				LOGGER.info("STEP 10: ACTUAL : brlan0 configuration has IPv4 and IPv6 address fields in Router Mode.");
+			} else {
+				LOGGER.error("STEP 10: ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("**********************************************************************************");
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 		} catch (Exception exception) {
-		    LOGGER.error("Exception occurred while deleting files in /tmp folder.");
-		    errorMessage = exception.getMessage();
-		    LOGGER.error(errorMessage);
+			errorMessage = "Exception occurred during execution : " + exception.getMessage();
+			LOGGER.error(errorMessage);
+			tapEnv.updateExecutionStatus(device, testId, testStepNumber, false, errorMessage, true);
+		} finally {
+			LOGGER.info("################### STARTING POST-CONFIGURATIONS ###################");
+			LOGGER.info("POST-CONDITION STEPS");
+			if (BroadBandCommonUtils.verifyDeviceInBridgeStaticModeStatusUsingWebPaCommand(tapEnv, device)) {
+				status = false;
+				errorMessage = "Unable to set the device back in Router Mode.";
+				LOGGER.info("#######################################################################################");
+				LOGGER.info(
+						"POST-CONDITION 1: DESCRIPTION : Verify setting device in LAN Mode as currently in Bridge Mode.");
+				LOGGER.info(
+						"POST-CONDITION 1: ACTION : Execute the Webpa Set command for following param: Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode and set value as 'router'.");
+				LOGGER.info("POST-CONDITION 1: EXPECTED : Device must be set in Router Mode.");
+				LOGGER.info("#######################################################################################");
+				if (BroadBandCommonUtils.verifyDeviceInBridgeStaticModeStatusUsingWebPaCommand(tapEnv, device)) {
+					status = false;
+					errorMessage = "Unable to set the device back in Router Mode.";
+					try {
+						status = BroadBandCommonUtils.setDeviceInRouterModeStatusUsingWebPaCommand(tapEnv, device);
+					} catch (Exception exception) {
+						errorMessage = errorMessage + "Exception occured while setting device in LAN Mode => "
+								+ exception.getMessage();
+					}
+					if (status) {
+						LOGGER.info("POST-CONDITION 1: ACTUAL : Device is set in Router Mode successfully.");
+						LOGGER.info("Waiting For 3 minutes after Changing Device to Router Mode.");
+						tapEnv.waitTill(BroadBandTestConstants.THREE_MINUTES);
+					} else {
+						LOGGER.error("POST-CONDITION 1: ACTUAL : " + errorMessage);
+					}
+				}
+				status = false;
+				errorMessage = "Unable to delete files created in /tmp folder.";
+				LOGGER.info("#######################################################################################");
+				LOGGER.info("POST-CONDITION 2: DESCRIPTION : Verify deleting all the created files in /tmp folder.");
+				LOGGER.info(
+						"POST-CONDITION 2: ACTION : SSH the device and Execute 'rm' command for all the created files in /tmp folder.");
+				LOGGER.info("POST-CONDITION 2: EXPECTED : All files created in /tmp folder must be deleted.");
+				LOGGER.info("#######################################################################################");
+				try {
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+							RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandTestConstants.FILE_NAME_TO_STORE_FINAL_IPV6_TABLE_RULES));
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+							RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV6_TABLE_RULES));
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+							RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandTestConstants.FILE_NAME_TO_STORE_INITIAL_IPV4_TABLE_RULES));
+					tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+							RDKBTestConstants.CMD_REMOVE_DIR_FORCEFULLY, RDKBTestConstants.SINGLE_SPACE_CHARACTER,
+							BroadBandTestConstants.FILE_NAME_TO_STORE_FINAL_IPV4_TABLE_RULES));
+					status = true;
+					if (status) {
+						LOGGER.info(
+								"POST-CONDITION 2: ACTUAL : All files created in /tmp folder deleted successfully.");
+					} else {
+						LOGGER.error("POST-CONDITION 2: ACTUAL : " + errorMessage);
+					}
+				} catch (Exception exception) {
+					LOGGER.error("Exception occurred while deleting files in /tmp folder.");
+					errorMessage = exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
+			}
+			LOGGER.info("ENDING TEST CASE: TC-RDKB-BRIDGE-MODE-1003");
 		}
-		LOGGER.info("################### COMPLETED POST-CONFIGURATIONS ###################");
-	    }
-	    LOGGER.info("ENDING TEST CASE: TC-RDKB-BRIDGE-MODE-1003");
 	}
-    }
 
 }
