@@ -426,12 +426,10 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 		} finally {
 			LOGGER.info("########################### STARTING POST-CONFIGURATIONS ###########################");
 			LOGGER.info("************************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : Verify whether the 'Block ICMP' for IPv4 traffic can be disabled");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Execute set command for the following webpa params to set value to 'false', Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequests ");
-			LOGGER.info("STEP " + stepNumber
-					+ ": EXPECTED : 'Block ICMP' under Custom Security should be disabled for IPv4 Traffic");
+			LOGGER.info(
+					"POST-CONDITION 1: DESCRIPTION: Verify whether the 'Block ICMP' for IPv4 traffic can be disabled");
+			LOGGER.info(
+					"POST-CONDITION 1: EXPECTED: 'Block ICMP' under Custom Security should be disabled for IPv4 Traffic");
 			LOGGER.info("************************************************************************************");
 
 			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
@@ -446,12 +444,10 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 			LOGGER.info("#####################################################################################");
 
 			LOGGER.info("************************************************************************************");
-			LOGGER.info("STEP " + stepNumber
-					+ ": DESCRIPTION : Verify whether the firewall setting is configured to 'Minimum Security' for IPv4 traffic");
-			LOGGER.info("STEP " + stepNumber
-					+ ": ACTION : Execute set command for the following webpa params to set value to 'Low', Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6 ");
-			LOGGER.info("STEP " + stepNumber
-					+ ": EXPECTED : Firewall Setting for IPv4 traffic should be set to 'Minimum Security'");
+			LOGGER.info(
+					"POST-CONDITION 2: DESCRIPTION: Verify whether the firewall setting is configured to 'Minimum Security' for IPv4 traffic");
+			LOGGER.info(
+					"POST-CONDITION 2: EXPECTED: Firewall Setting for IPv4 traffic should be set to 'Minimum Security'");
 			LOGGER.info("************************************************************************************");
 
 			if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
@@ -468,12 +464,10 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 			if (!(DeviceModeHandler.isFibreDevice(device))) {
 
 				LOGGER.info("************************************************************************************");
-				LOGGER.info("STEP " + stepNumber
-						+ ": DESCRIPTION : Verify whether the 'Block ICMP' for IPv6 traffic can be disabled");
-				LOGGER.info("STEP " + stepNumber
-						+ ": ACTION : Execute set command for the following webpa params to set value to 'false', Device.X_CISCO_COM_Security.Firewall.FilterAnonymousInternetRequestsV6 ");
-				LOGGER.info("STEP " + stepNumber
-						+ ": EXPECTED : 'Block ICMP' under Custom Security should be disabled for IPv6 Traffic");
+				LOGGER.info(
+						"POST-CONDITION 3: DESCRIPTION: Verify whether the 'Block ICMP' for IPv6 traffic can be disabled");
+				LOGGER.info(
+						"POST-CONDITION 3: EXPECTED: 'Block ICMP' under Custom Security should be disabled for IPv6 Traffic");
 				LOGGER.info("************************************************************************************");
 
 				if (BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
@@ -487,12 +481,10 @@ public class BroadBandFirewallTest extends AutomaticsTestBase {
 				}
 				LOGGER.info("#####################################################################################");
 				LOGGER.info("************************************************************************************");
-				LOGGER.info("STEP " + stepNumber
-						+ ": DESCRIPTION : Verify whether the firewall setting is configured to 'Typical Security' for IPv6 traffic");
-				LOGGER.info("STEP " + stepNumber
-						+ ": ACTION : Execute set command for the following webpa params to set value to 'Default', Device.X_CISCO_COM_Security.Firewall.FirewallLevelV6 ");
-				LOGGER.info("STEP " + stepNumber
-						+ ": EXPECTED :  Firewall Setting for IPv6 traffic should be set to 'Typical Security'");
+				LOGGER.info(
+						"POST-CONDITION 4: DESCRIPTION: Verify whether the firewall setting is configured to 'Typical Security' for IPv6 traffic");
+				LOGGER.info(
+						"POST-CONDITION 4: EXPECTED: Firewall Setting for IPv6 traffic should be set to 'Typical Security'");
 				LOGGER.info("************************************************************************************");
 
 				LOGGER.info(
