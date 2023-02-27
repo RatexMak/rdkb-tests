@@ -1008,7 +1008,8 @@ public class BroadBandWebPaTests extends AutomaticsTestBase {
 					"*********************************************************************************************");
 			errorMessage = "Unable to retrieve IPv4 address from nslookup response";
 			try {
-				response = tapEnv.executeCommandUsingSshConnection(WhiteListServer.getInstance(tapEnv, "localhost"),
+				response = tapEnv.executeCommandUsingSshConnection(
+						WhiteListServer.getInstance(tapEnv, BroadbandPropertyFileHandler.getServerIP()),
 						BroadBandCommonUtils.concatStringUsingStringBuffer(
 								BroadBandCommandConstants.CMD_NSLOOKUP_WITH_PATH_FOR_IPV4_ADDRESS,
 								BroadBandTestConstants.NSLOOKUP_FOR_FACEBOOK));
