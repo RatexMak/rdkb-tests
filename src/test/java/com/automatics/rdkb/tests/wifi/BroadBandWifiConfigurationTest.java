@@ -1011,7 +1011,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 					BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_CHANNEL_IN_5GHZ,
 					WebPaDataTypes.INTEGER.getValue(),
-					DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_140
+					DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_44
 							: BroadBandTestConstants.CHANNEL_NO_161);
 			if (status) {
 				LOGGER.info(
@@ -1473,7 +1473,7 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 				status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv,
 						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_CHANNEL_IN_5GHZ,
 						WebPaDataTypes.INTEGER.getValue(),
-						DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_140
+						DeviceModeHandler.isRPIDevice(device) ? BroadBandTestConstants.CHANNEL_NO_44
 								: BroadBandTestConstants.CHANNEL_NO_161);
 			} else {
 				LOGGER.info("#######################################################################################");
