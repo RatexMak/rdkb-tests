@@ -5348,49 +5348,47 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 		String stepNum = "S" + stepNumber;
 		boolean status = false;
 		String errorMessage = null;
-		if (wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_2_4GHZ)) {
-			if (DeviceModeHandler.isRPIDevice(device)
-					&& wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_B)) {
-				LOGGER.info("Current RPI setup only supports g,n as 2.4GHz operating standands");
-				tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-						errorMessage, false);
-			} else {
-				if (DeviceModeHandler.isRPIDevice(device) && (wifiOperatingStandard
-						.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_A)
-						|| wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_N))) {
-					LOGGER.info("Current RPI setup only supports ac as 5GHz operating standands");
-					tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
-							errorMessage, false);
-				}
-			}
 
-		}
-		String operStdWepParam = wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_2_4GHZ)
-				? BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD
-				: BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD;
-		/**
-		 * Step : SET AND VERIFY THE VALUE OF OPERATING STANDARD FOR 2.4/5 GHZ
-		 * 
-		 */
-		LOGGER.info("#######################################################################################");
-		LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : SET AND VERIFY THE VALUE OF " + wifiBand
-				+ " WITH OPERATING STANDARD AS " + wifiOperatingStandard);
-		LOGGER.info("STEP " + stepNumber
-				+ ": ACTION : SET AND VERIFY THE VALUE OF OPERATING STANDARD FOR USING WEBPA PARAM " + operStdWepParam);
-		LOGGER.info(
-				"STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO " + wifiOperatingStandard);
-		LOGGER.info("#######################################################################################");
-		errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + wifiOperatingStandard;
-		status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv, operStdWepParam,
-				BroadBandTestConstants.CONSTANT_0, wifiOperatingStandard);
-		if (status) {
-			LOGGER.info("STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS "
-					+ wifiOperatingStandard);
+		if (wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_2_4GHZ) && DeviceModeHandler.isRPIDevice(device)
+				&& wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_B)) {
+			LOGGER.info("Current RPI setup only supports g,n as 2.4GHz operating standands");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		} else if (wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_5GHZ) && DeviceModeHandler.isRPIDevice(device)
+				&& (wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_A)
+						|| wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_N))) {
+			LOGGER.info("Current RPI setup only supports ac as 5GHz operating standands");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
 		} else {
-			LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+			String operStdWepParam = wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_2_4GHZ)
+					? BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_2_4_GHZ_OPERATING_STANDARD
+					: BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_RADIO_5GHZ_OPERATING_STANDARD;
+			/**
+			 * Step : SET AND VERIFY THE VALUE OF OPERATING STANDARD FOR 2.4/5 GHZ
+			 * 
+			 */
+			LOGGER.info("#######################################################################################");
+			LOGGER.info("STEP " + stepNumber + ": DESCRIPTION : SET AND VERIFY THE VALUE OF " + wifiBand
+					+ " WITH OPERATING STANDARD AS " + wifiOperatingStandard);
+			LOGGER.info("STEP " + stepNumber
+					+ ": ACTION : SET AND VERIFY THE VALUE OF OPERATING STANDARD FOR USING WEBPA PARAM "
+					+ operStdWepParam);
+			LOGGER.info("STEP " + stepNumber + ": EXPECTED : THE OPERATING STANDARD MUST BE SET TO "
+					+ wifiOperatingStandard);
+			LOGGER.info("#######################################################################################");
+			errorMessage = "UNABLE TO SET OPERATING STANDARD AS " + wifiOperatingStandard;
+			status = BroadBandWebPaUtils.setAndGetParameterValuesUsingWebPa(device, tapEnv, operStdWepParam,
+					BroadBandTestConstants.CONSTANT_0, wifiOperatingStandard);
+			if (status) {
+				LOGGER.info("STEP " + stepNumber + " : ACTUAL : SUCCESSFULLY CHANGED THE OPERATING STANDARD AS "
+						+ wifiOperatingStandard);
+			} else {
+				LOGGER.error("STEP " + stepNumber + " : ACTUAL : " + errorMessage);
+			}
+			LOGGER.info("#######################################################################################");
+			tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 		}
-		LOGGER.info("#######################################################################################");
-		tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
 	}
 
 	/**
