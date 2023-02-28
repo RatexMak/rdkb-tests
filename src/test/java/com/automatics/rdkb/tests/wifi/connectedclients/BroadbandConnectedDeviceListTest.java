@@ -893,13 +893,13 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 			status = null != connectedClientDevice;
 			String successMessage = null;
 			if (status) {
-				if(!DeviceModeHandler.isRPIDevice(device)) {
-				successMessage = "Connected Client is assigned with a valid IPv4 Address DHCP Range";
-				status = BroadBandConnectedClientUtils.verifyIISStatus(connectedClientDevice, tapEnv,
-						BroadBandConnectedClientTestConstants.IIS_START_FLAG);
-				successMessage = successMessage + " - IIS service is running successfully";
-				errorMessage = successMessage + " - Unnable to start IIS service";
-				}else {
+				if (!DeviceModeHandler.isRPIDevice(device)) {
+					successMessage = "Connected Client is assigned with a valid IPv4 Address DHCP Range";
+					status = BroadBandConnectedClientUtils.verifyIISStatus(connectedClientDevice, tapEnv,
+							BroadBandConnectedClientTestConstants.IIS_START_FLAG);
+					successMessage = successMessage + " - IIS service is running successfully";
+					errorMessage = successMessage + " - Unnable to start IIS service";
+				} else {
 					status = true;
 				}
 			}
@@ -1069,24 +1069,30 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 					"STEP 13: EXPECTED: Security mode of the private wifi in 2.4Ghz must be changed successfully to WPA2 Enterprise");
 			LOGGER.info(
 					"************************************************************************************************");
-			try {
-				status = BroadBandConnectedClientUtils.setSecurityModeForWiFiNetwork(tapEnv, device,
-						BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE,
-						BroadBandConnectedClientTestConstants.SECURITY_ENCRYPTION_METHOD_AES,
-						WiFiFrequencyBand.WIFI_BAND_2_GHZ);
-				LOGGER.info("Waiting for One minute after setting Security mode wifi parameter");
-				tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			} catch (TestException exception) {
-				errorMessage += errorMessage + exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP 13:ACTUAL: Changed the security mode in 2.4Ghz band" + status);
+			if (!DeviceModeHandler.isRPIDevice(device)) {
+				try {
+					status = BroadBandConnectedClientUtils.setSecurityModeForWiFiNetwork(tapEnv, device,
+							BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE,
+							BroadBandConnectedClientTestConstants.SECURITY_ENCRYPTION_METHOD_AES,
+							WiFiFrequencyBand.WIFI_BAND_2_GHZ);
+					LOGGER.info("Waiting for One minute after setting Security mode wifi parameter");
+					tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+				} catch (TestException exception) {
+					errorMessage += errorMessage + exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP 13:ACTUAL: Changed the security mode in 2.4Ghz band" + status);
+				} else {
+					LOGGER.error("STEP 13 :ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 13 :ACTUAL: " + errorMessage);
+				LOGGER.info("WPA2 Enterprise is not present in supported modes for RPI ");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * step 14 : Change the security mode of wifi in 5Ghz band. Expected : Security
@@ -1106,24 +1112,30 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 					"STEP 14: EXPECTED: Security mode of the private wifi in 5Ghz must be changed successfully tp WPA2 Enterprise ");
 			LOGGER.info(
 					"************************************************************************************************");
-			try {
-				status = BroadBandConnectedClientUtils.setSecurityModeForWiFiNetwork(tapEnv, device,
-						BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE,
-						BroadBandConnectedClientTestConstants.SECURITY_ENCRYPTION_METHOD_AES,
-						WiFiFrequencyBand.WIFI_BAND_5_GHZ);
-				LOGGER.info("Waiting for One minute after setting Security mode wifi parameter");
-				tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
-			} catch (TestException exception) {
-				errorMessage += exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP 14:ACTUAL:Changed the security mode in 5Ghz band" + status);
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				try {
+					status = BroadBandConnectedClientUtils.setSecurityModeForWiFiNetwork(tapEnv, device,
+							BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE,
+							BroadBandConnectedClientTestConstants.SECURITY_ENCRYPTION_METHOD_AES,
+							WiFiFrequencyBand.WIFI_BAND_5_GHZ);
+					LOGGER.info("Waiting for One minute after setting Security mode wifi parameter");
+					tapEnv.waitTill(BroadBandTestConstants.ONE_MINUTE_IN_MILLIS);
+				} catch (TestException exception) {
+					errorMessage += exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP 14:ACTUAL:Changed the security mode in 5Ghz band" + status);
+				} else {
+					LOGGER.error("STEP 14 :ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 14 :ACTUAL: " + errorMessage);
+				LOGGER.info("WPA2 Enterprise is not present in supported modes for RPI ");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * 
@@ -1475,21 +1487,27 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 25: EXPECTED: Value must be same as it is set in step5  ");
 			LOGGER.info(
 					"************************************************************************************************");
-			try {
-				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PRIVATE_SECURITY_MODEENABLED,
-						BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE);
-			} catch (TestException exception) {
-				errorMessage = errorMessage + exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP 25:ACTUAL:Verified the value of  security mode in 2.4Ghz band" + status);
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				try {
+					status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_2_4_GHZ_PRIVATE_SECURITY_MODEENABLED,
+							BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE);
+				} catch (TestException exception) {
+					errorMessage = errorMessage + exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP 25:ACTUAL:Verified the value of  security mode in 2.4Ghz band" + status);
+				} else {
+					LOGGER.error("STEP 25: ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 25: ACTUAL: " + errorMessage);
+				LOGGER.info("WPA2 Enterprise is not present in supported modes for RPI ");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * step 26 : Verify the security mode of private wifi in 5Ghz band. Expected :
@@ -1508,21 +1526,27 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 			LOGGER.info("STEP 26: EXPECTED: Value must be same as it is set in step6 ");
 			LOGGER.info(
 					"************************************************************************************************");
-			try {
-				status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
-						BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PRIVATE_SECURITY_MODEENABLED,
-						BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE);
-			} catch (TestException exception) {
-				errorMessage = errorMessage + exception.getMessage();
-				LOGGER.error(errorMessage);
-			}
-			if (status) {
-				LOGGER.info("STEP 26:ACTUAL:Verified the value of the securtiy mode in 5Ghz band " + status);
+			if (DeviceModeHandler.isRPIDevice(device)) {
+				try {
+					status = BroadBandCommonUtils.getWebPaValueAndVerify(device, tapEnv,
+							BroadBandWebPaConstants.WEBPA_PARAM_DEVICE_WIFI_ACCESSPOINT_5_GHZ_PRIVATE_SECURITY_MODEENABLED,
+							BroadBandTestConstants.SECURITY_MODE_WPA2_ENTERPRISE);
+				} catch (TestException exception) {
+					errorMessage = errorMessage + exception.getMessage();
+					LOGGER.error(errorMessage);
+				}
+				if (status) {
+					LOGGER.info("STEP 26:ACTUAL:Verified the value of the securtiy mode in 5Ghz band " + status);
+				} else {
+					LOGGER.error("STEP 26: ACTUAL: " + errorMessage);
+				}
+				LOGGER.info("**********************************************************************************");
+				tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 			} else {
-				LOGGER.error("STEP 26: ACTUAL: " + errorMessage);
+				LOGGER.info("WPA2 Enterprise is not present in supported modes for RPI ");
+				tapEnv.updateExecutionForAllStatus(device, testId, testStepNumber, ExecutionStatus.NOT_APPLICABLE,
+						errorMessage, false);
 			}
-			LOGGER.info("**********************************************************************************");
-			tapEnv.updateExecutionStatus(device, testId, testStepNumber, status, errorMessage, false);
 
 			/**
 			 * step 27 : Verify the persistence of parental control rule Expected : Values
@@ -1902,8 +1926,7 @@ public class BroadbandConnectedDeviceListTest extends AutomaticsTestBase {
 			testStepNumber = "s3";
 			status = false;
 			result = BroadBandConnectedClientUtils.verifyInternetIsAccessibleInConnectedClientUsingCurl(tapEnv,
-					connectedClientSettop, BroadBandTestConstants.URL_W3SCHOOLS,
-					BroadBandTestConstants.IP_VERSION4);
+					connectedClientSettop, BroadBandTestConstants.URL_W3SCHOOLS, BroadBandTestConstants.IP_VERSION4);
 			status = result.isStatus();
 			errorMessage = result.getErrorMessage();
 			if (status) {
