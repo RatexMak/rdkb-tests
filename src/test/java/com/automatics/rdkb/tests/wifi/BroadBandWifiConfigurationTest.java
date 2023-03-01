@@ -5355,8 +5355,12 @@ public class BroadBandWifiConfigurationTest extends AutomaticsTestBase {
 			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 					errorMessage, false);
 		} else if (wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_5GHZ) && DeviceModeHandler.isRPIDevice(device)
-				&& (wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_A)
-						|| wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_N))) {
+				&& wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_A)) {
+			LOGGER.info("Current RPI setup only supports ac as 5GHz operating standands");
+			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
+					errorMessage, false);
+		} else if (wifiBand.equalsIgnoreCase(BroadBandTestConstants.BAND_5GHZ) && DeviceModeHandler.isRPIDevice(device)
+				&& wifiOperatingStandard.equalsIgnoreCase(BroadBandTestConstants.OPERATING_STANDARDS_N)) {
 			LOGGER.info("Current RPI setup only supports ac as 5GHz operating standands");
 			tapEnv.updateExecutionForAllStatus(device, testCaseId, stepNum, ExecutionStatus.NOT_APPLICABLE,
 					errorMessage, false);
