@@ -425,6 +425,32 @@ public class BroadBandFileSystemTests extends AutomaticsTestBase {
 
 			LOGGER.info("**********************************************************************************");
 
+			stepNum = "s4";
+			errorMessage = "Failed to ping Google.com";
+			status = false;
+
+			LOGGER.info("**********************************************************************************");
+			LOGGER.info("STEP 4: DESCRIPTION : Verify the internet access to google.com");
+			LOGGER.info(
+					"STEP 4: ACTION : ping to google.com");
+			LOGGER.info(
+					"STEP 4: EXPECTED : ping to google.com and return 100% success");
+			LOGGER.info("**********************************************************************************");
+
+			response = tapEnv.executeCommandUsingSsh(device, BroadBandCommonUtils.concatStringUsingStringBuffer(
+					"ping www.google.com -c 4"));
+
+			// if (status) {
+			// 	LOGGER.info("STEP 4: ACTUAL : Success to ping Google.com");
+			// } else {
+			// 	LOGGER.error("STEP 4: ACTUAL : " + errorMessage);
+			// }
+
+			// tapEnv.updateExecutionStatus(device, testCaseId, stepNum, status, errorMessage, false);
+
+
+			LOGGER.info("**********************************************************************************");
+
 		} catch (Exception e) {
 			errorMessage = errorMessage + e.getMessage();
 			LOGGER.error(errorMessage);
