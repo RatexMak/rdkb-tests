@@ -5443,7 +5443,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
 			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + bssid_device);
 			}
 
 			LOGGER.info("#####################################################################################");
@@ -5497,7 +5497,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
 			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + bssid_device);
 			}
 
 			LOGGER.info("****************************************************************************************");
@@ -5573,7 +5573,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
 			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + bssid_device);
 			}
 
 			LOGGER.info("**********************************************************************************");
@@ -5628,7 +5628,7 @@ public class BroadBandMsoWebGuiTest extends BroadBandWebUiBaseTest {
 			if (status) {
 				LOGGER.info("STEP " + stepNumber + ": ACTUAL : Attempt to execute the command is successful");
 			} else {
-				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + response);
+				LOGGER.error("STEP " + stepNumber + ": ACTUAL : " + errorMessage + " Resposne: " + bssid_device);
 			}
 
 			LOGGER.info("**********************************************************************************");
